@@ -170,6 +170,8 @@ return [
          * Application Service Providers...
          */
         App\Providers\AppServiceProvider::class,
+        \Greensight\CommonMsa\CommonLibServiceProvider::class,
+        \Pim\PimLibServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,

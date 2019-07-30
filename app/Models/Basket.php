@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Greensight\CommonMsa\Models\AbstractModel;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Класс-модель для сущности "Корзина"
@@ -11,6 +12,8 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *
  * @property int $customer_id - id покупателя
  * @property int $order_id - id заказа
+ *
+ * @property-read Order|null $order - заказ
  */
 class Basket extends AbstractModel
 {
@@ -23,4 +26,12 @@ class Basket extends AbstractModel
      * @var array
      */
     protected $fillable = self::FILLABLE;
+    
+    /**
+     * @return BelongsTo
+     */
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
 }
