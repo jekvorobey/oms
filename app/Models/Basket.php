@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Greensight\CommonMsa\Models\AbstractModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 /**
  * Класс-модель для сущности "Корзина"
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $order_id - id заказа
  *
  * @property-read Order|null $order - заказ
+ * @property-read Collection|BasketItem[] $items - элементы (товары)
  */
 class Basket extends AbstractModel
 {
@@ -33,5 +36,13 @@ class Basket extends AbstractModel
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+    
+    /**
+     * @return HasMany
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(BasketItem::class);
     }
 }

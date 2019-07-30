@@ -80,9 +80,7 @@ class OrdersSeeder extends Seeder
         /** @var OfferService $offerService */
         $offerService = resolve(OfferService::class);
         $restQuery = $offerService->newQuery();
-        $restQuery->addFields(OfferDto::entity(), 'id', 'product_id')
-            ->addFields(ProductDto::entity(), 'name')
-            ->include(ProductDto::entity());
+        $restQuery->addFields(OfferDto::entity(), 'id', 'product_id');
         $offers = $offerService->offers($restQuery);
     
         /** @var ProductService $productService */
