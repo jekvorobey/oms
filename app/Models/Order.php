@@ -6,10 +6,10 @@ use Greensight\CommonMsa\Models\AbstractModel;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Pim\Dto\Offer\OfferDto;
-use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
 
 /**
@@ -46,7 +46,7 @@ class Order extends AbstractModel
     /**
      * @var array
      */
-    protected static $restIncludes = ['basket', 'basketItems'];
+    protected static $restIncludes = ['basket'];
     
     /**
      * @return HasOne
@@ -64,6 +64,8 @@ class Order extends AbstractModel
      */
     public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
     {
+        /** @var RestQuery $restQuery */
+        //Фильтр заказов по мерчанту
         $merchantFilter = $restQuery->getFilter('merchant_id');
         if($merchantFilter) {
             [$op, $value] = $merchantFilter[0];
@@ -73,14 +75,44 @@ class Order extends AbstractModel
             $restQuery->addFields(OfferDto::entity(), 'id')
                 ->setFilter('merchant_id', $op, $value);
             $offersIds = $offerService->offers($restQuery)->pluck('id')->toArray();
-            //todo Доделать получение списка заказов для офферов мерчанта
-            $ordersIds = [];
             
-            $restQuery->setFilter('id', $ordersIds);
+            $query->whereHas('basket', function (Builder $query) use ($offersIds) {
+                $query->whereHas('items', function (Builder $query) use ($offersIds) {
+                    $query->whereIn('offer_id', $offersIds);
+                });
+            });
+            
             $restQuery->removeFilter('merchant_id');
         }
-        
-        //todo Доделать include товаров заказа
+    
+        //Получение элементов корзины для заказов
+        if ($restQuery->isIncluded('basketItems')) {
+            $basketFields = $restQuery->getFields('basket');
+            $restQuery->removeField('basket');
+            
+            $basketItemsFields = $restQuery->getFields('basketItems');
+            $restQuery->removeField('basketItems');
+            
+            $query->with([
+                'basket' => function (Relation $query) use ($basketFields, $basketItemsFields) {
+                    if ($basketFields) {
+                        $query->select(array_merge($basketFields, ['order_id']));
+                    } else {
+                        $query->select(['*']);
+                    }
+    
+                    $query->with([
+                        'items' => function (Relation $query) use ($basketItemsFields) {
+                            if ($basketItemsFields) {
+                                $query->select(array_merge($basketItemsFields, ['basket_id']));
+                            } else {
+                                $query->select(['*']);
+                            }
+                        },
+                    ]);
+                },
+            ]);
+        }
         
         return parent::modifyQuery($query, $restQuery);
     }
