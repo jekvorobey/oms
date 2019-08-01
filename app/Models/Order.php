@@ -86,12 +86,12 @@ class Order extends AbstractModel
         }
     
         //Получение элементов корзины для заказов
-        if ($restQuery->isIncluded('basketItem')) {
+        if ($restQuery->isIncluded('basketitem')) {
             $basketFields = $restQuery->getFields('basket');
             $restQuery->removeField('basket');
             
-            $basketItemsFields = $restQuery->getFields('basketItems');
-            $restQuery->removeField('basketItems');
+            $basketItemsFields = $restQuery->getFields('basketitem');
+            $restQuery->removeField('basketitem');
             
             $query->with([
                 'basket' => function (Relation $query) use ($basketFields, $basketItemsFields) {
