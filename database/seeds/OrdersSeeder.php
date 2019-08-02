@@ -26,8 +26,6 @@ class OrdersSeeder extends Seeder
     
     /** @var int */
     const ORDERS_COUNT = 100;
-    /** @var int */
-    const BASKETS_COUNT = 100;
     
     /**
      * @throws PimException
@@ -69,13 +67,16 @@ class OrdersSeeder extends Seeder
             'comment' => function () use ($faker) {
                 return $faker->realText();
             },
-        ])->add(Basket::class, self::BASKETS_COUNT, [
-            'customer_id' => function () use ($faker) {
-                return $this->customerId($faker);
-            },
         ]);
-    
         $populator->execute();
+        
+        $orders = Order::query()->select(['id'])->get();
+        foreach ($orders as $order) {
+            $basket = new Basket();
+            $basket->customer_id = $this->customerId($faker);
+            $basket->order_id = $order->id;
+            $basket->save();
+        }
     
         /** @var OfferService $offerService */
         $offerService = resolve(OfferService::class);
