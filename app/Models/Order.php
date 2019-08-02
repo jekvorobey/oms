@@ -71,10 +71,10 @@ class Order extends AbstractModel
             [$op, $value] = $merchantFilter[0];
             /** @var OfferService $offerService */
             $offerService = resolve(OfferService::class);
-            $restQuery = $offerService->newQuery();
-            $restQuery->addFields(OfferDto::entity(), 'id')
+            $offerQuery = $offerService->newQuery();
+            $offerQuery->addFields(OfferDto::entity(), 'id')
                 ->setFilter('merchant_id', $op, $value);
-            $offersIds = $offerService->offers($restQuery)->pluck('id')->toArray();
+            $offersIds = $offerService->offers($offerQuery)->pluck('id')->toArray();
             
             $query->whereHas('basket', function (Builder $query) use ($offersIds) {
                 $query->whereHas('items', function (Builder $query) use ($offersIds) {

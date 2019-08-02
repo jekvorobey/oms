@@ -7,7 +7,6 @@ use App\Models\DeliveryType;
 use App\Models\Order;
 use App\Models\OrderStatus;
 use App\Models\ReserveStatus;
-use EloquentPopulator\Populator;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Pim\Core\PimException;
@@ -35,42 +34,25 @@ class OrdersSeeder extends Seeder
         $faker = Faker\Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
     
-        $populator = new Populator($faker);
-        $populator->add(Order::class, self::ORDERS_COUNT, [
-            'customer_id' => function () use ($faker) {
-                return $this->customerId($faker);
-            },
-            'number' => function () use ($faker) {
-                return 'IBT' . $faker->dateTimeThisYear()->format('Ymdhis');
-            },
-            'cost' => function () use ($faker) {
-                return $faker->numberBetween(1, 1000);
-            },
-            'status' => function () use ($faker) {
-                return $faker->randomElement(OrderStatus::validValues());
-            },
-            'reserve_status' => function () use ($faker) {
-                return $faker->randomElement(ReserveStatus::validValues());
-            },
-            'delivery_type' => function () use ($faker)  {
-                return $faker->randomElement(DeliveryType::validValues());
-            },
-            'delivery_method' => function () use ($faker) {
-                return $faker->randomElement(DeliveryMethod::validValues());
-            },
-            'processing_time' => function () use ($faker) {
-                return $faker->dateTimeThisYear();
-            },
-            'delivery_time' => function () use ($faker) {
-                return $faker->dateTimeThisYear()->modify('+3 days');
-            },
-            'comment' => function () use ($faker) {
-                return $faker->realText();
-            },
-        ]);
-        $populator->execute();
+        $orders = collect();
+        for ($i = 0; $i < self::ORDERS_COUNT; $i++) {
+            $order = new Order();
+            $order->customer_id = $this->customerId($faker);
+            $order->number = 'IBT' . $faker->dateTimeThisYear()->format('Ymdhis');
+            $order->cost = $faker->numberBetween(1, 1000);
+            $order->status = $faker->randomElement(OrderStatus::validValues());
+            $order->reserve_status = $faker->randomElement(ReserveStatus::validValues());
+            $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
+            $order->delivery_method = $faker->randomElement(DeliveryMethod::validValues());
+            $order->created_at = $faker->dateTimeThisYear();
+            $order->processing_time = $order->created_at->modify('+1 days');
+            $order->delivery_time = $order->created_at->modify('+3 days');
+            $order->comment = $faker->realText();
+            $order->save();
+            
+            $orders->push($order);
+        }
         
-        $orders = Order::query()->select(['id'])->get();
         foreach ($orders as $order) {
             $basket = new Basket();
             $basket->customer_id = $this->customerId($faker);
