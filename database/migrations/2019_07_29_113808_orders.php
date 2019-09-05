@@ -72,6 +72,16 @@ class Orders extends Migration
 
             $table->foreign('basket_id')->references('id')->on('baskets');
         });
+        
+        Schema::create('payments', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->bigInteger('order_id');
+            $table->float('sum');
+            $table->dateTime('created_at');
+            $table->tinyInteger('status', false, true);
+            $table->dateTime('payed_at')->nullable();
+            $table->json('parts');
+        });
     }
 
     /**
