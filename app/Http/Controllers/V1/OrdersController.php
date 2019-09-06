@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers\V1;
 
+use App\Core\OrderReader;
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use Greensight\CommonMsa\Rest\Controller\CountAction;
-use Greensight\CommonMsa\Rest\Controller\CreateAction;
-use Greensight\CommonMsa\Rest\Controller\DeleteAction;
-use Greensight\CommonMsa\Rest\Controller\ReadAction;
-use Greensight\CommonMsa\Rest\Controller\UpdateAction;
+use Greensight\CommonMsa\Rest\RestQuery;
+use Illuminate\Http\Request;
 
 /**
  * Class OrdersController
@@ -16,41 +13,17 @@ use Greensight\CommonMsa\Rest\Controller\UpdateAction;
  */
 class OrdersController extends Controller
 {
-    use DeleteAction;
-    use CreateAction;
-    use UpdateAction;
-    use ReadAction;
-    use CountAction;
-
-    /**
-     * Получить список полей, которые можно редактировать через стандартные rest действия.
-     * Пример return ['name', 'status'];
-     * @return array
-     */
-    protected function writableFieldList(): array
+    public function read(Request $request)
     {
-        return Order::FILLABLE;
+        $reader = new OrderReader();
+        return response()->json([
+            'items' => $reader->list(new RestQuery($request)),
+        ]);
     }
-
-    /**
-     * Получить класс модели в виде строки
-     * Пример: return MyModel::class;
-     * @return string
-     */
-    public function modelClass(): string
+    
+    public function count(Request $request)
     {
-        return Order::class;
-    }
-
-    /**
-     * Задать права для выполнения стандартных rest действий.
-     * Пример: return [ RestAction::$DELETE => 'permission' ];
-     * @return array
-     */
-    public function permissionMap(): array
-    {
-        return [
-            // todo добавить необходимые права
-        ];
+        $reader = new OrderReader();
+        return response()->json($reader->count(new RestQuery($request)));
     }
 }
