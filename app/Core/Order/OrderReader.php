@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Core;
+namespace App\Core\Order;
 
 use App\Models\Order;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -13,6 +13,13 @@ use Pim\Services\OfferService\OfferService;
 class OrderReader
 {
     const PAGE_SIZE = 10;
+    
+    public function byId(int $id): ?Order
+    {
+        /** @var Order $order */
+        $order = Order::query()->where('id', $id)->first();
+        return $order;
+    }
     
     public function list(RestQuery $restQuery): Collection
     {

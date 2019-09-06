@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -45,5 +46,34 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+    
+    /**
+     * Обновить статус оплаты заказа в соотвествии со статусами оплат
+     */
+    public function refreshStatus()
+    {
+        $all = $this->payments->count();
+        $statuses = [];
+        foreach ($this->payments as $payment) {
+            $statuses[$payment->status] = isset($statuses[$payment->status]) ? $statuses[$payment->status] + 1 : 1;
+        }
+        $allIn = false;
+        foreach (PaymentStatus::all() as $status) {
+            if ($all == $statuses[$status->id] ?? -1) {
+                $this->status = $status->id;
+                $allIn = true;
+                break;
+            }
+        }
+        if (!$allIn) {
+            // todo уточнить логику смены статуса
+            if ($this->status == PaymentStatus::CREATED && $statuses[PaymentStatus::STARTED] > 0) {
+                $this->status = PaymentStatus::STARTED;
+            } elseif ($statuses[PaymentStatus::DONE] > 0) {
+                $this->status = PaymentStatus::PARTIAL_DONE;
+            }
+        }
+        $this->save();
     }
 }
