@@ -6,6 +6,7 @@ use App\Models\DeliveryMethod;
 use App\Models\DeliveryType;
 use App\Models\Order;
 use App\Models\OrderStatus;
+use App\Models\OrderHistory;
 use App\Models\ReserveStatus;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -22,10 +23,10 @@ class OrdersSeeder extends Seeder
 {
     /** @var int */
     const FAKER_SEED = 123456;
-    
+
     /** @var int */
     const ORDERS_COUNT = 100;
-    
+
     /**
      * @throws PimException
      */
@@ -33,7 +34,7 @@ class OrdersSeeder extends Seeder
     {
         $faker = Faker\Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
-    
+
         $orders = collect();
         for ($i = 0; $i < self::ORDERS_COUNT; $i++) {
             $order = new Order();
@@ -49,35 +50,41 @@ class OrdersSeeder extends Seeder
             $order->delivery_time = $order->created_at->modify('+3 days');
             $order->comment = $faker->realText();
             $order->save();
-            
+
             $orders->push($order);
         }
-        
+
         foreach ($orders as $order) {
             $basket = new Basket();
             $basket->customer_id = $this->customerId($faker);
             $basket->order_id = $order->id;
             $basket->save();
+
+            $history = new OrderHistory();
+            $history->type = 1;
+            $history->order_id = $order->id;
+            $history->created_at = $faker->dateTimeThisYear();
+            $history->save();
         }
-    
+
         /** @var OfferService $offerService */
         $offerService = resolve(OfferService::class);
         $restQuery = $offerService->newQuery();
         $restQuery->addFields(OfferDto::entity(), 'id', 'product_id');
         $offers = $offerService->offers($restQuery);
-    
+
         /** @var ProductService $productService */
         $productService = resolve(ProductService::class);
         $restQuery = $productService->newQuery();
         $restQuery->addFields(ProductDto::entity(), 'id', 'name')
             ->setFilter('id', $offers->pluck('product_id'));
         $products = $productService->products($restQuery)->keyBy('id');
-        
+
         $baskets = Basket::query()->select('id')->get();
         foreach ($baskets as $basket) {
             /** @var Collection|OfferDto[] $basketOffers */
             $basketOffers = $offers->random(rand(3, 5));
-            
+
             foreach ($basketOffers as $basketOffer) {
                 $basketItem = new BasketItem();
                 $basketItem->basket_id = $basket->id;
@@ -89,7 +96,7 @@ class OrdersSeeder extends Seeder
             }
         }
     }
-    
+
     /**
      * @param  \Faker\Generator  $faker
      * @return int
