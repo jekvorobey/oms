@@ -14,6 +14,14 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::namespace('V1')->prefix('v1')->group(function () {
+    Route::prefix('payments')->group(function () {
+        Route::prefix('handler')->group(function () {
+            Route::post('local', 'PaymentsController@handlerLocal')->name('handler.localPayment');
+        });
+        Route::prefix('{id}')->group(function () {
+            Route::post('start', 'PaymentsController@start');
+        });
+    });
     Route::prefix('orders')->group(function () {
         Route::prefix('history')->group(function () {
             Route::get('', 'OrdersHistoryController@read');
@@ -22,12 +30,13 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 
         Route::get('count', 'OrdersController@count');
         Route::prefix('{id}')->group(function () {
-            Route::get('', 'OrdersController@read');
-            Route::put('', 'OrdersController@update');
-            Route::delete('', 'OrdersController@delete');
+            Route::put('payments', 'OrdersController@setPayments');
+            //Route::get('', 'OrdersController@read');
+            //Route::put('', 'OrdersController@update');
+            //Route::delete('', 'OrdersController@delete');
         });
 
         Route::get('', 'OrdersController@read');
-        Route::post('', 'OrdersController@create');
+        //Route::post('', 'OrdersController@create');
     });
 });

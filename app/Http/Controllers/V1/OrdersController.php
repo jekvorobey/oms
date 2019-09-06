@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\V1;
 
+use App\Core\Order\OrderReader;
+use App\Core\Order\OrderWriter;
+use App\Core\Payment\PaymentProcessor;
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use Greensight\CommonMsa\Rest\Controller\CountAction;
-use Greensight\CommonMsa\Rest\Controller\CreateAction;
-use Greensight\CommonMsa\Rest\Controller\DeleteAction;
-use Greensight\CommonMsa\Rest\Controller\ReadAction;
-use Greensight\CommonMsa\Rest\Controller\UpdateAction;
+use App\Models\Payment\Payment;
+use Greensight\CommonMsa\Rest\RestQuery;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class OrdersController
@@ -16,41 +19,48 @@ use Greensight\CommonMsa\Rest\Controller\UpdateAction;
  */
 class OrdersController extends Controller
 {
-    use DeleteAction;
-    use CreateAction;
-    use UpdateAction;
-    use ReadAction;
-    use CountAction;
-
-    /**
-     * Получить список полей, которые можно редактировать через стандартные rest действия.
-     * Пример return ['name', 'status'];
-     * @return array
-     */
-    protected function writableFieldList(): array
+    public function read(Request $request)
     {
-        return Order::FILLABLE;
+        $reader = new OrderReader();
+        return response()->json([
+            'items' => $reader->list(new RestQuery($request)),
+        ]);
     }
-
-    /**
-     * Получить класс модели в виде строки
-     * Пример: return MyModel::class;
-     * @return string
-     */
-    public function modelClass(): string
+    
+    public function count(Request $request)
     {
-        return Order::class;
+        $reader = new OrderReader();
+        return response()->json($reader->count(new RestQuery($request)));
     }
-
-    /**
-     * Задать права для выполнения стандартных rest действий.
-     * Пример: return [ RestAction::$DELETE => 'permission' ];
-     * @return array
-     */
-    public function permissionMap(): array
+    
+    public function setPayments(int $id, Request $request)
     {
-        return [
-            // todo добавить необходимые права
-        ];
+        $reader = new OrderReader();
+        $writer = new OrderWriter();
+        
+        $order = $reader->byId($id);
+        if (!$order) {
+            throw new NotFoundHttpException('order not found');
+        }
+        /** @var \Illuminate\Validation\Validator $validator */
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'payments' => 'required|array',
+            'payments.*.id' => 'nullable|integer',
+            'payments.*.sum' => 'nullable|numeric',
+            'payments.*.status' => 'nullable|integer',
+            'payments.*.type' => 'nullable|integer',
+            'payments.*.data' => 'nullable|array'
+        ]);
+        
+        if ($validator->fails()) {
+            throw new BadRequestHttpException($validator->errors()->first());
+        }
+        $payments = collect();
+        foreach ($data['payments'] as $rawPayment) {
+            $payments[] = new Payment($rawPayment);
+        }
+        $writer->setPayments($order, $payments);
+        return response('', 204);
     }
 }

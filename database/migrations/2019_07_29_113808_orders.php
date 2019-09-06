@@ -26,6 +26,7 @@ class Orders extends Migration
             $table->dateTime('processing_time');
             $table->dateTime('delivery_time');
             $table->text('comment')->nullable();
+            $table->tinyInteger('payment_status', false, true)->default(1);
 
             $table->timestamps();
         });
@@ -72,6 +73,20 @@ class Orders extends Migration
 
             $table->foreign('basket_id')->references('id')->on('baskets');
         });
+        
+        Schema::create('payments', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->bigInteger('order_id')->unsigned();
+            $table->float('sum');
+            $table->tinyInteger('status', false, true)->default(1);
+            $table->tinyInteger('type', false, true);
+            $table->dateTime('payed_at')->nullable();
+            $table->dateTime('created_at');
+            
+            $table->json('data');
+            
+            $table->foreign('order_id')->references('id')->on('orders');
+        });
     }
 
     /**
@@ -83,6 +98,7 @@ class Orders extends Migration
     {
         Schema::dropIfExists('basket_items');
         Schema::dropIfExists('baskets');
+        Schema::dropIfExists('payments');
         Schema::dropIfExists('orders');
         Schema::dropIfExists('orders_history');
     }

@@ -2,21 +2,20 @@
 
 namespace App\Models;
 
-use Greensight\CommonMsa\Models\AbstractModel;
-use Greensight\CommonMsa\Rest\RestQuery;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Pim\Dto\Offer\OfferDto;
-use Pim\Services\OfferService\OfferService;
 
 /**
  * Класс-модель для сущности "Заказы"
  * Class Order
  * @package App\Models
  *
+ * @property int $id
  * @property int $customer_id - id покупателя
  * @property string $number - номер
  * @property float $cost - стоимость
@@ -27,27 +26,15 @@ use Pim\Services\OfferService\OfferService;
  * @property Carbon $processing_time - срок обработки (укомплектовки)
  * @property Carbon $delivery_time - срок доставки
  * @property string $comment - комментарий
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  *
  * @property Basket $basket - корзина
  * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
+ * @property Collection|Payment[] $payments - оплаты заказа
  */
-class Order extends AbstractModel
+class Order extends Model
 {
-    /**
-     * Заполняемые поля модели
-     */
-    const FILLABLE = ['customer_id', 'number', 'cost', 'status', 'reserve_status', 'delivery_type', 'delivery_method', 'processing_time', 'delivery_time', 'comment'];
-    
-    /**
-     * @var array
-     */
-    protected $fillable = self::FILLABLE;
-    
-    /**
-     * @var array
-     */
-    protected static $restIncludes = ['basket'];
-    
     /**
      * @return HasOne
      */
@@ -56,64 +43,37 @@ class Order extends AbstractModel
         return $this->hasOne(Basket::class);
     }
     
-    /**
-     * @param  Builder  $query
-     * @param  RestQuery  $restQuery
-     * @return Builder
-     * @throws \Pim\Core\PimException
-     */
-    public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
+    public function payments(): HasMany
     {
-        /** @var RestQuery $restQuery */
-        //Фильтр заказов по мерчанту
-        $merchantFilter = $restQuery->getFilter('merchant_id');
-        if($merchantFilter) {
-            [$op, $value] = $merchantFilter[0];
-            /** @var OfferService $offerService */
-            $offerService = resolve(OfferService::class);
-            $offerQuery = $offerService->newQuery();
-            $offerQuery->addFields(OfferDto::entity(), 'id')
-                ->setFilter('merchant_id', $op, $value);
-            $offersIds = $offerService->offers($offerQuery)->pluck('id')->toArray();
-            
-            $query->whereHas('basket', function (Builder $query) use ($offersIds) {
-                $query->whereHas('items', function (Builder $query) use ($offersIds) {
-                    $query->whereIn('offer_id', $offersIds);
-                });
-            });
-            
-            $restQuery->removeFilter('merchant_id');
-        }
+        return $this->hasMany(Payment::class);
+    }
     
-        //Получение элементов корзины для заказов
-        if ($restQuery->isIncluded('basketitem')) {
-            $basketFields = $restQuery->getFields('basket');
-            $restQuery->removeField('basket');
-            
-            $basketItemsFields = $restQuery->getFields('basketitem');
-            $restQuery->removeField('basketitem');
-            
-            $query->with([
-                'basket' => function (Relation $query) use ($basketFields, $basketItemsFields) {
-                    if ($basketFields) {
-                        $query->select(array_merge($basketFields, ['order_id']));
-                    } else {
-                        $query->select(['*']);
-                    }
-    
-                    $query->with([
-                        'items' => function (Relation $query) use ($basketItemsFields) {
-                            if ($basketItemsFields) {
-                                $query->select(array_merge($basketItemsFields, ['basket_id']));
-                            } else {
-                                $query->select(['*']);
-                            }
-                        },
-                    ]);
-                },
-            ]);
+    /**
+     * Обновить статус оплаты заказа в соотвествии со статусами оплат
+     */
+    public function refreshStatus()
+    {
+        $all = $this->payments->count();
+        $statuses = [];
+        foreach ($this->payments as $payment) {
+            $statuses[$payment->status] = isset($statuses[$payment->status]) ? $statuses[$payment->status] + 1 : 1;
         }
-        
-        return parent::modifyQuery($query, $restQuery);
+        $allIn = false;
+        foreach (PaymentStatus::all() as $status) {
+            if ($all == $statuses[$status->id] ?? -1) {
+                $this->status = $status->id;
+                $allIn = true;
+                break;
+            }
+        }
+        if (!$allIn) {
+            // todo уточнить логику смены статуса
+            if ($this->status == PaymentStatus::CREATED && $statuses[PaymentStatus::STARTED] > 0) {
+                $this->status = PaymentStatus::STARTED;
+            } elseif ($statuses[PaymentStatus::DONE] > 0) {
+                $this->status = PaymentStatus::PARTIAL_DONE;
+            }
+        }
+        $this->save();
     }
 }
