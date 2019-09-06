@@ -15,13 +15,18 @@ use Illuminate\Support\Facades\Route;
 
 Route::namespace('V1')->prefix('v1')->group(function () {
     Route::prefix('orders')->group(function () {
+        Route::prefix('history')->group(function () {
+            Route::get('', 'OrdersHistoryController@read');
+            Route::post('', 'OrdersHistoryController@create');
+        });
+
         Route::get('count', 'OrdersController@count');
         Route::prefix('{id}')->group(function () {
             Route::get('', 'OrdersController@read');
             Route::put('', 'OrdersController@update');
             Route::delete('', 'OrdersController@delete');
         });
-        
+
         Route::get('', 'OrdersController@read');
         Route::post('', 'OrdersController@create');
     });
