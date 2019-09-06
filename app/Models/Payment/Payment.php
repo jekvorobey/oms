@@ -2,9 +2,10 @@
 
 namespace App\Models\Payment;
 
+use App\Models\Order;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Models\AbstractModel;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Class Payment
@@ -15,28 +16,19 @@ use Illuminate\Support\Collection;
  * @property Carbon $created_at
  * @property Carbon $payed_at
  * @property int $status
+ * @property int $type
  * @property array $parts
  *
- * @property Collection|PaymentPart[] $payments
  */
 class Payment extends AbstractModel
 {
     public $timestamps = false;
     
     protected $dates = ['created_at', 'payed_at'];
-    protected $casts = ['parts' => 'array'];
+    protected $casts = ['data' => 'array'];
     
-    public function getPaymentsAttribute()
+    public function order(): BelongsTo
     {
-        return collect($this->parts)->map(function (array $part) {
-            return new PaymentPart($part);
-        });
-    }
-    
-    public function setPaymentsAttribute(Collection $payments)
-    {
-        $this->parts = $payments->map(function (PaymentPart $part) {
-            return $part->toArray();
-        });
+        return $this->belongsTo(Order::class);
     }
 }

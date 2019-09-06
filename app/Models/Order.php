@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Payment\Payment;
 use Greensight\CommonMsa\Models\AbstractModel;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
@@ -30,6 +32,7 @@ use Pim\Services\OfferService\OfferService;
  *
  * @property Basket $basket - корзина
  * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
+ * @property Collection|Payment[] $payments - оплаты заказа
  */
 class Order extends AbstractModel
 {
@@ -54,6 +57,11 @@ class Order extends AbstractModel
     public function basket(): HasOne
     {
         return $this->hasOne(Basket::class);
+    }
+    
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
     }
     
     /**
