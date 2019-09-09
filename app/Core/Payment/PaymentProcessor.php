@@ -17,10 +17,10 @@ class PaymentProcessor
     {
         $payment->status = PaymentStatus::STARTED;
         $payment->save();
-    
+
         $paymentSystem = $payment->paymentSystem();
-        $paymentSystem->createExternalPayment($returnUrl);
-        
-        return $paymentSystem->paymentLink();
+        $paymentSystem->createExternalPayment($payment, $returnUrl);
+
+        return $paymentSystem->paymentLink($payment);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V1;
 
 use App\Core\Payment\PaymentProcessor;
 use App\Http\Controllers\Controller;
+use App\Models\Payment\LocalPaymentSystem;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -22,14 +23,16 @@ class PaymentsController extends Controller
             throw new NotFoundHttpException();
         }
         $link = $processor->startPayment($payment, $returnUrl);
-    
+
         return response()->json([
             'paymentLink' => $link
         ]);
     }
-    
-    public function handlerLocal()
+
+    public function handlerLocal(Request $request)
     {
+        $paymentSystem = new LocalPaymentSystem();
+        $paymentSystem->handlePushPayment($request->all());
         return response('ok');
     }
 }
