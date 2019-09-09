@@ -64,7 +64,6 @@ class Orders extends Migration
 
             $table->string('name');
             $table->decimal('qty', 18, 4);
-            $table->decimal('price', 18, 4);
             $table->boolean('is_reserved')->default(false);
             $table->bigInteger('reserved_by')->nullable();
             $table->timestamp('reserved_at')->nullable();
@@ -73,7 +72,7 @@ class Orders extends Migration
 
             $table->foreign('basket_id')->references('id')->on('baskets');
         });
-        
+
         Schema::create('payments', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('order_id')->unsigned();
@@ -82,9 +81,9 @@ class Orders extends Migration
             $table->tinyInteger('type', false, true);
             $table->dateTime('payed_at')->nullable();
             $table->dateTime('created_at');
-            
+
             $table->json('data');
-            
+
             $table->foreign('order_id')->references('id')->on('orders');
         });
     }

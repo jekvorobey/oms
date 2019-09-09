@@ -91,7 +91,6 @@ class OrdersSeeder extends Seeder
                 $basketItem->offer_id = $basketOffer->id;
                 $basketItem->name = $products[$basketOffer->product_id]->name;
                 $basketItem->qty = $faker->randomDigitNotNull;
-                $basketItem->price = rand(1, 10000);
                 $basketItem->save();
             }
         }

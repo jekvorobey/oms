@@ -39,4 +39,16 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::get('', 'OrdersController@read');
         //Route::post('', 'OrdersController@create');
     });
+
+    Route::prefix('basket')->group(function () {
+        Route::post('', 'BasketController@create');
+        Route::get('', 'BasketController@read');
+
+        Route::prefix('{id}')->group(function () {
+            Route::put('', 'BasketController@update');
+            Route::delete('', 'BasketController@delete');
+        });
+
+    });
+
 });
