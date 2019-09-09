@@ -20,6 +20,7 @@ use Illuminate\Support\Collection;
  * @property string $number - номер
  * @property float $cost - стоимость
  * @property int $status - статус
+ * @property int $payment_status - статус оплаты
  * @property int $reserve_status - статус резерва
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
  * @property int $delivery_method - способ доставки
@@ -42,12 +43,12 @@ class Order extends Model
     {
         return $this->hasOne(Basket::class);
     }
-    
+
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
-    
+
     /**
      * Обновить статус оплаты заказа в соотвествии со статусами оплат
      */
@@ -60,18 +61,19 @@ class Order extends Model
         }
         $allIn = false;
         foreach (PaymentStatus::all() as $status) {
-            if ($all == $statuses[$status->id] ?? -1) {
-                $this->status = $status->id;
+            $statusCount = $statuses[$status->id] ?? 0;
+            if ($all == $statusCount) {
+                $this->payment_status = $status->id;
                 $allIn = true;
                 break;
             }
         }
         if (!$allIn) {
             // todo уточнить логику смены статуса
-            if ($this->status == PaymentStatus::CREATED && $statuses[PaymentStatus::STARTED] > 0) {
-                $this->status = PaymentStatus::STARTED;
-            } elseif ($statuses[PaymentStatus::DONE] > 0) {
-                $this->status = PaymentStatus::PARTIAL_DONE;
+            if ($this->payment_status == PaymentStatus::CREATED && ($statuses[PaymentStatus::STARTED] ?? 0) > 0) {
+                $this->payment_status = PaymentStatus::STARTED;
+            } elseif (($statuses[PaymentStatus::DONE] ?? 0) > 0) {
+                $this->payment_status = PaymentStatus::PARTIAL_DONE;
             }
         }
         $this->save();

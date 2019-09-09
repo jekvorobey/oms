@@ -25,10 +25,10 @@ class Payment extends Model
 {
     public $timestamps = false;
     protected static $unguarded = true;
-    
+
     protected $dates = ['created_at', 'payed_at'];
     protected $casts = ['data' => 'array'];
-    
+
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -39,19 +39,20 @@ class Payment extends Model
             $this->data = [];
         }
     }
-    
-    public function paymentSystem()
+
+    public function paymentSystem(): ?PaymentSystemInterface
     {
         switch ($this->data['paymentSystem'] ?? '') {
-            case 'testing': return new LocalPaymentSystem($this);
+            case 'testing': return new LocalPaymentSystem();
         }
+        return null;
     }
-    
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
-    
+
     protected static function boot()
     {
         parent::boot();
@@ -61,6 +62,6 @@ class Payment extends Model
             }
         });
     }
-    
-    
+
+
 }
