@@ -79,7 +79,9 @@ class Orders extends Migration
             $table->float('sum');
             $table->tinyInteger('status', false, true)->default(1);
             $table->tinyInteger('type', false, true);
+            $table->tinyInteger('paymentSystem', false, true);
             $table->dateTime('payed_at')->nullable();
+            $table->dateTime('expires_at')->nullable();
             $table->dateTime('created_at');
 
             $table->json('data');
@@ -95,10 +97,10 @@ class Orders extends Migration
      */
     public function down()
     {
+        Schema::dropIfExists('payments');
         Schema::dropIfExists('basket_items');
         Schema::dropIfExists('baskets');
-        Schema::dropIfExists('payments');
-        Schema::dropIfExists('orders');
         Schema::dropIfExists('orders_history');
+        Schema::dropIfExists('orders');
     }
 }

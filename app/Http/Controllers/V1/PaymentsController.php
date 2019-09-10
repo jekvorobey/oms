@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\V1;
 
-use App\Core\Payment\PaymentProcessor;
 use App\Http\Controllers\Controller;
-use App\Models\Payment\LocalPaymentSystem;
+use App\Core\Payment\LocalPaymentSystem;
+use App\Models\Payment\Payment;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -17,12 +17,12 @@ class PaymentsController extends Controller
         if (!$returnUrl) {
             throw new BadRequestHttpException('missing returnUrl');
         }
-        $processor = new PaymentProcessor();
-        $payment = $processor->paymentById($id);
+
+        $payment = Payment::findById($id);
         if (!$payment) {
             throw new NotFoundHttpException();
         }
-        $link = $processor->startPayment($payment, $returnUrl);
+        $link = $payment->start($returnUrl);
 
         return response()->json([
             'paymentLink' => $link

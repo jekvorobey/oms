@@ -78,4 +78,13 @@ class Order extends Model
         }
         $this->save();
     }
+    
+    /**
+     * Отменить заказ.
+     */
+    public function cancel(): void
+    {
+        $this->status = OrderStatus::CANCEL;
+        $this->save();
+    }
 }
