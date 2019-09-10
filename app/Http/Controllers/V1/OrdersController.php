@@ -49,7 +49,7 @@ class OrdersController extends Controller
             'payments.*.sum' => 'nullable|numeric',
             'payments.*.status' => 'nullable|integer',
             'payments.*.type' => 'nullable|integer',
-            'payments.*.paymentSystem'=> 'nullable|integer',
+            'payments.*.payment_system'=> 'nullable|integer',
             'payments.*.data' => 'nullable|array'
         ]);
         

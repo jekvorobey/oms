@@ -21,7 +21,7 @@ use Illuminate\Support\Collection;
  * @property Carbon $expires_at
  * @property int $status
  * @property int $type
- * @property int $paymentSystem
+ * @property int $payment_system
  * @property array $data
  *
  * @property-read Order $order
@@ -95,7 +95,7 @@ class Payment extends Model
 
     public function paymentSystem(): ?PaymentSystemInterface
     {
-        switch ($this->paymentSystem) {
+        switch ($this->payment_system) {
             case PaymentSystem::TEST: return new LocalPaymentSystem();
         }
         return null;
