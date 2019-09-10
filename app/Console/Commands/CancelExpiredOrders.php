@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
 use Illuminate\Console\Command;
 
 class CancelExpiredOrders extends Command
@@ -15,7 +16,7 @@ class CancelExpiredOrders extends Command
     {
         $payments = Payment::expiredPayments();
         foreach ($payments as $payment) {
-            $payment->order->cancel();
+            $payment->timeout();
         }
     }
 }

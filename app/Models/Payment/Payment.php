@@ -55,8 +55,8 @@ class Payment extends Model
     public static function expiredPayments(): Collection
     {
         return Payment::query()->where('status', PaymentStatus::STARTED)
-            ->whereDate('expires_at', '<', Carbon::now())
-            ->get('id', 'order_id');
+            ->where('expires_at', '<', Carbon::now()->format('Y-m-d H:i:s'))
+            ->get(['id', 'order_id']);
     }
 
     public function __construct(array $attributes = [])
@@ -91,6 +91,12 @@ class Payment extends Model
         $paymentSystem->createExternalPayment($this, $returnUrl);
         
         return $paymentSystem->paymentLink($this);
+    }
+    
+    public function timeout(): void
+    {
+        $this->status = PaymentStatus::TIMEOUT;
+        $this->save();
     }
 
     public function paymentSystem(): ?PaymentSystemInterface

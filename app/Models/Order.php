@@ -59,24 +59,30 @@ class Order extends Model
         foreach ($this->payments as $payment) {
             $statuses[$payment->status] = isset($statuses[$payment->status]) ? $statuses[$payment->status] + 1 : 1;
         }
-        $allIn = false;
-        foreach (PaymentStatus::all() as $status) {
-            $statusCount = $statuses[$status->id] ?? 0;
-            if ($all == $statusCount) {
-                $this->payment_status = $status->id;
-                $allIn = true;
-                break;
-            }
+        
+        // todo уточнить логику смены статуса
+        if ($this->allIs($statuses, $all, PaymentStatus::DONE)) {
+            $this->payment_status = PaymentStatus::DONE;
+        } elseif ($this->atLeastOne($statuses, PaymentStatus::TIMEOUT) && !$this->atLeastOne($statuses, PaymentStatus::DONE)) {
+            $this->payment_status = PaymentStatus::TIMEOUT;
+            $this->status = OrderStatus::CANCEL;
+        } elseif ($this->payment_status == PaymentStatus::CREATED && $this->atLeastOne($statuses, PaymentStatus::STARTED)) {
+            $this->payment_status = PaymentStatus::STARTED;
+        } elseif ($this->atLeastOne($statuses, PaymentStatus::DONE)) {
+            $this->payment_status = PaymentStatus::PARTIAL_DONE;
         }
-        if (!$allIn) {
-            // todo уточнить логику смены статуса
-            if ($this->payment_status == PaymentStatus::CREATED && ($statuses[PaymentStatus::STARTED] ?? 0) > 0) {
-                $this->payment_status = PaymentStatus::STARTED;
-            } elseif (($statuses[PaymentStatus::DONE] ?? 0) > 0) {
-                $this->payment_status = PaymentStatus::PARTIAL_DONE;
-            }
-        }
+        
         $this->save();
+    }
+    
+    protected function allIs(array $statuses, int $count, int $status): bool
+    {
+        return ($statuses[$status] ?? 0) == $count;
+    }
+    
+    protected function atLeastOne(array $statuses, int $status): bool
+    {
+        return ($statuses[$status] ?? 0) > 0;
     }
     
     /**
