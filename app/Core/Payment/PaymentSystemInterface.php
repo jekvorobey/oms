@@ -1,8 +1,10 @@
 <?php
 
 
-namespace App\Models\Payment;
+namespace App\Core\Payment;
 
+
+use App\Models\Payment\Payment;
 
 interface PaymentSystemInterface
 {
@@ -28,4 +30,13 @@ interface PaymentSystemInterface
      * @param array $data
      */
     public function handlePushPayment(array $data): void;
+    
+    /**
+     * Время в часах, в течение которого можно совершить платёж после его создания.
+     * Если за эт овремя платёж не совершён - заказ отменяется.
+     * Если не указано, то время бесконечно.
+     *
+     * @return int|null
+     */
+    public function duration(): ?int;
 }

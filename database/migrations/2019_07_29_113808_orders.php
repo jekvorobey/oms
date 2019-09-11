@@ -85,7 +85,9 @@ class Orders extends Migration
             $table->float('sum');
             $table->tinyInteger('status', false, true)->default(1);
             $table->tinyInteger('type', false, true);
+            $table->tinyInteger('payment_system', false, true);
             $table->dateTime('payed_at')->nullable();
+            $table->dateTime('expires_at')->nullable();
             $table->dateTime('created_at');
 
             $table->json('data');

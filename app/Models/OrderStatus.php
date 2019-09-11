@@ -9,15 +9,20 @@ namespace App\Models;
  */
 class OrderStatus
 {
+    public const CREATED = 1;
+    public const PROCESS = 2;
+    public const DONE = 3;
+    public const CANCEL = 4;
     /**
      * @return array
      */
     public static function validValues(): array
     {
         return [
-            1, //Новый
-            2, //В обработке
-            3, //Завершен
+            self::CREATED,
+            self::PROCESS,
+            self::DONE,
+            self::CANCEL,
         ];
     }
 }

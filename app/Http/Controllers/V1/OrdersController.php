@@ -4,7 +4,6 @@ namespace App\Http\Controllers\V1;
 
 use App\Core\Order\OrderReader;
 use App\Core\Order\OrderWriter;
-use App\Core\Payment\PaymentProcessor;
 use App\Http\Controllers\Controller;
 use App\Models\Payment\Payment;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -50,6 +49,7 @@ class OrdersController extends Controller
             'payments.*.sum' => 'nullable|numeric',
             'payments.*.status' => 'nullable|integer',
             'payments.*.type' => 'nullable|integer',
+            'payments.*.payment_system'=> 'nullable|integer',
             'payments.*.data' => 'nullable|array'
         ]);
         

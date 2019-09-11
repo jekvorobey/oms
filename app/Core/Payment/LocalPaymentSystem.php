@@ -1,7 +1,9 @@
 <?php
 
-namespace App\Models\Payment;
+namespace App\Core\Payment;
 
+use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Ramsey\Uuid\Uuid;
@@ -14,9 +16,6 @@ class LocalPaymentSystem implements PaymentSystemInterface
 
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
-        // тут мы обращаемся к системе оплаты
-        // которая отдаёт нам всякие ID оплаты и ссылку
-        // мы записываем всё в data
         $uuid = Uuid::uuid1()->toString();
         $data = $payment->data;
         $data['paymentId'] = $uuid;
@@ -54,5 +53,10 @@ class LocalPaymentSystem implements PaymentSystemInterface
             $payment->payed_at = Carbon::now();
             $payment->save();
         }
+    }
+    
+    public function duration(): ?int
+    {
+        return 1;
     }
 }
