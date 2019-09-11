@@ -14,7 +14,6 @@ use Illuminate\Support\Carbon;
  * @property int $offer_id - id предложения мерчанта
  * @property string $name - название товара
  * @property float $qty - кол-во
- * @property float $price - цена за единицу
  * @property bool $is_reserved - товар зарезервирован?
  * @property int $reserved_by - кем зарезервирован
  * @property Carbon $reserved_at - когда зарезервирован
@@ -24,8 +23,8 @@ class BasketItem extends AbstractModel
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = ['basket_id', 'offer_id', 'name', 'price', 'is_reserved', 'reserved_by', 'reserved_at'];
-    
+    const FILLABLE = ['basket_id', 'offer_id', 'name', 'qty', 'is_reserved', 'reserved_by', 'reserved_at'];
+
     /**
      * @var array
      */

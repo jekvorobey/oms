@@ -44,7 +44,10 @@ class Orders extends Migration
 
             $table->timestamps();
 
-            $table->foreign('order_id')->references('id')->on('orders');
+            $table->foreign('order_id')
+                ->references('id')
+                ->on('orders')
+                ->onDelete('cascade');
         });
 
         Schema::create('baskets', function (Blueprint $table) {
@@ -70,7 +73,10 @@ class Orders extends Migration
 
             $table->timestamps();
 
-            $table->foreign('basket_id')->references('id')->on('baskets');
+            $table->foreign('basket_id')
+                ->references('id')
+                ->on('baskets')
+                ->onDelete('cascade');
         });
 
         Schema::create('payments', function (Blueprint $table) {
@@ -95,10 +101,10 @@ class Orders extends Migration
      */
     public function down()
     {
+        Schema::dropIfExists('payments');
         Schema::dropIfExists('basket_items');
         Schema::dropIfExists('baskets');
-        Schema::dropIfExists('payments');
-        Schema::dropIfExists('orders');
         Schema::dropIfExists('orders_history');
+        Schema::dropIfExists('orders');
     }
 }

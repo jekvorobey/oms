@@ -40,13 +40,15 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         //Route::post('', 'OrdersController@create');
     });
 
-    Route::prefix('basket')->group(function () {
-        Route::post('', 'BasketController@create');
+    Route::prefix('baskets')->group(function () {
         Route::get('', 'BasketController@read');
+        Route::post('', 'BasketController@create');
 
         Route::prefix('{id}')->group(function () {
-            Route::put('', 'BasketController@update');
+            Route::get('items', 'BasketController@items');
             Route::delete('', 'BasketController@delete');
+            Route::put('additem', 'BasketController@additem');
+
         });
 
     });
