@@ -53,4 +53,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 
     });
 
+    Route::prefix('delivery')->group(function () {
+        Route::get('', 'DeliveryController@info');
+        Route::get('pvz', 'DeliveryController@infoPvz');
+    });
+
 });
