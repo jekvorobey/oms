@@ -4,25 +4,30 @@ namespace App\Core\Order;
 
 use App\Models\Order;
 use App\Models\Payment\Payment;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class OrderWriter
 {
-    public function create(array $data)
+    public function create(int $customerId, float $cost)
     {
-        // todo реализовать создавние заказа
+        $order = new Order();
+        $order->customer_id = $customerId;
+        $order->cost = $cost;
+        $order->number = 'IBT' . Carbon::now()->format('Ymdhis');
+        return $order->save();
     }
-    
+
     public function update(int $id, array $data)
     {
         // todo реализовать редактирование заказа
     }
-    
+
     public function delete(int $id)
     {
         // todo реализовать удаение заказа
     }
-    
+
     /**
      * Задать список оплат для заказа.
      *

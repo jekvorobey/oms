@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1;
 use App\Core\Order\OrderReader;
 use App\Core\Order\OrderWriter;
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\Payment\Payment;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Http\Request;
@@ -25,18 +26,18 @@ class OrdersController extends Controller
             'items' => $reader->list(new RestQuery($request)),
         ]);
     }
-    
+
     public function count(Request $request)
     {
         $reader = new OrderReader();
         return response()->json($reader->count(new RestQuery($request)));
     }
-    
+
     public function setPayments(int $id, Request $request)
     {
         $reader = new OrderReader();
         $writer = new OrderWriter();
-        
+
         $order = $reader->byId($id);
         if (!$order) {
             throw new NotFoundHttpException('order not found');
@@ -52,7 +53,7 @@ class OrdersController extends Controller
             'payments.*.payment_system'=> 'nullable|integer',
             'payments.*.data' => 'nullable|array'
         ]);
-        
+
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
         }
@@ -62,5 +63,19 @@ class OrdersController extends Controller
         }
         $writer->setPayments($order, $payments);
         return response('', 204);
+    }
+
+    public function create(Request $request)
+    {
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'customer_id' => 'required|integer',
+            'cost' => 'required|numeric',
+        ]);
+        if ($validator->fails()) {
+            throw new BadRequestHttpException($validator->errors()->first());
+        }
+        $writer = new OrderWriter();
+        $writer->create($data['customer_id'], $data['cost']);
     }
 }
