@@ -31,7 +31,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::get('count', 'OrdersController@count');
         Route::prefix('{id}')->group(function () {
             Route::put('payments', 'OrdersController@setPayments');
-            Route::post('items', 'OrderItemsController@add');
             Route::put('', 'OrdersController@update');
             Route::delete('', 'OrdersController@delete');
         });
@@ -41,16 +40,12 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('baskets')->group(function () {
-        Route::get('', 'BasketController@read');
-        Route::post('', 'BasketController@create');
-
-        Route::prefix('{id}')->group(function () {
-            Route::get('items', 'BasketController@items');
-            Route::delete('', 'BasketController@delete');
-            Route::put('additem', 'BasketController@additem');
-
+        Route::get('by-user/{userId}', 'BasketController@getCurrentBasket');
+        Route::prefix('{basketId}')->group(function () {
+            Route::put('set/{offerId}', 'BasketController@setItem');
+            Route::get('', 'BasketController@getBasket');
+            Route::delete('', 'BasketController@dropBasket');
         });
-
     });
 
     Route::prefix('delivery')->group(function () {

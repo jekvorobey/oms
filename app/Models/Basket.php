@@ -2,38 +2,47 @@
 
 namespace App\Models;
 
-use Greensight\CommonMsa\Models\AbstractModel;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
-use App\Models\BasketItem;
 
 /**
  * Класс-модель для сущности "Корзина"
  * Class Basket
  * @package App\Models
  *
+ * @property int $id
  * @property int $customer_id - id покупателя
  * @property int $order_id - id заказа
  *
  * @property-read Order|null $order - заказ
  * @property-read Collection|BasketItem[] $items - элементы (товары)
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|self query()
+ * @method static Basket|null find(int|array $id)
  */
-class Basket extends AbstractModel
+class Basket extends Model
 {
-    /**
-     * Заполняемые поля модели
-     */
-    const FILLABLE = ['customer_id', 'order_id'];
-
-    /**
-     * @var array
-     */
-    protected $fillable = self::FILLABLE;
+    protected static $unguarded = true;
     
-    public static function byOrder(int $orderId): ?self
+    /**
+     * Получить текущую корзину пользователя.
+     *
+     * @param int $customerId
+     * @return Basket
+     */
+    public static function findFreeUserBasket(int $customerId): self
     {
-        return self::query()->where('order_id', $orderId)->first();
+        $basket = self::query()->where('customer_id', $customerId)
+            ->whereNull('order_id')
+            ->first();
+        if (!$basket) {
+            $basket = new self();
+            $basket->customer_id = $customerId;
+            $basket->save();
+        }
+        return $basket;
     }
     
     /**
@@ -52,15 +61,48 @@ class Basket extends AbstractModel
         return $this->hasMany(BasketItem::class);
     }
     
-    public function addItem(int $offerId, string $name, int $qty): ?BasketItem
+    /**
+     * Получить объект товар корзины, даже если его нет в БД.
+     *
+     * @param int $offerId
+     * @return BasketItem
+     */
+    public function itemByOffer(int $offerId)
     {
-        $item = new BasketItem();
-        $item->offer_id = $offerId;
-        $item->name = $name;
-        $item->qty = $qty;
-        $item->basket_id = $this->id;
-        
-        return $item->save() ? $item : null;
+        $item = $this->items->first(function (BasketItem $item) use ($offerId) {
+            return $item->offer_id == $offerId;
+        });
+        if (!$item) {
+            $item = new BasketItem();
+            $item->offer_id = $offerId;
+            $item->basket_id = $this->id;
+        }
+        return $item;
+    }
+    
+    /**
+     * Создать/изменить/удалить товар корзины.
+     *
+     * @param int $offerId
+     * @param array $data
+     * @return bool|null
+     * @throws \Exception
+     */
+    public function setItem(int $offerId, array $data)
+    {
+        $item = $this->itemByOffer($offerId);
+        if ($item->id && isset($data['qty']) && $data['qty'] === 0) {
+            $ok = $item->delete();
+        } else {
+            if (isset($data['qty'])) {
+                $item->qty = $data['qty'];
+            }
+            if (isset($data['name'])) {
+                $item->name = $data['name'];
+            }
+            $ok = $item->save();
+        }
+        return $ok;
     }
 
     protected static function boot()
