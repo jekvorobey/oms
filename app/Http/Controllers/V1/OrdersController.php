@@ -5,12 +5,19 @@ namespace App\Http\Controllers\V1;
 use App\Core\Order\OrderReader;
 use App\Core\Order\OrderWriter;
 use App\Http\Controllers\Controller;
+use App\Models\DeliveryMethod;
+use App\Models\DeliveryType;
 use App\Models\Order;
+use App\Models\OrderStatus;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
+use App\Models\ReserveStatus;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -67,6 +74,7 @@ class OrdersController extends Controller
 
     public function create(Request $request)
     {
+        // todo Добавить провеку прав
         $data = $request->all();
         $validator = Validator::make($data, [
             'customer_id' => 'required|integer',
@@ -76,6 +84,45 @@ class OrdersController extends Controller
             throw new BadRequestHttpException($validator->errors()->first());
         }
         $writer = new OrderWriter();
-        $writer->create($data['customer_id'], $data['cost']);
+        $id = $writer->create($data['customer_id'], $data['cost']);
+        if (!$id) {
+            throw new HttpException(500, 'unable to save order');
+        }
+        return response()->json([
+            'id' => $id
+        ]);
+    }
+    
+    public function update(int $id, Request $request)
+    {
+        // todo Добавить провеку прав
+        /** @var Order $order */
+        $order = Order::find($id);
+        if (!$order) {
+            throw new NotFoundHttpException('order not found');
+        }
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'customer_id' => 'nullable|integer',
+            'cost' => 'nullable|numeric',
+            'status' => ['nullable', Rule::in(OrderStatus::validValues())],
+            'delivery_time' => 'nullable|datetime',
+            'processing_time' => 'nullable|datetime',
+            'reserve_status' => ['nullable', Rule::in(ReserveStatus::validValues())],
+            'delivery_method' => ['nullable', Rule::in(DeliveryMethod::validValues())],
+            'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
+            'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
+            'comment' => ['nullable', 'string']
+        ]);
+        if ($validator->fails()) {
+            throw new BadRequestHttpException($validator->errors()->first());
+        }
+        $order->fill($data);
+        $ok = $order->save();
+        if (!$ok) {
+            throw new HttpException(500, 'unable to save order');
+        }
+        
+        return response('', 204);
     }
 }

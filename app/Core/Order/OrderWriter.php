@@ -5,28 +5,23 @@ namespace App\Core\Order;
 use App\Models\Order;
 use App\Models\Payment\Payment;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
 class OrderWriter
 {
-    public function create(int $customerId, float $cost)
+    public function create(int $customerId, float $cost): ?int
     {
+        $now = CarbonImmutable::now();
         $order = new Order();
         $order->customer_id = $customerId;
         $order->cost = $cost;
-        $order->number = 'IBT' . Carbon::now()->format('Ymdhis');
-        return $order->save();
+        $order->number = 'IBT' . $now->format('Ymdhis');
+        $order->delivery_time = $now->addHours(24);
+        $order->processing_time = $now->addDays(7);
+        return $order->save() ? $order->id : null;
     }
-
-    public function update(int $id, array $data)
-    {
-        // todo реализовать редактирование заказа
-    }
-
-    public function delete(int $id)
-    {
-        // todo реализовать удаение заказа
-    }
+    
 
     /**
      * Задать список оплат для заказа.

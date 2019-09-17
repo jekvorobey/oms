@@ -33,9 +33,13 @@ use Illuminate\Support\Collection;
  * @property Basket $basket - корзина
  * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
  * @property Collection|Payment[] $payments - оплаты заказа
+ *
+ * @method static find(int|array $id): self|null
  */
 class Order extends Model
 {
+    
+    protected static $unguarded = true;
     /**
      * @return HasOne
      */

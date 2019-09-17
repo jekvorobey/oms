@@ -32,12 +32,12 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::prefix('{id}')->group(function () {
             Route::put('payments', 'OrdersController@setPayments');
             //Route::get('', 'OrdersController@read');
-            //Route::put('', 'OrdersController@update');
+            Route::put('', 'OrdersController@update');
             //Route::delete('', 'OrdersController@delete');
         });
 
         Route::get('', 'OrdersController@read');
-        //Route::post('', 'OrdersController@create');
+        Route::post('', 'OrdersController@create');
     });
 
     Route::prefix('baskets')->group(function () {

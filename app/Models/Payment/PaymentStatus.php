@@ -31,6 +31,18 @@ class PaymentStatus
         ];
     }
     
+    public static function validValues()
+    {
+        return [
+            self::CREATED,
+            self::STARTED,
+            self::TIMEOUT,
+            self::CANCELED,
+            self::PARTIAL_DONE,
+            self::DONE
+        ];
+    }
+    
     public function __construct(int $id, string $name)
     {
         $this->id = $id;
