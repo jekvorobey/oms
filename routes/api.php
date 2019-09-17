@@ -31,9 +31,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::get('count', 'OrdersController@count');
         Route::prefix('{id}')->group(function () {
             Route::put('payments', 'OrdersController@setPayments');
-            //Route::get('', 'OrdersController@read');
+            Route::post('items', 'OrderItemsController@add');
             Route::put('', 'OrdersController@update');
-            //Route::delete('', 'OrdersController@delete');
+            Route::delete('', 'OrdersController@delete');
         });
 
         Route::get('', 'OrdersController@read');

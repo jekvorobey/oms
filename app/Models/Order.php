@@ -52,6 +52,14 @@ class Order extends Model
     {
         return $this->hasMany(Payment::class);
     }
+    
+    public function createBasket(): ?Basket
+    {
+        $basket = new Basket();
+        $basket->customer_id = $this->customer_id;
+        $basket->order_id = $this->id;
+        return $basket->save() ? $basket : null;
+    }
 
     /**
      * Обновить статус оплаты заказа в соотвествии со статусами оплат

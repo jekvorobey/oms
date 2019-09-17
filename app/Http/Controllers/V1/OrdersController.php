@@ -125,4 +125,17 @@ class OrdersController extends Controller
         
         return response('', 204);
     }
+    
+    public function delete(int $id)
+    {
+        $order = Order::find($id);
+        if (!$order) {
+            throw new NotFoundHttpException('order not found');
+        }
+        $ok = $order->delete();
+        if (!$ok) {
+            throw new HttpException(500, 'unable to save order');
+        }
+        return response('', 204);
+    }
 }

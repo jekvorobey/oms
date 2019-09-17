@@ -30,7 +30,12 @@ class Basket extends AbstractModel
      * @var array
      */
     protected $fillable = self::FILLABLE;
-
+    
+    public static function byOrder(int $orderId): ?self
+    {
+        return self::query()->where('order_id', $orderId)->first();
+    }
+    
     /**
      * @return BelongsTo
      */
@@ -45,6 +50,17 @@ class Basket extends AbstractModel
     public function items(): HasMany
     {
         return $this->hasMany(BasketItem::class);
+    }
+    
+    public function addItem(int $offerId, string $name, int $qty): ?BasketItem
+    {
+        $item = new BasketItem();
+        $item->offer_id = $offerId;
+        $item->name = $name;
+        $item->qty = $qty;
+        $item->basket_id = $this->id;
+        
+        return $item->save() ? $item : null;
     }
 
     protected static function boot()
