@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use Greensight\CommonMsa\Models\AbstractModel;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
@@ -10,6 +11,7 @@ use Illuminate\Support\Carbon;
  * Class BasketItem
  * @package App\Models
  *
+ * @property int $id
  * @property int $basket_id - id корзины
  * @property int $offer_id - id предложения мерчанта
  * @property string $name - название товара
@@ -17,16 +19,39 @@ use Illuminate\Support\Carbon;
  * @property bool $is_reserved - товар зарезервирован?
  * @property int $reserved_by - кем зарезервирован
  * @property Carbon $reserved_at - когда зарезервирован
+ *
+ * @property-read Basket $basket
  */
-class BasketItem extends AbstractModel
+class BasketItem extends Model
 {
-    /**
-     * Заполняемые поля модели
-     */
-    const FILLABLE = ['basket_id', 'offer_id', 'name', 'qty', 'is_reserved', 'reserved_by', 'reserved_at'];
-
-    /**
-     * @var array
-     */
-    protected $fillable = self::FILLABLE;
+    protected static $unguarded = true;
+    
+    public function basket(): BelongsTo
+    {
+        return $this->belongsTo(Basket::class);
+    }
+    
+    protected static function boot()
+    {
+        parent::boot();
+        
+        self::created(function (self $cartItem) {
+            if ($cartItem->basket->order_id) {
+                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $cartItem->basket->order_id, $cartItem);
+            }
+        });
+    
+        self::updated(function (self $cartItem) {
+            if ($cartItem->basket->order_id) {
+                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $cartItem->basket->order_id, $cartItem);
+            }
+        });
+    
+        self::deleting(function (self $cartItem) {
+            if ($cartItem->basket->order_id) {
+                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $cartItem->basket->order_id, $cartItem);
+            }
+        });
+    }
+    
 }

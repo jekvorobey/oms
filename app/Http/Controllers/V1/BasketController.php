@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Basket;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -29,12 +30,28 @@ class BasketController extends Controller
         return response()->json($response);
     }
     
-    public function setItem(int $basketId, int $offerId, Request $request)
+    public function setItemByBasket(int $basketId, int $offerId, Request $request)
     {
         $basket = Basket::find($basketId);
         if (!$basket) {
             throw new NotFoundHttpException('basket not found');
         }
+        return $this->setItem($basket, $offerId, $request);
+    }
+    
+    public function setItemByOrder(int $id, int $offerId, Request $request)
+    {
+        /** @var Order $order */
+        $order = Order::find($id);
+        if (!$order) {
+            throw new NotFoundHttpException('order not found');
+        }
+        $basket = $order->getOrCreateBasket();
+        return $this->setItem($basket, $offerId, $request);
+    }
+    
+    protected function setItem(Basket $basket, int $offerId, Request $request)
+    {
         $data = $request->all();
         $validator = Validator::make($data, [
             'name' => 'nullable|string',

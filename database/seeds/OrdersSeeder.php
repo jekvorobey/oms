@@ -6,7 +6,7 @@ use App\Models\DeliveryMethod;
 use App\Models\DeliveryType;
 use App\Models\Order;
 use App\Models\OrderStatus;
-use App\Models\OrderHistory;
+use App\Models\OrderHistoryEvent;
 use App\Models\ReserveStatus;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -60,7 +60,7 @@ class OrdersSeeder extends Seeder
             $basket->order_id = $order->id;
             $basket->save();
 
-            $history = new OrderHistory();
+            $history = new OrderHistoryEvent();
             $history->type = 1;
             $history->order_id = $order->id;
             $history->created_at = $faker->dateTimeThisYear();

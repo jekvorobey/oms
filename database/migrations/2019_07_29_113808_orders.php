@@ -39,15 +39,10 @@ class Orders extends Migration
             $table->tinyInteger('type')->unsigned()->nullable();
             $table->jsonb('data')->nullable();
 
-            $table->bigInteger('entity')->unsigned()->nullable();
+            $table->string('entity')->nullable();
             $table->bigInteger('entity_id')->unsigned()->nullable();
 
             $table->timestamps();
-
-            $table->foreign('order_id')
-                ->references('id')
-                ->on('orders')
-                ->onDelete('cascade');
         });
 
         Schema::create('baskets', function (Blueprint $table) {
@@ -75,8 +70,7 @@ class Orders extends Migration
 
             $table->foreign('basket_id')
                 ->references('id')
-                ->on('baskets')
-                ->onDelete('cascade');
+                ->on('baskets');
         });
 
         Schema::create('payments', function (Blueprint $table) {

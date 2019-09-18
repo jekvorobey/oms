@@ -53,12 +53,31 @@ class Order extends Model
         return $this->hasMany(Payment::class);
     }
     
-    public function createBasket(): ?Basket
+    /**
+     * Создать корзину, прявязанную к заказу.
+     *
+     * @return Basket|null
+     */
+    protected function createBasket(): ?Basket
     {
         $basket = new Basket();
         $basket->customer_id = $this->customer_id;
         $basket->order_id = $this->id;
         return $basket->save() ? $basket : null;
+    }
+    
+    /**
+     * Получить существующую или создать новую корзину заказа.
+     *
+     * @return Basket|null
+     */
+    public function getOrCreateBasket(): ?Basket
+    {
+        $basket = $this->basket;
+        if (!$basket) {
+            $basket = $this->createBasket();
+        }
+        return $basket;
     }
 
     /**
@@ -104,5 +123,22 @@ class Order extends Model
     {
         $this->status = OrderStatus::CANCEL;
         $this->save();
+    }
+    
+    protected static function boot()
+    {
+        parent::boot();
+        
+        self::created(function (self $order) {
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $order->id, $order);
+        });
+        
+        self::updated(function (self $order) {
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $order->id, $order);
+        });
+    
+        self::deleting(function (self $order) {
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $order->id, $order);
+        });
     }
 }

@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\OrderHistory;
-use Greensight\CommonMsa\Rest\Controller\CountAction;
-use Greensight\CommonMsa\Rest\Controller\CreateAction;
-use Greensight\CommonMsa\Rest\Controller\DeleteAction;
-use Greensight\CommonMsa\Rest\Controller\ReadAction;
-use Greensight\CommonMsa\Rest\Controller\UpdateAction;
+use App\Models\Order;
+use App\Models\OrderHistoryEvent;
+use Greensight\CommonMsa\Rest\RestQuery;
+use Illuminate\Http\Request;
+
 
 /**
  * Class OrdersController
@@ -16,41 +15,28 @@ use Greensight\CommonMsa\Rest\Controller\UpdateAction;
  */
 class OrdersHistoryController extends Controller
 {
-    use DeleteAction;
-    use CreateAction;
-    use UpdateAction;
-    use ReadAction;
-    use CountAction;
-
-    /**
-     * Получить список полей, которые можно редактировать через стандартные rest действия.
-     * Пример return ['name', 'status'];
-     * @return array
-     */
-    protected function writableFieldList(): array
+    public function list(Request $request)
     {
-        return OrderHistory::FILLABLE;
+        $restQuery = new RestQuery($request);
+        return response()->json([
+            'items' => OrderHistoryEvent::findByRest($restQuery)->get(),
+        ]);
     }
-
-    /**
-     * Получить класс модели в виде строки
-     * Пример: return MyModel::class;
-     * @return string
-     */
-    public function modelClass(): string
+    
+    public function count(Request $request)
     {
-        return OrderHistory::class;
-    }
-
-    /**
-     * Задать права для выполнения стандартных rest действий.
-     * Пример: return [ RestAction::$DELETE => 'permission' ];
-     * @return array
-     */
-    public function permissionMap(): array
-    {
-        return [
-            // todo добавить необходимые права
-        ];
+        $restQuery = new RestQuery($request);
+        $pagination = $restQuery->getPage();
+        $pageSize = $pagination ? $pagination['limit'] : 10;
+    
+        $query = OrderHistoryEvent::findByRest($restQuery);
+        $total = $query->count();
+        $pages = ceil($total / $pageSize);
+        
+        return response()->json([
+            'total' => $total,
+            'pages' => $pages,
+            'pageSize' => $pageSize,
+        ]);
     }
 }

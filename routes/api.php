@@ -24,13 +24,14 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
     Route::prefix('orders')->group(function () {
         Route::prefix('history')->group(function () {
-            Route::get('', 'OrdersHistoryController@read');
-            Route::post('', 'OrdersHistoryController@create');
+            Route::get('count', 'OrdersHistoryController@count');
+            Route::get('', 'OrdersHistoryController@list');
         });
 
         Route::get('count', 'OrdersController@count');
         Route::prefix('{id}')->group(function () {
             Route::put('payments', 'OrdersController@setPayments');
+            Route::put('items/{offerId}', 'BasketController@setItemByOrder');
             Route::put('', 'OrdersController@update');
             Route::delete('', 'OrdersController@delete');
         });
@@ -42,7 +43,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     Route::prefix('baskets')->group(function () {
         Route::get('by-user/{userId}', 'BasketController@getCurrentBasket');
         Route::prefix('{basketId}')->group(function () {
-            Route::put('set/{offerId}', 'BasketController@setItem');
+            Route::put('items/{offerId}', 'BasketController@setItemByBasket');
             Route::get('', 'BasketController@getBasket');
             Route::delete('', 'BasketController@dropBasket');
         });
