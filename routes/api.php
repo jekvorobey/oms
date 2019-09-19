@@ -32,6 +32,13 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::prefix('{id}')->group(function () {
             Route::put('payments', 'OrdersController@setPayments');
             Route::put('items/{offerId}', 'BasketController@setItemByOrder');
+            Route::prefix('packages')->group(function () {
+                Route::post('', 'OrderDeliveryController@addPackages');
+                Route::prefix('{packageId}')->group(function () {
+                    Route::put('','OrderDeliveryController@editPackage');
+                    Route::delete('','OrderDeliveryController@deletePackage');
+                });
+            });
             Route::put('', 'OrdersController@update');
             Route::delete('', 'OrdersController@delete');
         });

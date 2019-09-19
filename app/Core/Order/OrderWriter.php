@@ -17,8 +17,7 @@ class OrderWriter
         $order->customer_id = $customerId;
         $order->cost = $cost;
         $order->number = 'IBT' . $now->format('Ymdhis');
-        $order->delivery_time = $now->addHours(24);
-        $order->processing_time = $now->addDays(7);
+        $order->delivery_address = [];
         return $order->save() ? $order->id : null;
     }
     

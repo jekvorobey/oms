@@ -4,7 +4,8 @@ namespace App\Models\Payment;
 
 use App\Core\Payment\LocalPaymentSystem;
 use App\Core\Payment\PaymentSystemInterface;
-use App\Models\Order;
+use App\Models\OmsModel;
+use App\Models\Order\Order;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,6 @@ use Illuminate\Support\Collection;
  *
  * @property int $order_id
  * @property float $sum
- * @property Carbon $created_at
  * @property Carbon $payed_at
  * @property Carbon $expires_at
  * @property int $status
@@ -26,7 +26,7 @@ use Illuminate\Support\Collection;
  *
  * @property-read Order $order
  */
-class Payment extends Model
+class Payment extends OmsModel
 {
     public $timestamps = false;
     protected static $unguarded = true;

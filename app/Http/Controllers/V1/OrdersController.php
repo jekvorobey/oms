@@ -79,6 +79,14 @@ class OrdersController extends Controller
         $validator = Validator::make($data, [
             'customer_id' => 'required|integer',
             'cost' => 'required|numeric',
+            
+            'delivery_method' => ['nullable', Rule::in(DeliveryMethod::validValues())],
+            'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
+            'delivery_comment' => ['nullable', 'string'],
+            'delivery_address' => ['nullable', 'array'],
+            'receiver_name' => ['nullable', 'string'],
+            'receiver_phone' => ['nullable', 'string'],
+            'receiver_email' => ['nullable', 'string', 'email'],
         ]);
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
@@ -105,14 +113,20 @@ class OrdersController extends Controller
         $validator = Validator::make($data, [
             'customer_id' => 'nullable|integer',
             'cost' => 'nullable|numeric',
+            
             'status' => ['nullable', Rule::in(OrderStatus::validValues())],
-            'delivery_time' => 'nullable|datetime',
-            'processing_time' => 'nullable|datetime',
             'reserve_status' => ['nullable', Rule::in(ReserveStatus::validValues())],
+            'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
+            
             'delivery_method' => ['nullable', Rule::in(DeliveryMethod::validValues())],
             'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
-            'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
-            'comment' => ['nullable', 'string']
+            'delivery_comment' => ['nullable', 'string'],
+            'delivery_address' => ['nullable', 'array'],
+            'receiver_name' => ['nullable', 'string'],
+            'receiver_phone' => ['nullable', 'string'],
+            'receiver_email' => ['nullable', 'string', 'email'],
+            
+            'manager_comment' => ['nullable', 'string'],
         ]);
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());

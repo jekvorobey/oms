@@ -1,12 +1,12 @@
 <?php
 
-use App\Models\Basket;
-use App\Models\BasketItem;
-use App\Models\DeliveryMethod;
-use App\Models\DeliveryType;
-use App\Models\Order;
-use App\Models\OrderStatus;
-use App\Models\OrderHistoryEvent;
+use App\Models\Basket\Basket;
+use App\Models\Basket\BasketItem;
+use App\Models\Delivery\DeliveryMethod;
+use App\Models\Delivery\DeliveryType;
+use App\Models\Order\Order;
+use App\Models\Order\OrderStatus;
+use App\Models\Order\OrderHistoryEvent;
 use App\Models\ReserveStatus;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -43,12 +43,13 @@ class OrdersSeeder extends Seeder
             $order->cost = $faker->numberBetween(1, 1000);
             $order->status = $faker->randomElement(OrderStatus::validValues());
             $order->reserve_status = $faker->randomElement(ReserveStatus::validValues());
+            $order->created_at = $faker->dateTimeThisYear();
+            //$order->manager_comment = $faker->realText();
+    
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
             $order->delivery_method = $faker->randomElement(DeliveryMethod::validValues());
-            $order->created_at = $faker->dateTimeThisYear();
-            $order->processing_time = $order->created_at->modify('+1 days');
-            $order->delivery_time = $order->created_at->modify('+3 days');
-            $order->comment = $faker->realText();
+            $order->delivery_address = [];
+            
             $order->save();
 
             $orders->push($order);
@@ -56,15 +57,9 @@ class OrdersSeeder extends Seeder
 
         foreach ($orders as $order) {
             $basket = new Basket();
-            $basket->customer_id = $this->customerId($faker);
+            $basket->customer_id = $order->customer_id;
             $basket->order_id = $order->id;
             $basket->save();
-
-            $history = new OrderHistoryEvent();
-            $history->type = 1;
-            $history->order_id = $order->id;
-            $history->created_at = $faker->dateTimeThisYear();
-            $history->save();
         }
 
         /** @var OfferService $offerService */

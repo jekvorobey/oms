@@ -4,12 +4,11 @@ namespace App\Models\Order;
 
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
+use App\Models\OmsModel;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -17,30 +16,32 @@ use Illuminate\Support\Collection;
  * Class Order
  * @package App\Models
  *
- * @property int $id
  * @property int $customer_id - id покупателя
  * @property string $number - номер
  * @property float $cost - стоимость
  * @property int $status - статус
  * @property int $payment_status - статус оплаты
  * @property int $reserve_status - статус резерва
+ * @property string $manager_comment - комментарий
+ *
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
  * @property int $delivery_method - способ доставки
- * @property Carbon $processing_time - срок обработки (укомплектовки)
- * @property Carbon $delivery_time - срок доставки
- * @property string $comment - комментарий
- * @property Carbon $created_at
- * @property Carbon $updated_at
+ * @property array $delivery_address
+ * @property string $delivery_comment
+ * @property string $receiver_name
+ * @property string $receiver_phone
+ * @property string $receiver_email
+ *
  *
  * @property Basket $basket - корзина
  * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
  * @property Collection|Payment[] $payments - оплаты заказа
- *
- * @method static find(int|array $id): self|null
  */
-class Order extends Model
+class Order extends OmsModel
 {
-    
+    protected $casts = [
+        'delivery_address' => 'array'
+    ];
     protected static $unguarded = true;
     /**
      * @return HasOne
@@ -140,6 +141,9 @@ class Order extends Model
         });
     
         self::deleting(function (self $order) {
+            if ($order->basket) {
+                $order->basket->delete();
+            }
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $order->id, $order);
         });
     }

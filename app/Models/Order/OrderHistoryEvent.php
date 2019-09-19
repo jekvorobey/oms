@@ -2,6 +2,7 @@
 
 namespace App\Models\Order;
 
+use App\Models\OmsModel;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * Class OrderHistory
  * @package App\Models
  *
- * @property int $id
  * @property int $order_id - id заказа
  * @property int $user_id - id пользователя
  * @property int $type - тип события
@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  *
  * @property Order $order - заказ
  */
-class OrderHistoryEvent extends Model
+class OrderHistoryEvent extends OmsModel
 {
     public const TYPE_CREATE = 1;
     public const TYPE_UPDATE = 2;

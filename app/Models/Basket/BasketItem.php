@@ -2,6 +2,7 @@
 
 namespace App\Models\Basket;
 
+use App\Models\OmsModel;
 use App\Models\Order\OrderHistoryEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,7 +13,6 @@ use Illuminate\Support\Carbon;
  * Class BasketItem
  * @package App\Models
  *
- * @property int $id
  * @property int $basket_id - id корзины
  * @property int $offer_id - id предложения мерчанта
  * @property string $name - название товара
@@ -23,7 +23,7 @@ use Illuminate\Support\Carbon;
  *
  * @property-read Basket $basket
  */
-class BasketItem extends Model
+class BasketItem extends OmsModel
 {
     protected static $unguarded = true;
     

@@ -2,6 +2,7 @@
 
 namespace App\Models\Basket;
 
+use App\Models\OmsModel;
 use App\Models\Order\Order;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,17 +14,13 @@ use Illuminate\Support\Collection;
  * Class Basket
  * @package App\Models
  *
- * @property int $id
  * @property int $customer_id - id покупателя
  * @property int $order_id - id заказа
  *
  * @property-read Order|null $order - заказ
  * @property-read Collection|BasketItem[] $items - элементы (товары)
- *
- * @method static \Illuminate\Database\Eloquent\Builder|self query()
- * @method static Basket|null find(int|array $id)
  */
-class Basket extends Model
+class Basket extends OmsModel
 {
     protected static $unguarded = true;
     

@@ -21,12 +21,16 @@ class Orders extends Migration
             $table->decimal('cost', 18, 4);
             $table->tinyInteger('status')->unsigned()->default(1);
             $table->tinyInteger('reserve_status')->unsigned()->default(1);
+            $table->text('manager_comment')->nullable();
+            $table->tinyInteger('payment_status', false, true)->default(1);
+            // delivery
             $table->tinyInteger('delivery_type')->unsigned()->default(1);
             $table->tinyInteger('delivery_method')->unsigned()->default(1);
-            $table->dateTime('processing_time');
-            $table->dateTime('delivery_time');
-            $table->text('comment')->nullable();
-            $table->tinyInteger('payment_status', false, true)->default(1);
+            $table->json('delivery_address');
+            $table->text('delivery_comment')->nullable();
+            $table->string('receiver_name')->nullable();
+            $table->string('receiver_phone')->nullable();
+            $table->string('receiver_email')->nullable();
 
             $table->timestamps();
         });
@@ -88,6 +92,18 @@ class Orders extends Migration
 
             $table->foreign('order_id')->references('id')->on('orders');
         });
+        
+        Schema::create('delivery_packages', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->bigInteger('order_id')->unsigned();
+            $table->json('items');
+            $table->dateTime('delivery_at')->nullable();
+            $table->timestamps();
+            
+            $table->foreign('order_id')
+                ->references('id')
+                ->on('orders');
+        });
     }
 
     /**
@@ -97,6 +113,7 @@ class Orders extends Migration
      */
     public function down()
     {
+        Schema::dropIfExists('delivery_packages');
         Schema::dropIfExists('payments');
         Schema::dropIfExists('basket_items');
         Schema::dropIfExists('baskets');
