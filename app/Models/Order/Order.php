@@ -1,7 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Order;
 
+use App\Models\Basket\Basket;
+use App\Models\Basket\BasketItem;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;

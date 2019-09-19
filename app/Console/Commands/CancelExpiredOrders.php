@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\Payment\Payment;
-use App\Models\Payment\PaymentStatus;
 use Illuminate\Console\Command;
 
 class CancelExpiredOrders extends Command

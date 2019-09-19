@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
-use App\Models\OrderHistoryEvent;
+use App\Models\Order\Order;
+use App\Models\Order\OrderHistoryEvent;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Http\Request;
 

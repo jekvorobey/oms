@@ -2,7 +2,7 @@
 
 namespace App\Core\Order;
 
-use App\Models\Order;
+use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;

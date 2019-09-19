@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Basket;
 
+use App\Models\Order\OrderHistoryEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;

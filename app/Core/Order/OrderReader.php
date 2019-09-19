@@ -2,7 +2,7 @@
 
 namespace App\Core\Order;
 
-use App\Models\Order;
+use App\Models\Order\Order;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;

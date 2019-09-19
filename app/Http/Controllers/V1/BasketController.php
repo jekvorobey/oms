@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Basket;
-use App\Models\Order;
+use App\Models\Basket\Basket;
+use App\Models\Order\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;

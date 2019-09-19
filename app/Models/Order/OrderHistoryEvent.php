@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Order;
 
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
