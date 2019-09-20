@@ -4,6 +4,7 @@ namespace App\Models\Order;
 
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
+use App\Models\Delivery\DeliveryPackage;
 use App\Models\OmsModel;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -36,6 +37,7 @@ use Illuminate\Support\Collection;
  * @property Basket $basket - корзина
  * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
  * @property Collection|Payment[] $payments - оплаты заказа
+ * @property Collection|DeliveryPackage[] $deliveryPackages
  */
 class Order extends OmsModel
 {
@@ -54,6 +56,11 @@ class Order extends OmsModel
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+    
+    public function deliveryPackages(): HasMany
+    {
+        return $this->hasMany(DeliveryPackage::class);
     }
     
     /**
@@ -143,6 +150,9 @@ class Order extends OmsModel
         self::deleting(function (self $order) {
             if ($order->basket) {
                 $order->basket->delete();
+            }
+            foreach ($order->deliveryPackages as $package) {
+                $package->delete();
             }
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $order->id, $order);
         });
