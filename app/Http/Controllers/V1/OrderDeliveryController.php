@@ -13,6 +13,18 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class OrderDeliveryController extends Controller
 {
+    public function list(int $id)
+    {
+        $order = Order::find($id);
+        if (!$order) {
+            throw new NotFoundHttpException('order not found');
+        }
+        
+        return response()->json([
+            'items' => $order->deliveryPackages
+        ]);
+    }
+    
     public function addPackages(int $id, Request $request)
     {
         $order = Order::find($id);

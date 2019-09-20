@@ -22,6 +22,11 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::post('start', 'PaymentsController@start');
         });
     });
+    Route::prefix('packages/{packageId}')->group(function () {
+        Route::put('','OrderDeliveryController@editPackage');
+        Route::delete('','OrderDeliveryController@deletePackage');
+    });
+    
     Route::prefix('orders')->group(function () {
         Route::prefix('history')->group(function () {
             Route::get('count', 'OrdersHistoryController@count');
@@ -33,11 +38,8 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::put('payments', 'OrdersController@setPayments');
             Route::put('items/{offerId}', 'BasketController@setItemByOrder');
             Route::prefix('packages')->group(function () {
+                Route::get('', 'OrderDeliveryController@list');
                 Route::post('', 'OrderDeliveryController@addPackages');
-                Route::prefix('{packageId}')->group(function () {
-                    Route::put('','OrderDeliveryController@editPackage');
-                    Route::delete('','OrderDeliveryController@deletePackage');
-                });
             });
             Route::put('', 'OrdersController@update');
             Route::delete('', 'OrdersController@delete');
