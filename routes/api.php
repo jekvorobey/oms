@@ -33,7 +33,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('', 'OrdersHistoryController@list');
         });
     
-        Route::prefix('export')->group(function () {
+        Route::prefix('exports')->group(function () {
             Route::get('count', 'OrdersExportController@count');
             Route::get('', 'OrdersExportController@read');
         });
@@ -42,7 +42,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::prefix('{id}')->group(function () {
             Route::put('payments', 'OrdersController@setPayments');
             Route::put('items/{offerId}', 'BasketController@setItemByOrder');
-            Route::prefix('export')->group(function () {
+            Route::prefix('exports')->group(function () {
                 Route::get('count', 'OrdersExportController@count');
                 Route::get('', 'OrdersExportController@read');
                 Route::post('', 'OrdersExportController@create');
