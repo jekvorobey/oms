@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
+/**
+ * Class Orders
+ */
 class Orders extends Migration
 {
     /**
@@ -100,9 +103,18 @@ class Orders extends Migration
             $table->dateTime('delivery_at')->nullable();
             $table->timestamps();
             
-            $table->foreign('order_id')
-                ->references('id')
-                ->on('orders');
+            $table->foreign('order_id')->references('id')->on('orders');
+        });
+        
+        Schema::create('orders_export', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->bigInteger('order_id')->unsigned();
+            $table->bigInteger('merchant_integration_id')->unsigned();
+            $table->string('order_xml_id');
+            $table->timestamps();
+            
+            $table->foreign('order_id')->references('id')->on('orders');
+            $table->unique(['merchant_integration_id', 'order_xml_id']);
         });
     }
 
@@ -113,6 +125,7 @@ class Orders extends Migration
      */
     public function down()
     {
+        Schema::dropIfExists('orders_export');
         Schema::dropIfExists('delivery_packages');
         Schema::dropIfExists('payments');
         Schema::dropIfExists('basket_items');

@@ -32,11 +32,26 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('count', 'OrdersHistoryController@count');
             Route::get('', 'OrdersHistoryController@list');
         });
+    
+        Route::prefix('export')->group(function () {
+            Route::get('count', 'OrdersExportController@count');
+            Route::get('', 'OrdersExportController@read');
+        });
 
         Route::get('count', 'OrdersController@count');
         Route::prefix('{id}')->group(function () {
             Route::put('payments', 'OrdersController@setPayments');
             Route::put('items/{offerId}', 'BasketController@setItemByOrder');
+            Route::prefix('export')->group(function () {
+                Route::get('count', 'OrdersExportController@count');
+                Route::get('', 'OrdersExportController@read');
+                Route::post('', 'OrdersExportController@create');
+                Route::prefix('{exportId}')->group(function () {
+                    Route::get('', 'OrdersExportController@read');
+                    Route::put('', 'OrdersExportController@update');
+                    Route::delete('', 'OrdersExportController@delete');
+                });
+            });
             Route::prefix('packages')->group(function () {
                 Route::get('', 'OrderDeliveryController@list');
                 Route::post('', 'OrderDeliveryController@addPackages');
