@@ -6,7 +6,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Класс-модель для сущности "Заказы во внешних системах"
+ * Класс-модель для сущности "Информация о заказах во внешних системах"
  * Class OrderExport
  * @package App\Models\Order
  *
