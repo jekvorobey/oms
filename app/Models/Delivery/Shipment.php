@@ -6,22 +6,24 @@ use App\Models\OmsModel;
 use App\Models\Order\Order;
 use App\Models\Order\OrderHistoryEvent;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Class DeliveryPackage
+ * Class Shipment
  * @package App\Models\Delivery
  *
  * @property int $order_id
  * @property array $items
  * @property Carbon $delivery_at
+ * @property int $status
  *
  * @property-read Order $order
+ * @property-read Collection|ShipmentPackage[] $packages
  */
-class DeliveryPackage extends OmsModel
+class Shipment extends OmsModel
 {
-    protected static $unguarded = true;
-    
     protected $casts = [
         'items' => 'array',
         'delivery_at' => 'datetime'
@@ -30,6 +32,11 @@ class DeliveryPackage extends OmsModel
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+    
+    public function packages(): HasMany
+    {
+        return $this->hasMany(ShipmentPackage::class);
     }
     
     protected static function boot()

@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Http\Controllers\V1;
+namespace App\Http\Controllers\V1\Shipments;
 
 use App\Http\Controllers\Controller;
-use App\Models\Delivery\DeliveryPackage;
+use App\Models\Delivery\Shipment;
 use App\Models\Order\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -11,7 +11,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class OrderDeliveryController extends Controller
+class ShipmentsController extends Controller
 {
     public function list(int $id)
     {
@@ -21,7 +21,7 @@ class OrderDeliveryController extends Controller
         }
         
         return response()->json([
-            'items' => $order->deliveryPackages
+            'items' => $order->shipments
         ]);
     }
     
@@ -41,7 +41,7 @@ class OrderDeliveryController extends Controller
             throw new BadRequestHttpException($validator->errors()->first());
         }
         foreach ($data['items'] as $item) {
-            $package = new DeliveryPackage();
+            $package = new Shipment();
             $package->order_id = $id;
             $package->items = $item['items'];
             if (isset($item['delivery_at'])) {
@@ -55,9 +55,9 @@ class OrderDeliveryController extends Controller
         return response('', 204);
     }
     
-    public function editPackage(int $packageId, Request $request)
+    public function editPackage(int $shipmentId, Request $request)
     {
-        $package = DeliveryPackage::find($packageId);
+        $package = Shipment::find($shipmentId);
         if (!$package) {
             throw new NotFoundHttpException('delivery package not found');
         }
@@ -78,9 +78,9 @@ class OrderDeliveryController extends Controller
         return response('', 204);
     }
     
-    public function deletePackage(int $packageId)
+    public function deletePackage(int $shipmentId)
     {
-        $package = DeliveryPackage::find($packageId);
+        $package = Shipment::find($shipmentId);
         if (!$package) {
             throw new NotFoundHttpException('delivery package not found');
         }

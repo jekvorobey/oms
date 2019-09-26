@@ -22,9 +22,17 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::post('start', 'PaymentsController@start');
         });
     });
-    Route::prefix('packages/{packageId}')->group(function () {
-        Route::put('','OrderDeliveryController@editPackage');
-        Route::delete('','OrderDeliveryController@deletePackage');
+    Route::prefix('shipments/{shipmentId}')->namespace('Shipments')->group(function () {
+        Route::prefix('packages')->group(function () {
+            Route::post('', 'PackageController@create');
+        });
+        Route::put('','ShipmentsController@editPackage');
+        Route::delete('','ShipmentsController@deletePackage');
+    });
+    
+    Route::prefix('shipment-packages/{packageId}')->namespace('Shipments')->group(function () {
+        Route::put('wrapper', 'PackageController@updateWrapper');
+        Route::put('offers/{offerId}', 'PackageController@setItem');
     });
     
     Route::prefix('orders')->group(function () {
@@ -52,9 +60,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                     Route::delete('', 'OrdersExportController@delete');
                 });
             });
-            Route::prefix('packages')->group(function () {
-                Route::get('', 'OrderDeliveryController@list');
-                Route::post('', 'OrderDeliveryController@addPackages');
+            Route::prefix('shipments')->namespace('Shipments')->group(function () {
+                Route::get('', 'ShipmentsController@list');
+                Route::post('', 'ShipmentsController@addPackages');
             });
             Route::put('', 'OrdersController@update');
             Route::delete('', 'OrdersController@delete');

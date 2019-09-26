@@ -17,5 +17,5 @@ use Illuminate\Support\Carbon;
  */
 class OmsModel extends Model
 {
-
+    protected static $unguarded = true;
 }
