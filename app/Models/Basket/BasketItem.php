@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $offer_id - id предложения мерчанта
  * @property string $name - название товара
  * @property float $qty - кол-во
+ * @property float|null $price - цена за единицу товара
  * @property bool $is_reserved - товар зарезервирован?
  * @property int $reserved_by - кем зарезервирован
  * @property Carbon $reserved_at - когда зарезервирован

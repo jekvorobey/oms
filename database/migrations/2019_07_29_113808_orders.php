@@ -69,6 +69,7 @@ class Orders extends Migration
 
             $table->string('name');
             $table->decimal('qty', 18, 4);
+            $table->decimal('price', 18, 4)->nullable();
             $table->boolean('is_reserved')->default(false);
             $table->bigInteger('reserved_by')->nullable();
             $table->timestamp('reserved_at')->nullable();
@@ -160,8 +161,8 @@ class Orders extends Migration
     {
         Schema::dropIfExists('orders_export');
         Schema::dropIfExists('shipment_packages');
-        Schema::dropIfExists('cargo');
         Schema::dropIfExists('shipments');
+        Schema::dropIfExists('cargo');
         Schema::dropIfExists('payments');
         Schema::dropIfExists('basket_items');
         Schema::dropIfExists('baskets');
