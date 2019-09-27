@@ -80,4 +80,28 @@ class ShipmentPackage extends OmsModel
         $this->items = $products;
         $this->recalcWeight();
     }
+    
+    protected static function boot()
+    {
+        parent::boot();
+        
+        self::saved(function (self $package) {
+            $needRecalc = false;
+            foreach (['weight', 'width', 'height', 'length'] as $field) {
+                if ($package->getOriginal($field) != $package[$field]) {
+                    $needRecalc = true;
+                    break;
+                }
+            }
+            if ($needRecalc && $package->shipment->cargo_id) {
+                $package->shipment->cargo->recalc();
+            }
+        });
+        
+        self::deleted(function (self $package) {
+            if ($package->shipment->cargo_id) {
+                $package->shipment->cargo->recalc();
+            }
+        });
+    }
 }

@@ -25,7 +25,7 @@ class ShipmentsController extends Controller
         ]);
     }
     
-    public function addPackages(int $id, Request $request)
+    public function addShipments(int $id, Request $request)
     {
         $order = Order::find($id);
         if (!$order) {
@@ -41,44 +41,45 @@ class ShipmentsController extends Controller
             throw new BadRequestHttpException($validator->errors()->first());
         }
         foreach ($data['items'] as $item) {
-            $package = new Shipment();
-            $package->order_id = $id;
-            $package->items = $item['items'];
+            $shipment = new Shipment();
+            $shipment->order_id = $id;
+            $shipment->items = $item['items'];
             if (isset($item['delivery_at'])) {
-                $package->delivery_at = $item['delivery_at'];
+                $shipment->delivery_at = $item['delivery_at'];
             }
-            $ok = $package->save();
+            $ok = $shipment->save();
             if (!$ok) {
-                throw new HttpException(500, 'unable to save delivery package');
+                throw new HttpException(500, 'unable to save shipment');
             }
         }
         return response('', 204);
     }
     
-    public function editPackage(int $shipmentId, Request $request)
+    public function editShipment(int $shipmentId, Request $request)
     {
-        $package = Shipment::find($shipmentId);
-        if (!$package) {
-            throw new NotFoundHttpException('delivery package not found');
+        $shipment = Shipment::find($shipmentId);
+        if (!$shipment) {
+            throw new NotFoundHttpException('shipment not found');
         }
         $data = $request->all();
         $validator = Validator::make($data, [
             'items' => 'nullable|array',
-            'delivery_at' => 'nullable|date'
+            'delivery_at' => 'nullable|date',
+            'cargo_id' => 'nullable|integer',
         ]);
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
         }
-        $package->fill($data);
-        $ok = $package->save();
+        $shipment->fill($data);
+        $ok = $shipment->save();
         if (!$ok) {
-            throw new HttpException(500, 'unable to save delivery package');
+            throw new HttpException(500, 'unable to save shipment');
         }
         
         return response('', 204);
     }
     
-    public function deletePackage(int $shipmentId)
+    public function deleteShipment(int $shipmentId)
     {
         $package = Shipment::find($shipmentId);
         if (!$package) {

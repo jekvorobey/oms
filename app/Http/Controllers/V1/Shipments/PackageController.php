@@ -89,4 +89,17 @@ class PackageController extends Controller
         }
         return response('', 204);
     }
+    
+    public function delete(int $packageId)
+    {
+        $package = ShipmentPackage::find($packageId);
+        if (!$package) {
+            throw new NotFoundHttpException('shipment package not found');
+        }
+        $ok = $package->delete();
+        if (!$ok) {
+            throw new HttpException(500, 'unable to save shipment package');
+        }
+        return response('', 204);
+    }
 }

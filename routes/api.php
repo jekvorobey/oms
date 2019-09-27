@@ -26,13 +26,18 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::prefix('packages')->group(function () {
             Route::post('', 'PackageController@create');
         });
-        Route::put('','ShipmentsController@editPackage');
-        Route::delete('','ShipmentsController@deletePackage');
+        Route::put('','ShipmentsController@editShipment');
+        Route::delete('','ShipmentsController@deleteShipment');
     });
     
     Route::prefix('shipment-packages/{packageId}')->namespace('Shipments')->group(function () {
         Route::put('wrapper', 'PackageController@updateWrapper');
         Route::put('offers/{offerId}', 'PackageController@setItem');
+        Route::delete('', 'PackageController@delete');
+    });
+    
+    Route::prefix('cargo')->namespace('Shipments')->group(function () {
+        Route::post('', 'CargoController@create');
     });
     
     Route::prefix('orders')->group(function () {
@@ -62,7 +67,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             });
             Route::prefix('shipments')->namespace('Shipments')->group(function () {
                 Route::get('', 'ShipmentsController@list');
-                Route::post('', 'ShipmentsController@addPackages');
+                Route::post('', 'ShipmentsController@addShipments');
             });
             Route::put('', 'OrdersController@update');
             Route::delete('', 'OrdersController@delete');

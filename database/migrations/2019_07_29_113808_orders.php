@@ -96,34 +96,35 @@ class Orders extends Migration
             $table->foreign('order_id')->references('id')->on('orders');
         });
         
-        Schema::create('shipments', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->bigInteger('order_id')->unsigned();
-            $table->json('items');
-            $table->dateTime('delivery_at')->nullable();
-            $table->tinyInteger('status', false, true)->default(1);
-            $table->timestamps();
-            
-            $table->foreign('order_id')->references('id')->on('orders');
-        });
-    
         Schema::create('cargo', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->tinyInteger('status', false, true)->default(1);
     
-            $table->integer('width');
-            $table->integer('height');
-            $table->integer('length');
-            $table->integer('weight');
+            $table->integer('width')->nullable();
+            $table->integer('height')->nullable();
+            $table->integer('length')->nullable();
+            $table->integer('weight')->nullable();
             
             $table->timestamps();
+        });
+    
+        Schema::create('shipments', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->bigInteger('order_id')->unsigned();
+            $table->bigInteger('cargo_id')->unsigned()->nullable();
+            $table->json('items');
+            $table->dateTime('delivery_at')->nullable();
+            $table->tinyInteger('status', false, true)->default(1);
+            $table->timestamps();
+        
+            $table->foreign('order_id')->references('id')->on('orders');
+            $table->foreign('cargo_id')->references('id')->on('cargo');
         });
         
         Schema::create('shipment_packages', function (Blueprint $table) {
             $table->bigIncrements('id');
             
             $table->bigInteger('shipment_id')->unsigned();
-            $table->bigInteger('cargo_id')->unsigned()->nullable();
             $table->tinyInteger('status', false, true)->default(1);
             $table->json('items');
     
@@ -136,7 +137,6 @@ class Orders extends Migration
             $table->timestamps();
             
             $table->foreign('shipment_id')->references('id')->on('shipments');
-            $table->foreign('cargo_id')->references('id')->on('cargo');
         });
         
         Schema::create('orders_export', function (Blueprint $table) {
@@ -160,8 +160,8 @@ class Orders extends Migration
     {
         Schema::dropIfExists('orders_export');
         Schema::dropIfExists('shipment_packages');
-        Schema::dropIfExists('cargo');
         Schema::dropIfExists('shipments');
+        Schema::dropIfExists('cargo');
         Schema::dropIfExists('payments');
         Schema::dropIfExists('basket_items');
         Schema::dropIfExists('baskets');
