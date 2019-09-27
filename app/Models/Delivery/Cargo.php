@@ -17,14 +17,54 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $length
  * @property int $weight
  *
- * @property-read Collection|ShipmentPackage[] $packages
+ * @property-read Collection|Shipment[] $shipments
  */
 class Cargo extends OmsModel
 {
+    private const SIDES = ['width', 'height', 'length'];
+    
     protected $table = 'cargo';
     
-    public function packages(): HasMany
+    public function shipments(): HasMany
     {
-        return $this->hasMany(ShipmentPackage::class);
+        return $this->hasMany(Shipment::class);
+    }
+    
+    public function recalc()
+    {
+        $weight = 0;
+        $volume = 0;
+        $maxSide = 0;
+        $maxSideName = 'width';
+        foreach ($this->shipments as $shipment) {
+            foreach ($shipment->packages as $package) {
+                $weight += $package->weight;
+                $volume += $package->width * $package->height * $package->length;
+                foreach (self::SIDES as $side) {
+                    if ($package[$side] > $maxSide) {
+                        $maxSide = $package[$side];
+                        $maxSideName = $side;
+                    }
+                }
+            }
+        }
+        $this->weight = $weight;
+        $avgSide = pow($volume, 1/3);
+        if ($maxSide <= $avgSide) {
+            foreach (self::SIDES as $side) {
+                $this[$side] = $avgSide;
+            }
+        } else {
+            $otherSide = sqrt($volume/$maxSide);
+            foreach (self::SIDES as $side) {
+                if ($side == $maxSideName) {
+                    $this[$side] = $maxSide;
+                } else {
+                    $this[$side] = $otherSide;
+                }
+            }
+        }
+        
+        $this->save();
     }
 }

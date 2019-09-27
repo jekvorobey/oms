@@ -18,9 +18,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property array $items
  * @property Carbon $delivery_at
  * @property int $status
+ * @property int $cargo_id
  *
  * @property-read Order $order
  * @property-read Collection|ShipmentPackage[] $packages
+ * @property-read Cargo $cargo
  */
 class Shipment extends OmsModel
 {
@@ -39,19 +41,54 @@ class Shipment extends OmsModel
         return $this->hasMany(ShipmentPackage::class);
     }
     
+    public function cargo(): BelongsTo
+    {
+        return $this->belongsTo(Cargo::class);
+    }
+    
     protected static function boot()
     {
         parent::boot();
-        self::created(function (self $package) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $package->order_id, $package);
+        self::created(function (self $shipment) {
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $shipment->order_id, $shipment);
         });
     
-        self::updated(function (self $package) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $package->order_id, $package);
+        self::updated(function (self $shipment) {
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $shipment->order_id, $shipment);
+        });
+        
+        self::saved(function (self $shipment) {
+            $oldCargoId = $shipment->getOriginal('cargo_id');
+            if ($oldCargoId != $shipment->cargo_id) {
+                if ($oldCargoId) {
+                    $oldCargo = Cargo::find($oldCargoId);
+                    if ($oldCargo) {
+                        $oldCargo->recalc();
+                    }
+                }
+                if ($shipment->cargo_id) {
+                    $newCargo = Cargo::find($shipment->cargo_id);
+                    if ($newCargo) {
+                        $newCargo->recalc();
+                    }
+                }
+            }
         });
     
-        self::deleting(function (self $package) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $package->order_id, $package);
+        self::deleting(function (self $shipment) {
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $shipment->order_id, $shipment);
+            foreach ($shipment->packages as $package) {
+                $package->delete();
+            }
+        });
+        
+        self::deleted(function (self $shipment) {
+            if ($shipment->cargo_id) {
+                $newCargo = Cargo::find($shipment->cargo_id);
+                if ($newCargo) {
+                    $newCargo->recalc();
+                }
+            }
         });
     }
 }
