@@ -11,6 +11,22 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PaymentsController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/v1/payments/{id}/start",
+     *     tags={"payment"},
+     *     summary="Начать оплату",
+     *     operationId="startPayment",
+     *     @OA\Parameter(description="ID оплаты",in="path",name="id",required=true,@OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="paymentLink",type="string")
+     *         )
+     *     ),
+     * )
+     */
     public function start(int $id, Request $request)
     {
         $returnUrl = $request->get('returnUrl');
@@ -28,7 +44,19 @@ class PaymentsController extends Controller
             'paymentLink' => $link
         ]);
     }
-
+    
+    /**
+     * @OA\Post(
+     *     path="/api/v1/payments/handler/local",
+     *     tags={"payment"},
+     *     summary="Обработчик для уведомления об оплате для тестовой (local) системы оплаты",
+     *     operationId="handlerLocal",
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *     ),
+     * )
+     */
     public function handlerLocal(Request $request)
     {
         $paymentSystem = new LocalPaymentSystem();

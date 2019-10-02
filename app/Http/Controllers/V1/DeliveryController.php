@@ -12,21 +12,20 @@ use Illuminate\Support\Carbon;
  */
 class DeliveryController extends Controller
 {
-
-    /**
-     * Задать права для выполнения стандартных rest действий.
-     * Пример: return [ RestAction::$DELETE => 'permission' ];
-     * @return array
-     */
-    public function permissionMap(): array
-    {
-        return [
-            // todo добавить необходимые права
-        ];
-    }
-
     /**
      * todo заменить на настоящие данные
+     *
+     * @OA\Get(
+     *     path="/api/v1/delivery",
+     *     tags={"delivery"},
+     *     summary="Непонятно что про доставку",
+     *     operationId="deliveryInfo",
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK"
+     *     ),
+     * )
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -59,6 +58,18 @@ class DeliveryController extends Controller
 
     /**
      * todo заменить на настоящие данные
+     *
+     *  @OA\Get(
+     *     path="/api/v1/delivery/pvz",
+     *     tags={"delivery"},
+     *     summary="Непонятно что про пункты самовывоза",
+     *     operationId="deliveryPvz",
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK"
+     *     ),
+     * )
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */

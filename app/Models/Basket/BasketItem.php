@@ -23,6 +23,18 @@ use Illuminate\Support\Carbon;
  * @property Carbon $reserved_at - когда зарезервирован
  *
  * @property-read Basket $basket
+ *
+ * @OA\Schema(
+ *     schema="BasketItem",
+ *     @OA\Property(property="id", type="integer"),
+ *     @OA\Property(property="basket_id", type="integer"),
+ *     @OA\Property(property="offer_id", type="integer"),
+ *     @OA\Property(property="name", type="string"),
+ *     @OA\Property(property="qty", type="integer"),
+ *     @OA\Property(property="is_reserved", type="integer"),
+ *     @OA\Property(property="reserved_by", type="integer"),
+ *     @OA\Property(property="reserved_at", type="string"),
+ * )
  */
 class BasketItem extends OmsModel
 {

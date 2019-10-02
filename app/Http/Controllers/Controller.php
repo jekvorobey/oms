@@ -18,6 +18,33 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  *          email="koryukov@greensight.ru"
  *      )
  * )
+ *
+ * @OA\Schema(
+ *     schema="CreateResult",
+ *     @OA\Property(
+ *         property="id",
+ *         type="integer",
+ *         format="int32"
+ *     )
+ * )
+ *  @OA\Schema(
+ *     schema="CountResult",
+ *     @OA\Property(
+ *         property="total",
+ *         type="integer",
+ *         format="int32"
+ *     ),
+ *     @OA\Property(
+ *         property="page",
+ *         type="integer",
+ *         format="int32"
+ *     ),
+ *     @OA\Property(
+ *         property="pageSize",
+ *         type="integer",
+ *         format="int32"
+ *     )
+ * )
  */
 class Controller extends BaseController
 {

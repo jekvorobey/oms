@@ -10,15 +10,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class CargoController extends Controller
 {
     /**
-     * @OA\Schema(
-     *     schema="CreateResult",
-     *     @OA\Property(
-     *         property="id",
-     *         type="integer",
-     *         format="int32"
-     *     )
-     * )
-     *
      * @OA\Post(
      *     path="/api/v1/cargo",
      *     tags={"cargo"},

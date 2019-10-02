@@ -26,6 +26,21 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class OrdersController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/v1/orders",
+     *     tags={"order"},
+     *     summary="Получить список заказов",
+     *     operationId="listOrders",
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *     ),
+     * )
+     * @todo уточнить типы в swagger
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function read(Request $request)
     {
         $reader = new OrderReader();
@@ -33,13 +48,48 @@ class OrdersController extends Controller
             'items' => $reader->list(new RestQuery($request)),
         ]);
     }
-
+    
+    /**
+     * @OA\Get(
+     *     path="/api/v1/orders/count",
+     *     tags={"order"},
+     *     summary="Получить количество заказов по заданому фильтру",
+     *     operationId="countOrders",
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *         @OA\JsonContent(ref="#/components/schemas/CountResult")
+     *     ),
+     * )
+     * @todo уточнить типы в swagger
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function count(Request $request)
     {
         $reader = new OrderReader();
         return response()->json($reader->count(new RestQuery($request)));
     }
-
+    
+    /**
+     * @OA\Put(
+     *     path="/api/v1/orders/{id}/payments",
+     *     tags={"payment"},
+     *     summary="Задать список оплат заказа",
+     *     operationId="setPayments",
+     *     @OA\Parameter(description="ID заказа",in="path",name="id",required=true,@OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *     ),
+     * )
+     *
+     * @param int $id
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     * @todo уточнить типы в swagger
+     */
     public function setPayments(int $id, Request $request)
     {
         $reader = new OrderReader();
@@ -71,7 +121,25 @@ class OrdersController extends Controller
         $writer->setPayments($order, $payments);
         return response('', 204);
     }
-
+    
+    /**
+     * @OA\Post(
+     *     path="/api/v1/orders",
+     *     tags={"order"},
+     *     summary="Создать заказ",
+     *     operationId="createOrder",
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *         @OA\JsonContent(ref="#/components/schemas/CreateResult"),
+     *     ),
+     * )
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     * @todo уточнить типы в swagger
+     */
     public function create(Request $request)
     {
         // todo Добавить провеку прав
@@ -101,6 +169,25 @@ class OrdersController extends Controller
         ]);
     }
     
+    /**
+     * @OA\Put(
+     *     path="/api/v1/orders/{id}",
+     *     tags={"order"},
+     *     summary="Обновить заказ",
+     *     operationId="updateOrder",
+     *     @OA\Parameter(description="ID заказа",in="path",name="id",required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=204,
+     *         description="OK"
+     *     ),
+     * )
+     *
+     * @param int $id
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     * @todo уточнить типы в swagger
+     */
     public function update(int $id, Request $request)
     {
         // todo Добавить провеку прав
@@ -140,6 +227,24 @@ class OrdersController extends Controller
         return response('', 204);
     }
     
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/orders/{id}",
+     *     tags={"order"},
+     *     summary="Удалить заказ",
+     *     operationId="deleteOrder",
+     *     @OA\Parameter(description="ID заказа",in="path",name="id",required=true,@OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=204,
+     *         description="OK"
+     *     ),
+     * )
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     * @todo уточнить типы в swagger
+     */
     public function delete(int $id)
     {
         $order = Order::find($id);

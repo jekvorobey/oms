@@ -11,6 +11,42 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PackageController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/v1/shipments/packages",
+     *     tags={"package"},
+     *     summary="Создать новую коробку",
+     *     operationId="createPackage",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(property="width",type="integer"),
+     *                 @OA\Property(property="height",type="integer"),
+     *                 @OA\Property(property="length",type="integer"),
+     *                 @OA\Property(property="wrapper_weight",type="integer"),
+     *                 @OA\Property(
+     *                      property="items",
+     *                      type="array",
+     *                      @OA\Items(
+     *                          @OA\Property(property="offer_id",type="integer"),
+     *                          @OA\Property(property="qty",type="integer"),
+     *                          @OA\Property(property="width",type="integer"),
+     *                          @OA\Property(property="height",type="integer"),
+     *                          @OA\Property(property="length",type="integer"),
+     *                          @OA\Property(property="weight",type="integer"),
+     *                      )
+     *                  ),
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="OK"
+     *     ),
+     * )
+     */
     public function create(int $shipmentId, Request $request)
     {
         $shipment = Shipment::find($shipmentId);
@@ -45,7 +81,40 @@ class PackageController extends Controller
         }
         return response('', 204);
     }
-    
+    /**
+     * @OA\Put(
+     *     path="/api/v1/shipments/packages/{id}/wrapper",
+     *     tags={"package"},
+     *     summary="Изменить парамеры упаковки",
+     *     operationId="updatePackageWrapper",
+     *     @OA\Parameter(
+     *         description="ID коробки",
+     *         in="path",
+     *         name="id",
+     *         required=true,
+     *         @OA\Schema(
+     *             format="int32",
+     *             type="integer"
+     *         )
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(property="width",type="integer"),
+     *                 @OA\Property(property="height",type="integer"),
+     *                 @OA\Property(property="length",type="integer"),
+     *                 @OA\Property( property="wrapper_weight",type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="OK"
+     *     ),
+     * )
+     */
     public function updateWrapper(int $packageId, Request $request)
     {
         $package = ShipmentPackage::find($packageId);
@@ -66,7 +135,35 @@ class PackageController extends Controller
         }
         return response('', 204);
     }
-    
+    /**
+     * @OA\Put(
+     *     path="/api/v1/shipments/packages/{id}/offers/{offerId}",
+     *     tags={"package"},
+     *     summary="Изменить парамеры упаковки",
+     *     operationId="setPackageItem",
+     *     @OA\Parameter(description="ID коробки",in="path",name="id",required=true,@OA\Schema(type="integer")),
+     *     @OA\Parameter(description="ID торгового предложения",in="path",name="offerId",required=true,
+     *          @OA\Schema(type="integer")),
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(property="qty",type="integer"),
+     *                 @OA\Property(property="width", type="integer"),
+     *                 @OA\Property(property="height",type="integer"),
+     *                 @OA\Property(property="length",type="integer"),
+     *                 @OA\Property(property="weight",type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *          description="OK"
+     *     ),
+     * )
+     */
     public function setItem(int $packageId, int $offerId, Request $request)
     {
         $package = ShipmentPackage::find($packageId);
@@ -89,7 +186,19 @@ class PackageController extends Controller
         }
         return response('', 204);
     }
-    
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/shipments/packages/{id}",
+     *     tags={"package"},
+     *     summary="Удалить коробку",
+     *     operationId="deletePackage",
+     *     @OA\Parameter(description="ID коробки",in="path",name="id",required=true,@OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=204,
+     *          description="OK"
+     *     ),
+     * )
+     */
     public function delete(int $packageId)
     {
         $package = ShipmentPackage::find($packageId);

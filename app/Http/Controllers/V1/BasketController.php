@@ -18,6 +18,28 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class BasketController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/v1/baskets",
+     *     tags={"basket"},
+     *     summary="Получить текущую корзину пользователя",
+     *     operationId="getCurrentBasket",
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id",type="integer"),
+     *             @OA\Property(property="items",type="array", @OA\Items(
+     *                  ref="#/components/schemas/BasketItem"
+     *             )),
+     *         )
+     *     ),
+     * )
+     *
+     * @param int $userId
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getCurrentBasket(int $userId, Request $request)
     {
         $basket = Basket::findFreeUserBasket($userId);

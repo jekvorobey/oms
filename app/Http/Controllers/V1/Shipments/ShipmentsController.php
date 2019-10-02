@@ -19,24 +19,10 @@ class ShipmentsController extends Controller
      *     tags={"shipment"},
      *     summary="Получить список отправлений заказа",
      *     operationId="listShipments",
-     *     @OA\Parameter(
-     *         description="ID заказа",
-     *         in="path",
-     *         name="id",
-     *         required=true,
-     *         @OA\Schema(
-     *             format="int64",
-     *             type="integer"
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Заказ не найден"
-     *     ),
-     *
+     *     @OA\Parameter(description="ID заказа",in="path",name="id",required=true,@OA\Schema(type="integer")),
      *     @OA\Response(
      *         response=200,
-     *         description="OK",
+     *         description="OK"
      *     ),
      * )
      *
@@ -57,18 +43,18 @@ class ShipmentsController extends Controller
     
     /**
      * @OA\Schema(
-     *     schema="CreateShopment",
+     *     schema="CreateShipment",
      *     @OA\Property(
      *         property="items",
      *         type="array",
-     *         @OA\Items(type="integer", format="int32", description="ID офферов"),
+     *         @OA\Items(type="integer"),
      *     )
      * )
      *
      * @OA\Post(
      *     path="/api/v1/orders/{id}/shipments",
      *     tags={"shipment"},
-     *     summary="Добавить отпралвения к заказу",
+     *     summary="Добавить отправления к заказу",
      *     operationId="addShipments",
      *     @OA\Parameter(
      *         description="ID заказа",
@@ -81,31 +67,17 @@ class ShipmentsController extends Controller
      *         )
      *     ),
      *     @OA\RequestBody(
-     *         description="Список отправлений",
      *         required=true,
      *         @OA\MediaType(
      *             mediaType="application/json",
      *             @OA\Schema(
-     *                 schema="CreateShopmentList",
      *                 @OA\Property(
      *                     property="items",
      *                     type="array",
-     *                     @OA\Items(ref="#/components/schemas/CreateShopment"),
+     *                     @OA\Items(ref="#/components/schemas/CreateShipment"),
      *                 )
      *             )
      *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Заказ не найден"
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Ошибка в параметрах"
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Не удалось сохранить"
      *     ),
      *     @OA\Response(
      *         response=204,
@@ -147,6 +119,34 @@ class ShipmentsController extends Controller
         return response('', 204);
     }
     
+    /**
+     * @OA\Put(
+     *     path="/api/v1/shipments/{id}",
+     *     tags={"shipment"},
+     *     summary="Изменить отправление",
+     *     operationId="updateShipment",
+     *     @OA\Parameter(description="ID отправления",in="path",name="id",required=true,@OA\Schema(type="integer")),
+     *      @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(property="items",type="array", @OA\Items(type="integer")),
+     *                 @OA\Property(property="delivery_at",type="string"),
+     *                 @OA\Property(property="cargo_id",type="integer"),
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="OK",
+     *     ),
+     * )
+     *
+     * @param int $shipmentId
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function editShipment(int $shipmentId, Request $request)
     {
         $shipment = Shipment::find($shipmentId);
@@ -171,6 +171,23 @@ class ShipmentsController extends Controller
         return response('', 204);
     }
     
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/shipments/{id}",
+     *     tags={"shipment"},
+     *     summary="Удалить отправление",
+     *     operationId="deleteShipment",
+     *     @OA\Parameter(description="ID отправлкения",in="path",name="id",required=true,@OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response=204,
+     *         description="OK",
+     *     ),
+     * )
+     *
+     * @param int $shipmentId
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
     public function deleteShipment(int $shipmentId)
     {
         $package = Shipment::find($shipmentId);
