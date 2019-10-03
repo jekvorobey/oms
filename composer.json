@@ -15,6 +15,10 @@
         {
             "type": "vcs",
             "url": "https://gitlab.com/greensight/ibt-pim-lib"
+        },
+        {
+            "type": "vcs",
+            "url": "https://gitlab.com/greensight/ibt-message-lib"
         }
     ],
     "require": {
@@ -23,6 +27,7 @@
         "fideloper/proxy": "^4.0",
         "greensight/ibt-common-lib": "dev-master",
         "greensight/ibt-pim-lib": "dev-master",
+        "greensight/ibt-message-lib": "dev-master",
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0"
     },
