@@ -3,11 +3,16 @@
 namespace App\Models\Order;
 
 use App\Models\OmsModel;
+use App\Models\Payment\PaymentStatus;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Greensight\Message\Services\NotificationService\NotificationService;
+use MerchantManagement\Services\OperatorService\OperatorService;
+use Pim\Services\OfferService\OfferService;
+use Greensight\Message\Dto\Notification\NotificationDto;
 
 /**
  * Класс-модель для сущности "история Заказов"
@@ -28,13 +33,13 @@ class OrderHistoryEvent extends OmsModel
     public const TYPE_CREATE = 1;
     public const TYPE_UPDATE = 2;
     public const TYPE_DELETE = 3;
-    
+
     protected static $unguarded = true;
     protected $table = 'orders_history';
     protected $casts = [
         'data' => 'array'
     ];
-    
+
     public static function saveEvent(int $type, int $orderId, Model $model)
     {
         $entityClass = get_class($model);
@@ -51,8 +56,10 @@ class OrderHistoryEvent extends OmsModel
             $event->data = $model->getDirty();
         }
         $event->save();
+
+        self::createNotifications($type, $model);
     }
-    
+
     /**
      * Получить запрос на выборку событий.
      *
@@ -75,12 +82,66 @@ class OrderHistoryEvent extends OmsModel
         }
         return $query;
     }
-    
+
     /**
      * @return HasOne
      */
     public function order(): HasOne
     {
         return $this->hasOne(Order::class, 'id', 'order_id');
+    }
+
+    private static function createNotifications(int $type, Model $model)
+    {
+        $dto = [
+            'status' => 0,
+            'payload' => [
+                'url' => '',
+                'title' => '',
+                'body' => ''
+            ]
+        ];
+
+        switch ($type) {
+            case self::TYPE_CREATE:
+                $dto['type'] = NotificationDto::TYPE_ORDER_NEW;
+                $dto['payload']['title'] = "Новый заказ";
+                $dto['payload']['body'] = "Создан заказ {$model->number}";
+                break;
+            case self::TYPE_UPDATE:
+                if($model->payment_status == PaymentStatus::DONE) {
+                    $dto['type'] = NotificationDto::TYPE_ORDER_PAYED;
+                    $dto['payload']['title'] = "Оплачен заказ";
+                    $dto['payload']['body'] = "Заказ {$model->number} оплачен";
+                }
+                break;
+        }
+
+        if(!isset($dto['type'])) return;
+
+        $offerService = resolve(OfferService::class);
+        $operatorService = resolve(OperatorService::class);
+        $notificationService = resolve(NotificationService::class);
+
+        // Получаем корзину и офферы из корзины заказа
+        $basket = $model->basket()->get()->first();
+        $basketItems = $basket->items()->get()->pluck('offer_id')->toArray();
+
+        // Получаем id мерчантов, которым принадлежат данные офферы
+        $offerQuery = $offerService->newQuery();
+        $offerQuery->setFilter('id', $basketItems);
+        $merchantIds = $offerService->offers($offerQuery)->pluck('merchant_id')->toArray();
+
+        // Получаем id юзеров и операторов выбранных мерчантов
+        $operatorQuery = $operatorService->newQuery();
+        $operatorQuery->setFilter('merchant_id', $merchantIds);
+        $operatorsIds = $operatorService->operators($operatorQuery)->pluck('user_id')->toArray();
+        $usersIds = $operatorsIds;
+
+        // Создаем уведомления
+        foreach ($usersIds as $userId) {
+            $dto['user_id'] = $userId;
+            $notificationService->create(new NotificationDto($dto));
+        }
     }
 }
