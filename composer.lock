@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2384f398930aa67604fc65b5a4d031f7",
+    "content-hash": "d1c6f070a7f282d5eb227b714e426e78",
     "packages": [
         {
             "name": "darkaonline/l5-swagger",
@@ -611,6 +611,43 @@
             ],
             "description": "iBT common code for all microservices",
             "time": "2019-09-25T14:08:13+00:00"
+        },
+        {
+            "name": "greensight/ibt-merchant-management-lib",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "git@gitlab.com:greensight/ibt-merchant-management-lib.git",
+                "reference": "fc4a3e53f5e21de05b8b9b319708f7e7e3bc4f6e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-merchant-management-lib/repository/archive.zip?sha=fc4a3e53f5e21de05b8b9b319708f7e7e3bc4f6e",
+                "reference": "fc4a3e53f5e21de05b8b9b319708f7e7e3bc4f6e",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "greensight/ibt-common-lib": "dev-master",
+                "php": "^7.1.3"
+            },
+            "require-dev": {
+                "laravel/framework": "^5.8"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MerchantManagement\\": "lib/"
+                }
+            },
+            "authors": [
+                {
+                    "name": "Bereza Evgeny",
+                    "email": "bereza@greensight.ru"
+                }
+            ],
+            "description": "iBT Merchant Management service client",
+            "time": "2019-09-06T15:21:53+00:00"
         },
         {
             "name": "greensight/ibt-message-lib",
@@ -1471,16 +1508,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "2.24.0",
+            "version": "2.25.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/briannesbitt/Carbon.git",
-                "reference": "934459c5ac0658bc765ad1e53512c7c77adcac29"
+                "reference": "b70da677101cca7b584c7489770d2677c2733593"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/934459c5ac0658bc765ad1e53512c7c77adcac29",
-                "reference": "934459c5ac0658bc765ad1e53512c7c77adcac29",
+                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/b70da677101cca7b584c7489770d2677c2733593",
+                "reference": "b70da677101cca7b584c7489770d2677c2733593",
                 "shasum": ""
             },
             "require": {
@@ -1527,14 +1564,14 @@
                     "homepage": "http://github.com/kylekatarnls"
                 }
             ],
-            "description": "A API extension for DateTime that supports 281 different languages.",
+            "description": "An API extension for DateTime that supports 281 different languages.",
             "homepage": "http://carbon.nesbot.com",
             "keywords": [
                 "date",
                 "datetime",
                 "time"
             ],
-            "time": "2019-08-31T16:37:55+00:00"
+            "time": "2019-09-30T16:22:22+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -4776,22 +4813,22 @@
         },
         {
             "name": "phpspec/prophecy",
-            "version": "1.8.1",
+            "version": "1.9.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpspec/prophecy.git",
-                "reference": "1927e75f4ed19131ec9bcc3b002e07fb1173ee76"
+                "reference": "f6811d96d97bdf400077a0cc100ae56aa32b9203"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/1927e75f4ed19131ec9bcc3b002e07fb1173ee76",
-                "reference": "1927e75f4ed19131ec9bcc3b002e07fb1173ee76",
+                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/f6811d96d97bdf400077a0cc100ae56aa32b9203",
+                "reference": "f6811d96d97bdf400077a0cc100ae56aa32b9203",
                 "shasum": ""
             },
             "require": {
                 "doctrine/instantiator": "^1.0.2",
                 "php": "^5.3|^7.0",
-                "phpdocumentor/reflection-docblock": "^2.0|^3.0.2|^4.0",
+                "phpdocumentor/reflection-docblock": "^2.0|^3.0.2|^4.0|^5.0",
                 "sebastian/comparator": "^1.1|^2.0|^3.0",
                 "sebastian/recursion-context": "^1.0|^2.0|^3.0"
             },
@@ -4835,7 +4872,7 @@
                 "spy",
                 "stub"
             ],
-            "time": "2019-06-13T12:50:23+00:00"
+            "time": "2019-10-03T11:07:50+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -5835,7 +5872,8 @@
     "stability-flags": {
         "greensight/ibt-common-lib": 20,
         "greensight/ibt-pim-lib": 20,
-        "greensight/ibt-message-lib": 20
+        "greensight/ibt-message-lib": 20,
+        "greensight/ibt-merchant-management-lib": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
