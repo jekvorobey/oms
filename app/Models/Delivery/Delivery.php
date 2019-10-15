@@ -3,26 +3,30 @@
 namespace App\Models\Delivery;
 
 use App\Models\OmsModel;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Груз
- * Class Cargo
+ * Доставка (одно или несколько отправлений, которые должны быть доставлены в один срок одной службой доставки)
+ * Class Delivery
  * @package App\Models\Delivery
  *
+ * @property int $order_id
  * @property int $status
  * @property int $delivery_method
  *
- * @property string $xml_id
+ * @property string $xml_id - идентификатор заказа на доставку в службе доставки
+ * @property string $number - номер доставки (номер_заказа-порядковый_номер_отправления)
  * @property double $width
  * @property double $height
  * @property double $length
  * @property double $weight
+ * @property Carbon $delivery_at
  *
  * @property-read Collection|Shipment[] $shipments
  */
-class Cargo extends OmsModel
+class Delivery extends OmsModel
 {
     use WithWeightAndSizes;
     
@@ -30,10 +34,11 @@ class Cargo extends OmsModel
     private const SIDES = ['width', 'height', 'length'];
     
     /** @var string */
-    protected $table = 'cargo';
+    protected $table = 'delivery';
     
     /** @var array */
     protected $casts = [
+        'delivery_at' => 'datetime',
         'weight' => 'float',
         'width' => 'float',
         'height' => 'float',
@@ -49,7 +54,7 @@ class Cargo extends OmsModel
     }
     
     /**
-     * Рассчитать вес груза
+     * Рассчитать вес доставки
      * @return float
      */
     public function calcWeight(): float
@@ -57,16 +62,14 @@ class Cargo extends OmsModel
         $weight = 0;
         
         foreach ($this->shipments as $shipment) {
-            foreach ($shipment->packages as $package) {
-                $weight += $package->weight;
-            }
+            $weight += $shipment->weight;
         }
         
         return $weight;
     }
     
     /**
-     * Рассчитать объем груза
+     * Рассчитать объем доставки
      * @return float
      */
     public function calcVolume(): float
@@ -74,28 +77,24 @@ class Cargo extends OmsModel
         $volume = 0;
         
         foreach ($this->shipments as $shipment) {
-            foreach ($shipment->packages as $package) {
-                $volume += $package->width * $package->height * $package->length;
-            }
+            $volume += $shipment->width * $shipment->height * $shipment->length;
         }
         
         return $volume;
     }
     
     /**
-     * Рассчитать значение максимальной стороны (длины, ширины или высоты) из всех коробок груза
+     * Рассчитать значение максимальной стороны (длины, ширины или высоты) из всех отправлений доставки
      * @return float
      */
     public function calcMaxSide(): float
     {
         $maxSide = 0;
-    
+        
         foreach ($this->shipments as $shipment) {
-            foreach ($shipment->packages as $package) {
-                foreach (self::SIDES as $side) {
-                    if ($package[$side] > $maxSide) {
-                        $maxSide = $package[$side];
-                    }
+            foreach (self::SIDES as $side) {
+                if ($shipment[$side] > $maxSide) {
+                    $maxSide = $shipment[$side];
                 }
             }
         }
@@ -104,21 +103,19 @@ class Cargo extends OmsModel
     }
     
     /**
-     * Определить название максимальной стороны (длины, ширины или высоты) из всех коробок груза
+     * Определить название максимальной стороны (длины, ширины или высоты) из всех отправлений доставки
      * @param  float  $maxSide
      * @return string
      */
     public function identifyMaxSideName(float $maxSide): string
     {
         $maxSideName = 'width';
-    
+        
         foreach ($this->shipments as $shipment) {
-            foreach ($shipment->packages as $package) {
-                foreach (self::SIDES as $side) {
-                    if ($package[$side] > $maxSide) {
-                        $maxSide = $package[$side];
-                        $maxSideName = $side;
-                    }
+            foreach (self::SIDES as $side) {
+                if ($shipment[$side] > $maxSide) {
+                    $maxSide = $shipment[$side];
+                    $maxSideName = $side;
                 }
             }
         }

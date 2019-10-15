@@ -20,70 +20,70 @@ class Orders extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('customer_id')->unsigned()->nullable();
             $table->bigInteger('order_id')->unsigned()->nullable();
-            
+        
             $table->boolean('is_belongs_to_order')->default(false);
-
+        
             $table->timestamps();
         });
-
+    
         Schema::create('basket_items', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('basket_id')->unsigned()->nullable();
             $table->bigInteger('offer_id')->unsigned()->nullable();
-
+            $table->bigInteger('store_id')->unsigned()->nullable();
+        
             $table->string('name');
             $table->decimal('qty', 18, 4);
             $table->decimal('price', 18, 4)->nullable();
             $table->boolean('is_reserved')->default(false);
             $table->bigInteger('reserved_by')->nullable();
             $table->timestamp('reserved_at')->nullable();
-
+        
             $table->timestamps();
-
+        
             $table->foreign('basket_id')
                 ->references('id')
                 ->on('baskets');
         });
-    
+        
         Schema::create('orders', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('basket_id')->unsigned();
-            $table->bigInteger('customer_id')->unsigned();
-        
+            $table->bigInteger('customer_id')->unsigned()->nullable();
+
             $table->string('number');
             $table->decimal('cost', 18, 4);
             $table->tinyInteger('status')->unsigned()->default(1);
-            $table->tinyInteger('reserve_status')->unsigned()->default(1);
             $table->text('manager_comment')->nullable();
             $table->tinyInteger('payment_status', false, true)->default(1);
             // delivery
-            $table->tinyInteger('delivery_type')->unsigned()->default(1);
-            $table->tinyInteger('delivery_method')->unsigned()->default(1);
+            $table->tinyInteger('delivery_type')->unsigned();
+            $table->tinyInteger('delivery_method')->unsigned();
             $table->json('delivery_address');
             $table->text('delivery_comment')->nullable();
             $table->string('receiver_name')->nullable();
             $table->string('receiver_phone')->nullable();
             $table->string('receiver_email')->nullable();
-        
+
             $table->timestamps();
     
             $table->foreign('basket_id')->references('id')->on('baskets');
         });
-    
+
         Schema::create('orders_history', function (Blueprint $table) {
             $table->bigIncrements('id');
-        
+
             $table->bigInteger('order_id')->unsigned();
             $table->bigInteger('user_id')->unsigned()->nullable();
             $table->tinyInteger('type')->unsigned()->nullable();
             $table->jsonb('data')->nullable();
-        
+
             $table->string('entity')->nullable();
             $table->bigInteger('entity_id')->unsigned()->nullable();
-        
+
             $table->timestamps();
         });
-    
+
         Schema::create('payments', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('order_id')->unsigned();
@@ -103,44 +103,91 @@ class Orders extends Migration
         Schema::create('cargo', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->tinyInteger('status', false, true)->default(1);
+            $table->tinyInteger('delivery_method')->unsigned();
     
-            $table->integer('width')->nullable();
-            $table->integer('height')->nullable();
-            $table->integer('length')->nullable();
-            $table->integer('weight')->nullable();
+            $table->string('xml_id')->nullable();
+            $table->decimal('width', 18, 4);
+            $table->decimal('height', 18, 4);
+            $table->decimal('length', 18, 4);
+            $table->decimal('weight', 18, 4);
             
             $table->timestamps();
+        });
+    
+        Schema::create('delivery', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->bigInteger('order_id')->unsigned();
+    
+            $table->string('xml_id')->nullable();
+            $table->string('number');
+            $table->decimal('width', 18, 4);
+            $table->decimal('height', 18, 4);
+            $table->decimal('length', 18, 4);
+            $table->decimal('weight', 18, 4);
+            $table->bigInteger('delivery_method')->unsigned();
+            $table->dateTime('delivery_at')->nullable();
+            $table->tinyInteger('status', false, true)->default(1);
+            
+            $table->timestamps();
+        
+            $table->foreign('order_id')->references('id')->on('orders');
         });
     
         Schema::create('shipments', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->bigInteger('order_id')->unsigned();
+            $table->bigInteger('delivery_id')->unsigned();
+            $table->bigInteger('store_id')->unsigned();
             $table->bigInteger('cargo_id')->unsigned()->nullable();
-            $table->json('items');
-            $table->dateTime('delivery_at')->nullable();
+    
+            $table->string('xml_id')->nullable();
+            $table->string('number');
             $table->tinyInteger('status', false, true)->default(1);
+            
             $table->timestamps();
         
-            $table->foreign('order_id')->references('id')->on('orders');
+            $table->foreign('delivery_id')->references('id')->on('delivery');
             $table->foreign('cargo_id')->references('id')->on('cargo');
+        });
+    
+        Schema::create('shipment_items', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->bigInteger('shipment_id')->unsigned();
+            $table->bigInteger('basket_item_id')->unsigned();
+    
+            $table->timestamps();
+    
+            $table->foreign('shipment_id')->references('id')->on('shipments');
+            $table->foreign('basket_item_id')->references('id')->on('basket_items');
+            
+            $table->unique(['shipment_id', 'basket_item_id']);
         });
         
         Schema::create('shipment_packages', function (Blueprint $table) {
             $table->bigIncrements('id');
-            
             $table->bigInteger('shipment_id')->unsigned();
+            $table->bigInteger('package_id')->unsigned();
             $table->tinyInteger('status', false, true)->default(1);
-            $table->json('items');
     
-            $table->integer('width');
-            $table->integer('height');
-            $table->integer('length');
-            $table->integer('weight');
-            $table->integer('wrapper_weight');
+            $table->decimal('width', 18, 4);
+            $table->decimal('height', 18, 4);
+            $table->decimal('length', 18, 4);
+            $table->decimal('weight', 18, 4);
+            $table->decimal('wrapper_weight', 18, 4);
             
             $table->timestamps();
             
             $table->foreign('shipment_id')->references('id')->on('shipments');
+        });
+    
+        Schema::create('shipment_package_items', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->bigInteger('shipment_package_id')->unsigned();
+            $table->bigInteger('basket_item_id')->unsigned();
+            $table->decimal('reserved_qty', 18, 4);
+            $table->bigInteger('reserved_by')->nullable();
+    
+            $table->foreign('shipment_package_id')->references('id')->on('shipment_packages');
+            $table->foreign('basket_item_id')->references('id')->on('basket_items');
         });
         
         Schema::create('orders_export', function (Blueprint $table) {
@@ -162,11 +209,14 @@ class Orders extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('orders_export');
+        Schema::dropIfExists('shipment_package_items');
         Schema::dropIfExists('shipment_packages');
+        Schema::dropIfExists('shipment_items');
         Schema::dropIfExists('shipments');
         Schema::dropIfExists('cargo');
+        Schema::dropIfExists('delivery');
         Schema::dropIfExists('payments');
+        Schema::dropIfExists('orders_export');
         Schema::dropIfExists('orders_history');
         Schema::dropIfExists('orders');
         Schema::dropIfExists('basket_items');

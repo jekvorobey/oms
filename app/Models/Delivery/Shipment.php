@@ -11,36 +11,46 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
+ * Отправление (набор товаров с одного склада)
  * Class Shipment
  * @package App\Models\Delivery
  *
- * @property int $order_id
- * @property array $items
- * @property Carbon $delivery_at
+ * @property int $delivery_id
+ * @property int $store_id
  * @property int $status
  * @property int $cargo_id
  *
- * @property-read Order $order
+ * @property string $xml_id - идентификатор места в заказе в службе доставки
+ * @property string $number - номер отправления (номер_заказа/порядковый_номер_отправления)
+ *
+ * @property-read Delivery $delivery
  * @property-read Collection|ShipmentPackage[] $packages
  * @property-read Cargo $cargo
  */
 class Shipment extends OmsModel
 {
-    protected $casts = [
-        'items' => 'array',
-        'delivery_at' => 'datetime'
-    ];
+    /** @var string */
+    protected $table = 'shipments';
     
-    public function order(): BelongsTo
+    /**
+     * @return BelongsTo
+     */
+    public function delivery(): BelongsTo
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(Delivery::class);
     }
     
+    /**
+     * @return HasMany
+     */
     public function packages(): HasMany
     {
         return $this->hasMany(ShipmentPackage::class);
     }
     
+    /**
+     * @return BelongsTo
+     */
     public function cargo(): BelongsTo
     {
         return $this->belongsTo(Cargo::class);
@@ -61,12 +71,14 @@ class Shipment extends OmsModel
             $oldCargoId = $shipment->getOriginal('cargo_id');
             if ($oldCargoId != $shipment->cargo_id) {
                 if ($oldCargoId) {
+                    /** @var Cargo $oldCargo */
                     $oldCargo = Cargo::find($oldCargoId);
                     if ($oldCargo) {
                         $oldCargo->recalc();
                     }
                 }
                 if ($shipment->cargo_id) {
+                    /** @var Cargo $newCargo */
                     $newCargo = Cargo::find($shipment->cargo_id);
                     if ($newCargo) {
                         $newCargo->recalc();
@@ -84,6 +96,7 @@ class Shipment extends OmsModel
         
         self::deleted(function (self $shipment) {
             if ($shipment->cargo_id) {
+                /** @var Cargo $newCargo */
                 $newCargo = Cargo::find($shipment->cargo_id);
                 if ($newCargo) {
                     $newCargo->recalc();

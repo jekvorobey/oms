@@ -22,6 +22,7 @@ use Illuminate\Support\Collection;
  */
 class Basket extends OmsModel
 {
+    /** @var bool */
     protected static $unguarded = true;
     
     /**

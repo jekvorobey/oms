@@ -10,41 +10,45 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @package App\Models\Delivery
  *
  * @property int $shipment_id
- * @property int $cargo_id
  * @property int $status
- * @property array $items
  *
- * @property int $width
- * @property int $height
- * @property int $length
- * @property int $weight
- * @property int $wrapper_weight
+ * @property double $width
+ * @property double $height
+ * @property double $length
+ * @property double $weight
+ * @property double $wrapper_weight
  *
  * @property-read Shipment $shipment
  */
 class ShipmentPackage extends OmsModel
 {
+    /** @var string */
+    protected $table = 'shipment_packages';
+    
+    /** @var array */
     protected $casts = [
-        'items' => 'array'
+        'weight' => 'float',
+        'width' => 'float',
+        'height' => 'float',
+        'length' => 'float',
     ];
+    
+    /**
+     * @return BelongsTo
+     */
     public function shipment(): BelongsTo
     {
         return $this->belongsTo(Shipment::class);
     }
     
-    public function cargo(): BelongsTo
-    {
-        return $this->belongsTo(Cargo::class);
-    }
-    
-    public function recalcWeight()
+    public function recalcWeight(): void
     {
         $this->weight = $this->wrapper_weight + array_reduce((array)$this->items, function ($sum, $product) {
             return $sum + $product['weight'] * $product['qty'];
         });
     }
     
-    public function setWrapper(int $weight, int $width, int $height, int $length)
+    public function setWrapper(float $weight, float $width, float $height, float $length): void
     {
         $this->wrapper_weight = $weight;
         $this->width = $width;
@@ -53,7 +57,7 @@ class ShipmentPackage extends OmsModel
         $this->recalcWeight();
     }
     
-    public function setProduct(int $offerId, array $data)
+    public function setProduct(int $offerId, array $data): void
     {
         $edited = false;
         $products = (array)$this->items;
@@ -78,6 +82,7 @@ class ShipmentPackage extends OmsModel
             $products[] = $data;
         }
         $this->items = $products;
+        
         $this->recalcWeight();
     }
     

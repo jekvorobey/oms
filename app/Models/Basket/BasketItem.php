@@ -4,7 +4,6 @@ namespace App\Models\Basket;
 
 use App\Models\OmsModel;
 use App\Models\Order\OrderHistoryEvent;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
@@ -38,8 +37,12 @@ use Illuminate\Support\Carbon;
  */
 class BasketItem extends OmsModel
 {
+    /** @var bool */
     protected static $unguarded = true;
     
+    /**
+     * @return BelongsTo
+     */
     public function basket(): BelongsTo
     {
         return $this->belongsTo(Basket::class);
@@ -67,5 +70,4 @@ class BasketItem extends OmsModel
             }
         });
     }
-    
 }

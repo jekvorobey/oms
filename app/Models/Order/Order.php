@@ -24,7 +24,6 @@ use Illuminate\Support\Collection;
  * @property float $cost - стоимость
  * @property int $status - статус
  * @property int $payment_status - статус оплаты
- * @property int $reserve_status - статус резерва
  * @property string $manager_comment - комментарий
  *
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
@@ -35,11 +34,10 @@ use Illuminate\Support\Collection;
  * @property string $receiver_phone
  * @property string $receiver_email
  *
- *
  * @property Basket $basket - корзина
  * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
  * @property Collection|Payment[] $payments - оплаты заказа
- * @property Collection|Shipment[] $shipments
+ * @property Collection|Delivery[] $shipments
  */
 class Order extends OmsModel
 {

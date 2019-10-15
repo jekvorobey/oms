@@ -2,6 +2,11 @@
 
 namespace App\Models\Payment;
 
+/**
+ * Платежная система
+ * Class PaymentSystem
+ * @package App\Models\Payment
+ */
 class PaymentSystem
 {
     public const TEST = 42;
@@ -17,7 +22,7 @@ class PaymentSystem
     public static function all()
     {
         return [
-            new self(self::TEST, 'Тестовая система полаты'),
+            new self(self::TEST, 'Тестовая система оплаты'),
         ];
     }
     
