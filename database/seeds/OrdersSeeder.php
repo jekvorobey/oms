@@ -6,7 +6,6 @@ use App\Models\Delivery\DeliveryMethod;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
-use App\Models\Order\OrderHistoryEvent;
 use App\Models\ReserveStatus;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -35,9 +34,44 @@ class OrdersSeeder extends Seeder
         $faker = Faker\Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
 
-        $orders = collect();
         for ($i = 0; $i < self::ORDERS_COUNT; $i++) {
+            $basket = new Basket();
+            $basket->customer_id = $this->customerId($faker);
+            $basket->save();
+        }
+    
+        /** @var OfferService $offerService */
+        $offerService = resolve(OfferService::class);
+        $restQuery = $offerService->newQuery();
+        $restQuery->addFields(OfferDto::entity(), 'id', 'product_id');
+        $offers = $offerService->offers($restQuery);
+    
+        /** @var ProductService $productService */
+        $productService = resolve(ProductService::class);
+        $restQuery = $productService->newQuery();
+        $restQuery->addFields(ProductDto::entity(), 'id', 'name')
+            ->setFilter('id', $offers->pluck('product_id'));
+        $products = $productService->products($restQuery)->keyBy('id');
+    
+        $baskets = Basket::query()->select('id')->get();
+        foreach ($baskets as $basket) {
+            /** @var Collection|OfferDto[] $basketOffers */
+            $basketOffers = $offers->random(rand(3, 5));
+        
+            foreach ($basketOffers as $basketOffer) {
+                $basketItem = new BasketItem();
+                $basketItem->basket_id = $basket->id;
+                $basketItem->offer_id = $basketOffer->id;
+                $basketItem->name = $products[$basketOffer->product_id]->name;
+                $basketItem->qty = $faker->randomDigitNotNull;
+                $basketItem->price = $faker->randomFloat(2, 100, 1000);
+                $basketItem->save();
+            }
+        }
+
+        foreach ($baskets as $basket) {
             $order = new Order();
+            $order->basket_id = $basket->id;
             $order->customer_id = $this->customerId($faker);
             $order->number = 'IBT' . $faker->dateTimeThisYear()->format('Ymdhis');
             $order->cost = $faker->numberBetween(1, 1000);
@@ -49,46 +83,10 @@ class OrdersSeeder extends Seeder
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
             $order->delivery_method = $faker->randomElement(DeliveryMethod::validValues());
             $order->delivery_address = [];
-            
+    
             $order->save();
-
-            $orders->push($order);
-        }
-
-        foreach ($orders as $order) {
-            $basket = new Basket();
-            $basket->customer_id = $order->customer_id;
-            $basket->order_id = $order->id;
+            $basket->is_belongs_to_order = true;
             $basket->save();
-        }
-
-        /** @var OfferService $offerService */
-        $offerService = resolve(OfferService::class);
-        $restQuery = $offerService->newQuery();
-        $restQuery->addFields(OfferDto::entity(), 'id', 'product_id');
-        $offers = $offerService->offers($restQuery);
-
-        /** @var ProductService $productService */
-        $productService = resolve(ProductService::class);
-        $restQuery = $productService->newQuery();
-        $restQuery->addFields(ProductDto::entity(), 'id', 'name')
-            ->setFilter('id', $offers->pluck('product_id'));
-        $products = $productService->products($restQuery)->keyBy('id');
-
-        $baskets = Basket::query()->select('id')->get();
-        foreach ($baskets as $basket) {
-            /** @var Collection|OfferDto[] $basketOffers */
-            $basketOffers = $offers->random(rand(3, 5));
-
-            foreach ($basketOffers as $basketOffer) {
-                $basketItem = new BasketItem();
-                $basketItem->basket_id = $basket->id;
-                $basketItem->offer_id = $basketOffer->id;
-                $basketItem->name = $products[$basketOffer->product_id]->name;
-                $basketItem->qty = $faker->randomDigitNotNull;
-                $basketItem->price = $faker->randomFloat(2, 100, 1000);
-                $basketItem->save();
-            }
         }
     }
 

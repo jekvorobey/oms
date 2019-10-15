@@ -4,7 +4,6 @@ namespace App\Models\Basket;
 
 use App\Models\OmsModel;
 use App\Models\Order\Order;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
@@ -15,7 +14,8 @@ use Illuminate\Support\Collection;
  * @package App\Models
  *
  * @property int $customer_id - id покупателя
- * @property int $order_id - id заказа
+ *
+ * @property bool $is_belongs_to_order - корзина принадлежит заказу? (поле необходимо для удаления старых корзин без заказов)
  *
  * @property-read Order|null $order - заказ
  * @property-read Collection|BasketItem[] $items - элементы (товары)
@@ -48,7 +48,7 @@ class Basket extends OmsModel
      */
     public function order(): BelongsTo
     {
-        return $this->belongsTo(Order::class);
+        return $this->belongsTo(Order::class, 'id', 'basket_id');
     }
 
     /**

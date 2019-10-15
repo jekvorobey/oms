@@ -18,6 +18,8 @@ use Illuminate\Support\Collection;
  * @package App\Models
  *
  * @property int $customer_id - id покупателя
+ * @property int $basket_id - id корзины
+ *
  * @property string $number - номер
  * @property float $cost - стоимость
  * @property int $status - статус
@@ -50,7 +52,7 @@ class Order extends OmsModel
      */
     public function basket(): HasOne
     {
-        return $this->hasOne(Basket::class);
+        return $this->hasOne(Basket::class, 'id', 'basket_id');
     }
 
     public function payments(): HasMany
