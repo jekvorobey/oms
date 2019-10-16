@@ -49,7 +49,7 @@ class LocalPaymentSystem implements PaymentSystemInterface
             throw new NotFoundHttpException();
         }
         if (self::STATUS_DONE == $status) {
-            $payment->status = PaymentStatus::DONE;
+            $payment->status = PaymentStatus::STATUS_DONE;
             $payment->payed_at = Carbon::now();
             $payment->save();
         }

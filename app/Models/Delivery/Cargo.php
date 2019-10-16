@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Груз
+ * Груз - совокупность отправлений для доставки на нулевой миле (доставка от мерчанта до распределительного центра)
  * Class Cargo
  * @package App\Models\Delivery
  *
+ * @property int $merchant_id
+ * @property int $store_id
  * @property int $status
- * @property int $delivery_method
+ * @property int $delivery_service
  *
  * @property string $xml_id
  * @property double $width

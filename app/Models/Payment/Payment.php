@@ -54,7 +54,7 @@ class Payment extends OmsModel
      */
     public static function expiredPayments(): Collection
     {
-        return Payment::query()->where('status', PaymentStatus::STARTED)
+        return Payment::query()->where('status', PaymentStatus::STATUS_STARTED)
             ->where('expires_at', '<', Carbon::now()->format('Y-m-d H:i:s'))
             ->get(['id', 'order_id']);
     }
@@ -82,7 +82,7 @@ class Payment extends OmsModel
     public function start(string $returnUrl)
     {
         $paymentSystem = $this->paymentSystem();
-        $this->status = PaymentStatus::STARTED;
+        $this->status = PaymentStatus::STATUS_STARTED;
         $hours = $paymentSystem->duration();
         if ($hours) {
             $this->expires_at = Carbon::now()->addHours($hours);
@@ -95,7 +95,7 @@ class Payment extends OmsModel
     
     public function timeout(): void
     {
-        $this->status = PaymentStatus::TIMEOUT;
+        $this->status = PaymentStatus::STATUS_TIMEOUT;
         $this->save();
     }
 

@@ -3,19 +3,18 @@
 namespace App\Models\Delivery;
 
 use App\Models\OmsModel;
-use App\Models\Order\Order;
 use App\Models\Order\OrderHistoryEvent;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Отправление (набор товаров с одного склада)
+ * Отправление (набор товаров с одного склада одного мерчанта)
  * Class Shipment
  * @package App\Models\Delivery
  *
  * @property int $delivery_id
+ * @property int $merchant_id
  * @property int $store_id
  * @property int $status
  * @property int $cargo_id
@@ -59,12 +58,13 @@ class Shipment extends OmsModel
     protected static function boot()
     {
         parent::boot();
+        
         self::created(function (self $shipment) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $shipment->order_id, $shipment);
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $shipment->delivery->order_id, $shipment);
         });
     
         self::updated(function (self $shipment) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $shipment->order_id, $shipment);
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $shipment->delivery->order_id, $shipment);
         });
         
         self::saved(function (self $shipment) {
@@ -88,7 +88,7 @@ class Shipment extends OmsModel
         });
     
         self::deleting(function (self $shipment) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $shipment->order_id, $shipment);
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $shipment->delivery->order_id, $shipment);
             foreach ($shipment->packages as $package) {
                 $package->delete();
             }

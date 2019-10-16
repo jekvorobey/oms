@@ -58,6 +58,7 @@ class Orders extends Migration
             $table->tinyInteger('payment_status', false, true)->default(1);
             // delivery
             $table->tinyInteger('delivery_type')->unsigned();
+            $table->tinyInteger('delivery_service')->unsigned();
             $table->tinyInteger('delivery_method')->unsigned();
             $table->json('delivery_address');
             $table->text('delivery_comment')->nullable();
@@ -102,8 +103,10 @@ class Orders extends Migration
         
         Schema::create('cargo', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->bigInteger('merchant_id')->unsigned();
+            $table->bigInteger('store_id')->unsigned();
             $table->tinyInteger('status', false, true)->default(1);
-            $table->tinyInteger('delivery_method')->unsigned();
+            $table->tinyInteger('delivery_service')->unsigned();
     
             $table->string('xml_id')->nullable();
             $table->decimal('width', 18, 4);
@@ -125,6 +128,7 @@ class Orders extends Migration
             $table->decimal('length', 18, 4);
             $table->decimal('weight', 18, 4);
             $table->bigInteger('delivery_method')->unsigned();
+            $table->tinyInteger('delivery_service')->unsigned();
             $table->dateTime('delivery_at')->nullable();
             $table->tinyInteger('status', false, true)->default(1);
             
@@ -136,6 +140,7 @@ class Orders extends Migration
         Schema::create('shipments', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('delivery_id')->unsigned();
+            $table->bigInteger('merchant_id')->unsigned();
             $table->bigInteger('store_id')->unsigned();
             $table->bigInteger('cargo_id')->unsigned()->nullable();
     

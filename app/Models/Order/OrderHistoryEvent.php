@@ -109,12 +109,12 @@ class OrderHistoryEvent extends OmsModel
                 $dto['payload']['body'] = "Создан заказ {$model->number}";
                 break;
             case self::TYPE_UPDATE:
-                if($model->status == OrderStatus::PROBLEM) {
+                if($model->status == OrderStatus::STATUS_PROBLEM) {
                     $dto['type'] = NotificationDto::TYPE_ORDER_PROBLEM;
                     $dto['payload']['title'] = "Проблемный заказ";
                     $dto['payload']['body'] = "Заказ {$model->number} помечен как проблемный";
                 }
-                if($model->payment_status == PaymentStatus::DONE) {
+                if($model->payment_status == PaymentStatus::STATUS_DONE) {
                     $dto['type'] = NotificationDto::TYPE_ORDER_PAYED;
                     $dto['payload']['title'] = "Оплачен заказ";
                     $dto['payload']['body'] = "Заказ {$model->number} оплачен";

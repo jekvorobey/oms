@@ -8,13 +8,14 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Доставка (одно или несколько отправлений, которые должны быть доставлены в один срок одной службой доставки)
+ * Доставка (одно или несколько отправлений, которые должны быть доставлены в один срок одной службой доставки до покупателя)
  * Class Delivery
  * @package App\Models\Delivery
  *
  * @property int $order_id
  * @property int $status
  * @property int $delivery_method
+ * @property int $delivery_service
  *
  * @property string $xml_id - идентификатор заказа на доставку в службе доставки
  * @property string $number - номер доставки (номер_заказа-порядковый_номер_отправления)

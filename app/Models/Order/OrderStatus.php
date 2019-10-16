@@ -9,20 +9,28 @@ namespace App\Models\Order;
  */
 class OrderStatus
 {
-    public const CREATED = 1;
-    public const PROCESS = 2;
-    public const DONE = 3;
-    public const CANCEL = 4;
+    /** @var int - создан */
+    public const STATUS_CREATED = 1;
+    /** @var int - в обработке */
+    public const STATUS_PROCESS = 2;
+    /** @var int - выполнен */
+    public const STATUS_DONE = 3;
+    /** @var int - проблемный */
+    public const STATUS_PROBLEM = 4;
+    /** @var int - отменен */
+    public const STATUS_CANCEL = 5;
+    
     /**
      * @return array
      */
     public static function validValues(): array
     {
         return [
-            self::CREATED,
-            self::PROCESS,
-            self::DONE,
-            self::CANCEL,
+            self::STATUS_CREATED,
+            self::STATUS_PROCESS,
+            self::STATUS_DONE,
+            self::STATUS_PROBLEM,
+            self::STATUS_CANCEL,
         ];
     }
 }

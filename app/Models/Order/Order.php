@@ -102,15 +102,15 @@ class Order extends OmsModel
         }
         
         // todo уточнить логику смены статуса
-        if ($this->allIs($statuses, $all, PaymentStatus::DONE)) {
-            $this->payment_status = PaymentStatus::DONE;
-        } elseif ($this->atLeastOne($statuses, PaymentStatus::TIMEOUT) && !$this->atLeastOne($statuses, PaymentStatus::DONE)) {
-            $this->payment_status = PaymentStatus::TIMEOUT;
-            $this->status = OrderStatus::CANCEL;
-        } elseif ($this->payment_status == PaymentStatus::CREATED && $this->atLeastOne($statuses, PaymentStatus::STARTED)) {
-            $this->payment_status = PaymentStatus::STARTED;
-        } elseif ($this->atLeastOne($statuses, PaymentStatus::DONE)) {
-            $this->payment_status = PaymentStatus::PARTIAL_DONE;
+        if ($this->allIs($statuses, $all, PaymentStatus::STATUS_DONE)) {
+            $this->payment_status = PaymentStatus::STATUS_DONE;
+        } elseif ($this->atLeastOne($statuses, PaymentStatus::STATUS_TIMEOUT) && !$this->atLeastOne($statuses, PaymentStatus::STATUS_DONE)) {
+            $this->payment_status = PaymentStatus::STATUS_TIMEOUT;
+            $this->status = OrderStatus::STATUS_CANCEL;
+        } elseif ($this->payment_status == PaymentStatus::STATUS_CREATED && $this->atLeastOne($statuses, PaymentStatus::STATUS_STARTED)) {
+            $this->payment_status = PaymentStatus::STATUS_STARTED;
+        } elseif ($this->atLeastOne($statuses, PaymentStatus::STATUS_DONE)) {
+            $this->payment_status = PaymentStatus::STATUS_PARTIAL_DONE;
         }
         
         $this->save();
@@ -131,7 +131,7 @@ class Order extends OmsModel
      */
     public function cancel(): void
     {
-        $this->status = OrderStatus::CANCEL;
+        $this->status = OrderStatus::STATUS_CANCEL;
         $this->save();
     }
     
