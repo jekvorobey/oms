@@ -4,16 +4,12 @@ namespace App\Models\Delivery;
 
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
-use App\Models\Order\Order;
 use App\Models\Order\OrderHistoryEvent;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Состав отправления (набор товаров с одного склада одного мерчанта)
- * Class Shipment
+ * Class ShipmentItem
  * @package App\Models\Delivery
  *
  * @property int $shipment_id

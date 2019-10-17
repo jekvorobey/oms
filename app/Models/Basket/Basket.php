@@ -4,8 +4,8 @@ namespace App\Models\Basket;
 
 use App\Models\OmsModel;
 use App\Models\Order\Order;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 
 /**
@@ -14,7 +14,6 @@ use Illuminate\Support\Collection;
  * @package App\Models
  *
  * @property int $customer_id - id покупателя
- *
  * @property bool $is_belongs_to_order - корзина принадлежит заказу? (поле необходимо для удаления старых корзин без заказов)
  *
  * @property-read Order|null $order - заказ
@@ -27,8 +26,7 @@ class Basket extends OmsModel
     
     /**
      * Получить текущую корзину пользователя.
-     *
-     * @param int $customerId
+     * @param  int  $customerId
      * @return Basket
      */
     public static function findFreeUserBasket(int $customerId): self
@@ -41,17 +39,18 @@ class Basket extends OmsModel
             $basket->customer_id = $customerId;
             $basket->save();
         }
+        
         return $basket;
     }
     
     /**
-     * @return BelongsTo
+     * @return HasOne
      */
-    public function order(): BelongsTo
+    public function order(): HasOne
     {
-        return $this->belongsTo(Order::class, 'id', 'basket_id');
+        return $this->hasOne(Order::class);
     }
-
+    
     /**
      * @return HasMany
      */
@@ -62,34 +61,35 @@ class Basket extends OmsModel
     
     /**
      * Получить объект товар корзины, даже если его нет в БД.
-     *
-     * @param int $offerId
+     * @param  int  $offerId
      * @return BasketItem
      */
-    public function itemByOffer(int $offerId)
+    public function itemByOffer(int $offerId): BasketItem
     {
         $item = $this->items->first(function (BasketItem $item) use ($offerId) {
             return $item->offer_id == $offerId;
         });
+        
         if (!$item) {
             $item = new BasketItem();
             $item->offer_id = $offerId;
             $item->basket_id = $this->id;
         }
+        
         return $item;
     }
     
     /**
      * Создать/изменить/удалить товар корзины.
-     *
-     * @param int $offerId
-     * @param array $data
+     * @param  int  $offerId
+     * @param  array  $data
      * @return bool|null
      * @throws \Exception
      */
-    public function setItem(int $offerId, array $data)
+    public function setItem(int $offerId, array $data): bool
     {
         $item = $this->itemByOffer($offerId);
+        
         if ($item->id && isset($data['qty']) && $data['qty'] === 0) {
             $ok = $item->delete();
         } else {
@@ -101,12 +101,14 @@ class Basket extends OmsModel
             }
             $ok = $item->save();
         }
+        
         return $ok;
     }
-
+    
     protected static function boot()
     {
         parent::boot();
+        
         self::deleting(function (Basket $basket) {
             foreach ($basket->items as $item) {
                 $item->delete();

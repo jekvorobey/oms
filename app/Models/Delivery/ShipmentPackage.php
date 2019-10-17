@@ -6,6 +6,7 @@ use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * Коробка отправления
  * Class ShipmentPackage
  * @package App\Models\Delivery
  *

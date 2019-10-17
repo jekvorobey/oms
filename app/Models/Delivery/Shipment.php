@@ -19,7 +19,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $status
  * @property int $cargo_id
  *
- * @property string $xml_id - идентификатор места в заказе в службе доставки
  * @property string $number - номер отправления (номер_заказа/порядковый_номер_отправления)
  *
  * @property-read Delivery $delivery

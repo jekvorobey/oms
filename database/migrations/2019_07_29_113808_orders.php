@@ -19,7 +19,6 @@ class Orders extends Migration
         Schema::create('baskets', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('customer_id')->unsigned()->nullable();
-            $table->bigInteger('order_id')->unsigned()->nullable();
         
             $table->boolean('is_belongs_to_order')->default(false);
         
@@ -35,31 +34,26 @@ class Orders extends Migration
             $table->string('name');
             $table->decimal('qty', 18, 4);
             $table->decimal('price', 18, 4)->nullable();
-            $table->boolean('is_reserved')->default(false);
-            $table->bigInteger('reserved_by')->nullable();
-            $table->timestamp('reserved_at')->nullable();
         
             $table->timestamps();
         
-            $table->foreign('basket_id')
-                ->references('id')
-                ->on('baskets');
+            $table->foreign('basket_id')->references('id')->on('baskets');
         });
         
         Schema::create('orders', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('basket_id')->unsigned();
             $table->bigInteger('customer_id')->unsigned()->nullable();
-
-            $table->string('number');
-            $table->decimal('cost', 18, 4);
             $table->tinyInteger('status')->unsigned()->default(1);
-            $table->text('manager_comment')->nullable();
             $table->tinyInteger('payment_status', false, true)->default(1);
-            // delivery
             $table->tinyInteger('delivery_type')->unsigned();
             $table->tinyInteger('delivery_service')->unsigned();
             $table->tinyInteger('delivery_method')->unsigned();
+
+            $table->string('number');
+            $table->decimal('cost', 18, 4);
+            $table->text('manager_comment')->nullable();
+            // delivery
             $table->json('delivery_address');
             $table->text('delivery_comment')->nullable();
             $table->string('receiver_name')->nullable();
@@ -88,14 +82,14 @@ class Orders extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('order_id')->unsigned();
-            $table->float('sum');
-            $table->tinyInteger('status', false, true)->default(1);
-            $table->tinyInteger('type', false, true);
             $table->tinyInteger('payment_system', false, true);
+            $table->tinyInteger('status', false, true)->default(1);
+            
+            $table->float('sum');
+            $table->tinyInteger('type', false, true);
             $table->dateTime('payed_at')->nullable();
             $table->dateTime('expires_at')->nullable();
             $table->dateTime('created_at');
-
             $table->json('data');
 
             $table->foreign('order_id')->references('id')->on('orders');
@@ -120,6 +114,9 @@ class Orders extends Migration
         Schema::create('delivery', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('order_id')->unsigned();
+            $table->bigInteger('delivery_method')->unsigned();
+            $table->tinyInteger('delivery_service')->unsigned();
+            $table->tinyInteger('status', false, true)->default(1);
     
             $table->string('xml_id')->nullable();
             $table->string('number');
@@ -127,10 +124,7 @@ class Orders extends Migration
             $table->decimal('height', 18, 4);
             $table->decimal('length', 18, 4);
             $table->decimal('weight', 18, 4);
-            $table->bigInteger('delivery_method')->unsigned();
-            $table->tinyInteger('delivery_service')->unsigned();
             $table->dateTime('delivery_at')->nullable();
-            $table->tinyInteger('status', false, true)->default(1);
             
             $table->timestamps();
         
@@ -143,10 +137,9 @@ class Orders extends Migration
             $table->bigInteger('merchant_id')->unsigned();
             $table->bigInteger('store_id')->unsigned();
             $table->bigInteger('cargo_id')->unsigned()->nullable();
-    
-            $table->string('xml_id')->nullable();
-            $table->string('number');
             $table->tinyInteger('status', false, true)->default(1);
+    
+            $table->string('number');
             
             $table->timestamps();
         

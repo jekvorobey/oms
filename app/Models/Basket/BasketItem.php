@@ -5,7 +5,6 @@ namespace App\Models\Basket;
 use App\Models\OmsModel;
 use App\Models\Order\OrderHistoryEvent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 
 /**
  * Класс-модель для сущности "Элемент корзины"
@@ -13,13 +12,11 @@ use Illuminate\Support\Carbon;
  * @package App\Models
  *
  * @property int $basket_id - id корзины
+ * @property int $store_id - id склада
  * @property int $offer_id - id предложения мерчанта
  * @property string $name - название товара
  * @property float $qty - кол-во
  * @property float|null $price - цена за единицу товара
- * @property bool $is_reserved - товар зарезервирован?
- * @property int $reserved_by - кем зарезервирован
- * @property Carbon $reserved_at - когда зарезервирован
  *
  * @property-read Basket $basket
  *
@@ -27,12 +24,11 @@ use Illuminate\Support\Carbon;
  *     schema="BasketItem",
  *     @OA\Property(property="id", type="integer"),
  *     @OA\Property(property="basket_id", type="integer"),
+ *     @OA\Property(property="store_id", type="integer"),
  *     @OA\Property(property="offer_id", type="integer"),
  *     @OA\Property(property="name", type="string"),
  *     @OA\Property(property="qty", type="integer"),
- *     @OA\Property(property="is_reserved", type="integer"),
- *     @OA\Property(property="reserved_by", type="integer"),
- *     @OA\Property(property="reserved_at", type="string"),
+ *     @OA\Property(property="price", type="number"),
  * )
  */
 class BasketItem extends OmsModel
