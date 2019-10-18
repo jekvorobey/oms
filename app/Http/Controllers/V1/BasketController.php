@@ -5,7 +5,9 @@ namespace App\Http\Controllers\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Basket\Basket;
 use App\Models\Order\Order;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -35,33 +37,49 @@ class BasketController extends Controller
      *         )
      *     ),
      * )
-     *
-     * @param int $userId
-     * @param Request $request
+     * @param  int  $userId
+     * @param  Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getCurrentBasket(int $userId, Request $request)
+    public function getCurrentBasket(int $userId, Request $request): JsonResponse
     {
         $basket = Basket::findFreeUserBasket($userId);
         $response = [
-            'id' => $basket->id
+            'id' => $basket->id,
         ];
         if ($request->get('items')) {
             $response['items'] = $this->getItems($basket);
         }
+        
         return response()->json($response);
     }
     
-    public function setItemByBasket(int $basketId, int $offerId, Request $request)
+    /**
+     * @param  int  $basketId
+     * @param  int  $offerId
+     * @param  Request  $request
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function setItemByBasket(int $basketId, int $offerId, Request $request): JsonResponse
     {
+        /** @var Basket $basket */
         $basket = Basket::find($basketId);
         if (!$basket) {
             throw new NotFoundHttpException('basket not found');
         }
+        
         return $this->setItem($basket, $offerId, $request);
     }
     
-    public function setItemByOrder(int $id, int $offerId, Request $request)
+    /**
+     * @param  int  $id
+     * @param  int  $offerId
+     * @param  Request  $request
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    public function setItemByOrder(int $id, int $offerId, Request $request): JsonResponse
     {
         /** @var Order $order */
         $order = Order::find($id);
@@ -69,15 +87,24 @@ class BasketController extends Controller
             throw new NotFoundHttpException('order not found');
         }
         $basket = $order->getOrCreateBasket();
+        
         return $this->setItem($basket, $offerId, $request);
     }
     
-    protected function setItem(Basket $basket, int $offerId, Request $request)
+    /**
+     * @param  Basket  $basket
+     * @param  int  $offerId
+     * @param  Request  $request
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    protected function setItem(Basket $basket, int $offerId, Request $request): JsonResponse
     {
         $data = $request->all();
         $validator = Validator::make($data, [
+            'store_id' => 'required|int',
             'name' => 'nullable|string',
-            'qty' => 'nullable|integer'
+            'qty' => 'nullable|integer',
         ]);
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
@@ -90,32 +117,51 @@ class BasketController extends Controller
         if ($request->get('items')) {
             $response['items'] = $this->getItems($basket);
         }
+        
         return response()->json($response);
     }
     
+    /**
+     * @param  int  $basketId
+     * @param  Request  $request
+     * @return JsonResponse
+     */
     public function getBasket(int $basketId, Request $request)
     {
+        /** @var Basket $basket */
         $basket = Basket::find($basketId);
         $response = [
-            'id' => $basket->id
+            'id' => $basket->id,
         ];
         if ($request->get('items')) {
             $response['items'] = $this->getItems($basket);
         }
+        
         return response()->json($response);
     }
     
-    public function dropBasket(int $basketId)
+    /**
+     * @param  int  $basketId
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @throws \Exception
+     */
+    public function dropBasket(int $basketId): Response
     {
+        /** @var Basket $basket */
         $basket = Basket::find($basketId);
         $ok = $basket->delete();
         if (!$ok) {
             throw new HttpException(500, 'unable to delete basket');
         }
+        
         return response('', 204);
     }
     
-    protected function getItems(Basket $basket)
+    /**
+     * @param  Basket  $basket
+     * @return array
+     */
+    protected function getItems(Basket $basket): array
     {
         return $basket->items->toArray();
     }

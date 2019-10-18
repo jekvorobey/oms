@@ -4,7 +4,7 @@ namespace App\Models\Order;
 
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
-use App\Models\Delivery\Shipment;
+use App\Models\Delivery\Delivery;
 use App\Models\OmsModel;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -19,25 +19,45 @@ use Illuminate\Support\Collection;
  *
  * @property int $customer_id - id покупателя
  * @property int $basket_id - id корзины
+ * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
+ * @property int $delivery_service - служба доставки (DPD, CDEK и т.д.)
+ * @property int $delivery_method - способ доставки (самовывоз из ПВЗ, самовывоз из постомата, доставка)
  *
  * @property string $number - номер
  * @property float $cost - стоимость
  * @property int $status - статус
  * @property int $payment_status - статус оплаты
- * @property string $manager_comment - комментарий
- *
- * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
- * @property int $delivery_method - способ доставки
- * @property array $delivery_address
- * @property string $delivery_comment
- * @property string $receiver_name
- * @property string $receiver_phone
- * @property string $receiver_email
+ * @property string $manager_comment - комментарий менеджера
+ * @property array $delivery_address - адрес доставки
+ * @property string $delivery_comment - комментарий к доставке
+ * @property string $receiver_name - имя получателя
+ * @property string $receiver_phone - телефон получателя
+ * @property string $receiver_email - e-mail получателя
  *
  * @property Basket $basket - корзина
  * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
  * @property Collection|Payment[] $payments - оплаты заказа
- * @property Collection|Delivery[] $shipments
+ * @property Collection|Delivery[] $deliveries - доставка заказа
+ *
+ * @OA\Schema(
+ *     schema="OrderItem",
+ *     @OA\Property(property="id", type="integer", description="id заказа"),
+ *     @OA\Property(property="customer_id", type="integer", description="id покупателя"),
+ *     @OA\Property(property="basket_id", type="integer", description="id корзины"),
+ *     @OA\Property(property="basket", ref="#/components/schemas/BasketItem"),
+ *     @OA\Property(property="delivery_type", type="string", description="тип доставки (одним отправлением, несколькими отправлениями)"),
+ *     @OA\Property(property="delivery_service", type="string", description="служба доставки (DPD, CDEK и т.д.)"),
+ *     @OA\Property(property="delivery_method", type="string", description="способ доставки (самовывоз из ПВЗ, самовывоз из постомата, доставка)"),
+ *     @OA\Property(property="number", type="string", description="номер"),
+ *     @OA\Property(property="cost", type="number", description="стоимость"),
+ *     @OA\Property(property="payment_status", type="integer", description="статус оплаты"),
+ *     @OA\Property(property="manager_comment", type="string", description="комментарий менеджера"),
+ *     @OA\Property(property="delivery_address", type="string", description="адрес доставки"),
+ *     @OA\Property(property="delivery_comment", type="string", description="комментарий к доставке"),
+ *     @OA\Property(property="receiver_name", type="string", description="имя получателя"),
+ *     @OA\Property(property="receiver_phone", type="string", description="телефон получателя"),
+ *     @OA\Property(property="receiver_email", type="string", description="e-mail получателя"),
+ * )
  */
 class Order extends OmsModel
 {
@@ -58,9 +78,9 @@ class Order extends OmsModel
         return $this->hasMany(Payment::class);
     }
     
-    public function shipments(): HasMany
+    public function deliveries(): HasMany
     {
-        return $this->hasMany(Shipment::class);
+        return $this->hasMany(Delivery::class);
     }
     
     /**

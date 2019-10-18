@@ -35,9 +35,13 @@ class OrdersController extends Controller
      *     @OA\Response(
      *         response=200,
      *         description="OK",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items",type="array", @OA\Items(
+     *                  ref="#/components/schemas/OrderItem"
+     *             )),
+     *         )
      *     ),
      * )
-     * @todo уточнить типы в swagger
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */

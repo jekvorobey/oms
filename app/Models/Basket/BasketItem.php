@@ -7,7 +7,7 @@ use App\Models\Order\OrderHistoryEvent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Класс-модель для сущности "Элемент корзины"
+ * Состав корзины
  * Class BasketItem
  * @package App\Models
  *
@@ -22,13 +22,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @OA\Schema(
  *     schema="BasketItem",
- *     @OA\Property(property="id", type="integer"),
- *     @OA\Property(property="basket_id", type="integer"),
- *     @OA\Property(property="store_id", type="integer"),
- *     @OA\Property(property="offer_id", type="integer"),
- *     @OA\Property(property="name", type="string"),
- *     @OA\Property(property="qty", type="integer"),
- *     @OA\Property(property="price", type="number"),
+ *     @OA\Property(property="id", type="integer", description="id оффера в корзине"),
+ *     @OA\Property(property="basket_id", type="integer", description="id корзины"),
+ *     @OA\Property(property="store_id", type="integer", description="id склада"),
+ *     @OA\Property(property="offer_id", type="integer", description="id предложения мерчанта"),
+ *     @OA\Property(property="name", type="string", description="название товара"),
+ *     @OA\Property(property="qty", type="integer", description="кол-во"),
+ *     @OA\Property(property="price", type="number", description="цена"),
  * )
  */
 class BasketItem extends OmsModel
