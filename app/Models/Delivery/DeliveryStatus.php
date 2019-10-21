@@ -115,12 +115,30 @@ class DeliveryStatus
     {
         return [
             self::STATUS_CREATED,
-            self::STATUS_REQUEST_SEND,
-            self::STATUS_SHIPPED,
+            
+            self::STATUS_UPLOADING,
+            self::STATUS_UPLOADED,
+            self::STATUS_UPLOADING_ERROR,
+            
+            self::STATUS_ON_POINT_IN,
+            self::STATUS_ON_WAY,
+            self::STATUS_ON_POINT_OUT,
+            self::STATUS_DELIVERING,
+            self::STATUS_READY_FOR_RECIPIENT,
             self::STATUS_DONE,
-            self::STATUS_SHIPPING_PROBLEM,
-            self::STATUS_DELIVERY_PROBLEM,
+            
+            self::STATUS_RETURNED_FROM_DELIVERY,
+            self::STATUS_PARTIAL_RETURN,
+            self::STATUS_RETURN_READY,
+            self::STATUS_RETURNING,
+            self::STATUS_RETURNED,
+            
+            self::STATUS_LOST,
+            self::STATUS_PROBLEM,
             self::STATUS_CANCEL,
+            
+            self::STATUS_UNKNOWN,
+            self::STATUS_NA,
         ];
     }
     

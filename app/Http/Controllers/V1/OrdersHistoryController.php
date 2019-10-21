@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order\Order;
 use App\Models\Order\OrderHistoryEvent;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Http\Request;
@@ -37,7 +36,7 @@ class OrdersHistoryController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function list(Request $request)
+    public function read(Request $request)
     {
         $restQuery = new RestQuery($request);
         return response()->json([

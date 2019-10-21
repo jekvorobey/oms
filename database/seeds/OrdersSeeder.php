@@ -3,10 +3,10 @@
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\DeliveryMethod;
+use App\Models\Delivery\DeliveryService;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
-use App\Models\ReserveStatus;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Pim\Core\PimException;
@@ -61,6 +61,7 @@ class OrdersSeeder extends Seeder
             foreach ($basketOffers as $basketOffer) {
                 $basketItem = new BasketItem();
                 $basketItem->basket_id = $basket->id;
+                $basketItem->store_id = rand(1, 8);
                 $basketItem->offer_id = $basketOffer->id;
                 $basketItem->name = $products[$basketOffer->product_id]->name;
                 $basketItem->qty = $faker->randomDigitNotNull;
@@ -76,13 +77,17 @@ class OrdersSeeder extends Seeder
             $order->number = 'IBT' . $faker->dateTimeThisYear()->format('Ymdhis');
             $order->cost = $faker->numberBetween(1, 1000);
             $order->status = $faker->randomElement(OrderStatus::validValues());
-            $order->reserve_status = $faker->randomElement(ReserveStatus::validValues());
             $order->created_at = $faker->dateTimeThisYear();
-            //$order->manager_comment = $faker->realText();
+            $order->manager_comment = $faker->realText();
     
+            $order->delivery_service = $faker->randomElement(DeliveryService::validValues());
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
             $order->delivery_method = $faker->randomElement(DeliveryMethod::validValues());
             $order->delivery_address = [];
+            
+            $order->receiver_name = $faker->name;
+            $order->receiver_phone = $faker->phoneNumber;
+            $order->receiver_email = $faker->email;
     
             $order->save();
             $basket->is_belongs_to_order = true;

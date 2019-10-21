@@ -2,8 +2,8 @@
 
 namespace App\Models\Delivery;
 
-use App\Models\OmsModel;
 use Carbon\Carbon;
+use Greensight\CommonMsa\Models\AbstractModel;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -27,9 +27,31 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property-read Collection|Shipment[] $shipments
  */
-class Delivery extends OmsModel
+class Delivery extends AbstractModel
 {
     use WithWeightAndSizes;
+    
+    /**
+     * Заполняемые поля модели
+     */
+    const FILLABLE = [
+        'order_id',
+        'status',
+        'delivery_method',
+        'delivery_service',
+        'xml_id',
+        'number',
+        'width',
+        'height',
+        'length',
+        'weight',
+        'delivery_at',
+    ];
+    
+    /**
+     * @var array
+     */
+    protected $fillable = self::FILLABLE;
     
     /** @var array */
     private const SIDES = ['width', 'height', 'length'];

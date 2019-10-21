@@ -6,12 +6,12 @@ use App\Core\Order\OrderReader;
 use App\Core\Order\OrderWriter;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery\DeliveryMethod;
+use App\Models\Delivery\DeliveryService;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
-use App\Models\ReserveStatus;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -149,9 +149,14 @@ class OrdersController extends Controller
         // todo Добавить провеку прав
         $data = $request->all();
         $validator = Validator::make($data, [
+            'basket_id' => 'required|integer',
             'customer_id' => 'required|integer',
             'cost' => 'required|numeric',
+
+            'status' => ['nullable', Rule::in(OrderStatus::validValues())],
+            'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
             
+            'delivery_service' => ['nullable', Rule::in(DeliveryService::validValues())],
             'delivery_method' => ['nullable', Rule::in(DeliveryMethod::validValues())],
             'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
             'delivery_comment' => ['nullable', 'string'],
@@ -159,6 +164,8 @@ class OrdersController extends Controller
             'receiver_name' => ['nullable', 'string'],
             'receiver_phone' => ['nullable', 'string'],
             'receiver_email' => ['nullable', 'string', 'email'],
+
+            'manager_comment' => ['nullable', 'string'],
         ]);
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
@@ -202,13 +209,14 @@ class OrdersController extends Controller
         }
         $data = $request->all();
         $validator = Validator::make($data, [
+            'basket_id' => 'nullable|integer',
             'customer_id' => 'nullable|integer',
             'cost' => 'nullable|numeric',
             
             'status' => ['nullable', Rule::in(OrderStatus::validValues())],
-            'reserve_status' => ['nullable', Rule::in(ReserveStatus::validValues())],
             'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
-            
+
+            'delivery_service' => ['nullable', Rule::in(DeliveryService::validValues())],
             'delivery_method' => ['nullable', Rule::in(DeliveryMethod::validValues())],
             'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
             'delivery_comment' => ['nullable', 'string'],
