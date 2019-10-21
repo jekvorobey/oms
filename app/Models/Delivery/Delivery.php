@@ -2,8 +2,8 @@
 
 namespace App\Models\Delivery;
 
+use App\Models\OmsModel;
 use Carbon\Carbon;
-use Greensight\CommonMsa\Models\AbstractModel;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property-read Collection|Shipment[] $shipments
  */
-class Delivery extends AbstractModel
+class Delivery extends OmsModel
 {
     use WithWeightAndSizes;
     

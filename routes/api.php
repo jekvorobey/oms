@@ -55,7 +55,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             
             Route::prefix('delivery')->namespace('Delivery')->group(function () {
                 Route::get('count', 'DeliveryController@count');
-                Route::get('', 'DeliveryController@read');
+                Route::get('', 'DeliveryController@readByOrder');
                 Route::post('', 'DeliveryController@create');
             });
             
@@ -90,11 +90,11 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 
                 Route::prefix('shipments')->group(function () {
                     Route::get('', 'ShipmentsController@count');
-                    Route::get('', 'ShipmentsController@read');
+                    Route::get('', 'ShipmentsController@readByDelivery');
                     Route::post('', 'ShipmentsController@create');
                 });
                 
-                Route::put('','DeliveryController@edit');
+                Route::put('','DeliveryController@update');
                 Route::delete('','DeliveryController@delete');
             });
         });
@@ -110,16 +110,16 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 
                 Route::prefix('shipment-packages')->group(function () {
                     Route::get('', 'ShipmentPackageController@count');
-                    Route::get('', 'ShipmentPackageController@read');
+                    Route::get('', 'ShipmentPackageController@readByShipment');
                     Route::post('', 'ShipmentPackageController@create');
                 });
     
-                Route::put('','ShipmentsController@edit');
+                Route::put('','ShipmentsController@update');
                 Route::delete('','ShipmentsController@delete');
             });
         });
         
-        Route::prefix('shipment-packages/{packageId}')->group(function () {
+        Route::prefix('shipment-packages/{$id}')->group(function () {
             Route::put('wrapper', 'ShipmentPackageController@updateWrapper');
             Route::put('items/{basketItemId}', 'ShipmentPackageController@setItem');
             Route::delete('', 'ShipmentPackageController@delete');
@@ -131,7 +131,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     
             Route::prefix('{id}')->group(function () {
                 Route::get('', 'CargoController@read');
-                Route::put('','CargoController@edit');
+                Route::put('','CargoController@update');
                 Route::delete('','CargoController@delete');
             });
         });

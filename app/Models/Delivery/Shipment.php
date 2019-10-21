@@ -27,6 +27,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Shipment extends OmsModel
 {
+    /**
+     * Заполняемые поля модели
+     */
+    const FILLABLE = [
+        'delivery_id',
+        'merchant_id',
+        'store_id',
+        'cargo_id',
+        'number',
+    ];
+    
+    /**
+     * @var array
+     */
+    protected $fillable = self::FILLABLE;
+    
     /** @var string */
     protected $table = 'shipments';
     
@@ -58,13 +74,14 @@ class Shipment extends OmsModel
     {
         parent::boot();
         
-        self::created(function (self $shipment) {
+        //todo Доделать сохранение истории
+        /*self::created(function (self $shipment) {
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $shipment->delivery->order_id, $shipment);
         });
     
         self::updated(function (self $shipment) {
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $shipment->delivery->order_id, $shipment);
-        });
+        });*/
         
         self::saved(function (self $shipment) {
             $oldCargoId = $shipment->getOriginal('cargo_id');
@@ -87,7 +104,8 @@ class Shipment extends OmsModel
         });
     
         self::deleting(function (self $shipment) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $shipment->delivery->order_id, $shipment);
+            //todo Доделать сохранение истории
+            //OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $shipment->delivery->order_id, $shipment);
             foreach ($shipment->packages as $package) {
                 $package->delete();
             }

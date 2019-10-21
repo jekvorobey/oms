@@ -12,7 +12,10 @@ use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
 use Greensight\CommonMsa\Rest\Controller\UpdateAction;
 use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
+use Greensight\CommonMsa\Rest\RestQuery;
+use Greensight\CommonMsa\Rest\RestSerializable;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -26,7 +29,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class DeliveryController
- * @package App\Http\Controllers\V1
+ * @package App\Http\Controllers\V1\Delivery
  */
 class DeliveryController extends Controller
 {
@@ -169,7 +172,7 @@ class DeliveryController extends Controller
     }
     
     /**
-     * Подситать кол-во доставок
+     * Подсчитать кол-во доставок
      * @param  Request  $request
      * @param  RequestInitiator  $client
      * @return \Illuminate\Http\JsonResponse
@@ -231,14 +234,44 @@ class DeliveryController extends Controller
     }
     
     /**
-     * Информация о доставке
+     * Список доставок / информация о доставке
      * @param  Request  $request
      * @param  RequestInitiator  $client
      * @return \Illuminate\Http\JsonResponse
      */
-    public function read(Request $request, RequestInitiator $client)
+    public function read(Request $request, RequestInitiator $client): JsonResponse
     {
         return $this->readTrait($request, $client);
+    }
+    
+    /**
+     * Список доставок заказа
+     * @param  int  $orderId
+     * @param  Request  $request
+     * @param  RequestInitiator  $client
+     * @return JsonResponse
+     */
+    public function readByOrder(int $orderId, Request $request, RequestInitiator $client): JsonResponse
+    {
+        /** @var Model|RestSerializable $modelClass */
+        $modelClass = $this->modelClass();
+        $restQuery = new RestQuery($request);
+    
+        $pagination = $restQuery->getPage();
+        $baseQuery = $modelClass::query();
+        if ($pagination) {
+            $baseQuery->offset($pagination['offset'])->limit($pagination['limit']);
+        }
+        $query = $modelClass::modifyQuery($baseQuery->where('order_id', $orderId), $restQuery);
+    
+        $items = $query->get()
+            ->map(function (RestSerializable $model) use ($restQuery) {
+                return $model->toRest($restQuery);
+            });
+    
+        return response()->json([
+            'items' => $items
+        ]);
     }
     
     /**
@@ -251,7 +284,7 @@ class DeliveryController extends Controller
      *     path="/api/v1/delivery/{id}",
      *     tags={"delivery"},
      *     summary="Изменить доставку",
-     *     operationId="createDelivery",
+     *     operationId="updateDelivery",
      *     @OA\Parameter(description="ID доставки", in="path", name="id", required=true, @OA\Schema(type="integer")),
      *      @OA\RequestBody(
      *         required=true,
@@ -266,7 +299,7 @@ class DeliveryController extends Controller
      *     ),
      * )
      */
-    public function edit(int $id, Request $request, RequestInitiator $client): Response
+    public function update(int $id, Request $request, RequestInitiator $client): Response
     {
         return $this->updateTrait($id, $request, $client);
     }

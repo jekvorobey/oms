@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Greensight\CommonMsa\Models\AbstractModel;
 use Illuminate\Support\Carbon;
 
 /**
@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
  *
  * @method static static find(int|array $id)
  */
-class OmsModel extends Model
+class OmsModel extends AbstractModel
 {
     /** @var bool */
     protected static $unguarded = true;
