@@ -5,7 +5,7 @@ namespace App\Models\Delivery;
 /**
  * Тип доставки
  * Class DeliveryType
- * @package App\Models
+ * @package App\Models\Delivery
  */
 class DeliveryType
 {
@@ -41,7 +41,7 @@ class DeliveryType
     }
     
     /**
-     * DeliveryService constructor.
+     * DeliveryType constructor.
      * @param  int  $id
      * @param  string  $name
      */

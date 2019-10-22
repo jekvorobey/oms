@@ -7,7 +7,7 @@ namespace App\Models\Delivery;
  * P.S. Статусы доставки груза от службы доставки мы не получаем,
  * статусы будут передаваться отдельно для заказов на доставку (доставок у нас), которые входят в груз (см. DeliveryStatus)
  * Class CargoStatus
- * @package App\Models
+ * @package App\Models\Delivery
  */
 class CargoStatus
 {
@@ -56,7 +56,7 @@ class CargoStatus
     }
     
     /**
-     * DeliveryService constructor.
+     * CargoStatus constructor.
      * @param  int  $id
      * @param  string  $name
      */

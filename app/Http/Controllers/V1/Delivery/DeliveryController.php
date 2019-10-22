@@ -183,6 +183,36 @@ class DeliveryController extends Controller
     }
     
     /**
+     * Подсчитать кол-во доставок заказа
+     * @param int $orderId
+     * @param  Request  $request
+     * @param  RequestInitiator  $client
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function countByDelivery(int $orderId, Request $request, RequestInitiator $client): JsonResponse
+    {
+        /** @var Model|RestSerializable $modelClass */
+        $modelClass = $this->modelClass();
+        $restQuery = new RestQuery($request);
+        
+        
+        $pagination = $restQuery->getPage();
+        $pageSize = $pagination ? $pagination['limit'] : ReadAction::$PAGE_SIZE;
+        $baseQuery = $modelClass::query();
+        
+        $query = $modelClass::modifyQuery($baseQuery->where('order_id', $orderId), $restQuery);
+        $total = $query->count();
+        
+        $pages = ceil($total / $pageSize);
+        
+        return response()->json([
+            'total' => $total,
+            'pages' => $pages,
+            'pageSize' => $pageSize,
+        ]);
+    }
+    
+    /**
      * Создать доставку
      * @param  int  $orderId
      * @param  Request  $request

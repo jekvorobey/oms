@@ -5,7 +5,7 @@ namespace App\Models\Delivery;
 /**
  * Статус доставки
  * Class DeliveryStatus
- * @package App\Models
+ * @package App\Models\Delivery
  */
 class DeliveryStatus
 {
@@ -143,7 +143,7 @@ class DeliveryStatus
     }
     
     /**
-     * DeliveryService constructor.
+     * DeliveryStatus constructor.
      * @param  int  $id
      * @param  string  $name
      * @param  string  $xml_id

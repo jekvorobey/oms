@@ -42,8 +42,9 @@ class ShipmentItem extends OmsModel
     protected static function boot()
     {
         parent::boot();
-        
-        self::created(function (self $shipmentItem) {
+    
+        //todo Доделать сохранение истории
+        /*self::created(function (self $shipmentItem) {
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $shipmentItem->shipment->delivery->order_id, $shipmentItem);
         });
     
@@ -53,6 +54,6 @@ class ShipmentItem extends OmsModel
     
         self::deleting(function (self $shipmentItem) {
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $shipmentItem->shipment->delivery->order_id, $shipmentItem);
-        });
+        });*/
     }
 }

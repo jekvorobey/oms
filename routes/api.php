@@ -54,13 +54,13 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             });
             
             Route::prefix('delivery')->namespace('Delivery')->group(function () {
-                Route::get('count', 'DeliveryController@count');
-                Route::get('', 'DeliveryController@readByOrder');
-                Route::post('', 'DeliveryController@create');
+                Route::get('count', 'DeliveryController@countByOrder');//+
+                Route::get('', 'DeliveryController@readByOrder');//+
+                Route::post('', 'DeliveryController@create');//+
             });
             
-            Route::put('', 'OrdersController@update');
-            Route::delete('', 'OrdersController@delete');
+            Route::put('', 'OrdersController@update');//+
+            Route::delete('', 'OrdersController@delete');//+
         });
 
         Route::get('', 'OrdersController@read');
@@ -79,50 +79,63 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     
     Route::namespace('Delivery')->group(function () {
         Route::prefix('delivery')->group(function () {
-            Route::get('count', 'DeliveryController@count');
-            Route::get('', 'DeliveryController@read');
+            Route::get('count', 'DeliveryController@count');//+
+            Route::get('', 'DeliveryController@read');//+
             
             Route::get('', 'DeliveryController@info'); //todo Временный
             Route::get('pvz', 'DeliveryController@infoPvz');  //todo Временный
         
             Route::prefix('{id}')->group(function () {
-                Route::get('', 'DeliveryController@read');
+                Route::get('', 'DeliveryController@read');//+
                 
                 Route::prefix('shipments')->group(function () {
-                    Route::get('', 'ShipmentsController@count');
-                    Route::get('', 'ShipmentsController@readByDelivery');
-                    Route::post('', 'ShipmentsController@create');
+                    Route::get('count', 'ShipmentsController@countByDelivery');//+
+                    Route::get('', 'ShipmentsController@readByDelivery');//+
+                    Route::post('', 'ShipmentsController@create');//+
                 });
                 
-                Route::put('','DeliveryController@update');
-                Route::delete('','DeliveryController@delete');
+                Route::put('','DeliveryController@update');//+
+                Route::delete('','DeliveryController@delete');//+
             });
         });
         
         Route::prefix('shipments')->group(function () {
-            Route::get('count', 'ShipmentsController@count');
-            Route::get('', 'ShipmentsController@read');
+            Route::get('count', 'ShipmentsController@count');//+
+            Route::get('', 'ShipmentsController@read');//+
     
             Route::prefix('{id}')->group(function () {
-                Route::get('', 'ShipmentsController@read');
+                Route::get('', 'ShipmentsController@read');//+
     
-                Route::put('items/{basketItemId}', 'ShipmentsController@setItem');
+                Route::prefix('items')->group(function () {
+                    Route::get('count', 'ShipmentsController@countItems');//+
+                    Route::get('', 'ShipmentsController@readItems');//+
+                    Route::get('{basketItemId}', 'ShipmentsController@readItem');//+
+                    Route::post('{basketItemId}', 'ShipmentsController@createItem');//+
+                    Route::delete('{basketItemId}', 'ShipmentsController@deleteItem');//+
+                });
                 
                 Route::prefix('shipment-packages')->group(function () {
-                    Route::get('', 'ShipmentPackageController@count');
-                    Route::get('', 'ShipmentPackageController@readByShipment');
-                    Route::post('', 'ShipmentPackageController@create');
+                    Route::get('count', 'ShipmentPackagesController@countByShipment');//+
+                    Route::get('', 'ShipmentPackagesController@readByShipment');//+
+                    Route::post('', 'ShipmentPackagesController@create');//+
                 });
     
-                Route::put('','ShipmentsController@update');
-                Route::delete('','ShipmentsController@delete');
+                Route::put('','ShipmentsController@update');//+
+                Route::delete('','ShipmentsController@delete');//+
             });
         });
         
         Route::prefix('shipment-packages/{$id}')->group(function () {
-            Route::put('wrapper', 'ShipmentPackageController@updateWrapper');
-            Route::put('items/{basketItemId}', 'ShipmentPackageController@setItem');
-            Route::delete('', 'ShipmentPackageController@delete');
+            Route::prefix('items')->group(function () {
+                Route::get('count', 'ShipmentPackagesController@countItems');//+
+                Route::get('', 'ShipmentPackagesController@readItems');//+
+                Route::get('{basketItemId}', 'ShipmentPackagesController@readItem');//+
+                Route::post('{basketItemId}', 'ShipmentPackagesController@createItem');//+
+                Route::delete('{basketItemId}', 'ShipmentPackagesController@deleteItem');//+
+            });
+            
+            Route::put('', 'ShipmentPackagesController@update');//+
+            Route::delete('', 'ShipmentPackagesController@delete');//+
         });
         
         Route::prefix('cargo')->group(function () {

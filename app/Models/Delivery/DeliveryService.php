@@ -5,7 +5,7 @@ namespace App\Models\Delivery;
 /**
  * Служба доставки на последней миле (доставка от распределительного центра до места получения заказа)
  * Class DeliveryService
- * @package App\Models
+ * @package App\Models\Delivery
  */
 class DeliveryService
 {

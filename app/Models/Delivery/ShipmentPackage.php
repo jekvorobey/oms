@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @package App\Models\Delivery
  *
  * @property int $shipment_id
+ * @property int $package_id
  * @property int $status
  *
  * @property double $width
@@ -23,11 +24,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ShipmentPackage extends OmsModel
 {
+    /**
+     * Заполняемые поля модели
+     */
+    const FILLABLE = [
+        'shipment_id',
+        'package_id',
+        'status',
+        'width',
+        'height',
+        'length',
+        'weight',
+        'wrapper_weight',
+    ];
+    
+    /**
+     * @var array
+     */
+    protected $fillable = self::FILLABLE;
+    
     /** @var string */
     protected $table = 'shipment_packages';
     
     /** @var array */
     protected $casts = [
+        'wrapper_weight' => 'float',
         'weight' => 'float',
         'width' => 'float',
         'height' => 'float',

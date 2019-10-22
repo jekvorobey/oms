@@ -5,7 +5,7 @@ namespace App\Models\Delivery;
 /**
  * Способ доставки на последней миле (доставка до места получения заказа)
  * Class DeliveryMethod
- * @package App\Models
+ * @package App\Models\Delivery
  */
 class DeliveryMethod
 {
@@ -46,7 +46,7 @@ class DeliveryMethod
     }
     
     /**
-     * DeliveryService constructor.
+     * DeliveryMethod constructor.
      * @param  int  $id
      * @param  string  $name
      */

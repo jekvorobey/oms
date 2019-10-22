@@ -3,26 +3,26 @@
 namespace App\Models\Delivery;
 
 /**
- * Статус отправления
- * P.S. Статусы отправления от службы доставки мы не получаем,
- * статусы будут передаваться отдельно для заказов на доставку (доставок у нас), который содержит отправления
+ * Статус коробки отправления
  * Class ShipmentStatus
- * @package App\Models
+ * @package App\Models\Delivery
  */
-class ShipmentStatus
+class ShipmentPackageStatus
 {
-    /** @var int - создано (автоматически устанавливается платформой) */
+    /** @var int - создана (автоматически устанавливается платформой) */
     public const STATUS_CREATED = 1;
     /** @var int - в сборке (устанавливается вручную оператором мерчанта) */
     public const STATUS_ASSEMBLING = 2;
-    /** @var int - собрано (устанавливается вручную оператором мерчанта) */
+    /** @var int - собрана (устанавливается вручную оператором мерчанта) */
     public const STATUS_ASSEMBLED = 3;
     /** @var int - проблема при сборке (устанавливается вручную оператором мерчанта) */
     public const STATUS_ASSEMBLING_PROBLEM = 4;
-    /** @var int - просрочено  (автоматически устанавливается платформой) */
+    /** @var int - сборка просрочена (автоматически устанавливается платформой) */
     public const STATUS_TIMEOUT = 5;
-    /** @var int - отменено  (устанавливается вручную администратором iBT) */
+    /** @var int - сборка отменена (устанавливается вручную администратором iBT) */
     public const STATUS_CANCEL = 6;
+    /** @var int - утеряна при доставке (автоматически получается от службы доставки) */
+    public const STATUS_LOST = 7;
     
     /** @var int */
     public $id;
@@ -35,12 +35,13 @@ class ShipmentStatus
     public static function all()
     {
         return [
-            new self(self::STATUS_CREATED, 'Создано'),
+            new self(self::STATUS_CREATED, 'Создана'),
             new self(self::STATUS_ASSEMBLING, 'В сборке'),
-            new self(self::STATUS_ASSEMBLED, 'Собрано'),
+            new self(self::STATUS_ASSEMBLED, 'Собрана'),
             new self(self::STATUS_ASSEMBLING_PROBLEM, 'Проблема при сборке'),
-            new self(self::STATUS_TIMEOUT, 'Просрочено'),
-            new self(self::STATUS_CANCEL, 'Отменено'),
+            new self(self::STATUS_TIMEOUT, 'Сборка просрочена'),
+            new self(self::STATUS_CANCEL, 'Сборка отменена'),
+            new self(self::STATUS_LOST, 'Утеряна при доставке'),
         ];
     }
     
@@ -56,6 +57,7 @@ class ShipmentStatus
             self::STATUS_ASSEMBLING_PROBLEM,
             self::STATUS_TIMEOUT,
             self::STATUS_CANCEL,
+            self::STATUS_LOST,
         ];
     }
     
