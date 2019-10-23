@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V1\Delivery;
 
 use App\Http\Controllers\Controller;
+use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
@@ -30,6 +31,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class ShipmentPackagesController extends Controller
 {
+    use ReadAction {
+        read as readTrait;
+    }
     use UpdateAction {
         update as updateTrait;
     }
@@ -144,7 +148,7 @@ class ShipmentPackagesController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=204,
+     *         response=201,
      *         description="OK",
      *     ),
      * )
@@ -173,6 +177,17 @@ class ShipmentPackagesController extends Controller
         return response()->json([
             'id' => $shipmentPackage->id
         ], 201);
+    }
+    
+    /**
+     * Информация о коробке отправления
+     * @param  Request  $request
+     * @param  RequestInitiator  $client
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function read(Request $request, RequestInitiator $client): JsonResponse
+    {
+        return $this->readTrait($request, $client);
     }
     
     /**
@@ -319,7 +334,7 @@ class ShipmentPackagesController extends Controller
     }
     
     /**
-     * Информация об элементе (товар с одного склада одного мерчанта) отправления
+     * Информация об элементе (товар с одного склада одного мерчанта) коробки отправления
      * @param  int  $shipmentPackageId
      * @param  int  $basketItemId
      * @param  Request  $request
@@ -348,63 +363,58 @@ class ShipmentPackagesController extends Controller
     }
     
     /**
-     * Создать элемент (товар с одного склада одного мерчанта) отправления
+     * Добавить/обновить/удалить элемент (собранный товар с одного склада одного мерчанта) коробки отправления
      * @param  int  $shipmentPackageId
      * @param  int  $basketItemId
      * @param  Request  $request
      * @return Response
      */
-    public function createItem(int $shipmentPackageId, int $basketItemId, RequestInitiator $client): Response
+    public function setItem(int $shipmentPackageId, int $basketItemId, Request $request, RequestInitiator $client): Response
     {
-        /** @var ShipmentPackage $shipmentPackage */
-        $shipmentPackage = ShipmentPackage::find($shipmentPackageId);
-        if (!$shipmentPackage) {
-            throw new NotFoundHttpException('shipment not found');
-        }
+        // todo добавить проверку прав
+        $qty = (float) $request->input('qty');
+        $setBy = (int) $request->input('set_by');
     
-        //todo Проверка прав
-    
-        $shipmentPackageItem = new ShipmentPackageItem();
-        $shipmentPackageItem->shipment_package_id = $shipmentPackageId;
-        $shipmentPackageItem->basket_item_id = $basketItemId;
-        $ok = $shipmentPackageItem->save();
-        if (!$ok) {
-            throw new HttpException(500, 'unable to save shipment item');
-        }
-        
-        return response('', 201);
-    }
-    
-    /**
-     * Удалить элемент (товар с одного склада одного мерчанта) отправления
-     * @param  int  $shipmentPackageId
-     * @param  int  $basketItemId
-     * @param  RequestInitiator  $client
-     * @return Response
-     */
-    public function deleteItem(int $shipmentPackageId, int $basketItemId, RequestInitiator $client): Response
-    {
-        /** @var ShipmentPackageItem $shipmentPackageItem */
-        $shipmentPackageItem = ShipmentPackageItem::query()
+        $ok = true;
+        /** @var Model|RestSerializable $modelClass */
+        $modelClass = $this->modelItemsClass();
+        $shipmentPackageItem = $modelClass::query()
             ->where('shipment_package_id', $shipmentPackageId)
             ->where('basket_item_id', $basketItemId)
             ->first();
-        if (!$shipmentPackageItem) {
-            throw new NotFoundHttpException('shipment item not found');
+        if (!$qty && !is_null($shipmentPackageItem)) {
+            //Удаляем элемент из коробки отправления
+            try {
+                $ok = $shipmentPackageItem->delete();
+            } catch (\Exception $e) {
+                $ok = false;
+                $message = $e->getMessage();
+            }
+        } else {
+            /** @var BasketItem $basketItem */
+            $basketItem = BasketItem::find($basketItemId);
+            
+            if (!$setBy) {
+                $ok = false;
+                $message = 'set_by is empty';
+            } elseif ($basketItem->qty < $qty) {
+                $ok = false;
+                $message = 'shipment package qty can\'t be more than basket item qty';
+            } else {
+                if (is_null($shipmentPackageItem)) {
+                    $shipmentPackageItem = new $modelClass();
+                }
+                $shipmentPackageItem->updateOrCreate([
+                    'shipment_package_id' => $shipmentPackageId,
+                    'basket_item_id' => $basketItemId,
+                ], ['qty' => $qty, 'set_by' => $setBy]);
+            }
         }
-        
-        //todo Проверка прав
-        
-        try {
-            $ok = $shipmentPackageItem->delete();
-        } catch (\Exception $e) {
-            $ok = false;
-        }
-        
+    
         if (!$ok) {
-            throw new HttpException(500);
+            throw new HttpException(500, $message);
         }
-        
+    
         return response('', 204);
     }
 }

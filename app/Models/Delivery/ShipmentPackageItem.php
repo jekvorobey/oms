@@ -14,16 +14,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property int $shipment_package_id
  * @property int $basket_item_id
- * @property float $reserved_qty
- * @property int $reserved_by
+ * @property float $qty
+ * @property int $set_by
  *
  * @property-read ShipmentPackage $shipmentPackage
  * @property-read BasketItem $basketItem
  */
 class ShipmentPackageItem extends OmsModel
 {
+    /**
+     * Заполняемые поля модели
+     */
+    const FILLABLE = [
+        'shipment_package_id',
+        'basket_item_id',
+        'qty',
+        'set_by',
+    ];
+    
+    /**
+     * @var array
+     */
+    protected $fillable = self::FILLABLE;
+    
     /** @var string */
-    protected $table = 'shipment_packages_items';
+    protected $table = 'shipment_package_items';
     
     /**
      * @return BelongsTo
@@ -45,7 +60,8 @@ class ShipmentPackageItem extends OmsModel
     {
         parent::boot();
         
-        self::created(function (self $shipmentPackageItem) {
+        //todo Доделать сохранение истории
+        /*self::created(function (self $shipmentPackageItem) {
             OrderHistoryEvent::saveEvent(
                 OrderHistoryEvent::TYPE_CREATE,
                 $shipmentPackageItem->shipmentPackage->shipment->delivery->order_id,
@@ -67,6 +83,6 @@ class ShipmentPackageItem extends OmsModel
                 $shipmentPackageItem->shipmentPackage->shipment->delivery->order_id,
                 $shipmentPackageItem
             );
-        });
+        });*/
     }
 }

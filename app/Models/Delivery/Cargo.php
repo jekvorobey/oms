@@ -28,6 +28,26 @@ class Cargo extends OmsModel
 {
     use WithWeightAndSizes;
     
+    /**
+     * Заполняемые поля модели
+     */
+    const FILLABLE = [
+        'merchant_id',
+        'store_id',
+        'status',
+        'delivery_service',
+        'xml_id',
+        'width',
+        'height',
+        'length',
+        'weight',
+    ];
+    
+    /**
+     * @var array
+     */
+    protected $fillable = self::FILLABLE;
+    
     /** @var array */
     private const SIDES = ['width', 'height', 'length'];
     

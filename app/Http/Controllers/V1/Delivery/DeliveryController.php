@@ -232,7 +232,7 @@ class DeliveryController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=204,
+     *         response=201,
      *         description="OK",
      *     ),
      * )

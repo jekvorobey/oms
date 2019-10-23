@@ -181,11 +181,15 @@ class Orders extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('shipment_package_id')->unsigned();
             $table->bigInteger('basket_item_id')->unsigned();
-            $table->decimal('reserved_qty', 18, 4);
-            $table->bigInteger('reserved_by')->nullable();
+            $table->decimal('qty', 18, 4);
+            $table->bigInteger('set_by')->nullable();
+    
+            $table->timestamps();
     
             $table->foreign('shipment_package_id')->references('id')->on('shipment_packages');
             $table->foreign('basket_item_id')->references('id')->on('basket_items');
+    
+            $table->unique(['shipment_package_id', 'basket_item_id']);
         });
         
         Schema::create('orders_export', function (Blueprint $table) {
