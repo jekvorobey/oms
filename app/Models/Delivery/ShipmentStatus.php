@@ -16,7 +16,7 @@ class ShipmentStatus
     /** @var int - в сборке (устанавливается вручную оператором мерчанта) */
     public const STATUS_ASSEMBLING = 2;
     /** @var int - все товары отправления в наличии (устанавливается вручную оператором мерчанта) */
-    public const STATUS_ALL_PRODUCTS_AVAILABLE = 2;
+    public const STATUS_ALL_PRODUCTS_AVAILABLE = 3;
     /** @var int - собрано (устанавливается вручную оператором мерчанта) */
     public const STATUS_ASSEMBLED = 4;
     /** @var int - проблема при сборке (устанавливается вручную оператором мерчанта) */
