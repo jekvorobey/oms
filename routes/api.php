@@ -53,7 +53,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 });
             });
             
-            Route::prefix('delivery')->namespace('Delivery')->group(function () {
+            Route::prefix('deliveries')->namespace('Delivery')->group(function () {
                 Route::get('count', 'DeliveryController@countByOrder');
                 Route::get('', 'DeliveryController@readByOrder');
                 Route::post('', 'DeliveryController@create');
@@ -78,7 +78,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
     
     Route::namespace('Delivery')->group(function () {
-        Route::prefix('delivery')->group(function () {
+        Route::prefix('deliveries')->group(function () {
             Route::get('count', 'DeliveryController@count');
             Route::get('', 'DeliveryController@read');
         
@@ -144,7 +144,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             });
         });
         
-        Route::prefix('cargo')->group(function () {
+        Route::prefix('cargos')->group(function () {
             Route::get('count', 'CargoController@count');
             Route::get('', 'CargoController@read');
             Route::post('', 'CargoController@create');
