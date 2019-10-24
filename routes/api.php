@@ -153,6 +153,8 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::get('', 'CargoController@read');
                 Route::put('','CargoController@update');
                 Route::delete('','CargoController@delete');
+    
+                //todo Добавить end-point для работы с отправлениями груза
             });
         });
     });
