@@ -15,14 +15,16 @@ class ShipmentStatus
     public const STATUS_CREATED = 1;
     /** @var int - в сборке (устанавливается вручную оператором мерчанта) */
     public const STATUS_ASSEMBLING = 2;
+    /** @var int - все товары отправоения в наличии (устанавливается вручную оператором мерчанта) */
+    public const STATUS_ALL_PRODUCTS_AVAILABLE = 2;
     /** @var int - собрано (устанавливается вручную оператором мерчанта) */
-    public const STATUS_ASSEMBLED = 3;
+    public const STATUS_ASSEMBLED = 4;
     /** @var int - проблема при сборке (устанавливается вручную оператором мерчанта) */
-    public const STATUS_ASSEMBLING_PROBLEM = 4;
+    public const STATUS_ASSEMBLING_PROBLEM = 5;
     /** @var int - просрочено  (автоматически устанавливается платформой) */
-    public const STATUS_TIMEOUT = 5;
+    public const STATUS_TIMEOUT = 6;
     /** @var int - отменено  (устанавливается вручную администратором iBT) */
-    public const STATUS_CANCEL = 6;
+    public const STATUS_CANCEL = 7;
     
     /** @var int */
     public $id;
@@ -37,6 +39,7 @@ class ShipmentStatus
         return [
             new self(self::STATUS_CREATED, 'Создано'),
             new self(self::STATUS_ASSEMBLING, 'В сборке'),
+            new self(self::STATUS_ALL_PRODUCTS_AVAILABLE, 'Все товары отправоения в наличии'),
             new self(self::STATUS_ASSEMBLED, 'Собрано'),
             new self(self::STATUS_ASSEMBLING_PROBLEM, 'Проблема при сборке'),
             new self(self::STATUS_TIMEOUT, 'Просрочено'),
@@ -52,6 +55,7 @@ class ShipmentStatus
         return [
             self::STATUS_CREATED,
             self::STATUS_ASSEMBLING,
+            self::STATUS_ALL_PRODUCTS_AVAILABLE,
             self::STATUS_ASSEMBLED,
             self::STATUS_ASSEMBLING_PROBLEM,
             self::STATUS_TIMEOUT,
