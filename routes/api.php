@@ -81,9 +81,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::prefix('delivery')->group(function () {
             Route::get('count', 'DeliveryController@count');
             Route::get('', 'DeliveryController@read');
-            
-            Route::get('', 'DeliveryController@info'); //todo Временный
-            Route::get('pvz', 'DeliveryController@infoPvz');  //todo Временный
         
             Route::prefix('{id}')->group(function () {
                 Route::get('', 'DeliveryController@read');
