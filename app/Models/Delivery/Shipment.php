@@ -47,6 +47,11 @@ class Shipment extends OmsModel
     protected $table = 'shipments';
     
     /**
+     * @var array
+     */
+    protected static $restIncludes = ['delivery', 'packages', 'cargo'];
+    
+    /**
      * @return BelongsTo
      */
     public function delivery(): BelongsTo

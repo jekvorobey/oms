@@ -41,6 +41,11 @@ class ShipmentPackageItem extends OmsModel
     protected $table = 'shipment_package_items';
     
     /**
+     * @var array
+     */
+    protected static $restIncludes = ['shipmentPackage', 'basketItem'];
+    
+    /**
      * @return BelongsTo
      */
     public function shipmentPackage(): BelongsTo

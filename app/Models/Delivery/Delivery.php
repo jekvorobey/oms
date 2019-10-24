@@ -69,6 +69,11 @@ class Delivery extends OmsModel
     ];
     
     /**
+     * @var array
+     */
+    protected static $restIncludes = ['shipments'];
+    
+    /**
      * @return HasMany
      */
     public function shipments(): HasMany

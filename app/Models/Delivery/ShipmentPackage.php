@@ -56,6 +56,11 @@ class ShipmentPackage extends OmsModel
     ];
     
     /**
+     * @var array
+     */
+    protected static $restIncludes = ['shipment'];
+    
+    /**
      * @return BelongsTo
      */
     public function shipment(): BelongsTo

@@ -34,6 +34,11 @@ class OrderExport extends AbstractModel
     protected $table = 'orders_export';
     
     /**
+     * @var array
+     */
+    protected static $restIncludes = ['order'];
+    
+    /**
      * @return BelongsTo
      */
     public function order(): BelongsTo
