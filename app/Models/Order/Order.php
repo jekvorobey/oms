@@ -77,12 +77,17 @@ class Order extends OmsModel
     {
         return $this->hasMany(Payment::class);
     }
-    
+
     public function deliveries(): HasMany
     {
         return $this->hasMany(Delivery::class);
     }
-    
+
+    public function comment(): HasOne
+    {
+        return $this->HasOne(OrderComment::class);
+    }
+
     /**
      * Создать корзину, прявязанную к заказу.
      *
@@ -95,7 +100,7 @@ class Order extends OmsModel
         $basket->order_id = $this->id;
         return $basket->save() ? $basket : null;
     }
-    
+
     /**
      * Получить существующую или создать новую корзину заказа.
      *
@@ -120,7 +125,7 @@ class Order extends OmsModel
         foreach ($this->payments as $payment) {
             $statuses[$payment->status] = isset($statuses[$payment->status]) ? $statuses[$payment->status] + 1 : 1;
         }
-        
+
         // todo уточнить логику смены статуса
         if ($this->allIs($statuses, $all, PaymentStatus::STATUS_DONE)) {
             $this->payment_status = PaymentStatus::STATUS_DONE;
@@ -132,20 +137,20 @@ class Order extends OmsModel
         } elseif ($this->atLeastOne($statuses, PaymentStatus::STATUS_DONE)) {
             $this->payment_status = PaymentStatus::STATUS_PARTIAL_DONE;
         }
-        
+
         $this->save();
     }
-    
+
     protected function allIs(array $statuses, int $count, int $status): bool
     {
         return ($statuses[$status] ?? 0) == $count;
     }
-    
+
     protected function atLeastOne(array $statuses, int $status): bool
     {
         return ($statuses[$status] ?? 0) > 0;
     }
-    
+
     /**
      * Отменить заказ.
      */
@@ -154,19 +159,19 @@ class Order extends OmsModel
         $this->status = OrderStatus::STATUS_CANCEL;
         $this->save();
     }
-    
+
     protected static function boot()
     {
         parent::boot();
-        
+
         self::created(function (self $order) {
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $order->id, $order);
         });
-        
+
         self::updated(function (self $order) {
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $order->id, $order);
         });
-    
+
         self::deleting(function (self $order) {
             if ($order->basket) {
                 $order->basket->delete();
