@@ -128,11 +128,17 @@ class ShipmentPackage extends OmsModel
             if ($needRecalc && $package->shipment->cargo_id) {
                 $package->shipment->cargo->recalc();
             }
+            if ($needRecalc && $package->shipment->delivery_id) {
+                $package->shipment->delivery->recalc();
+            }
         });
         
         self::deleted(function (self $package) {
             if ($package->shipment->cargo_id) {
                 $package->shipment->cargo->recalc();
+            }
+            if ($package->shipment->delivery_id) {
+                $package->shipment->delivery->recalc();
             }
         });
     }

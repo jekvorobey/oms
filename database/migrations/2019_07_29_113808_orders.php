@@ -120,10 +120,10 @@ class Orders extends Migration
     
             $table->string('xml_id')->nullable();
             $table->string('number');
-            $table->decimal('width', 18, 4);
-            $table->decimal('height', 18, 4);
-            $table->decimal('length', 18, 4);
-            $table->decimal('weight', 18, 4);
+            $table->decimal('width', 18, 4)->default(0.0);
+            $table->decimal('height', 18, 4)->default(0.0);
+            $table->decimal('length', 18, 4)->default(0.0);
+            $table->decimal('weight', 18, 4)->default(0.0);
             $table->dateTime('delivery_at')->nullable();
             
             $table->timestamps();

@@ -174,6 +174,7 @@ return [
         \Greensight\Message\MessageLibServiceProvider::class,
         \MerchantManagement\MerchantLibServiceProvider::class,
         \Pim\PimLibServiceProvider::class,
+        \Greensight\Store\StoreLibServiceProvider::class,
         L5Swagger\L5SwaggerServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
