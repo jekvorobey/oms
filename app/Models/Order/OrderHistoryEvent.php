@@ -33,6 +33,7 @@ class OrderHistoryEvent extends OmsModel
     public const TYPE_CREATE = 1;
     public const TYPE_UPDATE = 2;
     public const TYPE_DELETE = 3;
+    public const TYPE_COMMENT = 4;
 
     protected static $unguarded = true;
     protected $table = 'orders_history';
@@ -119,6 +120,12 @@ class OrderHistoryEvent extends OmsModel
                     $dto['payload']['title'] = "Оплачен заказ";
                     $dto['payload']['body'] = "Заказ {$model->number} оплачен";
                 }
+                break;
+
+            case self::TYPE_COMMENT:
+                $dto['type'] = NotificationDto::TYPE_ORDER_COMMENT;
+                $dto['payload']['title'] = "Обновлён комментарий заказа";
+                $dto['payload']['body'] = "Комментарий заказа {$model->number} был обновлен";
                 break;
         }
 
