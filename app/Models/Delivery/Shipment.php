@@ -20,10 +20,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $status
  * @property int $cargo_id
  *
- * //dynamic attributes
- * @property int $cost
- *
  * @property string $number - номер отправления (номер_заказа/порядковый_номер_отправления)
+ *
+ * //dynamic attributes
+ * @property float $cost - сумма товаров отправления
+ * @property int $package_qty - кол-во коробок отправления
  *
  * @property-read Delivery $delivery
  * @property-read Collection|ShipmentItem[] $items
@@ -89,6 +90,7 @@ class Shipment extends OmsModel
     }
     
     /**
+     * Сумма товаров отправления
      * @return float
      */
     public function getCostAttribute(): float
@@ -100,6 +102,15 @@ class Shipment extends OmsModel
         }
         
         return $cost;
+    }
+    
+    /**
+     * Кол-во коробок отправления
+     * @return int
+     */
+    public function getPackageQtyAttribute(): int
+    {
+        return (int)$this->packages()->count();
     }
     
     /**
@@ -120,6 +131,14 @@ class Shipment extends OmsModel
             $restQuery->addFields(static::restEntity(), $fields);
             $query->with('items.basketItem');
         }
+        if (in_array('package_qty', $fields)) {
+            $modifiedRestQuery->removeField(static::restEntity());
+            if (($key = array_search('package_qty', $fields)) !== false) {
+                unset($fields[$key]);
+            }
+            $restQuery->addFields(static::restEntity(), $fields);
+            $query->with('packages');
+        }
         
         return parent::modifyQuery($query, $modifiedRestQuery);
     }
@@ -134,6 +153,9 @@ class Shipment extends OmsModel
         
         if (in_array('cost', $restQuery->getFields(static::restEntity()))) {
             $result['cost'] = $this->cost;
+        }
+        if (in_array('package_qty', $restQuery->getFields(static::restEntity()))) {
+            $result['package_qty'] = $this->package_qty;
         }
         
         return $result;

@@ -62,6 +62,7 @@ class DeliverySeeder extends Seeder
                 $delivery->length = $faker->numberBetween(1, 100);
                 $delivery->weight = $faker->numberBetween(100, 1000);
                 $delivery->delivery_at = $order->created_at->modify('+' . rand(1, 7) . ' days');
+                $delivery->created_at = $order->created_at;
                 $delivery->save();
     
                 $deliveryShipmentNumber = 1;
@@ -78,6 +79,7 @@ class DeliverySeeder extends Seeder
                     $shipment->merchant_id = $store->merchant_id;
                     $shipment->store_id = $storeId;
                     $shipment->number = $order->number . '/' . $shipmentNumber;
+                    $shipment->created_at = $order->created_at->modify('+' . rand(1, 7) . ' minutes');
                     $shipment->save();
                     
                     foreach ($itemsByStore as $item) {
@@ -85,6 +87,7 @@ class DeliverySeeder extends Seeder
                         $shipmentItem = new ShipmentItem();
                         $shipmentItem->shipment_id = $shipment->id;
                         $shipmentItem->basket_item_id = $item->id;
+                        $shipmentItem->created_at = $shipment->created_at;
                         $shipmentItem->save();
                     }
     
