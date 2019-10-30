@@ -31,12 +31,12 @@ class OrderComment extends OmsModel
     {
         parent::boot();
 
-        self::created(function (self $order) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_COMMENT, $order->id, $order);
+        self::created(function (self $comment) {
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_COMMENT, $comment->order_id, $comment->order);
         });
 
-        self::updated(function (self $order) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_COMMENT, $order->id, $order);
+        self::updated(function (self $comment) {
+            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_COMMENT, $comment->order_id, $comment->order);
         });
     }
 }
