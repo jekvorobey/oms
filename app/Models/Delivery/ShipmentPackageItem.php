@@ -89,5 +89,15 @@ class ShipmentPackageItem extends OmsModel
                 $shipmentPackageItem
             );
         });*/
+    
+        self::saved(function (self $shipmentPackageItem) {
+            if ($shipmentPackageItem->qty != $shipmentPackageItem->getOriginal('qty')) {
+                $shipmentPackageItem->shipmentPackage->recalcWeight();
+            }
+        });
+        
+        self::deleted(function (self $shipmentPackageItem) {
+            $shipmentPackageItem->shipmentPackage->recalcWeight();
+        });
     }
 }

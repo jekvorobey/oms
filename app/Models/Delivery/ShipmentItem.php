@@ -48,6 +48,14 @@ class ShipmentItem extends OmsModel
     {
         parent::boot();
     
+        self::saved(function (self $shipmentItem) {
+            $shipmentItem->shipment->costRecalc();
+        });
+    
+        self::deleted(function (self $shipmentItem) {
+            $shipmentItem->shipment->costRecalc();
+        });
+    
         //todo Доделать сохранение истории
         /*self::created(function (self $shipmentItem) {
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $shipmentItem->shipment->delivery->order_id, $shipmentItem);

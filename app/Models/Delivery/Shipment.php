@@ -2,12 +2,15 @@
 
 namespace App\Models\Delivery;
 
+use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Pim\Dto\Offer\OfferDto;
+use Pim\Services\OfferService\OfferService;
 
 /**
  * Отправление (набор товаров с одного склада одного мерчанта)
@@ -21,9 +24,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $cargo_id
  *
  * @property string $number - номер отправления (номер_заказа/порядковый_номер_отправления)
+ * @property float $cost - сумма товаров отправления
+ * @property string $required_shipping_at - требуемая дата отгрузки
  *
  * //dynamic attributes
- * @property float $cost - сумма товаров отправления
  * @property int $package_qty - кол-во коробок отправления
  *
  * @property-read Delivery $delivery
@@ -42,6 +46,8 @@ class Shipment extends OmsModel
         'store_id',
         'cargo_id',
         'number',
+        'cost',
+        'required_shipping_at',
     ];
     
     /**
@@ -90,18 +96,19 @@ class Shipment extends OmsModel
     }
     
     /**
-     * Сумма товаров отправления
-     * @return float
+     * Пересчитать сумму товаров отправления
      */
-    public function getCostAttribute(): float
+    public function costRecalc(): void
     {
         $cost = 0.0;
+        $this->load('items.basketItem');
     
         foreach ($this->items as $item) {
             $cost += $item->basketItem->qty * $item->basketItem->price;
         }
         
-        return $cost;
+        $this->cost = $cost;
+        $this->save(['cost']);
     }
     
     /**
@@ -117,20 +124,13 @@ class Shipment extends OmsModel
      * @param  Builder  $query
      * @param  RestQuery  $restQuery
      * @return Builder
+     * @throws \Pim\Core\PimException
      */
     public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
     {
         $modifiedRestQuery = clone $restQuery;
     
         $fields = $restQuery->getFields(static::restEntity());
-        if (in_array('cost', $fields)) {
-            $modifiedRestQuery->removeField(static::restEntity());
-            if (($key = array_search('cost', $fields)) !== false) {
-                unset($fields[$key]);
-            }
-            $restQuery->addFields(static::restEntity(), $fields);
-            $query->with('items.basketItem');
-        }
         if (in_array('package_qty', $fields)) {
             $modifiedRestQuery->removeField(static::restEntity());
             if (($key = array_search('package_qty', $fields)) !== false) {
@@ -138,6 +138,40 @@ class Shipment extends OmsModel
             }
             $restQuery->addFields(static::restEntity(), $fields);
             $query->with('packages');
+        }
+    
+        $merchantFilter = $restQuery->getFilter('merchant_id');
+        $merchantId = $merchantFilter ? $merchantFilter[0][1] : 0;
+        
+        //Фильтр по коду товара из ERP мерчанта
+        $offerXmlIdFilter = $restQuery->getFilter('offer_xml_id');
+        if($offerXmlIdFilter) {
+            [$op, $value] = $offerXmlIdFilter[0];
+            /** @var OfferService $offerService */
+            $offerService = resolve(OfferService::class);
+            $offerQuery = $offerService->newQuery()
+                ->addFields(OfferDto::entity(), 'id')
+                ->setFilter('xml_id', $op, $value);
+            if ($merchantId) {
+                $offerQuery->setFilter('merchant_id', $merchantId);
+            }
+            $offerIds = $offerService->offers($offerQuery)->pluck('id')->toArray();
+    
+            $shipmentIds = [];
+            if ($offerIds) {
+                $shipmentIds = Shipment::query()
+                    ->select('id')
+                    ->whereHas('items', function (Builder $query) use ($offerIds) {
+                        $query->whereHas('basketItem', function (Builder $query) use ($offerIds) {
+                            $query->where('offer_id', $offerIds);
+                        });
+                    })
+                    ->get()
+                    ->pluck('id')
+                    ->toArray();
+            }
+            $modifiedRestQuery->setFilter('id', $shipmentIds);
+            $modifiedRestQuery->removeFilter('offer_xml_id');
         }
         
         return parent::modifyQuery($query, $modifiedRestQuery);
@@ -151,9 +185,6 @@ class Shipment extends OmsModel
     {
         $result = $this->toArray();
         
-        if (in_array('cost', $restQuery->getFields(static::restEntity()))) {
-            $result['cost'] = $this->cost;
-        }
         if (in_array('package_qty', $restQuery->getFields(static::restEntity()))) {
             $result['package_qty'] = $this->package_qty;
         }

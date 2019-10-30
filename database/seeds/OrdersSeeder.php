@@ -8,6 +8,8 @@ use App\Models\Delivery\DeliveryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
 use App\Models\Order\OrderStatus;
+use Greensight\Store\Dto\StockDto;
+use Greensight\Store\Services\StockService\StockService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Pim\Core\PimException;
@@ -46,6 +48,19 @@ class OrdersSeeder extends Seeder
         $restQuery = $offerService->newQuery();
         $restQuery->addFields(OfferDto::entity(), 'id', 'product_id');
         $offers = $offerService->offers($restQuery);
+    
+        /** @var StockService $stockService */
+        /*$stockService = resolve(StockService::class);
+        $stocks = collect();
+        foreach ($offers->chunk(20) as $chunkedOffers) {
+            $restQuery = $stockService->newQuery();
+            $restQuery->addFields(StockDto::entity(), 'store_id', 'offer_id')
+                ->setFilter('offer_id', $chunkedOffers->pluck('id')->toArray());
+            /** @var Collection|StockDto[] $stocks /
+            $chunkedStocks = $stockService->stocks($restQuery)->groupBy('offer_id');
+            
+            $stocks->merge($chunkedStocks);
+        }*/
 
         /** @var ProductService $productService */
         $productService = resolve(ProductService::class);
@@ -60,8 +75,17 @@ class OrdersSeeder extends Seeder
             $basketOffers = $offers->random(rand(3, 5));
 
             foreach ($basketOffers as $basketOffer) {
+                /*if (!$stocks->has($basketOffer->id)) {
+                    continue;
+                }
+                /** @var Collection|StockDto[] $offerStocks /
+                $offerStocks = $stocks[$basketOffer->id];
+                /** @var StockDto $offerStock /
+                $offerStock = $offerStocks->random();*/
+                
                 $basketItem = new BasketItem();
                 $basketItem->basket_id = $basket->id;
+                //$basketItem->store_id = $offerStock->store_id;
                 $basketItem->store_id = rand(1, 8);
                 $basketItem->offer_id = $basketOffer->id;
                 $basketItem->name = $products[$basketOffer->product_id]->name;

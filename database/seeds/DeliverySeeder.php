@@ -80,6 +80,7 @@ class DeliverySeeder extends Seeder
                     $shipment->store_id = $storeId;
                     $shipment->number = $order->number . '/' . $shipmentNumber;
                     $shipment->created_at = $order->created_at->modify('+' . rand(1, 7) . ' minutes');
+                    $shipment->required_shipping_at = $order->created_at->modify('+3 hours');
                     $shipment->save();
                     
                     foreach ($itemsByStore as $item) {

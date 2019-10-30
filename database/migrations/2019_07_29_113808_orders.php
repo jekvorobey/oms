@@ -140,6 +140,8 @@ class Orders extends Migration
             $table->tinyInteger('status', false, true)->default(1);
 
             $table->string('number');
+            $table->decimal('cost', 18, 4)->default(0.0);
+            $table->timestamp('required_shipping_at');
 
             $table->timestamps();
 

@@ -2,9 +2,12 @@
 
 namespace App\Models\Basket;
 
+use App\Models\Delivery\ShipmentItem;
+use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\OmsModel;
 use App\Models\Order\OrderHistoryEvent;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Состав корзины
@@ -19,6 +22,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float|null $price - цена за единицу товара
  *
  * @property-read Basket $basket
+ * @property-read ShipmentItem $shipmentItem
+ * @property-read ShipmentPackageItem $shipmentPackageItem
  *
  * @OA\Schema(
  *     schema="BasketItem",
@@ -44,25 +49,49 @@ class BasketItem extends OmsModel
         return $this->belongsTo(Basket::class);
     }
     
+    /**
+     * @return HasOne
+     */
+    public function shipmentItem(): HasOne
+    {
+        return $this->hasOne(ShipmentItem::class);
+    }
+    
+    /**
+     * @return HasOne
+     */
+    public function shipmentPackageItem(): HasOne
+    {
+        return $this->hasOne(ShipmentPackageItem::class);
+    }
+    
     protected static function boot()
     {
         parent::boot();
         
-        self::created(function (self $cartItem) {
-            if ($cartItem->basket->order_id) {
-                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $cartItem->basket->order_id, $cartItem);
+        self::created(function (self $basketItem) {
+            if ($basketItem->basket->order && $basketItem->basket->order->id) {
+                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $basketItem->basket->order->id, $basketItem);
             }
         });
     
-        self::updated(function (self $cartItem) {
-            if ($cartItem->basket->order_id) {
-                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $cartItem->basket->order_id, $cartItem);
+        self::updated(function (self $basketItem) {
+            if ($basketItem->basket->order && $basketItem->basket->order->id) {
+                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $basketItem->basket->order->id, $basketItem);
             }
         });
     
-        self::deleting(function (self $cartItem) {
-            if ($cartItem->basket->order_id) {
-                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $cartItem->basket->order_id, $cartItem);
+        self::deleting(function (self $basketItem) {
+            if ($basketItem->basket->order && $basketItem->basket->order->id) {
+                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $basketItem->basket->order->id, $basketItem);
+            }
+            
+            if ($basketItem->shipmentItem) {
+                $basketItem->shipmentItem->delete();
+            }
+            
+            if ($basketItem->shipmentPackageItem) {
+                $basketItem->shipmentPackageItem->delete();
             }
         });
     }
