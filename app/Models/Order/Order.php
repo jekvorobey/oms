@@ -176,9 +176,10 @@ class Order extends OmsModel
             if ($order->basket) {
                 $order->basket->delete();
             }
-            foreach ($order->shipments as $package) {
-                $package->delete();
+            foreach ($order->deliveries as $delivery) {
+                $delivery->delete();
             }
+            
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $order->id, $order);
         });
     }

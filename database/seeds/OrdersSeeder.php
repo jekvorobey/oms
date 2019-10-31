@@ -36,11 +36,14 @@ class OrdersSeeder extends Seeder
     {
         $faker = Faker\Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
-
+    
+        $baskets = collect();
         for ($i = 0; $i < self::ORDERS_COUNT; $i++) {
             $basket = new Basket();
             $basket->customer_id = $this->customerId($faker);
-            $basket->save();
+            if ($basket->save()) {
+                $baskets->push($basket);
+            }
         }
 
         /** @var OfferService $offerService */
@@ -50,17 +53,20 @@ class OrdersSeeder extends Seeder
         $offers = $offerService->offers($restQuery);
     
         /** @var StockService $stockService */
-        /*$stockService = resolve(StockService::class);
+        $stockService = resolve(StockService::class);
         $stocks = collect();
-        foreach ($offers->chunk(20) as $chunkedOffers) {
+        foreach ($offers->chunk(50) as $chunkedOffers) {
             $restQuery = $stockService->newQuery();
             $restQuery->addFields(StockDto::entity(), 'store_id', 'offer_id')
                 ->setFilter('offer_id', $chunkedOffers->pluck('id')->toArray());
-            /** @var Collection|StockDto[] $stocks /
+            /** @var Collection|StockDto[] $stocks */
             $chunkedStocks = $stockService->stocks($restQuery)->groupBy('offer_id');
             
-            $stocks->merge($chunkedStocks);
-        }*/
+            //Мержим коллекции $stocks и $chunkedStocks, метод $stocks->merge() не работает для многомерных коллекций
+            foreach ($chunkedStocks as $key => $stock) {
+                $stocks->put($key, $stock);
+            }
+        }
 
         /** @var ProductService $productService */
         $productService = resolve(ProductService::class);
@@ -69,24 +75,22 @@ class OrdersSeeder extends Seeder
             ->setFilter('id', $offers->pluck('product_id'));
         $products = $productService->products($restQuery)->keyBy('id');
 
-        $baskets = Basket::query()->select('id')->get();
         foreach ($baskets as $basket) {
             /** @var Collection|OfferDto[] $basketOffers */
             $basketOffers = $offers->random(rand(3, 5));
 
             foreach ($basketOffers as $basketOffer) {
-                /*if (!$stocks->has($basketOffer->id)) {
+                if (!$stocks->has($basketOffer->id)) {
                     continue;
                 }
-                /** @var Collection|StockDto[] $offerStocks /
+                /** @var Collection|StockDto[] $offerStocks */
                 $offerStocks = $stocks[$basketOffer->id];
-                /** @var StockDto $offerStock /
-                $offerStock = $offerStocks->random();*/
+                /** @var StockDto $offerStock */
+                $offerStock = $offerStocks->random();
                 
                 $basketItem = new BasketItem();
                 $basketItem->basket_id = $basket->id;
-                //$basketItem->store_id = $offerStock->store_id;
-                $basketItem->store_id = rand(1, 8);
+                $basketItem->store_id = $offerStock->store_id;
                 $basketItem->offer_id = $basketOffer->id;
                 $basketItem->name = $products[$basketOffer->product_id]->name;
                 $basketItem->qty = $faker->randomDigitNotNull;
