@@ -10,6 +10,7 @@ use App\Models\Delivery\DeliveryService;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
+use App\Models\Order\OrderComment;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -52,7 +53,7 @@ class OrdersController extends Controller
             'items' => $reader->list(new RestQuery($request)),
         ]);
     }
-    
+
     /**
      * @OA\Get(
      *     path="/api/v1/orders/count",
@@ -74,7 +75,7 @@ class OrdersController extends Controller
         $reader = new OrderReader();
         return response()->json($reader->count(new RestQuery($request)));
     }
-    
+
     /**
      * @OA\Put(
      *     path="/api/v1/orders/{id}/payments",
@@ -125,7 +126,7 @@ class OrdersController extends Controller
         $writer->setPayments($order, $payments);
         return response('', 204);
     }
-    
+
     /**
      * @OA\Post(
      *     path="/api/v1/orders",
@@ -155,7 +156,7 @@ class OrdersController extends Controller
 
             'status' => ['nullable', Rule::in(OrderStatus::validValues())],
             'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
-            
+
             'delivery_service' => ['nullable', Rule::in(DeliveryService::validValues())],
             'delivery_method' => ['nullable', Rule::in(DeliveryMethod::validValues())],
             'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
@@ -179,7 +180,7 @@ class OrdersController extends Controller
             'id' => $id
         ]);
     }
-    
+
     /**
      * @OA\Put(
      *     path="/api/v1/orders/{id}",
@@ -212,7 +213,7 @@ class OrdersController extends Controller
             'basket_id' => 'nullable|integer',
             'customer_id' => 'nullable|integer',
             'cost' => 'nullable|numeric',
-            
+
             'status' => ['nullable', Rule::in(OrderStatus::validValues())],
             'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
 
@@ -224,7 +225,7 @@ class OrdersController extends Controller
             'receiver_name' => ['nullable', 'string'],
             'receiver_phone' => ['nullable', 'string'],
             'receiver_email' => ['nullable', 'string', 'email'],
-            
+
             'manager_comment' => ['nullable', 'string'],
         ]);
         if ($validator->fails()) {
@@ -235,10 +236,10 @@ class OrdersController extends Controller
         if (!$ok) {
             throw new HttpException(500, 'unable to save order');
         }
-        
+
         return response('', 204);
     }
-    
+
     /**
      * @OA\Delete(
      *     path="/api/v1/orders/{id}",
@@ -267,6 +268,40 @@ class OrdersController extends Controller
         if (!$ok) {
             throw new HttpException(500, 'unable to save order');
         }
+        return response('', 204);
+    }
+
+
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     */
+    public function setComment(int $id, Request $request)
+    {
+        $data = $request->all();
+        $validator = Validator::make($data, [
+            'text' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            throw new BadRequestHttpException($validator->errors()->first());
+        }
+
+        $comment = OrderComment::where(['order_id' => $id])->get()->first();
+        if (!$comment) {
+            $comment = new OrderComment();
+        }
+
+        $comment->order_id = $id;
+        $comment->text = $data['text'];
+
+        $ok = $comment->save();
+
+        if (!$ok) {
+            throw new HttpException(500, 'unable to save comment');
+        }
+
         return response('', 204);
     }
 }
