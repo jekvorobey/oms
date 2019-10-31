@@ -10,7 +10,9 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Pim\Dto\Offer\OfferDto;
+use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
+use Pim\Services\ProductService\ProductService;
 
 /**
  * Отправление (набор товаров с одного склада одного мерчанта)
@@ -142,8 +144,29 @@ class Shipment extends OmsModel
     
         $merchantFilter = $restQuery->getFilter('merchant_id');
         $merchantId = $merchantFilter ? $merchantFilter[0][1] : 0;
-        
-        //Фильтр по коду товара из ERP мерчанта
+    
+        //Функция-фильтр id отправлений по id офферов
+        $filterByOfferIds = function ($offerIds) {
+            $shipmentIds = [];
+            if ($offerIds) {
+                $shipmentIds = Shipment::query()
+                    ->select('id')
+                    ->whereHas('items', function (Builder $query) use ($offerIds) {
+                        $query->whereHas('basketItem', function (Builder $query) use ($offerIds) {
+                            $query->where('offer_id', $offerIds);
+                        });
+                    })
+                    ->get()
+                    ->pluck('id')
+                    ->toArray();
+                if (!$shipmentIds) {
+                    $shipmentIds = [-1];
+                }
+            }
+            
+            return $shipmentIds;
+        };
+        //Фильтр по коду оффера мерчанта из ERP мерчанта
         $offerXmlIdFilter = $restQuery->getFilter('offer_xml_id');
         if($offerXmlIdFilter) {
             [$op, $value] = $offerXmlIdFilter[0];
@@ -157,22 +180,59 @@ class Shipment extends OmsModel
             }
             $offerIds = $offerService->offers($offerQuery)->pluck('id')->toArray();
     
-            $shipmentIds = [];
-            if ($offerIds) {
-                $shipmentIds = Shipment::query()
-                    ->select('id')
-                    ->whereHas('items', function (Builder $query) use ($offerIds) {
-                        $query->whereHas('basketItem', function (Builder $query) use ($offerIds) {
-                            $query->where('offer_id', $offerIds);
-                        });
-                    })
-                    ->get()
-                    ->pluck('id')
-                    ->toArray();
+            $shipmentIds = $filterByOfferIds($offerIds);
+            $existShipmentIds = $modifiedRestQuery->getFilter('id') ? $modifiedRestQuery->getFilter('id')[0][1] : [];
+            if ($existShipmentIds) {
+                $shipmentIds = array_values(array_intersect($existShipmentIds, $shipmentIds));
             }
             $modifiedRestQuery->setFilter('id', $shipmentIds);
             $modifiedRestQuery->removeFilter('offer_xml_id');
         }
+        
+        //Функция-фильтр по свойству товара
+        $filterByProductField = function ($filterField, $productField) use (
+            $restQuery,
+            $modifiedRestQuery,
+            $merchantId,
+            $filterByOfferIds
+        ) {
+            $productVendorCodeFilter = $restQuery->getFilter($filterField);
+            if($productVendorCodeFilter) {
+                [$op, $value] = $productVendorCodeFilter[0];
+        
+                /** @var ProductService $productService */
+                $productService = resolve(ProductService::class);
+                $productQuery = $productService->newQuery()
+                    ->addFields(ProductDto::entity(), 'id')
+                    ->setFilter($productField, $op, $value);
+                $productIds = $productService->products($productQuery)->pluck('id')->toArray();
+        
+                $offerIds = [];
+                if ($productIds) {
+                    /** @var OfferService $offerService */
+                    $offerService = resolve(OfferService::class);
+                    $offerQuery = $offerService->newQuery()
+                        ->addFields(OfferDto::entity(), 'id')
+                        ->setFilter('product_id', $productIds);
+                    if ($merchantId) {
+                        $offerQuery->setFilter('merchant_id', $merchantId);
+                    }
+                    $offerIds = $offerService->offers($offerQuery)->pluck('id')->toArray();
+                }
+        
+                $shipmentIds = $filterByOfferIds($offerIds);
+                $existShipmentIds = $modifiedRestQuery->getFilter('id') ? $modifiedRestQuery->getFilter('id')[0][1] : [];
+                if ($existShipmentIds) {
+                    $shipmentIds = array_values(array_intersect($existShipmentIds, $shipmentIds));
+                }
+                $modifiedRestQuery->setFilter('id', $shipmentIds);
+                $modifiedRestQuery->removeFilter($filterField);
+            }
+        };
+        //Фильтр по артикулу товара
+        $filterByProductField('product_vendor_code', 'vendor_code');
+        //Фильтр по бренду товара
+        $filterByProductField('brands', 'brand_id');
         
         return parent::modifyQuery($query, $modifiedRestQuery);
     }
