@@ -120,6 +120,11 @@ class OrderHistoryEvent extends OmsModel
                     $dto['payload']['title'] = "Оплачен заказ";
                     $dto['payload']['body'] = "Заказ {$model->number} оплачен";
                 }
+                if($model->status == OrderStatus::STATUS_CANCEL) {
+                    $dto['type'] = NotificationDto::TYPE_ORDER_CANCEL;
+                    $dto['payload']['title'] = "Отмена заказа";
+                    $dto['payload']['body'] = "Заказ {$model->number} был отменён";
+                }
                 break;
 
             case self::TYPE_COMMENT:
