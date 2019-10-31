@@ -57,6 +57,7 @@ class DeliverySeeder extends Seeder
                 $delivery->delivery_service = $faker->randomElement(DeliveryService::validValues());
                 $delivery->xml_id = $faker->uuid;
                 $delivery->number = $order->number . '-' . $i;
+                $delivery->cost = $faker->randomFloat(2, 0, 500);
                 $delivery->width = $faker->numberBetween(1, 100);
                 $delivery->height = $faker->numberBetween(1, 100);
                 $delivery->length = $faker->numberBetween(1, 100);

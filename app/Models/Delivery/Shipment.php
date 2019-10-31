@@ -8,6 +8,7 @@ use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
@@ -34,6 +35,7 @@ use Pim\Services\ProductService\ProductService;
  *
  * @property-read Delivery $delivery
  * @property-read Collection|ShipmentItem[] $items
+ * @property-read Collection|BasketItem[] $basketItems
  * @property-read Collection|ShipmentPackage[] $packages
  * @property-read Cargo $cargo
  */
@@ -63,7 +65,7 @@ class Shipment extends OmsModel
     /**
      * @var array
      */
-    protected static $restIncludes = ['delivery', 'packages', 'cargo'];
+    protected static $restIncludes = ['delivery', 'packages', 'cargo', 'items', 'basketItems'];
     
     /**
      * @return BelongsTo
@@ -79,6 +81,14 @@ class Shipment extends OmsModel
     public function items(): HasMany
     {
         return $this->hasMany(ShipmentItem::class);
+    }
+    
+    /**
+     * @return BelongsToMany
+     */
+    public function basketItems(): BelongsToMany
+    {
+        return $this->belongsToMany(BasketItem::class, (new ShipmentItem())->getTable());
     }
     
     /**
@@ -106,11 +116,11 @@ class Shipment extends OmsModel
         $this->load('items.basketItem');
     
         foreach ($this->items as $item) {
-            $cost += $item->basketItem->qty * $item->basketItem->price;
+            $cost += $item->basketItem->cost;
         }
         
         $this->cost = $cost;
-        $this->save(['cost']);
+        $this->save();
     }
     
     /**

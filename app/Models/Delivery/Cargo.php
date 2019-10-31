@@ -17,10 +17,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $delivery_service
  *
  * @property string $xml_id
- * @property double $width
- * @property double $height
- * @property double $length
- * @property double $weight
+ * @property float $width
+ * @property float $height
+ * @property float $length
+ * @property float $weight
  *
  * @property-read Collection|Shipment[] $shipments
  */

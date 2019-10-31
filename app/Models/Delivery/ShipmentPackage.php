@@ -14,11 +14,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $package_id
  * @property int $status
  *
- * @property double $width
- * @property double $height
- * @property double $length
- * @property double $weight
- * @property double $wrapper_weight
+ * @property float $width
+ * @property float $height
+ * @property float $length
+ * @property float $weight
+ * @property float $wrapper_weight
  *
  * @property-read Shipment $shipment
  */

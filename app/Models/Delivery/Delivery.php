@@ -19,10 +19,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property string $xml_id - идентификатор заказа на доставку в службе доставки
  * @property string $number - номер доставки (номер_заказа-порядковый_номер_отправления)
- * @property double $width
- * @property double $height
- * @property double $length
- * @property double $weight
+ * @property float $cost - стоимость доставки, полученная от службы доставки (не влияет на общую стоимость доставки по заказу!)
+ * @property float $width
+ * @property float $height
+ * @property float $length
+ * @property float $weight
  * @property Carbon $delivery_at
  *
  * @property-read Collection|Shipment[] $shipments

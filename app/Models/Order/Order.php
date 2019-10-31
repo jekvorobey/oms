@@ -28,6 +28,7 @@ use Illuminate\Support\Collection;
  * @property int $status - статус
  * @property int $payment_status - статус оплаты
  * @property string $manager_comment - комментарий менеджера
+ * @property float $delivery_cost - стоимость доставки iBT
  * @property array $delivery_address - адрес доставки
  * @property string $delivery_comment - комментарий к доставке
  * @property string $receiver_name - имя получателя
@@ -86,6 +87,27 @@ class Order extends OmsModel
     public function comment(): HasOne
     {
         return $this->HasOne(OrderComment::class);
+    }
+    
+    /**
+     * Пересчитать сумму товаров заказа
+     */
+    public function costRecalc(bool $save = true): void
+    {
+        $cost = 0.0;
+        $this->load('basket.items', 'deliveries');
+        
+        //Считаем сумму позиций в корзине
+        foreach ($this->basket->items as $item) {
+            $cost += $item->cost;
+        }
+        //Прибавляем стоимость за доставку
+        $cost += $this->delivery_cost;
+        
+        $this->cost = $cost;
+        if ($save) {
+            $this->save();
+        }
     }
 
     /**
@@ -163,6 +185,12 @@ class Order extends OmsModel
     protected static function boot()
     {
         parent::boot();
+    
+        self::saving(function (self $order) {
+            if ($order->delivery_cost != $order->getOriginal('delivery_cost')) {
+                $order->costRecalc(false);
+            }
+        });
 
         self::created(function (self $order) {
             OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $order->id, $order);

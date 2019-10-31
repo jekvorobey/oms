@@ -95,6 +95,7 @@ class OrdersSeeder extends Seeder
                 $basketItem->name = $products[$basketOffer->product_id]->name;
                 $basketItem->qty = $faker->randomDigitNotNull;
                 $basketItem->price = $faker->randomFloat(2, 100, 1000);
+                $basketItem->discount = $faker->randomFloat(2, 0, $basketItem->price/3);
                 $basketItem->save();
             }
         }
@@ -104,7 +105,6 @@ class OrdersSeeder extends Seeder
             $order->basket_id = $basket->id;
             $order->customer_id = $this->customerId($faker);
             $order->number = 'IBT' . $faker->dateTimeThisYear()->format('Ymdhis');
-            $order->cost = $faker->numberBetween(1, 1000);
             $order->status = $faker->randomElement(OrderStatus::validValues());
             $order->created_at = $faker->dateTimeThisYear();
             $order->manager_comment = $faker->realText();
@@ -113,6 +113,7 @@ class OrdersSeeder extends Seeder
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
             $order->delivery_method = $faker->randomElement(DeliveryMethod::validValues());
             $order->delivery_address = [];
+            $order->delivery_cost = $faker->randomFloat(2, 0, 500);
 
             $order->receiver_name = $faker->name;
             $order->receiver_phone = $faker->phoneNumber;

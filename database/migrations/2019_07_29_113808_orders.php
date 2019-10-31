@@ -34,6 +34,8 @@ class Orders extends Migration
             $table->string('name');
             $table->decimal('qty', 18, 4);
             $table->decimal('price', 18, 4)->nullable();
+            $table->decimal('discount', 18, 4)->nullable();
+            $table->decimal('cost', 18, 4)->default(0.0);
 
             $table->timestamps();
 
@@ -51,9 +53,10 @@ class Orders extends Migration
             $table->tinyInteger('delivery_method')->unsigned();
 
             $table->string('number');
-            $table->decimal('cost', 18, 4);
+            $table->decimal('cost', 18, 4)->default(0.0);
             $table->text('manager_comment')->nullable();
             // delivery
+            $table->decimal('delivery_cost', 18, 4)->default(0.0);
             $table->json('delivery_address');
             $table->text('delivery_comment')->nullable();
             $table->string('receiver_name')->nullable();
@@ -120,6 +123,7 @@ class Orders extends Migration
 
             $table->string('xml_id')->nullable();
             $table->string('number');
+            $table->decimal('cost', 18, 4)->default(0.0);
             $table->decimal('width', 18, 4)->default(0.0);
             $table->decimal('height', 18, 4)->default(0.0);
             $table->decimal('length', 18, 4)->default(0.0);
