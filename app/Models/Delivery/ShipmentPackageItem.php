@@ -3,8 +3,9 @@
 namespace App\Models\Delivery;
 
 use App\Models\Basket\BasketItem;
+use App\Models\History\HistoryType;
 use App\Models\OmsModel;
-use App\Models\Order\OrderHistoryEvent;
+use App\Models\History\History;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -66,29 +67,29 @@ class ShipmentPackageItem extends OmsModel
         parent::boot();
         
         //todo Доделать сохранение истории
-        /*self::created(function (self $shipmentPackageItem) {
-            OrderHistoryEvent::saveEvent(
-                OrderHistoryEvent::TYPE_CREATE,
-                $shipmentPackageItem->shipmentPackage->shipment->delivery->order_id,
+        self::created(function (self $shipmentPackageItem) {
+            History::saveEvent(
+                HistoryType::TYPE_CREATE,
+                $shipmentPackageItem->shipmentPackage->shipment,
                 $shipmentPackageItem
             );
         });
     
         self::updated(function (self $shipmentPackageItem) {
-            OrderHistoryEvent::saveEvent(
-                OrderHistoryEvent::TYPE_UPDATE,
-                $shipmentPackageItem->shipmentPackage->shipment->delivery->order_id,
+            History::saveEvent(
+                HistoryType::TYPE_UPDATE,
+                $shipmentPackageItem->shipmentPackage->shipment,
                 $shipmentPackageItem
             );
         });
     
         self::deleting(function (self $shipmentPackageItem) {
-            OrderHistoryEvent::saveEvent(
-                OrderHistoryEvent::TYPE_DELETE,
-                $shipmentPackageItem->shipmentPackage->shipment->delivery->order_id,
+            History::saveEvent(
+                HistoryType::TYPE_DELETE,
+                $shipmentPackageItem->shipmentPackage->shipment,
                 $shipmentPackageItem
             );
-        });*/
+        });
     
         self::saved(function (self $shipmentPackageItem) {
             if ($shipmentPackageItem->qty != $shipmentPackageItem->getOriginal('qty')) {

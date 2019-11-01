@@ -4,8 +4,9 @@ namespace App\Models\Basket;
 
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentPackageItem;
+use App\Models\History\HistoryType;
 use App\Models\OmsModel;
-use App\Models\Order\OrderHistoryEvent;
+use App\Models\History\History;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -102,19 +103,19 @@ class BasketItem extends OmsModel
         
         self::created(function (self $basketItem) {
             if ($basketItem->basket->order && $basketItem->basket->order->id) {
-                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $basketItem->basket->order->id, $basketItem);
+                History::saveEvent(HistoryType::TYPE_CREATE, $basketItem->basket->order, $basketItem);
             }
         });
     
         self::updated(function (self $basketItem) {
             if ($basketItem->basket->order && $basketItem->basket->order->id) {
-                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $basketItem->basket->order->id, $basketItem);
+                History::saveEvent(HistoryType::TYPE_UPDATE, $basketItem->basket->order, $basketItem);
             }
         });
     
         self::deleting(function (self $basketItem) {
             if ($basketItem->basket->order && $basketItem->basket->order->id) {
-                OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $basketItem->basket->order->id, $basketItem);
+                History::saveEvent(HistoryType::TYPE_DELETE, $basketItem->basket->order, $basketItem);
             }
             
             if ($basketItem->shipmentItem) {

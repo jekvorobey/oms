@@ -2,9 +2,12 @@
 
 namespace App\Models\Order;
 
+use App\Core\Notification\OrderNotification;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
+use App\Models\History\History;
+use App\Models\History\HistoryType;
 use App\Models\OmsModel;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -66,6 +69,9 @@ class Order extends OmsModel
         'delivery_address' => 'array'
     ];
     protected static $unguarded = true;
+    /** @var string */
+    public $notificator = OrderNotification::class;
+    
     /**
      * @return HasOne
      */
@@ -193,11 +199,11 @@ class Order extends OmsModel
         });
 
         self::created(function (self $order) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $order->id, $order);
+            History::saveEvent(HistoryType::TYPE_CREATE, $order, $order);
         });
 
         self::updated(function (self $order) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $order->id, $order);
+            History::saveEvent(HistoryType::TYPE_UPDATE, $order, $order);
         });
 
         self::deleting(function (self $order) {
@@ -208,7 +214,7 @@ class Order extends OmsModel
                 $delivery->delete();
             }
             
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $order->id, $order);
+            History::saveEvent(HistoryType::TYPE_DELETE, $order, $order);
         });
     }
 }

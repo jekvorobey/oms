@@ -2,6 +2,8 @@
 
 namespace App\Models\Order;
 
+use App\Models\History\History;
+use App\Models\History\HistoryType;
 use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -45,11 +47,11 @@ class OrderComment extends OmsModel
         parent::boot();
 
         self::created(function (self $orderComment) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_COMMENT, $orderComment->order_id, $orderComment->order);
+            History::saveEvent(HistoryType::TYPE_COMMENT, $orderComment->order, $orderComment);
         });
 
         self::updated(function (self $orderComment) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_COMMENT, $orderComment->order_id, $orderComment->order);
+            History::saveEvent(HistoryType::TYPE_COMMENT, $orderComment->order, $orderComment);
         });
     }
 }

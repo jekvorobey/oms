@@ -26,11 +26,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('orders')->group(function () {
-        Route::prefix('history')->group(function () {
-            Route::get('count', 'OrdersHistoryController@count');
-            Route::get('', 'OrdersHistoryController@read');
-        });
-
         Route::prefix('exports')->group(function () {
             Route::get('count', 'OrdersExportController@count');
             Route::get('', 'OrdersExportController@read');
@@ -38,6 +33,10 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 
         Route::get('count', 'OrdersController@count');
         Route::prefix('{id}')->group(function () {
+            Route::prefix('history')->group(function () {
+                Route::get('count', 'HistoryController@countByOrder');
+                Route::get('', 'HistoryController@readByOrder');
+            });
             Route::put('payments', 'OrdersController@setPayments');
             Route::put('comment', 'OrdersController@setComment');
 
@@ -102,6 +101,10 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('', 'ShipmentsController@read');
 
             Route::prefix('{id}')->group(function () {
+                Route::prefix('history')->group(function () {
+                    Route::get('count', 'HistoryController@countByShipment');
+                    Route::get('', 'HistoryController@readByShipment');
+                });
                 Route::get('', 'ShipmentsController@read');
 
                 Route::prefix('items')->group(function () {
@@ -151,6 +154,10 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::post('', 'CargoController@create');
 
             Route::prefix('{id}')->group(function () {
+                Route::prefix('history')->group(function () {
+                    Route::get('count', 'HistoryController@countByCargo');
+                    Route::get('', 'HistoryController@readByCargo');
+                });
                 Route::get('', 'CargoController@read');
                 Route::put('','CargoController@update');
                 Route::delete('','CargoController@delete');

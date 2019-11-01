@@ -3,8 +3,9 @@
 namespace App\Models\Delivery;
 
 use App\Models\Basket\BasketItem;
+use App\Models\History\HistoryType;
 use App\Models\OmsModel;
-use App\Models\Order\OrderHistoryEvent;
+use App\Models\History\History;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -56,17 +57,16 @@ class ShipmentItem extends OmsModel
             $shipmentItem->shipment->costRecalc();
         });
     
-        //todo Доделать сохранение истории
-        /*self::created(function (self $shipmentItem) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_CREATE, $shipmentItem->shipment->delivery->order_id, $shipmentItem);
+        self::created(function (self $shipmentItem) {
+            History::saveEvent(HistoryType::TYPE_CREATE, $shipmentItem->shipment, $shipmentItem);
         });
     
         self::updated(function (self $shipmentItem) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_UPDATE, $shipmentItem->shipment->delivery->order_id, $shipmentItem);
+            History::saveEvent(HistoryType::TYPE_UPDATE, $shipmentItem->shipment, $shipmentItem);
         });
     
         self::deleting(function (self $shipmentItem) {
-            OrderHistoryEvent::saveEvent(OrderHistoryEvent::TYPE_DELETE, $shipmentItem->shipment->delivery->order_id, $shipmentItem);
-        });*/
+            History::saveEvent(HistoryType::TYPE_DELETE, $shipmentItem->shipment, $shipmentItem);
+        });
     }
 }

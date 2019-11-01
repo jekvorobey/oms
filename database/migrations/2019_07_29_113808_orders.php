@@ -68,16 +68,17 @@ class Orders extends Migration
             $table->foreign('basket_id')->references('id')->on('baskets');
         });
 
-        Schema::create('orders_history', function (Blueprint $table) {
+        Schema::create('history', function (Blueprint $table) {
             $table->bigIncrements('id');
 
-            $table->bigInteger('order_id')->unsigned();
             $table->bigInteger('user_id')->unsigned()->nullable();
-            $table->tinyInteger('type')->unsigned()->nullable();
+            $table->tinyInteger('type')->unsigned();
             $table->jsonb('data')->nullable();
 
-            $table->string('entity')->nullable();
-            $table->bigInteger('entity_id')->unsigned()->nullable();
+            $table->string('main_entity');
+            $table->bigInteger('main_entity_id')->unsigned();
+            $table->string('entity');
+            $table->bigInteger('entity_id')->unsigned();
 
             $table->timestamps();
         });
@@ -235,7 +236,7 @@ class Orders extends Migration
         Schema::dropIfExists('payments');
         Schema::dropIfExists('orders_comments');
         Schema::dropIfExists('orders_export');
-        Schema::dropIfExists('orders_history');
+        Schema::dropIfExists('history');
         Schema::dropIfExists('orders');
         Schema::dropIfExists('basket_items');
         Schema::dropIfExists('baskets');
