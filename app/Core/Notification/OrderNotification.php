@@ -39,30 +39,30 @@ class OrderNotification implements NotificationInterface
             case HistoryType::TYPE_CREATE:
                 $dto['type'] = NotificationDto::TYPE_ORDER_NEW;
                 $dto['payload']['title'] = "Новый заказ";
-                $dto['payload']['body'] = "Создан заказ {$model->number}";
+                $dto['payload']['body'] = "Создан заказ {$mainModel->number}";
                 break;
             case HistoryType::TYPE_UPDATE:
-                if($model->status == OrderStatus::STATUS_PROBLEM) {
+                if($mainModel->status == OrderStatus::STATUS_PROBLEM) {
                     $dto['type'] = NotificationDto::TYPE_ORDER_PROBLEM;
                     $dto['payload']['title'] = "Проблемный заказ";
-                    $dto['payload']['body'] = "Заказ {$model->number} помечен как проблемный";
+                    $dto['payload']['body'] = "Заказ {$mainModel->number} помечен как проблемный";
                 }
-                if($model->payment_status == PaymentStatus::STATUS_DONE) {
+                if($mainModel->payment_status == PaymentStatus::STATUS_DONE) {
                     $dto['type'] = NotificationDto::TYPE_ORDER_PAYED;
                     $dto['payload']['title'] = "Оплачен заказ";
-                    $dto['payload']['body'] = "Заказ {$model->number} оплачен";
+                    $dto['payload']['body'] = "Заказ {$mainModel->number} оплачен";
                 }
-                if($model->status == OrderStatus::STATUS_CANCEL) {
+                if($mainModel->status == OrderStatus::STATUS_CANCEL) {
                     $dto['type'] = NotificationDto::TYPE_ORDER_CANCEL;
                     $dto['payload']['title'] = "Отмена заказа";
-                    $dto['payload']['body'] = "Заказ {$model->number} был отменён";
+                    $dto['payload']['body'] = "Заказ {$mainModel->number} был отменён";
                 }
                 break;
         
             case HistoryType::TYPE_COMMENT:
                 $dto['type'] = NotificationDto::TYPE_ORDER_COMMENT;
                 $dto['payload']['title'] = "Обновлён комментарий заказа";
-                $dto['payload']['body'] = "Комментарий заказа {$model->number} был обновлен";
+                $dto['payload']['body'] = "Комментарий заказа {$mainModel->number} был обновлен";
                 break;
         }
     
@@ -76,7 +76,7 @@ class OrderNotification implements NotificationInterface
     
         // Получаем корзину и офферы из корзины заказа
         /** @var Basket $basket */
-        $basket = $model->basket->get()->first();
+        $basket = $mainModel->basket->get()->first();
         $basketItems = $basket->items()->get()->pluck('offer_id')->toArray();
     
         // Получаем id мерчантов, которым принадлежат данные офферы

@@ -35,15 +35,18 @@ class History extends OmsModel
      */
     public static function saveEvent(int $type, OmsModel $mainModel, OmsModel $model): void
     {
+        $mainModelClass = explode('\\', get_class($mainModel));
+        $modelClass = explode('\\', get_class($model));
+        
         /** @var RequestInitiator $user */
         $user = resolve(RequestInitiator::class);
         $event = new self();
         $event->type = $type;
         $event->user_id = $user->userId();
-        $event->main_entity = end(explode('\\', get_class($mainModel)));
+        $event->main_entity = end($mainModelClass);
         $event->main_entity_id = $mainModel->id;
         $event->entity_id = $model->id;
-        $event->entity = end(explode('\\', get_class($model)));
+        $event->entity = end($modelClass);
         $event->data = $type != HistoryType::TYPE_DELETE ? $model->getDirty() : $model->toArray();
         $event->save();
 

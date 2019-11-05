@@ -88,9 +88,10 @@ class HistoryController extends Controller
         if ($pagination) {
             $baseQuery->offset($pagination['offset'])->limit($pagination['limit']);
         }
+        $mainEntityClass = explode('\\', $mainEntity);
         $query = History::modifyQuery(
             $baseQuery
-                ->where('main_entity', end(explode('\\', $mainEntity)))
+                ->where('main_entity', end($mainEntityClass))
                 ->where('main_entity_id', $mainEntityId),
             $restQuery
         );
@@ -161,9 +162,10 @@ class HistoryController extends Controller
         $pageSize = $pagination ? $pagination['limit'] : ReadAction::$PAGE_SIZE;
         $baseQuery = History::query();
     
+        $mainEntityClass = explode('\\', $mainEntity);
         $query = History::modifyQuery(
             $baseQuery
-                ->where('main_entity', end(explode('\\', $mainEntity)))
+                ->where('main_entity', end($mainEntityClass))
                 ->where('main_entity_id', $mainEntityId),
             $restQuery
         );
