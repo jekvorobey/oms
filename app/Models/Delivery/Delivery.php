@@ -2,9 +2,13 @@
 
 namespace App\Models\Delivery;
 
+use App\Models\History\History;
+use App\Models\History\HistoryType;
 use App\Models\OmsModel;
+use App\Models\Order\Order;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -26,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float $weight
  * @property Carbon $delivery_at
  *
+ * @property-read Order $order
  * @property-read Collection|Shipment[] $shipments
  */
 class Delivery extends OmsModel
@@ -73,6 +78,14 @@ class Delivery extends OmsModel
      * @var array
      */
     protected static $restIncludes = ['shipments'];
+    
+    /**
+     * @return BelongsTo
+     */
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
+    }
     
     /**
      * @return HasMany
@@ -150,5 +163,22 @@ class Delivery extends OmsModel
         }
         
         return $maxSideName;
+    }
+    
+    protected static function boot()
+    {
+        parent::boot();
+    
+        self::created(function (self $delivery) {
+            History::saveEvent(HistoryType::TYPE_CREATE, $delivery->order, $delivery);
+        });
+    
+        self::updated(function (self $delivery) {
+            History::saveEvent(HistoryType::TYPE_UPDATE, $delivery->order, $delivery);
+        });
+    
+        self::deleting(function (self $delivery) {
+            History::saveEvent(HistoryType::TYPE_DELETE, $delivery->order, $delivery);
+        });
     }
 }

@@ -4,6 +4,8 @@ namespace App\Models\Payment;
 
 use App\Core\Payment\LocalPaymentSystem;
 use App\Core\Payment\PaymentSystemInterface;
+use App\Models\History\History;
+use App\Models\History\HistoryType;
 use App\Models\OmsModel;
 use App\Models\Order\Order;
 use Carbon\Carbon;
@@ -115,10 +117,23 @@ class Payment extends OmsModel
     protected static function boot()
     {
         parent::boot();
+        
         self::saved(function (self $payment) {
             if ($payment->getOriginal('status') != $payment->status) {
                 $payment->order->refreshStatus();
             }
+        });
+    
+        self::created(function (self $payment) {
+            History::saveEvent(HistoryType::TYPE_CREATE, $payment->order, $payment);
+        });
+    
+        self::updated(function (self $payment) {
+            History::saveEvent(HistoryType::TYPE_UPDATE, $payment->order, $payment);
+        });
+    
+        self::deleting(function (self $payment) {
+            History::saveEvent(HistoryType::TYPE_DELETE, $payment->order, $payment);
         });
     }
 }

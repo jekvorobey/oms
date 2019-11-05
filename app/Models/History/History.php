@@ -4,7 +4,8 @@ namespace App\Models\History;
 
 use App\Models\OmsModel;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 /**
  * Класс-модель для сущности "История изменения сущностей"
@@ -14,10 +15,10 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $user_id - id пользователя
  * @property int $type - тип события
  * @property string $data - информация
- * @property string $main_entity - название основной сущности, деталке которой будет выводится история изменения (например, Order или Shipment)
- * @property int $main_entity_id - id основной сущность (например, Заказа или Отправления)
  * @property string $entity - название изменяемой сущности (например, BasketItem или ShipmentItem)
  * @property int $entity_id - id изменяемой сущности (например, Позиция корзины или Позиция отправления)
+ *
+ * @property Collection|HistoryMainEntity[] $historyMainEntities
  */
 class History extends OmsModel
 {
@@ -29,29 +30,48 @@ class History extends OmsModel
     ];
     
     /**
-     * @param  int  $type
-     * @param  string  $mainEntity
-     * @param  Model  $model
+     * @return HasMany
      */
-    public static function saveEvent(int $type, OmsModel $mainModel, OmsModel $model): void
+    public function historyMainEntities(): HasMany
     {
-        $mainModelClass = explode('\\', get_class($mainModel));
+        return $this->hasMany(HistoryMainEntity::class);
+    }
+    
+    /**
+     * @param  int  $type
+     * @param  OmsModel|array  $mainModels
+     * @param  OmsModel|null  $model
+     */
+    public static function saveEvent(int $type, $mainModels, OmsModel $model): void
+    {
+        //Сохраняем событие в историю
         $modelClass = explode('\\', get_class($model));
-        
         /** @var RequestInitiator $user */
         $user = resolve(RequestInitiator::class);
         $event = new self();
         $event->type = $type;
         $event->user_id = $user->userId();
-        $event->main_entity = end($mainModelClass);
-        $event->main_entity_id = $mainModel->id;
+        
         $event->entity_id = $model->id;
         $event->entity = end($modelClass);
         $event->data = $type != HistoryType::TYPE_DELETE ? $model->getDirty() : $model->toArray();
         $event->save();
-
-        if ($mainModel->notificator) {
-            $mainModel->notificator::notify($type, $mainModel, $model);
+    
+        //Привязываем событие к основным сущностям, деталке которых оно будет выводится в истории изменения
+        if (!is_array($mainModels)) {
+            $mainModels = [$mainModels];
+        }
+        foreach ($mainModels as $mainModel) {
+            $historyMainEntity = new HistoryMainEntity();
+            $historyMainEntity->history_id = $event->id;
+            $mainModelClass = explode('\\', get_class($mainModel));
+            $historyMainEntity->main_entity = end($mainModelClass);
+            $historyMainEntity->main_entity_id = $mainModel->id;
+            $historyMainEntity->save();
+            
+            if ($mainModel->notificator) {
+                $mainModel->notificator::notify($type, $mainModel, $model);
+            }
         }
     }
 }

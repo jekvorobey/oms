@@ -102,19 +102,19 @@ class BasketItem extends OmsModel
         });
         
         self::created(function (self $basketItem) {
-            if ($basketItem->basket->order && $basketItem->basket->order->id) {
+            if ($basketItem->basket->order) {
                 History::saveEvent(HistoryType::TYPE_CREATE, $basketItem->basket->order, $basketItem);
             }
         });
     
         self::updated(function (self $basketItem) {
-            if ($basketItem->basket->order && $basketItem->basket->order->id) {
+            if ($basketItem->basket->order) {
                 History::saveEvent(HistoryType::TYPE_UPDATE, $basketItem->basket->order, $basketItem);
             }
         });
     
         self::deleting(function (self $basketItem) {
-            if ($basketItem->basket->order && $basketItem->basket->order->id) {
+            if ($basketItem->basket->order) {
                 History::saveEvent(HistoryType::TYPE_DELETE, $basketItem->basket->order, $basketItem);
             }
             

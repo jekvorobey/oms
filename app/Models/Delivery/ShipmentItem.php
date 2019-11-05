@@ -58,15 +58,36 @@ class ShipmentItem extends OmsModel
         });
     
         self::created(function (self $shipmentItem) {
-            History::saveEvent(HistoryType::TYPE_CREATE, $shipmentItem->shipment, $shipmentItem);
+            History::saveEvent(
+                HistoryType::TYPE_CREATE,
+                [
+                    $shipmentItem->shipment->delivery->order,
+                    $shipmentItem->shipment,
+                ],
+                $shipmentItem
+            );
         });
     
         self::updated(function (self $shipmentItem) {
-            History::saveEvent(HistoryType::TYPE_UPDATE, $shipmentItem->shipment, $shipmentItem);
+            History::saveEvent(
+                HistoryType::TYPE_UPDATE,
+                [
+                    $shipmentItem->shipment->delivery->order,
+                    $shipmentItem->shipment,
+                ],
+                $shipmentItem
+            );
         });
     
         self::deleting(function (self $shipmentItem) {
-            History::saveEvent(HistoryType::TYPE_DELETE, $shipmentItem->shipment, $shipmentItem);
+            History::saveEvent(
+                HistoryType::TYPE_DELETE,
+                [
+                    $shipmentItem->shipment->delivery->order,
+                    $shipmentItem->shipment,
+                ],
+                $shipmentItem
+            );
         });
     }
 }

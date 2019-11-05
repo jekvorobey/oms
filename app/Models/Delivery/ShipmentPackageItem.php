@@ -66,11 +66,13 @@ class ShipmentPackageItem extends OmsModel
     {
         parent::boot();
         
-        //todo Доделать сохранение истории
         self::created(function (self $shipmentPackageItem) {
             History::saveEvent(
                 HistoryType::TYPE_CREATE,
-                $shipmentPackageItem->shipmentPackage->shipment,
+                [
+                    $shipmentPackageItem->shipmentPackage->shipment->delivery->order,
+                    $shipmentPackageItem->shipmentPackage->shipment,
+                ],
                 $shipmentPackageItem
             );
         });
@@ -78,7 +80,10 @@ class ShipmentPackageItem extends OmsModel
         self::updated(function (self $shipmentPackageItem) {
             History::saveEvent(
                 HistoryType::TYPE_UPDATE,
-                $shipmentPackageItem->shipmentPackage->shipment,
+                [
+                    $shipmentPackageItem->shipmentPackage->shipment->delivery->order,
+                    $shipmentPackageItem->shipmentPackage->shipment,
+                ],
                 $shipmentPackageItem
             );
         });
@@ -86,7 +91,10 @@ class ShipmentPackageItem extends OmsModel
         self::deleting(function (self $shipmentPackageItem) {
             History::saveEvent(
                 HistoryType::TYPE_DELETE,
-                $shipmentPackageItem->shipmentPackage->shipment,
+                [
+                    $shipmentPackageItem->shipmentPackage->shipment->delivery->order,
+                    $shipmentPackageItem->shipmentPackage->shipment,
+                ],
                 $shipmentPackageItem
             );
         });

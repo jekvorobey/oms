@@ -2,6 +2,8 @@
 
 namespace App\Models\Delivery;
 
+use App\Models\History\History;
+use App\Models\History\HistoryType;
 use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -116,6 +118,39 @@ class ShipmentPackage extends OmsModel
     protected static function boot()
     {
         parent::boot();
+    
+        self::created(function (self $package) {
+            History::saveEvent(
+                HistoryType::TYPE_CREATE,
+                [
+                    $package->shipment->delivery->order,
+                    $package->shipment
+                ],
+                $package
+            );
+        });
+    
+        self::updated(function (self $package) {
+            History::saveEvent(
+                HistoryType::TYPE_UPDATE,
+                [
+                    $package->shipment->delivery->order,
+                    $package->shipment
+                ],
+                $package
+            );
+        });
+    
+        self::deleting(function (self $package) {
+            History::saveEvent(
+                HistoryType::TYPE_DELETE,
+                [
+                    $package->shipment->delivery->order,
+                    $package->shipment
+                ],
+                $package
+            );
+        });
         
         self::saved(function (self $package) {
             $needRecalc = false;

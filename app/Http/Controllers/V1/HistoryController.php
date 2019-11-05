@@ -9,6 +9,7 @@ use App\Models\Order\Order;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Rest\RestSerializable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -90,9 +91,10 @@ class HistoryController extends Controller
         }
         $mainEntityClass = explode('\\', $mainEntity);
         $query = History::modifyQuery(
-            $baseQuery
-                ->where('main_entity', end($mainEntityClass))
-                ->where('main_entity_id', $mainEntityId),
+            $baseQuery->whereHas('historyMainEntities', function (Builder $query) use ($mainEntityClass, $mainEntityId) {
+                $query->where('main_entity', end($mainEntityClass))
+                    ->where('main_entity_id', $mainEntityId);
+            }),
             $restQuery
         );
     
@@ -164,9 +166,10 @@ class HistoryController extends Controller
     
         $mainEntityClass = explode('\\', $mainEntity);
         $query = History::modifyQuery(
-            $baseQuery
-                ->where('main_entity', end($mainEntityClass))
-                ->where('main_entity_id', $mainEntityId),
+            $baseQuery->whereHas('historyMainEntities', function (Builder $query) use ($mainEntityClass, $mainEntityId) {
+                $query->where('main_entity', end($mainEntityClass))
+                    ->where('main_entity_id', $mainEntityId);
+            }),
             $restQuery
         );
         $total = $query->count();
