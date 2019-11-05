@@ -76,6 +76,15 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::post('start', 'PaymentsController@start');
         });
     });
+    
+    Route::prefix('shipments')->group(function () {
+        Route::prefix('{id}')->group(function () {
+            Route::prefix('history')->group(function () {
+                Route::get('count', 'HistoryController@countByShipment');
+                Route::get('', 'HistoryController@readByShipment');
+            });
+        });
+    });
 
     Route::namespace('Delivery')->group(function () {
         Route::prefix('deliveries')->group(function () {
@@ -101,10 +110,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('', 'ShipmentsController@read');
 
             Route::prefix('{id}')->group(function () {
-                Route::prefix('history')->group(function () {
-                    Route::get('count', 'HistoryController@countByShipment');
-                    Route::get('', 'HistoryController@readByShipment');
-                });
                 Route::get('', 'ShipmentsController@read');
 
                 Route::prefix('items')->group(function () {
