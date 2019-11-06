@@ -32,6 +32,10 @@ class Orders extends Migration
             $table->bigInteger('store_id')->unsigned()->nullable();
 
             $table->string('name');
+            $table->decimal('weight', 18, 4);
+            $table->decimal('width', 18, 4);
+            $table->decimal('height', 18, 4);
+            $table->decimal('length', 18, 4);
             $table->decimal('qty', 18, 4);
             $table->decimal('price', 18, 4)->nullable();
             $table->decimal('discount', 18, 4)->nullable();

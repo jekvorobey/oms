@@ -3,8 +3,6 @@
 namespace App\Models\Delivery;
 
 use App\Models\Basket\BasketItem;
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 use App\Models\OmsModel;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,7 +27,7 @@ use Pim\Services\ProductService\ProductService;
  * @property int $cargo_id
  *
  * @property string $number - номер отправления (номер_заказа/порядковый_номер_отправления)
- * @property float $cost - сумма товаров отправления
+ * @property float $cost - сумма товаров отправления (расчитывается автоматически)
  * @property string $required_shipping_at - требуемая дата отгрузки
  *
  * //dynamic attributes
@@ -51,8 +49,8 @@ class Shipment extends OmsModel
         'merchant_id',
         'store_id',
         'cargo_id',
+        'status',
         'number',
-        'cost',
         'required_shipping_at',
     ];
     
@@ -262,56 +260,5 @@ class Shipment extends OmsModel
         }
         
         return $result;
-    }
-    
-    protected static function boot()
-    {
-        parent::boot();
-        
-        self::created(function (self $shipment) {
-            History::saveEvent(HistoryType::TYPE_CREATE, [$shipment->delivery->order, $shipment], $shipment);
-        });
-    
-        self::updated(function (self $shipment) {
-            History::saveEvent(HistoryType::TYPE_UPDATE, [$shipment->delivery->order, $shipment], $shipment);
-        });
-        
-        self::saved(function (self $shipment) {
-            $oldCargoId = $shipment->getOriginal('cargo_id');
-            if ($oldCargoId != $shipment->cargo_id) {
-                if ($oldCargoId) {
-                    /** @var Cargo $oldCargo */
-                    $oldCargo = Cargo::find($oldCargoId);
-                    if ($oldCargo) {
-                        $oldCargo->recalc();
-                    }
-                }
-                if ($shipment->cargo_id) {
-                    /** @var Cargo $newCargo */
-                    $newCargo = Cargo::find($shipment->cargo_id);
-                    if ($newCargo) {
-                        $newCargo->recalc();
-                    }
-                }
-            }
-        });
-    
-        self::deleting(function (self $shipment) {
-            History::saveEvent(HistoryType::TYPE_DELETE, [$shipment->delivery->order, $shipment], $shipment);
-            
-            foreach ($shipment->packages as $package) {
-                $package->delete();
-            }
-        });
-        
-        self::deleted(function (self $shipment) {
-            if ($shipment->cargo_id) {
-                /** @var Cargo $newCargo */
-                $newCargo = Cargo::find($shipment->cargo_id);
-                if ($newCargo) {
-                    $newCargo->recalc();
-                }
-            }
-        });
     }
 }

@@ -2,12 +2,10 @@
 
 namespace App\Models\Order;
 
-use App\Core\Notification\OrderNotification;
+use App\Core\Notifications\OrderNotification;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 use App\Models\OmsModel;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -27,7 +25,7 @@ use Illuminate\Support\Collection;
  * @property int $delivery_method - способ доставки (самовывоз из ПВЗ, самовывоз из постомата, доставка)
  *
  * @property string $number - номер
- * @property float $cost - стоимость
+ * @property float $cost - стоимость (расчитывается автоматически)
  * @property int $status - статус
  * @property int $payment_status - статус оплаты
  * @property string $manager_comment - комментарий менеджера
@@ -53,7 +51,7 @@ use Illuminate\Support\Collection;
  *     @OA\Property(property="delivery_service", type="string", description="служба доставки (DPD, CDEK и т.д.)"),
  *     @OA\Property(property="delivery_method", type="string", description="способ доставки (самовывоз из ПВЗ, самовывоз из постомата, доставка)"),
  *     @OA\Property(property="number", type="string", description="номер"),
- *     @OA\Property(property="cost", type="number", description="стоимость"),
+ *     @OA\Property(property="cost", type="number", description="стоимость (расчитывается автоматически)"),
  *     @OA\Property(property="payment_status", type="integer", description="статус оплаты"),
  *     @OA\Property(property="manager_comment", type="string", description="комментарий менеджера"),
  *     @OA\Property(property="delivery_address", type="string", description="адрес доставки"),
@@ -186,35 +184,5 @@ class Order extends OmsModel
     {
         $this->status = OrderStatus::STATUS_CANCEL;
         $this->save();
-    }
-
-    protected static function boot()
-    {
-        parent::boot();
-    
-        self::saving(function (self $order) {
-            if ($order->delivery_cost != $order->getOriginal('delivery_cost')) {
-                $order->costRecalc(false);
-            }
-        });
-
-        self::created(function (self $order) {
-            History::saveEvent(HistoryType::TYPE_CREATE, $order, $order);
-        });
-
-        self::updated(function (self $order) {
-            History::saveEvent(HistoryType::TYPE_UPDATE, $order, $order);
-        });
-
-        self::deleting(function (self $order) {
-            if ($order->basket) {
-                $order->basket->delete();
-            }
-            foreach ($order->deliveries as $delivery) {
-                $delivery->delete();
-            }
-            
-            History::saveEvent(HistoryType::TYPE_DELETE, $order, $order);
-        });
     }
 }

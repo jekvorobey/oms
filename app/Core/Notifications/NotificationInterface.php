@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Core\Notification;
+namespace App\Core\Notifications;
 
 
 use App\Models\OmsModel;
 
 /**
  * Interface NotificationInterface
- * @package App\Core\Notification
+ * @package App\Core\Notifications
  */
 interface NotificationInterface
 {

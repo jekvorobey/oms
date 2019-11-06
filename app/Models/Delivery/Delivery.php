@@ -2,8 +2,6 @@
 
 namespace App\Models\Delivery;
 
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 use App\Models\OmsModel;
 use App\Models\Order\Order;
 use Carbon\Carbon;
@@ -24,10 +22,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $xml_id - идентификатор заказа на доставку в службе доставки
  * @property string $number - номер доставки (номер_заказа-порядковый_номер_отправления)
  * @property float $cost - стоимость доставки, полученная от службы доставки (не влияет на общую стоимость доставки по заказу!)
- * @property float $width
- * @property float $height
- * @property float $length
- * @property float $weight
+ * @property float $width - ширина (расчитывается автоматически)
+ * @property float $height - высота (расчитывается автоматически)
+ * @property float $length - длина (расчитывается автоматически)
+ * @property float $weight - вес (расчитывается автоматически)
  * @property Carbon $delivery_at
  *
  * @property-read Order $order
@@ -47,10 +45,6 @@ class Delivery extends OmsModel
         'delivery_service',
         'xml_id',
         'number',
-        'width',
-        'height',
-        'length',
-        'weight',
         'delivery_at',
     ];
     
@@ -163,22 +157,5 @@ class Delivery extends OmsModel
         }
         
         return $maxSideName;
-    }
-    
-    protected static function boot()
-    {
-        parent::boot();
-    
-        self::created(function (self $delivery) {
-            History::saveEvent(HistoryType::TYPE_CREATE, $delivery->order, $delivery);
-        });
-    
-        self::updated(function (self $delivery) {
-            History::saveEvent(HistoryType::TYPE_UPDATE, $delivery->order, $delivery);
-        });
-    
-        self::deleting(function (self $delivery) {
-            History::saveEvent(HistoryType::TYPE_DELETE, $delivery->order, $delivery);
-        });
     }
 }

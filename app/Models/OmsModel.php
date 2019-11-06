@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Core\Notification\NotificationInterface;
+use App\Core\Notifications\NotificationInterface;
 use Greensight\CommonMsa\Models\AbstractModel;
 
 /**

@@ -113,27 +113,4 @@ class Payment extends OmsModel
     {
         return $this->belongsTo(Order::class);
     }
-
-    protected static function boot()
-    {
-        parent::boot();
-        
-        self::saved(function (self $payment) {
-            if ($payment->getOriginal('status') != $payment->status) {
-                $payment->order->refreshStatus();
-            }
-        });
-    
-        self::created(function (self $payment) {
-            History::saveEvent(HistoryType::TYPE_CREATE, $payment->order, $payment);
-        });
-    
-        self::updated(function (self $payment) {
-            History::saveEvent(HistoryType::TYPE_UPDATE, $payment->order, $payment);
-        });
-    
-        self::deleting(function (self $payment) {
-            History::saveEvent(HistoryType::TYPE_DELETE, $payment->order, $payment);
-        });
-    }
 }

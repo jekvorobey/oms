@@ -3,9 +3,7 @@
 namespace App\Models\Delivery;
 
 use App\Models\Basket\BasketItem;
-use App\Models\History\HistoryType;
 use App\Models\OmsModel;
-use App\Models\History\History;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -43,51 +41,5 @@ class ShipmentItem extends OmsModel
     public function basketItem(): BelongsTo
     {
         return $this->belongsTo(BasketItem::class);
-    }
-    
-    protected static function boot()
-    {
-        parent::boot();
-    
-        self::saved(function (self $shipmentItem) {
-            $shipmentItem->shipment->costRecalc();
-        });
-    
-        self::deleted(function (self $shipmentItem) {
-            $shipmentItem->shipment->costRecalc();
-        });
-    
-        self::created(function (self $shipmentItem) {
-            History::saveEvent(
-                HistoryType::TYPE_CREATE,
-                [
-                    $shipmentItem->shipment->delivery->order,
-                    $shipmentItem->shipment,
-                ],
-                $shipmentItem
-            );
-        });
-    
-        self::updated(function (self $shipmentItem) {
-            History::saveEvent(
-                HistoryType::TYPE_UPDATE,
-                [
-                    $shipmentItem->shipment->delivery->order,
-                    $shipmentItem->shipment,
-                ],
-                $shipmentItem
-            );
-        });
-    
-        self::deleting(function (self $shipmentItem) {
-            History::saveEvent(
-                HistoryType::TYPE_DELETE,
-                [
-                    $shipmentItem->shipment->delivery->order,
-                    $shipmentItem->shipment,
-                ],
-                $shipmentItem
-            );
-        });
     }
 }

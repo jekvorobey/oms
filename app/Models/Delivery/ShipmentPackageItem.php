@@ -3,9 +3,7 @@
 namespace App\Models\Delivery;
 
 use App\Models\Basket\BasketItem;
-use App\Models\History\HistoryType;
 use App\Models\OmsModel;
-use App\Models\History\History;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -60,53 +58,5 @@ class ShipmentPackageItem extends OmsModel
     public function basketItem(): BelongsTo
     {
         return $this->belongsTo(BasketItem::class);
-    }
-    
-    protected static function boot()
-    {
-        parent::boot();
-        
-        self::created(function (self $shipmentPackageItem) {
-            History::saveEvent(
-                HistoryType::TYPE_CREATE,
-                [
-                    $shipmentPackageItem->shipmentPackage->shipment->delivery->order,
-                    $shipmentPackageItem->shipmentPackage->shipment,
-                ],
-                $shipmentPackageItem
-            );
-        });
-    
-        self::updated(function (self $shipmentPackageItem) {
-            History::saveEvent(
-                HistoryType::TYPE_UPDATE,
-                [
-                    $shipmentPackageItem->shipmentPackage->shipment->delivery->order,
-                    $shipmentPackageItem->shipmentPackage->shipment,
-                ],
-                $shipmentPackageItem
-            );
-        });
-    
-        self::deleting(function (self $shipmentPackageItem) {
-            History::saveEvent(
-                HistoryType::TYPE_DELETE,
-                [
-                    $shipmentPackageItem->shipmentPackage->shipment->delivery->order,
-                    $shipmentPackageItem->shipmentPackage->shipment,
-                ],
-                $shipmentPackageItem
-            );
-        });
-    
-        self::saved(function (self $shipmentPackageItem) {
-            if ($shipmentPackageItem->qty != $shipmentPackageItem->getOriginal('qty')) {
-                $shipmentPackageItem->shipmentPackage->recalcWeight();
-            }
-        });
-        
-        self::deleted(function (self $shipmentPackageItem) {
-            $shipmentPackageItem->shipmentPackage->recalcWeight();
-        });
     }
 }

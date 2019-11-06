@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
+use App\Models\Delivery\ShipmentStatus;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
@@ -19,6 +20,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -90,10 +92,13 @@ class ShipmentsController extends Controller
     protected function inputValidators(): array
     {
         return [
+            'delivery_id' => [new RequiredOnPost(), 'integer'],
             'merchant_id' => [new RequiredOnPost(), 'integer'],
             'store_id' => [new RequiredOnPost(), 'integer'],
             'cargo_id' => ['nullable', 'integer'],
+            'status' => ['nullable', Rule::in(ShipmentStatus::validValues())],
             'number' => [new RequiredOnPost(), 'string'],
+            'required_shipping_at' => [new RequiredOnPost(), 'date'],
         ];
     }
     

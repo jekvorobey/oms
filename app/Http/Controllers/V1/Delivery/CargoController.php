@@ -83,10 +83,6 @@ class CargoController extends Controller
             'status' => ['nullable', Rule::in(CargoStatus::validValues())],
             'delivery_service' => [new RequiredOnPost(), Rule::in(DeliveryService::validValues())],
             'xml_id' => ['nullable', 'string'],
-            'width' => [new RequiredOnPost(), 'numeric'],
-            'height' => [new RequiredOnPost(), 'numeric'],
-            'length' => [new RequiredOnPost(), 'numeric'],
-            'weight' => [new RequiredOnPost(), 'numeric'],
         ];
     }
     

@@ -17,10 +17,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $delivery_service
  *
  * @property string $xml_id
- * @property float $width
- * @property float $height
- * @property float $length
- * @property float $weight
+ * @property float $width - ширина (расчитывается автоматически)
+ * @property float $height - высота (расчитывается автоматически)
+ * @property float $length - длина (расчитывается автоматически)
+ * @property float $weight - вес (расчитывается автоматически)
  *
  * @property-read Collection|Shipment[] $shipments
  */
@@ -37,10 +37,6 @@ class Cargo extends OmsModel
         'status',
         'delivery_service',
         'xml_id',
-        'width',
-        'height',
-        'length',
-        'weight',
     ];
     
     /**

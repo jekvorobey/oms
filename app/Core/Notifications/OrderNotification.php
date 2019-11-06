@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Core\Notification;
+namespace App\Core\Notifications;
 
 use App\Models\Basket\Basket;
 use App\Models\History\HistoryType;
@@ -16,7 +16,7 @@ use Pim\Services\OfferService\OfferService;
 /**
  * Уведомления по заказам
  * Class OrderNotification
- * @package App\Core\Notification
+ * @package App\Core\Notifications
  */
 class OrderNotification implements NotificationInterface
 {

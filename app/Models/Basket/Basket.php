@@ -104,15 +104,4 @@ class Basket extends OmsModel
         
         return $ok;
     }
-    
-    protected static function boot()
-    {
-        parent::boot();
-        
-        self::deleting(function (Basket $basket) {
-            foreach ($basket->items as $item) {
-                $item->delete();
-            }
-        });
-    }
 }

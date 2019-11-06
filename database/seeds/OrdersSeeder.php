@@ -71,7 +71,7 @@ class OrdersSeeder extends Seeder
         /** @var ProductService $productService */
         $productService = resolve(ProductService::class);
         $restQuery = $productService->newQuery();
-        $restQuery->addFields(ProductDto::entity(), 'id', 'name')
+        $restQuery->addFields(ProductDto::entity(), 'id', 'name', 'weight', 'width', 'height', 'length')
             ->setFilter('id', $offers->pluck('product_id'));
         $products = $productService->products($restQuery)->keyBy('id');
 
@@ -87,12 +87,17 @@ class OrdersSeeder extends Seeder
                 $offerStocks = $stocks[$basketOffer->id];
                 /** @var StockDto $offerStock */
                 $offerStock = $offerStocks->random();
+                $product = $products[$basketOffer->product_id];
                 
                 $basketItem = new BasketItem();
                 $basketItem->basket_id = $basket->id;
                 $basketItem->store_id = $offerStock->store_id;
                 $basketItem->offer_id = $basketOffer->id;
-                $basketItem->name = $products[$basketOffer->product_id]->name;
+                $basketItem->name = $product->name;
+                $basketItem->weight = $product->weight;
+                $basketItem->width = $product->width;
+                $basketItem->height = $product->height;
+                $basketItem->length = $product->length;
                 $basketItem->qty = $faker->randomDigitNotNull;
                 $basketItem->price = $faker->randomFloat(2, 100, 1000);
                 $basketItem->discount = $faker->randomFloat(2, 0, $basketItem->price/3);

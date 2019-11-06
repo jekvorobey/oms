@@ -94,7 +94,6 @@ class ShipmentPackagesController extends Controller
             'width' => [new RequiredOnPost(), 'numeric'],
             'height' => [new RequiredOnPost(), 'numeric'],
             'length' => [new RequiredOnPost(), 'numeric'],
-            'weight' => [new RequiredOnPost(), 'numeric'],
             'wrapper_weight' => [new RequiredOnPost(), 'numeric'],
         ];
     }
