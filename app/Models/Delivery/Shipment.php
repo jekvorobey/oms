@@ -65,7 +65,7 @@ class Shipment extends OmsModel
     /**
      * @var array
      */
-    protected static $restIncludes = ['delivery', 'packages', 'cargo', 'items', 'basketItems'];
+    protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems'];
     
     /**
      * @return BelongsTo

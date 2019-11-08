@@ -86,6 +86,7 @@ class ShipmentPackage extends OmsModel
         $this->weight = $this->wrapper_weight + $this->items->reduce(function ($sum, ShipmentPackageItem $item) {
             return $sum + $item->basketItem->weight * $item->qty;
         });
+        
         if ($save) {
             $this->save();
         }
