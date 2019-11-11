@@ -34,7 +34,7 @@ class OrderNotification implements NotificationInterface
                 'body' => ''
             ]
         ];
-    
+
         switch ($type) {
             case HistoryType::TYPE_CREATE:
                 $dto['type'] = NotificationDto::TYPE_ORDER_NEW;
@@ -58,41 +58,43 @@ class OrderNotification implements NotificationInterface
                     $dto['payload']['body'] = "Заказ {$mainModel->number} был отменён";
                 }
                 break;
-        
+
             case HistoryType::TYPE_COMMENT:
                 $dto['type'] = NotificationDto::TYPE_ORDER_COMMENT;
                 $dto['payload']['title'] = "Обновлён комментарий заказа";
                 $dto['payload']['body'] = "Комментарий заказа {$mainModel->number} был обновлен";
                 break;
         }
-    
+
         if(!isset($dto['type'])) return;
-    
+
         /** @var OfferService $offerService */
         $offerService = resolve(OfferService::class);
         /** @var OperatorService $operatorService */
         $operatorService = resolve(OperatorService::class);
         $notificationService = resolve(NotificationService::class);
-    
+
         // Получаем корзину и офферы из корзины заказа
         /** @var Basket $basket */
         $basket = $mainModel->basket->get()->first();
         $basketItems = $basket->items()->get()->pluck('offer_id')->toArray();
-    
+        $basketItems = array_unique($basketItems);
+
         // Получаем id мерчантов, которым принадлежат данные офферы
         $offerQuery = $offerService->newQuery();
         $offerQuery->setFilter('id', $basketItems);
         $merchantIds = $offerService->offers($offerQuery)->pluck('merchant_id')->toArray();
-    
+        $merchantIds = array_unique($merchantIds);
+
         // Получаем id юзеров и операторов выбранных мерчантов
         /** @var RestQuery $operatorQuery */
         $operatorQuery = $operatorService->newQuery();
         $operatorQuery->setFilter('merchant_id', $merchantIds);
         $operatorsIds = $operatorService->operators($operatorQuery)->pluck('user_id')->toArray();
-        $usersIds = $operatorsIds;
-    
+        $operatorsIds = array_unique($operatorsIds);
+
         // Создаем уведомления
-        foreach ($usersIds as $userId) {
+        foreach ($operatorsIds as $userId) {
             $dto['user_id'] = $userId;
             $notificationService->create(new NotificationDto($dto));
         }
