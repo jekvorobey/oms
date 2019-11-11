@@ -63,10 +63,11 @@ use Illuminate\Support\Collection;
  */
 class Order extends OmsModel
 {
+    /** @var array */
     protected $casts = [
         'delivery_address' => 'array'
     ];
-    protected static $unguarded = true;
+    
     /** @var string */
     public $notificator = OrderNotification::class;
     
@@ -77,20 +78,29 @@ class Order extends OmsModel
     {
         return $this->hasOne(Basket::class, 'id', 'basket_id');
     }
-
+    
+    /**
+     * @return HasMany
+     */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
-
+    
+    /**
+     * @return HasMany
+     */
     public function deliveries(): HasMany
     {
         return $this->hasMany(Delivery::class);
     }
-
+    
+    /**
+     * @return HasOne
+     */
     public function comment(): HasOne
     {
-        return $this->HasOne(OrderComment::class);
+        return $this->hasOne(OrderComment::class);
     }
     
     /**
@@ -144,7 +154,7 @@ class Order extends OmsModel
     /**
      * Обновить статус оплаты заказа в соотвествии со статусами оплат
      */
-    public function refreshStatus()
+    public function refreshPaymentStatus()
     {
         $all = $this->payments->count();
         $statuses = [];
@@ -166,12 +176,23 @@ class Order extends OmsModel
 
         $this->save();
     }
-
+    
+    /**
+     * @param  array  $statuses
+     * @param  int  $count
+     * @param  int  $status
+     * @return bool
+     */
     protected function allIs(array $statuses, int $count, int $status): bool
     {
         return ($statuses[$status] ?? 0) == $count;
     }
-
+    
+    /**
+     * @param  array  $statuses
+     * @param  int  $status
+     * @return bool
+     */
     protected function atLeastOne(array $statuses, int $status): bool
     {
         return ($statuses[$status] ?? 0) > 0;

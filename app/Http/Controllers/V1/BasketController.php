@@ -13,7 +13,6 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-
 /**
  * Class BasketController
  * @package App\Http\Controllers\V1
@@ -126,7 +125,7 @@ class BasketController extends Controller
      * @param  Request  $request
      * @return JsonResponse
      */
-    public function getBasket(int $basketId, Request $request)
+    public function getBasket(int $basketId, Request $request): JsonResponse
     {
         /** @var Basket $basket */
         $basket = Basket::find($basketId);
@@ -166,3 +165,4 @@ class BasketController extends Controller
         return $basket->items->toArray();
     }
 }
+

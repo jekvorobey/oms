@@ -40,7 +40,7 @@ class PaymentObserver
     public function saved(Payment $payment)
     {
         if ($payment->getOriginal('status') != $payment->status) {
-            $payment->order->refreshStatus();
+            $payment->order->refreshPaymentStatus();
         }
     }
     

@@ -14,7 +14,9 @@ use App\Models\Order\OrderComment;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Greensight\CommonMsa\Rest\RestQuery;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -46,9 +48,10 @@ class OrdersController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function read(Request $request)
+    public function read(Request $request): JsonResponse
     {
         $reader = new OrderReader();
+        
         return response()->json([
             'items' => $reader->list(new RestQuery($request)),
         ]);
@@ -70,9 +73,10 @@ class OrdersController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function count(Request $request)
+    public function count(Request $request): JsonResponse
     {
         $reader = new OrderReader();
+        
         return response()->json($reader->count(new RestQuery($request)));
     }
 
@@ -145,7 +149,7 @@ class OrdersController extends Controller
      * @throws \Exception
      * @todo уточнить типы в swagger
      */
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
         // todo Добавить провеку прав
         $data = $request->all();
@@ -200,7 +204,7 @@ class OrdersController extends Controller
      * @throws \Exception
      * @todo уточнить типы в swagger
      */
-    public function update(int $id, Request $request)
+    public function update(int $id, Request $request): Response
     {
         // todo Добавить провеку прав
         /** @var Order $order */
@@ -258,8 +262,9 @@ class OrdersController extends Controller
      * @throws \Exception
      * @todo уточнить типы в swagger
      */
-    public function delete(int $id)
+    public function delete(int $id): Response
     {
+        /** @var Order $order */
         $order = Order::find($id);
         if (!$order) {
             throw new NotFoundHttpException('order not found');
@@ -268,6 +273,7 @@ class OrdersController extends Controller
         if (!$ok) {
             throw new HttpException(500, 'unable to save order');
         }
+        
         return response('', 204);
     }
 
@@ -277,7 +283,7 @@ class OrdersController extends Controller
      * @param Request $request
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
-    public function setComment(int $id, Request $request)
+    public function setComment(int $id, Request $request): Response
     {
         $data = $request->all();
         $validator = Validator::make($data, [
@@ -288,7 +294,7 @@ class OrdersController extends Controller
             throw new BadRequestHttpException($validator->errors()->first());
         }
 
-        $comment = OrderComment::where(['order_id' => $id])->get()->first();
+        $comment = OrderComment::query()->where(['order_id' => $id])->get()->first();
         if (!$comment) {
             $comment = new OrderComment();
         }
@@ -305,3 +311,4 @@ class OrdersController extends Controller
         return response('', 204);
     }
 }
+
