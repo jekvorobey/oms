@@ -78,10 +78,17 @@ class ShipmentPackage extends OmsModel
         return $this->hasMany(ShipmentPackageItem::class);
     }
     
-    public function recalcWeight(): void
+    /**
+     * @param  bool  $save
+     */
+    public function recalcWeight(bool $save = true): void
     {
-        $this->weight = $this->wrapper_weight + array_reduce((array)$this->items, function ($sum, ShipmentPackageItem $item) {
-            return $sum + $item->basketItem->weight * $item->basketItem->qty;
+        $this->weight = $this->wrapper_weight + $this->items->reduce(function ($sum, ShipmentPackageItem $item) {
+            return $sum + $item->basketItem->weight * $item->qty;
         });
+        
+        if ($save) {
+            $this->save();
+        }
     }
 }

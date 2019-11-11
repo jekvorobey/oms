@@ -32,7 +32,7 @@ class Basket extends OmsModel
     public static function findFreeUserBasket(int $customerId): self
     {
         $basket = self::query()->where('customer_id', $customerId)
-            ->whereNull('order_id')
+            ->whereNull('is_belongs_to_order')
             ->first();
         if (!$basket) {
             $basket = new self();

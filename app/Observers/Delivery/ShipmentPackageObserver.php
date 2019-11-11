@@ -86,7 +86,7 @@ class ShipmentPackageObserver
     public function saving(ShipmentPackage $shipmentPackage)
     {
         if ($shipmentPackage->wrapper_weight != $shipmentPackage->getOriginal('wrapper_weight')) {
-            $shipmentPackage->recalcWeight();
+            $shipmentPackage->recalcWeight(false);
         }
     }
     

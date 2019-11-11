@@ -65,7 +65,7 @@ class Shipment extends OmsModel
     /**
      * @var array
      */
-    protected static $restIncludes = ['delivery', 'packages', 'cargo', 'items', 'basketItems'];
+    protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems'];
     
     /**
      * @return BelongsTo
@@ -110,7 +110,7 @@ class Shipment extends OmsModel
     /**
      * Пересчитать сумму товаров отправления
      */
-    public function costRecalc(): void
+    public function costRecalc(bool $save = true): void
     {
         $cost = 0.0;
         $this->load('items.basketItem');
@@ -120,7 +120,10 @@ class Shipment extends OmsModel
         }
         
         $this->cost = $cost;
-        $this->save();
+        
+        if ($save) {
+            $this->save();
+        }
     }
     
     /**
