@@ -350,14 +350,15 @@ class ShipmentPackagesController extends Controller
             ->where('shipment_package_id', $shipmentPackageId)
             ->where('basket_item_id', $basketItemId);
         $query = $modelClass::modifyQuery($baseQuery, $restQuery);
-        
-        $items = $query->get()
-            ->map(function (RestSerializable $model) use ($restQuery) {
-                return $model->toRest($restQuery);
-            });
+    
+        /** @var RestSerializable $model */
+        $model = $query->first();
+        if (!$model) {
+            throw new NotFoundHttpException();
+        }
         
         return response()->json([
-            'items' => $items
+            'items' => $model->toRest($restQuery),
         ]);
     }
     

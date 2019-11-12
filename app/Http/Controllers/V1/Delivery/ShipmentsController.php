@@ -371,13 +371,14 @@ class ShipmentsController extends Controller
     
         //todo Проверка прав
     
-        $items = $query->get()
-            ->map(function (RestSerializable $model) use ($restQuery) {
-                return $model->toRest($restQuery);
-            });
+        /** @var RestSerializable $model */
+        $model = $query->first();
+        if (!$model) {
+            throw new NotFoundHttpException();
+        }
     
         return response()->json([
-            'items' => $items
+            'items' => $model->toRest($restQuery),
         ]);
     }
     
