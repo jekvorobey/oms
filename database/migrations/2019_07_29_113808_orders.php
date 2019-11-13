@@ -51,7 +51,11 @@ class Orders extends Migration
             $table->bigInteger('basket_id')->unsigned();
             $table->bigInteger('customer_id')->unsigned()->nullable();
             $table->tinyInteger('status')->unsigned()->default(1);
+            $table->dateTime('status_at')->nullable();
             $table->tinyInteger('payment_status', false, true)->default(1);
+            $table->dateTime('payment_status_at')->nullable();
+            $table->boolean('is_problem')->default(false);
+            $table->dateTime('is_problem_at')->nullable();
             $table->tinyInteger('delivery_type')->unsigned();
             $table->tinyInteger('delivery_service')->unsigned();
             $table->tinyInteger('delivery_method')->unsigned();
@@ -66,8 +70,6 @@ class Orders extends Migration
             $table->string('receiver_name')->nullable();
             $table->string('receiver_phone')->nullable();
             $table->string('receiver_email')->nullable();
-
-            $table->dateTime('status_updated_at')->nullable();
             $table->timestamps();
 
             $table->foreign('basket_id')->references('id')->on('baskets');

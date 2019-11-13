@@ -42,7 +42,7 @@ class OrderNotification implements NotificationInterface
                 $dto['payload']['body'] = "Создан заказ {$mainModel->number}";
                 break;
             case HistoryType::TYPE_UPDATE:
-                if($mainModel->status == OrderStatus::STATUS_PROBLEM) {
+                if($mainModel->is_problem) {
                     $dto['type'] = NotificationDto::TYPE_ORDER_PROBLEM;
                     $dto['payload']['title'] = "Проблемный заказ";
                     $dto['payload']['body'] = "Заказ {$mainModel->number} помечен как проблемный";

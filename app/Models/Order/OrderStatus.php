@@ -15,10 +15,8 @@ class OrderStatus
     public const STATUS_PROCESS = 2;
     /** @var int - выполнен */
     public const STATUS_DONE = 3;
-    /** @var int - проблемный */
-    public const STATUS_PROBLEM = 4;
     /** @var int - отменен */
-    public const STATUS_CANCEL = 5;
+    public const STATUS_CANCEL = 4;
     
     /**
      * @return array
@@ -29,7 +27,6 @@ class OrderStatus
             self::STATUS_CREATED,
             self::STATUS_PROCESS,
             self::STATUS_DONE,
-            self::STATUS_PROBLEM,
             self::STATUS_CANCEL,
         ];
     }

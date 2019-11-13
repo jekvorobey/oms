@@ -41,7 +41,11 @@ class OrderObserver
     public function saving(Order $order)
     {
         if ($order->status != $order->getOriginal('status')) {
-            $order->status_updated_at = Carbon::now();
+            $order->status_at = Carbon::now();
+        }
+        
+        if ($order->payment_status != $order->getOriginal('payment_status')) {
+            $order->payment_status_at = Carbon::now();
         }
 
         if ($order->delivery_cost != $order->getOriginal('delivery_cost')) {

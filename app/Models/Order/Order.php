@@ -27,7 +27,11 @@ use Illuminate\Support\Collection;
  * @property string $number - номер
  * @property float $cost - стоимость (расчитывается автоматически)
  * @property int $status - статус
+ * @property \Illuminate\Support\Carbon|null $status_at - дата установки статуса заказа
  * @property int $payment_status - статус оплаты
+ * @property \Illuminate\Support\Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property int $is_problem - флаг, что заказ проблемный
+ * @property \Illuminate\Support\Carbon|null $is_problem_at - дата установки флага проблемного заказа
  * @property string $manager_comment - комментарий менеджера
  * @property float $delivery_cost - стоимость доставки iBT
  * @property array $delivery_address - адрес доставки
