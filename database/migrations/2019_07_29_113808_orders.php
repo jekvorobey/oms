@@ -67,6 +67,7 @@ class Orders extends Migration
             $table->string('receiver_phone')->nullable();
             $table->string('receiver_email')->nullable();
 
+            $table->dateTime('status_updated_at')->nullable();
             $table->timestamps();
 
             $table->foreign('basket_id')->references('id')->on('baskets');
@@ -84,16 +85,16 @@ class Orders extends Migration
 
             $table->timestamps();
         });
-    
+
         Schema::create('history_main_entity', function (Blueprint $table) {
             $table->bigIncrements('id');
-    
+
             $table->bigInteger('history_id')->unsigned();
             $table->string('main_entity');
             $table->bigInteger('main_entity_id')->unsigned();
-    
+
             $table->timestamps();
-    
+
             $table->foreign('history_id')->references('id')->on('history');
         });
 
