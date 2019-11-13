@@ -5,6 +5,7 @@ namespace App\Observers\Order;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\Order;
+use Carbon\Carbon;
 
 /**
  * Class OrderObserver
@@ -39,11 +40,15 @@ class OrderObserver
      */
     public function saving(Order $order)
     {
+        if ($order->status != $order->getOriginal('status')) {
+            $order->status_updated_at = Carbon::now();
+        }
+
         if ($order->delivery_cost != $order->getOriginal('delivery_cost')) {
             $order->costRecalc(false);
         }
     }
-    
+
     /**
      * Handle the order "deleting" event.
      * @param  Order  $order
@@ -52,7 +57,7 @@ class OrderObserver
     public function deleting(Order $order)
     {
         History::saveEvent(HistoryType::TYPE_DELETE, $order, $order);
-        
+
         if ($order->basket) {
             $order->basket->delete();
         }
