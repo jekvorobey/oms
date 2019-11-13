@@ -29,6 +29,7 @@ use Pim\Services\ProductService\ProductService;
  * @property string $number - номер отправления (номер_заказа/порядковый_номер_отправления)
  * @property float $cost - сумма товаров отправления (расчитывается автоматически)
  * @property string $required_shipping_at - требуемая дата отгрузки
+ * @property string $assembly_problem_comment - последнее сообщение мерчанта о проблеме со сборкой
  *
  * //dynamic attributes
  * @property int $package_qty - кол-во коробок отправления
@@ -52,6 +53,7 @@ class Shipment extends OmsModel
         'status',
         'number',
         'required_shipping_at',
+        'assembly_problem_comment',
     ];
     
     /**

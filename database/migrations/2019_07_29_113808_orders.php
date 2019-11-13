@@ -162,6 +162,7 @@ class Orders extends Migration
             $table->string('number');
             $table->decimal('cost', 18, 4)->default(0.0);
             $table->timestamp('required_shipping_at');
+            $table->text('assembly_problem_comment')->nullable();
 
             $table->timestamps();
 
