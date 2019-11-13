@@ -118,5 +118,31 @@ class ShipmentObserver
                 }
             }
         }
+        
+        if ($shipment->status != $shipment->getOriginal('status') &&
+            in_array($shipment->status, [ShipmentStatus::STATUS_ASSEMBLING_PROBLEM, ShipmentStatus::STATUS_TIMEOUT])) {
+            $order = $shipment->delivery->order;
+            $order->is_problem = true;
+            $order->save();
+        }
+        
+        if ($shipment->status != $shipment->getOriginal('status') &&
+            $shipment->getOriginal('status') == ShipmentStatus::STATUS_ASSEMBLING_PROBLEM) {
+            $order = $shipment->delivery->order;
+            $isAllShipmentsOk = true;
+            foreach ($order->deliveries as $delivery) {
+                foreach ($delivery->shipments as $shipment) {
+                    if (in_array($shipment->status, [
+                        ShipmentStatus::STATUS_ASSEMBLING_PROBLEM, ShipmentStatus::STATUS_TIMEOUT
+                    ])) {
+                        $isAllShipmentsOk = false;
+                        break 2;
+                    }
+                }
+            }
+    
+            $order->is_problem = !$isAllShipmentsOk;
+            $order->save();
+        }
     }
 }

@@ -47,6 +47,10 @@ class OrderObserver
         if ($order->payment_status != $order->getOriginal('payment_status')) {
             $order->payment_status_at = Carbon::now();
         }
+        
+        if ($order->is_problem != $order->getOriginal('is_problem')) {
+            $order->is_problem_at = Carbon::now();
+        }
 
         if ($order->delivery_cost != $order->getOriginal('delivery_cost')) {
             $order->costRecalc(false);

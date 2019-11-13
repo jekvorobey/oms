@@ -2,6 +2,7 @@
 
 namespace App\Models\Delivery;
 
+use App\Core\Notifications\ShipmentNotification;
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -55,6 +56,9 @@ class Shipment extends OmsModel
         'required_shipping_at',
         'assembly_problem_comment',
     ];
+    
+    /** @var string */
+    public $notificator = ShipmentNotification::class;
     
     /**
      * @var array
