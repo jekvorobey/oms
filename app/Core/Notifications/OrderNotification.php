@@ -36,31 +36,31 @@ class OrderNotification extends AbstractNotification implements NotificationInte
         switch ($type) {
             case HistoryType::TYPE_CREATE:
                 $notification->type = NotificationDto::TYPE_ORDER_NEW;
-                $notification->payload['title'] = "Новый заказ";
-                $notification->payload['body'] = "Создан заказ {$order->number}";
+                $notification->setPayloadField('title', "Новый заказ");
+                $notification->setPayloadField('body', "Создан заказ {$order->number}");
                 break;
             case HistoryType::TYPE_UPDATE:
                 if($order->is_problem) {
                     $notification->type = NotificationDto::TYPE_ORDER_PROBLEM;
-                    $notification->payload['title'] = "Проблемный заказ";
-                    $notification->payload['body'] = "Заказ {$order->number} помечен как проблемный";
+                    $notification->setPayloadField('title', "Проблемный заказ");
+                    $notification->setPayloadField('body', "Заказ {$order->number} помечен как проблемный");
                 }
                 if($order->payment_status == PaymentStatus::STATUS_DONE) {
                     $notification->type = NotificationDto::TYPE_ORDER_PAYED;
-                    $notification->payload['title'] = "Оплачен заказ";
-                    $notification->payload['body'] = "Заказ {$order->number} оплачен";
+                    $notification->setPayloadField('title', "Оплачен заказ");
+                    $notification->setPayloadField('body', "Заказ {$order->number} оплачен");
                 }
                 if($order->status == OrderStatus::STATUS_CANCEL) {
                     $notification->type = NotificationDto::TYPE_ORDER_CANCEL;
-                    $notification->payload['title'] = "Отмена заказа";
-                    $notification->payload['body'] = "Заказ {$order->number} был отменён";
+                    $notification->setPayloadField('title', "Отмена заказа");
+                    $notification->setPayloadField('body', "Заказ {$order->number} был отменён");
                 }
                 break;
         
             case HistoryType::TYPE_COMMENT:
                 $notification->type = NotificationDto::TYPE_ORDER_COMMENT;
-                $notification->payload['title'] = "Обновлён комментарий заказа";
-                $notification->payload['body'] = "Комментарий заказа {$order->number} был обновлен";
+                $notification->setPayloadField('title', "Обновлён комментарий заказа");
+                $notification->setPayloadField('body', "Комментарий заказа {$order->number} был обновлен");
                 break;
         }
     

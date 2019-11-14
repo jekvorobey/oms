@@ -39,14 +39,14 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
         switch ($type) {
             case HistoryType::TYPE_CREATE:
                 $notification->type = NotificationDto::TYPE_SHIPMENT_NEW;
-                $notification->payload['title'] = "Новый заказ";
-                $notification->payload['body'] = "Создан заказ {$shipment->number}";
+                $notification->setPayloadField('title', "Новый заказ");
+                $notification->setPayloadField('body', "Создан заказ {$shipment->number}");
                 break;
             case HistoryType::TYPE_UPDATE:
                 if($shipment->status == ShipmentStatus::STATUS_CANCEL) {
                     $notification->type = NotificationDto::TYPE_SHIPMENT_CANCEL;
-                    $notification->payload['title'] = "Отмена заказа";
-                    $notification->payload['body'] = "Заказ {$shipment->number} был отменён";
+                    $notification->setPayloadField('title', "Отмена заказа");
+                    $notification->setPayloadField('body', "Заказ {$shipment->number} был отменён");
                 }
                 break;
         }
@@ -69,7 +69,7 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
         // Создаем уведомления
         foreach ($operatorsIds as $userId) {
             $notification->user_id = $userId;
-            $notificationService->create(new NotificationDto($notification));
+            $notificationService->create($notification);
         }
     }
     
@@ -85,8 +85,8 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
             case HistoryType::TYPE_UPDATE:
                 if($shipment->status = ShipmentStatus::STATUS_ASSEMBLING_PROBLEM) {
                     $notification->type = NotificationDto::TYPE_SHIPMENT_PROBLEM;
-                    $notification->payload['title'] = "Проблема при сборке отправления";
-                    $notification->payload['body'] = "Возникла проблема при сборке отправления {$shipment->number} из заказа {$shipment->delivery->order->number}: {$shipment->assembly_problem_comment}" ;
+                    $notification->setPayloadField('title', "Проблема при сборке отправления");
+                    $notification->setPayloadField('body', "Возникла проблема при сборке отправления {$shipment->number} из заказа {$shipment->delivery->order->number}: {$shipment->assembly_problem_comment}");
                 }
         }
     
