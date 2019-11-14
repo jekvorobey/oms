@@ -655,12 +655,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-message-lib.git",
-                "reference": "10f0ed44d22ea146fb379835fc93cea2551cf9d6"
+                "reference": "9829eaecb3eded727d803e617d6ad02ba8331106"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-message-lib/repository/archive.zip?sha=10f0ed44d22ea146fb379835fc93cea2551cf9d6",
-                "reference": "10f0ed44d22ea146fb379835fc93cea2551cf9d6",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-message-lib/repository/archive.zip?sha=9829eaecb3eded727d803e617d6ad02ba8331106",
+                "reference": "9829eaecb3eded727d803e617d6ad02ba8331106",
                 "shasum": ""
             },
             "require": {
@@ -695,7 +695,7 @@
                 }
             ],
             "description": "iBT message client",
-            "time": "2019-11-06T14:17:04+00:00"
+            "time": "2019-11-14T14:35:21+00:00"
         },
         {
             "name": "greensight/ibt-pim-lib",
@@ -703,12 +703,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-pim-lib.git",
-                "reference": "213c986bf9c0ae263d8c65270a4a6955856b16c8"
+                "reference": "550ea7310ca1b8aa9c89ba705900599c19ae3adf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=213c986bf9c0ae263d8c65270a4a6955856b16c8",
-                "reference": "213c986bf9c0ae263d8c65270a4a6955856b16c8",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=550ea7310ca1b8aa9c89ba705900599c19ae3adf",
+                "reference": "550ea7310ca1b8aa9c89ba705900599c19ae3adf",
                 "shasum": ""
             },
             "require": {
@@ -732,7 +732,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2019-11-13T08:32:58+00:00"
+            "time": "2019-11-13T11:42:19+00:00"
         },
         {
             "name": "greensight/ibt-store-lib",
@@ -4310,16 +4310,16 @@
         },
         {
             "name": "fzaninotto/faker",
-            "version": "v1.8.0",
+            "version": "v1.9.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fzaninotto/Faker.git",
-                "reference": "f72816b43e74063c8b10357394b6bba8cb1c10de"
+                "reference": "27a216cbe72327b2d6369fab721a5843be71e57d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fzaninotto/Faker/zipball/f72816b43e74063c8b10357394b6bba8cb1c10de",
-                "reference": "f72816b43e74063c8b10357394b6bba8cb1c10de",
+                "url": "https://api.github.com/repos/fzaninotto/Faker/zipball/27a216cbe72327b2d6369fab721a5843be71e57d",
+                "reference": "27a216cbe72327b2d6369fab721a5843be71e57d",
                 "shasum": ""
             },
             "require": {
@@ -4328,13 +4328,11 @@
             "require-dev": {
                 "ext-intl": "*",
                 "phpunit/phpunit": "^4.8.35 || ^5.7",
-                "squizlabs/php_codesniffer": "^1.5"
+                "squizlabs/php_codesniffer": "^2.9.2"
             },
             "type": "library",
             "extra": {
-                "branch-alias": {
-                    "dev-master": "1.8-dev"
-                }
+                "branch-alias": []
             },
             "autoload": {
                 "psr-4": {
@@ -4356,7 +4354,7 @@
                 "faker",
                 "fixtures"
             ],
-            "time": "2018-07-12T10:23:15+00:00"
+            "time": "2019-11-14T13:13:06+00:00"
         },
         {
             "name": "guidocella/eloquent-populator",
