@@ -5,8 +5,15 @@ namespace App\Models\Basket;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\OmsModel;
+use Greensight\Store\Dto\StockDto;
+use Greensight\Store\Services\StockService\StockService;
+use Greensight\Store\Services\StoreService\StoreService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Pim\Dto\Product\ProductDto;
+use Pim\Services\OfferService\OfferService;
+use Pim\Services\ProductService\ProductService;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
  * Состав корзины
@@ -83,6 +90,28 @@ class BasketItem extends OmsModel
         $this->cost = $this->qty * $this->price - $this->discount;
         if ($save) {
             $this->save();
+        }
+    }
+    
+    public function setDataByType()
+    {
+        if($this->type == Basket::TYPE_PRODUCT) {
+            /** @var OfferService $offerService */
+            $offerService = resolve(OfferService::class);
+            $offerInfo = $offerService->offerInfo($this->offer_id);
+            if (!$offerInfo->store_id) {
+                throw new BadRequestHttpException('offer without stocks');
+            }
+            $this->name = $offerInfo->name;
+            $this->product = [
+                'store_id' => $offerInfo->store_id,
+                'weight' => $offerInfo->weight,
+                'width' => $offerInfo->width,
+                'height' => $offerInfo->height,
+                'length' => $offerInfo->length,
+            ];
+        } else {
+            throw new \Exception('Masterclass type is not supported yet...');
         }
     }
 }

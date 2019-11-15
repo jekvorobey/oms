@@ -105,9 +105,7 @@ class Basket extends OmsModel
             if (isset($data['qty'])) {
                 $item->qty = $data['qty'];
             }
-            if (isset($data['name'])) {
-                $item->name = $data['name'];
-            }
+            $item->setDataByType();
             $ok = $item->save();
         }
         
