@@ -36,27 +36,37 @@ class BasketController extends Controller
      *         )
      *     ),
      * )
-     * @param  int  $userId
-     * @param  Request  $request
+     * @param int $userId
+     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function getCurrentBasket(int $userId, Request $request): JsonResponse
     {
-        $basket = Basket::findFreeUserBasket($userId);
-        $response = [
-            'id' => $basket->id,
-        ];
-        if ($request->get('items')) {
-            $response['items'] = $this->getItems($basket);
+        $types = (array)$request->get('type', [
+            Basket::TYPE_PRODUCT,
+            Basket::TYPE_MASTER
+        ]);
+        $result = [];
+        foreach ($types as $type) {
+            $basket = Basket::findFreeUserBasket($type, $userId);
+            $item = [
+                'id' => $basket->id,
+            ];
+            if ($request->get('items')) {
+                $item['items'] = $this->getItems($basket);
+            }
+            
+            $result[] = $item;
         }
         
-        return response()->json($response);
+        
+        return response()->json($result);
     }
     
     /**
-     * @param  int  $basketId
-     * @param  int  $offerId
-     * @param  Request  $request
+     * @param int $basketId
+     * @param int $offerId
+     * @param Request $request
      * @return JsonResponse
      * @throws \Exception
      */
@@ -72,9 +82,9 @@ class BasketController extends Controller
     }
     
     /**
-     * @param  int  $id
-     * @param  int  $offerId
-     * @param  Request  $request
+     * @param int $id
+     * @param int $offerId
+     * @param Request $request
      * @return JsonResponse
      * @throws \Exception
      */
@@ -91,9 +101,9 @@ class BasketController extends Controller
     }
     
     /**
-     * @param  Basket  $basket
-     * @param  int  $offerId
-     * @param  Request  $request
+     * @param Basket $basket
+     * @param int $offerId
+     * @param Request $request
      * @return JsonResponse
      * @throws \Exception
      */
@@ -101,9 +111,7 @@ class BasketController extends Controller
     {
         $data = $request->all();
         $validator = Validator::make($data, [
-            'store_id' => 'required|int',
-            'name' => 'nullable|string',
-            'qty' => 'nullable|integer',
+            'qty' => 'integer',
         ]);
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
@@ -121,8 +129,8 @@ class BasketController extends Controller
     }
     
     /**
-     * @param  int  $basketId
-     * @param  Request  $request
+     * @param int $basketId
+     * @param Request $request
      * @return JsonResponse
      */
     public function getBasket(int $basketId, Request $request): JsonResponse
@@ -140,7 +148,7 @@ class BasketController extends Controller
     }
     
     /**
-     * @param  int  $basketId
+     * @param int $basketId
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      * @throws \Exception
      */
@@ -157,7 +165,7 @@ class BasketController extends Controller
     }
     
     /**
-     * @param  Basket  $basket
+     * @param Basket $basket
      * @return array
      */
     protected function getItems(Basket $basket): array

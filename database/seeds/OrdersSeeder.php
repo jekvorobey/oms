@@ -40,6 +40,7 @@ class OrdersSeeder extends Seeder
         $baskets = collect();
         for ($i = 0; $i < self::ORDERS_COUNT; $i++) {
             $basket = new Basket();
+            $basket->type = Basket::TYPE_PRODUCT;
             $basket->customer_id = $this->customerId($faker);
             if ($basket->save()) {
                 $baskets->push($basket);
@@ -73,6 +74,7 @@ class OrdersSeeder extends Seeder
         $restQuery = $productService->newQuery();
         $restQuery->addFields(ProductDto::entity(), 'id', 'name', 'weight', 'width', 'height', 'length')
             ->setFilter('id', $offers->pluck('product_id'));
+        /** @var Collection|ProductDto[] $products */
         $products = $productService->products($restQuery)->keyBy('id');
 
         foreach ($baskets as $basket) {
@@ -90,17 +92,20 @@ class OrdersSeeder extends Seeder
                 $product = $products[$basketOffer->product_id];
                 
                 $basketItem = new BasketItem();
+                $basketItem->type = Basket::TYPE_PRODUCT;
                 $basketItem->basket_id = $basket->id;
-                $basketItem->store_id = $offerStock->store_id;
                 $basketItem->offer_id = $basketOffer->id;
                 $basketItem->name = $product->name;
-                $basketItem->weight = $product->weight;
-                $basketItem->width = $product->width;
-                $basketItem->height = $product->height;
-                $basketItem->length = $product->length;
                 $basketItem->qty = $faker->randomDigitNotNull;
                 $basketItem->price = $faker->randomFloat(2, 100, 1000);
                 $basketItem->discount = $faker->randomFloat(2, 0, $basketItem->price/3);
+                $basketItem->product = [
+                    'store_id' => $offerStock->store_id,
+                    'weight' => $product->weight,
+                    'width' => $product->width,
+                    'height' => $product->height,
+                    'length' => $product->length,
+                ];
                 $basketItem->save();
             }
         }

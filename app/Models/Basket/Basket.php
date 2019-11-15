@@ -15,28 +15,36 @@ use Illuminate\Support\Collection;
  *
  * @property int $customer_id - id покупателя
  * @property bool $is_belongs_to_order - корзина принадлежит заказу? (поле необходимо для удаления старых корзин без заказов)
+ * @property int $type - тип корзины (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)
  *
  * @property-read Order|null $order - заказ
  * @property-read Collection|BasketItem[] $items - элементы (товары)
  */
 class Basket extends OmsModel
 {
+    public const TYPE_PRODUCT = 1;
+    public const TYPE_MASTER = 2;
+    
     /** @var bool */
     protected static $unguarded = true;
     
     /**
      * Получить текущую корзину пользователя.
-     * @param  int  $customerId
+     * @param int $type
+     * @param int $customerId
      * @return Basket
      */
-    public static function findFreeUserBasket(int $customerId): self
+    public static function findFreeUserBasket(int $type, int $customerId): self
     {
-        $basket = self::query()->where('customer_id', $customerId)
-            ->whereNull('is_belongs_to_order')
+        $basket = self::query()
+            ->where('customer_id', $customerId)
+            ->where('type', $type)
+            ->where('is_belongs_to_order', 0)
             ->first();
         if (!$basket) {
             $basket = new self();
             $basket->customer_id = $customerId;
+            $basket->type = $type;
             $basket->save();
         }
         
@@ -74,6 +82,7 @@ class Basket extends OmsModel
             $item = new BasketItem();
             $item->offer_id = $offerId;
             $item->basket_id = $this->id;
+            $item->type = $this->type;
         }
         
         return $item;
@@ -96,9 +105,7 @@ class Basket extends OmsModel
             if (isset($data['qty'])) {
                 $item->qty = $data['qty'];
             }
-            if (isset($data['name'])) {
-                $item->name = $data['name'];
-            }
+            $item->setDataByType();
             $ok = $item->save();
         }
         
