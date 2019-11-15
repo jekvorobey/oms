@@ -19,7 +19,7 @@ class Orders extends Migration
         Schema::create('baskets', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('customer_id')->unsigned()->nullable();
-
+            $table->integer('type')->unsigned();
             $table->boolean('is_belongs_to_order')->default(false);
 
             $table->timestamps();
@@ -29,13 +29,16 @@ class Orders extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('basket_id')->unsigned()->nullable();
             $table->bigInteger('offer_id')->unsigned()->nullable();
-            $table->bigInteger('store_id')->unsigned()->nullable();
-
+            $table->integer('type')->unsigned();
+            $table->json('product');
             $table->string('name');
-            $table->decimal('weight', 18, 4);
-            $table->decimal('width', 18, 4);
-            $table->decimal('height', 18, 4);
-            $table->decimal('length', 18, 4);
+            
+//            $table->bigInteger('store_id')->unsigned()->nullable();
+//            $table->decimal('weight', 18, 4);
+//            $table->decimal('width', 18, 4);
+//            $table->decimal('height', 18, 4);
+//            $table->decimal('length', 18, 4);
+            
             $table->decimal('qty', 18, 4);
             $table->decimal('price', 18, 4)->nullable();
             $table->decimal('discount', 18, 4)->nullable();

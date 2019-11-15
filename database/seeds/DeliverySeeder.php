@@ -40,11 +40,11 @@ class DeliverySeeder extends Seeder
         /** @var Collection|Order[] $orders */
         $orders = Order::query()->with('basket', 'basket.items')->get();
         foreach ($orders as $order) {
-            $basketItemsByStore = $order->basket->items->groupBy('store_id');
+            $basketItemsByStore = $order->basket->items->groupBy('product.store_id');
             
             /** @var int $deliveriesCount - кол-во доставок в заказе (от 1 до кол-ва складов = отправлений) */
             $deliveriesCount = $order->delivery_type == DeliveryType::TYPE_SPLIT ?
-                rand(1, $basketItemsByStore->count()) : 1;
+                $faker->numberBetween(1, $basketItemsByStore->count()) : 1;
             /** @var int $shipmentsCount - кол-во отправлений в доставке */
             $shipmentsCount = (int)$basketItemsByStore->count()/$deliveriesCount;
     
@@ -68,6 +68,9 @@ class DeliverySeeder extends Seeder
     
                 $deliveryShipmentNumber = 1;
                 foreach ($basketItemsByStore as $storeId => $itemsByStore) {
+                    if (!$storeId) {
+                        continue;
+                    }
                     if ($deliveryShipmentNumber > $shipmentsCount && $i != $deliveriesCount ) {
                         break;
                     }
