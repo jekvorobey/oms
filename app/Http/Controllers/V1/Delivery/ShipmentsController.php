@@ -149,6 +149,7 @@ class ShipmentsController extends Controller
      * @param  int  $deliveryId
      * @param  Request  $request
      * @return JsonResponse
+     * //todo swagger
      * @OA\Post(
      *     path="/api/v1/delivery/{id}/shipments",
      *     tags={"shipment"},
@@ -159,7 +160,6 @@ class ShipmentsController extends Controller
      *         required=true,
      *         @OA\MediaType(
      *             mediaType="application/json",
-     *             //todo swagger
      *         )
      *     ),
      *     @OA\Response(
@@ -242,7 +242,7 @@ class ShipmentsController extends Controller
      * @param  int  $id
      * @param  Request  $request
      * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
-     *
+     * //todo swagger
      * @OA\Put(
      *     path="/api/v1/shipments/{id}",
      *     tags={"shipment"},
@@ -253,7 +253,6 @@ class ShipmentsController extends Controller
      *         required=true,
      *         @OA\MediaType(
      *             mediaType="application/json",
-     *             //todo swagger
      *         )
      *     ),
      *     @OA\Response(

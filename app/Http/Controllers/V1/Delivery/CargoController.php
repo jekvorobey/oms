@@ -102,7 +102,7 @@ class CargoController extends Controller
      * @param  Request  $request
      * @param  RequestInitiator $client
      * @return JsonResponse
-     *
+     * //todo swagger
      * @OA\Post(
      *     path="/api/v1/cargo",
      *     tags={"cargo"},
@@ -112,7 +112,6 @@ class CargoController extends Controller
      *         required=true,
      *         @OA\MediaType(
      *             mediaType="application/json",
-     *             //todo swagger
      *         )
      *     ),
      *     @OA\Response(
@@ -142,7 +141,7 @@ class CargoController extends Controller
      * @param  int  $id
      * @param  Request  $request
      * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
-     *
+     * //todo swagger
      * @OA\Put(
      *     path="/api/v1/cargo/{id}",
      *     tags={"cargo"},
@@ -153,7 +152,6 @@ class CargoController extends Controller
      *         required=true,
      *         @OA\MediaType(
      *             mediaType="application/json",
-     *             //todo swagger
      *         )
      *     ),
      *     @OA\Response(

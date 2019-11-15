@@ -139,7 +139,7 @@ class DeliveryController extends Controller
      * @param  int  $orderId
      * @param  Request  $request
      * @return JsonResponse
-     *
+     * //todo swagger
      * @OA\Post(
      *     path="/api/v1/orders/{id}/delivery",
      *     tags={"delivery"},
@@ -150,7 +150,6 @@ class DeliveryController extends Controller
      *         required=true,
      *         @OA\MediaType(
      *             mediaType="application/json",
-     *             //todo swagger
      *         )
      *     ),
      *     @OA\Response(
@@ -231,7 +230,7 @@ class DeliveryController extends Controller
      * @param  int  $id
      * @param  Request  $request
      * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
-     *
+     * //todo swagger
      * @OA\Put(
      *     path="/api/v1/delivery/{id}",
      *     tags={"delivery"},
@@ -242,7 +241,6 @@ class DeliveryController extends Controller
      *         required=true,
      *         @OA\MediaType(
      *             mediaType="application/json",
-     *             //todo swagger
      *         )
      *     ),
      *     @OA\Response(
