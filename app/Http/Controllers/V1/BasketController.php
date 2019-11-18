@@ -49,18 +49,13 @@ class BasketController extends Controller
         $result = [];
         foreach ($types as $type) {
             $basket = Basket::findFreeUserBasket($type, $userId);
-            $item = [
-                'id' => $basket->id,
-            ];
-            if ($request->get('items')) {
-                $item['items'] = $this->getItems($basket);
-            }
-            
-            $result[] = $item;
+            $result[] = $basket;
         }
         
         
-        return response()->json($result);
+        return response()->json([
+            'items' => $result
+        ]);
     }
     
     /**
