@@ -36,26 +36,26 @@ class BasketController extends Controller
      *         )
      *     ),
      * )
-     * @param int $userId
+     * @param int $customerId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getCurrentBasket(int $userId, Request $request): JsonResponse
+    public function getCurrentBasket(int $customerId, Request $request): JsonResponse
     {
-        $types = (array)$request->get('type', [
-            Basket::TYPE_PRODUCT,
-            Basket::TYPE_MASTER
+        $data = $this->validate($request, [
+            'type' => 'required|integer'
         ]);
-        $result = [];
-        foreach ($types as $type) {
-            $basket = Basket::findFreeUserBasket($type, $userId);
-            $result[] = $basket;
+    
+        /** @var Basket $basket */
+        $basket = Basket::findFreeUserBasket($data['type'], $customerId);
+        $response = [
+            'id' => $basket->id,
+        ];
+        if ($request->get('items')) {
+            $response['items'] = $this->getItems($basket);
         }
-        
-        
-        return response()->json([
-            'items' => $result
-        ]);
+    
+        return response()->json($response);
     }
     
     /**
