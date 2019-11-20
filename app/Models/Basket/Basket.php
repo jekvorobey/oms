@@ -98,15 +98,15 @@ class Basket extends OmsModel
     public function setItem(int $offerId, array $data): bool
     {
         $item = $this->itemByOffer($offerId);
-        
-        if ($item->id && isset($data['qty']) && $data['qty'] === 0) {
+        $ok = true;
+        if ($item->id && isset($data['qty']) && $data['qty'] == 0) {
             $ok = $item->delete();
         } else {
-            if (isset($data['qty'])) {
+            if (isset($data['qty']) && $data['qty'] > 0) {
                 $item->qty = $data['qty'];
+                $item->setDataByType();
+                $ok = $item->save();
             }
-            $item->setDataByType();
-            $ok = $item->save();
         }
         
         return $ok;
