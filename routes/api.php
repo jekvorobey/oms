@@ -76,7 +76,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::post('start', 'PaymentsController@start');
         });
     });
-    
+
     Route::prefix('shipments')->group(function () {
         Route::prefix('{id}')->group(function () {
             Route::prefix('history')->group(function () {
@@ -135,6 +135,8 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         });
 
         Route::prefix('shipment-packages')->group(function () {
+            Route::get('', 'ShipmentPackagesController@read');
+
             Route::prefix('{id}')->group(function () {
                 Route::get('', 'ShipmentPackagesController@read');
 
