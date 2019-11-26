@@ -75,6 +75,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::prefix('{id}')->group(function () {
             Route::post('start', 'PaymentsController@start');
         });
+        Route::get('byOrder', 'PaymentsController@getByOrder');
     });
 
     Route::prefix('shipments')->group(function () {

@@ -45,6 +45,23 @@ class PaymentsController extends Controller
         ]);
     }
     
+    public function getByOrder(Request $request)
+    {
+        $data = $this->validate($request, [
+            'type' => 'required|integer',
+            'orderId' => 'required|integer',
+        ]);
+        $payment = Payment::query()
+            ->where('order_id', $data['orderId'])
+            ->where('type', $data['type'])
+            ->first();
+        if (!$payment) {
+            throw new NotFoundHttpException('payment not found');
+        }
+        
+        return response()->json($payment);
+    }
+    
     /**
      * @OA\Post(
      *     path="/api/v1/payments/handler/local",

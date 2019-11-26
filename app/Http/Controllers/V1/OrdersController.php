@@ -176,7 +176,7 @@ class OrdersController extends Controller
             throw new BadRequestHttpException($validator->errors()->first());
         }
         $writer = new OrderWriter();
-        $id = $writer->create($data['customer_id'], $data['cost']);
+        $id = $writer->create($data);
         if (!$id) {
             throw new HttpException(500, 'unable to save order');
         }
