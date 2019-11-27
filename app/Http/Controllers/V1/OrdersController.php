@@ -156,16 +156,21 @@ class OrdersController extends Controller
         $validator = Validator::make($data, [
             'basket_id' => 'required|integer',
             'customer_id' => 'required|integer',
+            
             'cost' => 'required|numeric',
-
-            'status' => ['nullable', Rule::in(OrderStatus::validValues())],
-            'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
-
-            'delivery_service' => ['nullable', Rule::in(DeliveryService::validValues())],
-            'delivery_method' => ['nullable', Rule::in(DeliveryMethod::validValues())],
-            'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
-            'delivery_comment' => ['nullable', 'string'],
+            'price' => 'required|numeric',
+            
+            'spent_bonus' => 'required|integer',
+            'added_bonus' => 'required|integer',
+            'promocode' => 'nullable|string',
+            'certificate' => 'nullable|integer',
+    
+            'delivery_type' => ['required', Rule::in(DeliveryType::validValues())],
+            'delivery_service' => ['required', Rule::in(DeliveryService::validValues())],
+            'delivery_method' => ['required', Rule::in(DeliveryMethod::validValues())],
             'delivery_address' => ['nullable', 'array'],
+            'delivery_comment' => ['nullable', 'string'],
+            
             'receiver_name' => ['nullable', 'string'],
             'receiver_phone' => ['nullable', 'string'],
             'receiver_email' => ['nullable', 'string', 'email'],

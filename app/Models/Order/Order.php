@@ -20,12 +20,24 @@ use Illuminate\Support\Collection;
  *
  * @property int $customer_id - id покупателя
  * @property int $basket_id - id корзины
+ *
+ * @property float $cost - стоимость (расчитывается автоматически)
+ * @property float $price
+ * @property int $spent_bonus
+ * @property int $added_bonus
+ * @property string $promocode
+ * @property int $certificate
+ *
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
  * @property int $delivery_service - служба доставки (DPD, CDEK и т.д.)
  * @property int $delivery_method - способ доставки (самовывоз из ПВЗ, самовывоз из постомата, доставка)
+ * @property float $delivery_cost - стоимость доставки iBT
+ * @property array $delivery_address - адрес доставки
+ * @property string $delivery_comment - комментарий к доставке
+ * @property string $receiver_name - имя получателя
+ * @property string $receiver_phone - телефон получателя
+ * @property string $receiver_email - e-mail получателя
  *
- * @property string $number - номер
- * @property float $cost - стоимость (расчитывается автоматически)
  * @property int $status - статус
  * @property \Illuminate\Support\Carbon|null $status_at - дата установки статуса заказа
  * @property int $payment_status - статус оплаты
@@ -33,12 +45,8 @@ use Illuminate\Support\Collection;
  * @property int $is_problem - флаг, что заказ проблемный
  * @property \Illuminate\Support\Carbon|null $is_problem_at - дата установки флага проблемного заказа
  * @property string $manager_comment - комментарий менеджера
- * @property float $delivery_cost - стоимость доставки iBT
- * @property array $delivery_address - адрес доставки
- * @property string $delivery_comment - комментарий к доставке
- * @property string $receiver_name - имя получателя
- * @property string $receiver_phone - телефон получателя
- * @property string $receiver_email - e-mail получателя
+ *
+ * @property string $number - номер
  *
  * @property Basket $basket - корзина
  * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
@@ -112,20 +120,21 @@ class Order extends OmsModel
      */
     public function costRecalc(bool $save = true): void
     {
-        $cost = 0.0;
-        $this->load('basket.items', 'deliveries');
-        
-        //Считаем сумму позиций в корзине
-        foreach ($this->basket->items as $item) {
-            $cost += $item->cost;
-        }
-        //Прибавляем стоимость за доставку
-        $cost += $this->delivery_cost;
-        
-        $this->cost = $cost;
-        if ($save) {
-            $this->save();
-        }
+        // todo сложный момент с пересчётом стоимости заказа при его изменении. Какие цены брять? как применять уже применённые скидки?
+//        $cost = 0.0;
+//        $this->load('basket.items', 'deliveries');
+//
+//        //Считаем сумму позиций в корзине
+//        foreach ($this->basket->items as $item) {
+//            $cost += $item->cost;
+//        }
+//        //Прибавляем стоимость за доставку
+//        $cost += $this->delivery_cost;
+//
+//        $this->cost = $cost;
+//        if ($save) {
+//            $this->save();
+//        }
     }
 
     /**

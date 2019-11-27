@@ -50,29 +50,42 @@ class Orders extends Migration
         });
 
         Schema::create('orders', function (Blueprint $table) {
+            // generated
             $table->bigIncrements('id');
+            $table->string('number');
+            // identify
             $table->bigInteger('basket_id')->unsigned();
             $table->bigInteger('customer_id')->unsigned()->nullable();
+            // prices & marketing
+            // полная стоимость заказанных товаров
+            $table->decimal('cost', 18, 4)->default(0.0);
+            // итоговая стоимость заказа совсем скидками и доставкой
+            $table->decimal('price', 18, 4)->default(0.0);
+            $table->decimal('delivery_cost', 18, 4)->default(0.0);
+    
+            $table->integer('spent_bonus')->default(0);
+            $table->integer('added_bonus')->default(0);
+            $table->string('promocode')->nullable();
+            $table->string('certificate')->nullable();
+            // delivery
+            $table->tinyInteger('delivery_type')->unsigned();
+            $table->tinyInteger('delivery_service')->unsigned();
+            $table->tinyInteger('delivery_method')->unsigned();
+            $table->json('delivery_address');
+            $table->text('delivery_comment')->nullable();
+            $table->string('receiver_name')->nullable();
+            $table->string('receiver_phone')->nullable();
+            $table->string('receiver_email')->nullable();
+            // statuses
             $table->tinyInteger('status')->unsigned()->default(1);
             $table->dateTime('status_at')->nullable();
             $table->tinyInteger('payment_status', false, true)->default(1);
             $table->dateTime('payment_status_at')->nullable();
             $table->boolean('is_problem')->default(false);
             $table->dateTime('is_problem_at')->nullable();
-            $table->tinyInteger('delivery_type')->unsigned();
-            $table->tinyInteger('delivery_service')->unsigned();
-            $table->tinyInteger('delivery_method')->unsigned();
-
-            $table->string('number');
-            $table->decimal('cost', 18, 4)->default(0.0);
+            // management
             $table->text('manager_comment')->nullable();
-            // delivery
-            $table->decimal('delivery_cost', 18, 4)->default(0.0);
-            $table->json('delivery_address');
-            $table->text('delivery_comment')->nullable();
-            $table->string('receiver_name')->nullable();
-            $table->string('receiver_phone')->nullable();
-            $table->string('receiver_email')->nullable();
+            
             $table->timestamps();
 
             $table->foreign('basket_id')->references('id')->on('baskets');

@@ -99,16 +99,16 @@ class Basket extends OmsModel
     {
         $item = $this->itemByOffer($offerId);
         $ok = true;
-        if ($item->id && isset($data['qty']) && $data['qty'] == 0) {
+        if ($item->id && isset($data['qty']) && $data['qty'] === 0) {
             $ok = $item->delete();
         } else {
             if (isset($data['qty']) && $data['qty'] > 0) {
                 $item->qty = $data['qty'];
-                $item->setDataByType();
-                $ok = $item->save();
             }
+            $item->setDataByType();
+            $item->fill($data);
+            $ok = $item->save();
         }
-        
         return $ok;
     }
 }

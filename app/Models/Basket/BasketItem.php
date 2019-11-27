@@ -96,6 +96,9 @@ class BasketItem extends OmsModel
     public function setDataByType()
     {
         if($this->type == Basket::TYPE_PRODUCT) {
+            if (isset($this->product['store_id'])) {
+                return;
+            }
             /** @var OfferService $offerService */
             $offerService = resolve(OfferService::class);
             $offerInfo = $offerService->offerInfo($this->offer_id);

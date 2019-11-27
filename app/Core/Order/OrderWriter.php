@@ -14,14 +14,7 @@ class OrderWriter
     {
         $now = CarbonImmutable::now();
         $order = new Order();
-        $order->customer_id = $data['customer_id'];
-        $order->basket_id = $data['basket_id'];
-        $order->cost = $data['cost'];
-        
-        $order->delivery_service = $data['delivery_service'] ?? null;
-        $order->delivery_type = $data['delivery_type'] ?? null;
-        $order->delivery_method = $data['delivery_method'] ?? null;
-        $order->delivery_comment = $data['delivery_comment'] ?? null;
+        $order->fill($data);
         
         $order->number = 'IBT' . $now->format('Ymdhis');
         $order->delivery_address = [];

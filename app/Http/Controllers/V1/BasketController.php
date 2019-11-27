@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Basket\Basket;
+use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -157,6 +158,39 @@ class BasketController extends Controller
         }
         
         return response('', 204);
+    }
+    
+    public function commitItemsPrice(int $basketId, Request $request)
+    {
+        $data = $this->validate($request, [
+            'items' => 'required|array',
+            'items.*' => 'array',
+            'items.*.offerId' => 'required|integer',
+            'items.*.cost' => 'required|numeric',
+            'items.*.offerPrice' => 'required|numeric',
+            'items.*.price' => 'required|numeric',
+        ]);
+        /** @var Basket $basket */
+        $basket = Basket::find($basketId);
+        $items = $this->getItems($basket);
+        $priceMap = [];
+        foreach ($data as $dataItem) {
+            $priceMap[$dataItem['offerId']] = $dataItem;
+        }
+        /** @var BasketItem $item */
+        foreach ($items as $item) {
+            if (!isset($priceMap[$item->offer_id])) {
+                continue;
+            }
+            [
+                'cost' => $cost,
+                'price' => $price,
+                'discount' => $discount
+            ] = $priceMap[$item->offer_id];
+            $item->cost = $cost;
+            $item->price = $price;
+            $item->discount = $discount;
+        }
     }
     
     /**
