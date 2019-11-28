@@ -19,7 +19,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 
         Route::prefix('{basketId}')->group(function () {
             Route::put('items/{offerId}', 'BasketController@setItemByBasket');
-
+            Route::put('commit', 'BasketController@commitItemsPrice');
             Route::get('', 'BasketController@getBasket');
             Route::delete('', 'BasketController@dropBasket');
         });

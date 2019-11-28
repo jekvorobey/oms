@@ -167,30 +167,29 @@ class BasketController extends Controller
             'items.*' => 'array',
             'items.*.offerId' => 'required|integer',
             'items.*.cost' => 'required|numeric',
-            'items.*.offerPrice' => 'required|numeric',
             'items.*.price' => 'required|numeric',
         ]);
         /** @var Basket $basket */
         $basket = Basket::find($basketId);
-        $items = $this->getItems($basket);
         $priceMap = [];
-        foreach ($data as $dataItem) {
+        foreach ($data['items'] as $dataItem) {
             $priceMap[$dataItem['offerId']] = $dataItem;
         }
-        /** @var BasketItem $item */
-        foreach ($items as $item) {
+        foreach ($basket->items as $item) {
             if (!isset($priceMap[$item->offer_id])) {
                 continue;
             }
             [
                 'cost' => $cost,
                 'price' => $price,
-                'discount' => $discount
             ] = $priceMap[$item->offer_id];
             $item->cost = $cost;
             $item->price = $price;
-            $item->discount = $discount;
+            $item->discount = $cost - $price;
+            $item->save();
         }
+        
+        return response('', 204);
     }
     
     /**

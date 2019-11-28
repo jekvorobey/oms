@@ -24,10 +24,10 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @property int $offer_id - id предложения мерчанта
  * @property int $type - тип товара (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)
  * @property string $name - название товара
- * @property float $qty - кол-во
- * @property float|null $price - цена за единицу товара без учета скидки
- * @property float|null $discount - скидка за все кол-во товара
- * @property float|null $cost - сумма за все кол-во товара с учетом скидки (расчитывается автоматически)
+ * @property float $qty - кол-во товара
+ * @property float|null $price - цена элемента корзины со скидкой (cost - discount)
+ * @property float|null $discount - скидка элемента корзины (offerDiscount * qty)
+ * @property float|null $cost - стоимость элемента корзины без скидок (offerCost * qty)
  * @property array $product - данные зависящие от типа товара
  *
  * @property-read Basket $basket
@@ -81,17 +81,17 @@ class BasketItem extends OmsModel
         return $this->hasOne(ShipmentPackageItem::class);
     }
     
-    /**
-     * Пересчитать сумму позиции корзины
-     * @param bool $save
-     */
-    public function costRecalc(bool $save = true): void
-    {
-        $this->cost = $this->qty * $this->price - $this->discount;
-        if ($save) {
-            $this->save();
-        }
-    }
+//    /**
+//     * Пересчитать сумму позиции корзины
+//     * @param bool $save
+//     */
+//    public function costRecalc(bool $save = true): void
+//    {
+//        $this->cost = $this->qty * $this->price - $this->discount;
+//        if ($save) {
+//            $this->save();
+//        }
+//    }
     
     public function setDataByType()
     {
