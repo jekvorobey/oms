@@ -6,6 +6,7 @@ namespace App\Models\Delivery;
  * Способ доставки на последней миле (доставка до места получения заказа)
  * Class DeliveryMethod
  * @package App\Models\Delivery
+ * @deprecated Класс переехал в сервис ibt-logistics-ms
  */
 class DeliveryMethod
 {

@@ -6,6 +6,7 @@ namespace App\Models\Delivery;
  * Служба доставки на последней миле (доставка от распределительного центра до места получения заказа)
  * Class DeliveryService
  * @package App\Models\Delivery
+ * @deprecated Класс переехал в сервис ibt-logistics-ms
  */
 class DeliveryService
 {
