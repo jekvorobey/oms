@@ -2,6 +2,7 @@
 
 namespace App\Observers\Order;
 
+use App\Models\Basket\Basket;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\Order;
@@ -21,6 +22,8 @@ class OrderObserver
     public function created(Order $order)
     {
         History::saveEvent(HistoryType::TYPE_CREATE, $order, $order);
+        $order->basket->is_belongs_to_order = 1;
+        $order->basket->save();
     }
 
     /**
