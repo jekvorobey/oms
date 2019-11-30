@@ -17,7 +17,6 @@ class OrderWriter
         $order->fill($data);
         
         $order->number = 'IBT' . $now->format('Ymdhis');
-        $order->delivery_address = [];
         return $order->save() ? $order->id : null;
     }
     
