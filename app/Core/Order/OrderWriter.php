@@ -15,7 +15,9 @@ class OrderWriter
         $now = CarbonImmutable::now();
         $order = new Order();
         $order->fill($data);
-        
+        if (!$order->delivery_address) {
+            $order->delivery_address = [];
+        }
         $order->number = 'IBT' . $now->format('Ymdhis');
         return $order->save() ? $order->id : null;
     }
