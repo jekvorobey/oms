@@ -70,6 +70,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     Route::prefix('payments')->group(function () {
         Route::prefix('handler')->group(function () {
             Route::post('local', 'PaymentsController@handlerLocal')->name('handler.localPayment');
+            Route::post('yandex', 'PaymentsController@handlerYandex')->name('handler.yandexPayment');
         });
 
         Route::prefix('{id}')->group(function () {

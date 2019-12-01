@@ -1,7 +1,8 @@
 <?php
 
 return [
-
+    'y_checkout_shop_id' => env('Y_CHECKOUT_SHOP_ID'),
+    'y_checkout_key' => env('Y_CHECKOUT_KEY'),
     /*
     |--------------------------------------------------------------------------
     | Application Name

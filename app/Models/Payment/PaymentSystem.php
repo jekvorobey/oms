@@ -9,6 +9,7 @@ namespace App\Models\Payment;
  */
 class PaymentSystem
 {
+    public const YANDEX = 1;
     public const TEST = 42;
     
     /** @var int */
@@ -22,6 +23,7 @@ class PaymentSystem
     public static function all()
     {
         return [
+            new self(self::YANDEX, 'Яндекс касса'),
             new self(self::TEST, 'Тестовая система оплаты'),
         ];
     }

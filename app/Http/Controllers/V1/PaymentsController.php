@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V1;
 
+use App\Core\Payment\YandexPaymentSystem;
 use App\Http\Controllers\Controller;
 use App\Core\Payment\LocalPaymentSystem;
 use App\Models\Payment\Payment;
@@ -79,5 +80,17 @@ class PaymentsController extends Controller
         $paymentSystem = new LocalPaymentSystem();
         $paymentSystem->handlePushPayment($request->all());
         return response('ok');
+    }
+    
+    public function handlerYandex(Request $request)
+    {
+        $paymentSystem = new YandexPaymentSystem();
+        $ok = $paymentSystem->handlePushPayment($request->all());
+        if (!$ok) {
+            throw new BadRequestHttpException();
+        }
+        return response()->json([
+            'processed' => 1
+        ]);
     }
 }

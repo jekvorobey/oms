@@ -24,6 +24,7 @@ use App\Observers\Order\OrderObserver;
 use App\Observers\Payment\PaymentObserver;
 use Illuminate\Support\ServiceProvider;
 use L5Swagger\L5SwaggerServiceProvider;
+use YandexCheckout\Client;
 
 /**
  * Class AppServiceProvider
@@ -48,6 +49,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $this->app->singleton(Client::class, function ($app) {
+            $client = new Client();
+            $client->setAuth(config('app.y_checkout_shop_id'), config('app.y_checkout_key'));
+            return $client;
+        });
+        
         Basket::observe(BasketObserver::class);
         BasketItem::observe(BasketItemObserver::class);
     

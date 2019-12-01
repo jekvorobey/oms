@@ -4,6 +4,7 @@ namespace App\Models\Payment;
 
 use App\Core\Payment\LocalPaymentSystem;
 use App\Core\Payment\PaymentSystemInterface;
+use App\Core\Payment\YandexPaymentSystem;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\OmsModel;
@@ -104,6 +105,7 @@ class Payment extends OmsModel
     public function paymentSystem(): ?PaymentSystemInterface
     {
         switch ($this->payment_system) {
+            case PaymentSystem::YANDEX: return new YandexPaymentSystem();
             case PaymentSystem::TEST: return new LocalPaymentSystem();
         }
         return null;

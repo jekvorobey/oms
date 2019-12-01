@@ -34,12 +34,13 @@
         "darkaonline/l5-swagger": "5.8.*",
         "fideloper/proxy": "^4.0",
         "greensight/ibt-common-lib": "dev-master",
-        "greensight/ibt-pim-lib": "dev-master",
-        "greensight/ibt-message-lib": "dev-master",
         "greensight/ibt-merchant-management-lib": "dev-master",
+        "greensight/ibt-message-lib": "dev-master",
+        "greensight/ibt-pim-lib": "dev-master",
         "greensight/ibt-store-lib": "dev-master",
         "laravel/framework": "5.8.*",
-        "laravel/tinker": "^1.0"
+        "laravel/tinker": "^1.0",
+        "yandex-money/yandex-checkout-sdk-php": "^1.5"
     },
     "require-dev": {
         "beyondcode/laravel-dump-server": "^1.0",
