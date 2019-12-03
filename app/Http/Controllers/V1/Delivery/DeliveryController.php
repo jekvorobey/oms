@@ -88,6 +88,8 @@ class DeliveryController extends Controller
             'delivery_method' => [new RequiredOnPost(), Rule::in(DeliveryMethod::validValues())],
             'delivery_service' => [new RequiredOnPost(), Rule::in(DeliveryService::validValues())],
             'xml_id' => ['nullable', 'string'],
+            'tariff_id' => ['nullable', 'integer'],
+            'point_id' => ['nullable', 'integer'],
             'number' => [new RequiredOnPost(), 'string'],
             'delivery_at' => [new RequiredOnPost(), 'date'],
         ];

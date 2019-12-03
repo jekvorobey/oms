@@ -2,12 +2,13 @@
 
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
-use App\Models\Delivery\DeliveryMethod;
-use App\Models\Delivery\DeliveryService;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Order\Order;
+use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Dto\Lists\DeliveryService;
+use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Store\Dto\StoreDto;
 use Greensight\Store\Services\StoreService\StoreService;
 use Illuminate\Database\Seeder;
@@ -36,6 +37,11 @@ class DeliverySeeder extends Seeder
         $restQuery->addFields(StoreDto::entity(), 'id', 'merchant_id');
         /** @var Collection|StoreDto[] $stores */
         $stores = $storeService->stores($restQuery)->keyBy('id');
+    
+        /** @var ListsService $listsService */
+        $listsService = resolve(ListsService::class);
+        $tariffs = $listsService->tariffs()->groupBy('delivery_service');
+        $points = $listsService->points()->groupBy('delivery_service');
         
         /** @var Collection|Order[] $orders */
         $orders = Order::query()->with('basket', 'basket.items')->get();
@@ -53,9 +59,15 @@ class DeliverySeeder extends Seeder
                 //Создаем доставку
                 $delivery = new Delivery();
                 $delivery->order_id = $order->id;
-                $delivery->delivery_method = $faker->randomElement(DeliveryMethod::validValues());
-                $delivery->delivery_service = $faker->randomElement(DeliveryService::validValues());
-                $delivery->xml_id = $faker->uuid;
+                $delivery->delivery_method = $faker->randomElement(array_keys(DeliveryMethod::allMethods()));
+                $delivery->delivery_service = $faker->randomElement(array_keys(DeliveryService::allServices()));
+                $delivery->tariff_id = isset($tariffs[$delivery->delivery_service]) ?
+                    $faker->randomElement($tariffs[$delivery->delivery_service]->pluck('id')->toArray()) : 0;
+                $delivery->point_id = (
+                    isset($points[$delivery->delivery_service]) &&
+                    in_array($delivery->delivery_method, [DeliveryMethod::METHOD_OUTPOST_PICKUP, DeliveryMethod::METHOD_POSTOMAT_PICKUP])) ?
+                    $faker->randomElement($points[$delivery->delivery_service]->pluck('id')->toArray()) : 0;
+                $delivery->xml_id = $delivery->tariff_id ? $faker->uuid : '';
                 $delivery->number = $order->number . '-' . $i;
                 $delivery->cost = $faker->randomFloat(2, 0, 500);
                 $delivery->width = $faker->numberBetween(1, 100);

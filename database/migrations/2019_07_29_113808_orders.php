@@ -156,6 +156,8 @@ class Orders extends Migration
             $table->tinyInteger('status', false, true)->default(1);
 
             $table->string('xml_id')->nullable();
+            $table->integer('tariff_id')->nullable();
+            $table->integer('point_id')->nullable();
             $table->string('number');
             $table->decimal('cost', 18, 4)->default(0.0);
             $table->decimal('width', 18, 4)->default(0.0);

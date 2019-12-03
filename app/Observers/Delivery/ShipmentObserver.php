@@ -3,10 +3,14 @@
 namespace App\Observers\Delivery;
 
 use App\Models\Delivery\Cargo;
+use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderInputDto;
+use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 
 /**
  * Class ShipmentObserver
@@ -191,5 +195,62 @@ class ShipmentObserver
             $order->is_problem = !$isAllShipmentsOk;
             $order->save();
         }
+    }
+    
+    /**
+     * Создать/обновить заказ на доставку
+     * Создание заказа на доставку происходит когда все отправления доставки получают статус "Все товары отправления в наличии"
+     * Обновление заказа на доставку происходит когда отправление доставки получает статус "Собрано"
+     * @param Shipment $shipment
+     */
+    protected function upsertDeliveryOrder(Shipment $shipment): void
+    {
+        if ($shipment->status != $shipment->getOriginal('status') &&
+            $shipment->getOriginal('status') == ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE) {
+            $shipment->load('delivery.shipments');
+            $delivery = $shipment->delivery;
+            
+            foreach ($delivery->shipments as $deliveryShipment) {
+                if (!in_array($deliveryShipment->status, [
+                    ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE,
+                    ShipmentStatus::STATUS_ASSEMBLED,
+                ])) {
+                    return;
+                }
+            }
+            
+            $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
+            /** @var DeliveryOrderService $deliveryOrderService */
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
+            if (!$delivery->xml_id) {
+                $deliveryOrderService->createOrder($delivery->delivery_service, $deliveryOrderInputDto);
+            } else {
+                $deliveryOrderService->updateOrder(
+                    $delivery->delivery_service,
+                    $delivery->xml_id,
+                    $deliveryOrderInputDto
+                );
+            }
+        }
+    }
+    
+    /**
+     * Сформировать заказ на доставку
+     * @param Delivery $delivery
+     * @return DeliveryOrderInputDto
+     */
+    protected function formDeliveryOrder(Delivery $delivery): DeliveryOrderInputDto
+    {
+        $delivery->load(['order', 'shipments.packages.items.basketItem']);
+        $deliveryOrderInputDto = new DeliveryOrderInputDto();
+        
+        $deliveryOrderDto = new DeliveryOrderDto();
+        $deliveryOrderInputDto->order = $deliveryOrderDto;
+        $deliveryOrderDto->number = $delivery->number;
+        $deliveryOrderDto->height = $delivery->height;
+        $deliveryOrderDto->length = $delivery->length;
+        $deliveryOrderDto->width = $delivery->width;
+        $deliveryOrderDto->pickup_type = 1; //todo указано жестко, т.к. не понятно кто будет доставлять заказ от мерчанта до РЦ на нулевой миле
+        $deliveryOrderDto->delivery_method = $delivery->delivery_method;
     }
 }

@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $delivery_service
  *
  * @property string $xml_id - идентификатор заказа на доставку в службе доставки
+ * @property int $tariff_id - идентификатор тарифа на доставку из сервиса логистики
+ * @property int $point_id - идентификатор пункта самовывоза из сервиса логистики
  * @property string $number - номер доставки (номер_заказа-порядковый_номер_отправления)
  * @property float $cost - стоимость доставки, полученная от службы доставки (не влияет на общую стоимость доставки по заказу!)
  * @property float $width - ширина (расчитывается автоматически)
@@ -44,6 +46,8 @@ class Delivery extends OmsModel
         'delivery_method',
         'delivery_service',
         'xml_id',
+        'tariff_id',
+        'point_id',
         'number',
         'delivery_at',
     ];
