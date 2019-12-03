@@ -31,24 +31,8 @@ class ShipmentObserver
      */
     public function updating(Shipment $shipment): bool
     {
-        //Проверяем, что все товары отправления упакованы по коробкам, если статус меняется на "Собрано"
-        if ($shipment->status != $shipment->getOriginal('status') &&
-            $shipment->status == ShipmentStatus::STATUS_ASSEMBLED
-        ) {
-            $shipment->load('items.basketItem', 'packages.items');
-    
-            $shipmentItems = [];
-            foreach ($shipment->items as $shipmentItem) {
-                $shipmentItems[$shipmentItem->basket_item_id] = $shipmentItem->basketItem->qty;
-            }
-            
-            foreach ($shipment->packages as $package) {
-                foreach ($package->items as $packageItem) {
-                    $shipmentItems[$packageItem->basket_item_id] -= $packageItem->qty;
-                }
-            }
-            
-            return empty(array_filter($shipmentItems));
+        if (!$this->checkAllProductsPacked($shipment)) {
+            return false;
         }
         
         return true;
@@ -85,6 +69,56 @@ class ShipmentObserver
      */
     public function deleted(Shipment $shipment)
     {
+        $this->recalcCargoOnDelete($shipment);
+    }
+    
+    /**
+     * Handle the order "saved" event.
+     * @param  Shipment $shipment
+     * @throws \Exception
+     */
+    public function saved(Shipment $shipment)
+    {
+        $this->recalcCargoOnSaved($shipment);
+        $this->markOrderAsProblem($shipment);
+        $this->markOrderAsNonProblem($shipment);
+    }
+    
+    /**
+     * Проверить, что все товары отправления упакованы по коробкам, если статус меняется на "Собрано"
+     * @param Shipment $shipment
+     * @return bool
+     */
+    protected function checkAllProductsPacked(Shipment $shipment): bool
+    {
+        if ($shipment->status != $shipment->getOriginal('status') &&
+            $shipment->status == ShipmentStatus::STATUS_ASSEMBLED
+        ) {
+            $shipment->load('items.basketItem', 'packages.items');
+        
+            $shipmentItems = [];
+            foreach ($shipment->items as $shipmentItem) {
+                $shipmentItems[$shipmentItem->basket_item_id] = $shipmentItem->basketItem->qty;
+            }
+        
+            foreach ($shipment->packages as $package) {
+                foreach ($package->items as $packageItem) {
+                    $shipmentItems[$packageItem->basket_item_id] -= $packageItem->qty;
+                }
+            }
+        
+            return empty(array_filter($shipmentItems));
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Пересчитать груз при удалении отправления
+     * @param Shipment $shipment
+     */
+    protected function recalcCargoOnDelete(Shipment $shipment): void
+    {
         if ($shipment->cargo_id) {
             /** @var Cargo $newCargo */
             $newCargo = Cargo::find($shipment->cargo_id);
@@ -95,11 +129,10 @@ class ShipmentObserver
     }
     
     /**
-     * Handle the order "saved" event.
-     * @param  Shipment $shipment
-     * @throws \Exception
+     * Пересчитать груз при сохранении отправления
+     * @param Shipment $shipment
      */
-    public function saved(Shipment $shipment)
+    protected function recalcCargoOnSaved(Shipment $shipment): void
     {
         $oldCargoId = $shipment->getOriginal('cargo_id');
         if ($oldCargoId != $shipment->cargo_id) {
@@ -118,14 +151,28 @@ class ShipmentObserver
                 }
             }
         }
-        
+    }
+    
+    /**
+     * Пометить заказ как проблемный в случае проблемного отправления
+     * @param Shipment $shipment
+     */
+    protected function markOrderAsProblem(Shipment $shipment): void
+    {
         if ($shipment->status != $shipment->getOriginal('status') &&
             in_array($shipment->status, [ShipmentStatus::STATUS_ASSEMBLING_PROBLEM, ShipmentStatus::STATUS_TIMEOUT])) {
             $order = $shipment->delivery->order;
             $order->is_problem = true;
             $order->save();
         }
-        
+    }
+    
+    /**
+     * Пометить заказ как непроблемный, если все его отправления непроблемные
+     * @param Shipment $shipment
+     */
+    protected function markOrderAsNonProblem(Shipment $shipment): void
+    {
         if ($shipment->status != $shipment->getOriginal('status') &&
             $shipment->getOriginal('status') == ShipmentStatus::STATUS_ASSEMBLING_PROBLEM) {
             $order = $shipment->delivery->order;
@@ -140,7 +187,7 @@ class ShipmentObserver
                     }
                 }
             }
-    
+        
             $order->is_problem = !$isAllShipmentsOk;
             $order->save();
         }
