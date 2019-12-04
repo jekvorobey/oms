@@ -29,7 +29,6 @@ use Illuminate\Support\Collection;
  * @property int $certificate
  *
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
- * @property int $delivery_service - служба доставки (DPD, CDEK и т.д.)
  * @property int $delivery_method - способ доставки (самовывоз из ПВЗ, самовывоз из постомата, доставка)
  * @property float $delivery_cost - стоимость доставки iBT
  * @property array $delivery_address - адрес доставки

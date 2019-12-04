@@ -119,7 +119,6 @@ class OrdersSeeder extends Seeder
             $order->created_at = $faker->dateTimeThisYear();
             $order->manager_comment = $faker->realText();
 
-            $order->delivery_service = $faker->randomElement(DeliveryService::validValues());
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
             $order->delivery_method = $faker->randomElement(DeliveryMethod::validValues());
             $order->delivery_address = [];

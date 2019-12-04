@@ -69,7 +69,6 @@ class Orders extends Migration
             $table->string('certificate')->nullable();
             // delivery
             $table->tinyInteger('delivery_type')->unsigned();
-            $table->tinyInteger('delivery_service')->unsigned();
             $table->tinyInteger('delivery_method')->unsigned();
             $table->json('delivery_address');
             $table->text('delivery_comment')->nullable();
