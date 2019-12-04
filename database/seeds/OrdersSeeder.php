@@ -37,6 +37,7 @@ class OrdersSeeder extends Seeder
         $faker = Faker\Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
     
+        /** @var Collection|Basket[] $baskets */
         $baskets = collect();
         for ($i = 0; $i < self::ORDERS_COUNT; $i++) {
             $basket = new Basket();
@@ -121,7 +122,27 @@ class OrdersSeeder extends Seeder
 
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
             $order->delivery_method = $faker->randomElement(DeliveryMethod::validValues());
-            $order->delivery_address = [];
+            $region = $faker->randomElement([
+                ['Москва', 'г'],
+                ['Московская', 'обл'],
+                ['Тверская', 'обл'],
+                ['Калужская', 'обл'],
+                ['Рязанская', 'обл'],
+            ]);
+            $order->delivery_address = [
+                'country_code' => 'RU',
+                'post_index' => $faker->postcode,
+                'region' => $region[0],
+                'region_type' => $region[1],
+                'area' => '',
+                'city' => $faker->city,
+                'city_type' => 'г',
+                'street' => explode(' ', $faker->streetName)[0],
+                'street_type' => 'ул',
+                'house' => 'д ' . $faker->buildingNumber,
+                'block' => '',
+                'office' => '',
+            ];
             $order->delivery_cost = $faker->randomFloat(2, 0, 500);
 
             $order->receiver_name = $faker->name;
