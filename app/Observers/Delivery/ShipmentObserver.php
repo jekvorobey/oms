@@ -307,7 +307,7 @@ class ShipmentObserver
         $deliveryOrderRecipientDto->email = $delivery->order->receiver_email;
         $deliveryOrderRecipientDto->phone = $delivery->order->receiver_phone;
         
-        //Информация о мkестах (коробках) заказа
+        //Информация о местах (коробках) заказа
         $places = collect();
         $deliveryOrderInputDto->places = $places;
         $packageNumber = 1;
