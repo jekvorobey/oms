@@ -564,12 +564,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-common-ms-code.git",
-                "reference": "b940b1028de5392e4241a262f2f339fde92cb546"
+                "reference": "09235475e1aa519c47e0d15506985c0085603a6c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-common-ms-code/repository/archive.zip?sha=b940b1028de5392e4241a262f2f339fde92cb546",
-                "reference": "b940b1028de5392e4241a262f2f339fde92cb546",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-common-ms-code/repository/archive.zip?sha=09235475e1aa519c47e0d15506985c0085603a6c",
+                "reference": "09235475e1aa519c47e0d15506985c0085603a6c",
                 "shasum": ""
             },
             "require": {
@@ -610,7 +610,7 @@
                 }
             ],
             "description": "iBT common code for all microservices",
-            "time": "2019-10-31T13:48:40+00:00"
+            "time": "2019-12-04T16:23:07+00:00"
         },
         {
             "name": "greensight/ibt-logistics-lib",
@@ -618,12 +618,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-logistics-lib.git",
-                "reference": "0a1a378c2a37244c24d13978d4c03df67928f507"
+                "reference": "ce31bc4be9d4ef7ec343443c2a35a01b3e1acec0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=0a1a378c2a37244c24d13978d4c03df67928f507",
-                "reference": "0a1a378c2a37244c24d13978d4c03df67928f507",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=ce31bc4be9d4ef7ec343443c2a35a01b3e1acec0",
+                "reference": "ce31bc4be9d4ef7ec343443c2a35a01b3e1acec0",
                 "shasum": ""
             },
             "require": {
@@ -658,7 +658,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2019-11-28T15:20:55+00:00"
+            "time": "2019-12-03T15:51:02+00:00"
         },
         {
             "name": "greensight/ibt-merchant-management-lib",
