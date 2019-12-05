@@ -283,7 +283,7 @@ class ShipmentObserver
             $deliveryOrderSenderDto->street,
             $deliveryOrderSenderDto->house,
             $deliveryOrderSenderDto->block,
-            $deliveryOrderSenderDto->office,
+            $deliveryOrderSenderDto->flat,
         ]);
         $deliveryOrderSenderDto->company_name = $ibtService->getCompanyName();
         $deliveryOrderSenderDto->contact_name = $ibtService->getCentralStoreContactName();
@@ -301,7 +301,7 @@ class ShipmentObserver
             $deliveryOrderRecipientDto->street,
             $deliveryOrderRecipientDto->house,
             $deliveryOrderRecipientDto->block,
-            $deliveryOrderRecipientDto->office,
+            $deliveryOrderRecipientDto->flat,
         ]);
         $deliveryOrderRecipientDto->contact_name = $delivery->order->receiver_name;
         $deliveryOrderRecipientDto->email = $delivery->order->receiver_email;

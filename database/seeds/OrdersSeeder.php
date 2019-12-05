@@ -123,25 +123,25 @@ class OrdersSeeder extends Seeder
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
             $order->delivery_method = $faker->randomElement(DeliveryMethod::validValues());
             $region = $faker->randomElement([
-                ['Москва', 'г'],
-                ['Московская', 'обл'],
-                ['Тверская', 'обл'],
-                ['Калужская', 'обл'],
-                ['Рязанская', 'обл'],
+                'Москва г',
+                'Московская обл',
+                'Тверская обл',
+                'Калужская обл',
+                'Рязанская обл',
             ]);
             $order->delivery_address = [
                 'country_code' => 'RU',
                 'post_index' => $faker->postcode,
-                'region' => $region[0],
-                'region_type' => $region[1],
+                'region' => $region,
+                'region_guid' => $faker->uuid,
                 'area' => '',
-                'city' => $faker->city,
-                'city_type' => 'г',
-                'street' => explode(' ', $faker->streetName)[0],
-                'street_type' => 'ул',
-                'house' => 'д ' . $faker->buildingNumber,
+                'area_guid' => '',
+                'city' => 'г. ' . $faker->city,
+                'city_guid' => $faker->uuid,
+                'street' => 'ул. ' . explode(' ', $faker->streetName)[0],
+                'house' => 'д. ' . $faker->buildingNumber,
                 'block' => '',
-                'office' => '',
+                'flat' => '',
             ];
             $order->delivery_cost = $faker->randomFloat(2, 0, 500);
 
