@@ -17,7 +17,6 @@ use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderPlaceDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderRecipientDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderSenderDto;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
-use Illuminate\Support\Collection;
 
 /**
  * Class ShipmentObserver
@@ -230,7 +229,11 @@ class ShipmentObserver
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
             if (!$delivery->xml_id) {
-                $deliveryOrderService->createOrder($delivery->delivery_service, $deliveryOrderInputDto);
+                $deliveryOrderOutputDto = $deliveryOrderService->createOrder($delivery->delivery_service, $deliveryOrderInputDto);
+                if ($deliveryOrderOutputDto->xml_id) {
+                    $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
+                    $delivery->save();
+                }
             } else {
                 $deliveryOrderService->updateOrder(
                     $delivery->delivery_service,
