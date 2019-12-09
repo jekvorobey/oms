@@ -122,7 +122,7 @@ class Shipment extends OmsModel
         $this->load('items.basketItem');
     
         foreach ($this->items as $item) {
-            $cost += $item->basketItem->cost;
+            $cost += $item->basketItem->price;
         }
         
         $this->cost = $cost;

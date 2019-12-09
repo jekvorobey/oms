@@ -142,8 +142,13 @@ class OrdersSeeder extends Seeder
                 'house' => 'д. ' . $faker->buildingNumber,
                 'block' => '',
                 'flat' => '',
+                'porch' => '',
+                'intercom' => '',
+                'comment' => '',
             ];
             $order->delivery_cost = $faker->randomFloat(2, 0, 500);
+            $order->cost = $faker->randomFloat(2, 100, 500);
+            $order->price = $order->cost + $order->delivery_cost;
 
             $order->receiver_name = $faker->name;
             $order->receiver_phone = $faker->phoneNumber;
