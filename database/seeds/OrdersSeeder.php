@@ -2,12 +2,11 @@
 
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
-use App\Models\Delivery\DeliveryMethod;
-use App\Models\Delivery\DeliveryService;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
 use App\Models\Order\OrderStatus;
+use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Store\Dto\StockDto;
 use Greensight\Store\Services\StockService\StockService;
 use Illuminate\Database\Seeder;
@@ -121,7 +120,7 @@ class OrdersSeeder extends Seeder
             $order->manager_comment = $faker->realText();
 
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
-            $order->delivery_method = $faker->randomElement(DeliveryMethod::validValues());
+            $order->delivery_method = $faker->randomElement(array_keys(DeliveryMethod::allMethods()));
             $region = $faker->randomElement([
                 'Москва г',
                 'Московская обл',

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V1\Delivery;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
-use App\Models\Delivery\DeliveryService;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\CreateAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
@@ -13,6 +12,7 @@ use Greensight\CommonMsa\Rest\Controller\ReadAction;
 use Greensight\CommonMsa\Rest\Controller\UpdateAction;
 use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
+use Greensight\Logistics\Dto\Lists\DeliveryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -81,7 +81,7 @@ class CargoController extends Controller
             'merchant_id' => [new RequiredOnPost(), 'integer'],
             'store_id' => [new RequiredOnPost(), 'integer'],
             'status' => ['nullable', Rule::in(CargoStatus::validValues())],
-            'delivery_service' => [new RequiredOnPost(), Rule::in(DeliveryService::validValues())],
+            'delivery_service' => [new RequiredOnPost(), Rule::in(array_keys(DeliveryService::allServices()))],
             'xml_id' => ['nullable', 'string'],
         ];
     }

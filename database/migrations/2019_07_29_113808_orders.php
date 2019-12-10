@@ -153,6 +153,7 @@ class Orders extends Migration
             $table->bigInteger('delivery_method')->unsigned();
             $table->tinyInteger('delivery_service')->unsigned();
             $table->tinyInteger('status', false, true)->default(1);
+            $table->string('status_xml_id')->nullable();
 
             $table->string('xml_id')->nullable();
             $table->integer('tariff_id')->nullable();
@@ -164,6 +165,8 @@ class Orders extends Migration
             $table->decimal('length', 18, 4)->default(0.0);
             $table->decimal('weight', 18, 4)->default(0.0);
             $table->dateTime('delivery_at')->nullable();
+            $table->dateTime('status_at')->nullable();
+            $table->dateTime('status_xml_id_at')->nullable();
 
             $table->timestamps();
 

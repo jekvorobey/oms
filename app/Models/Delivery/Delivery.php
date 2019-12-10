@@ -5,9 +5,10 @@ namespace App\Models\Delivery;
 use App\Models\OmsModel;
 use App\Models\Order\Order;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
+use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\DeliveryOrderStatus;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 /**
  * Доставка (одно или несколько отправлений, которые должны быть доставлены в один срок одной службой доставки до покупателя)
@@ -20,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $delivery_service
  *
  * @property string $xml_id - идентификатор заказа на доставку в службе доставки
+ * @property string $status_xml_id - статус заказа на доставку в службе доставки
  * @property int $tariff_id - идентификатор тарифа на доставку из сервиса логистики
  * @property int $point_id - идентификатор пункта самовывоза из сервиса логистики
  * @property string $number - номер доставки (номер_заказа-порядковый_номер_отправления)
@@ -29,6 +31,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float $length - длина (расчитывается автоматически)
  * @property float $weight - вес (расчитывается автоматически)
  * @property Carbon $delivery_at
+ * @property Carbon $status_at
+ * @property Carbon $status_xml_id_at
  *
  * @property-read Order $order
  * @property-read Collection|Shipment[] $shipments
@@ -161,5 +165,24 @@ class Delivery extends OmsModel
         }
         
         return $maxSideName;
+    }
+    
+    /**
+     * Получить доставки в работе: выгружены в СД и еще не доставлены
+     * @return Collection|self[]
+     */
+    public static function deliveriesAtWork(): Collection
+    {
+        return self::query()
+            ->whereNotNull('xml_id')
+            ->where('xml_id', '!=', '')
+            ->whereNotIn('status', [
+                DeliveryOrderStatus::STATUS_DONE,
+                DeliveryOrderStatus::STATUS_RETURNED,
+                DeliveryOrderStatus::STATUS_LOST,
+                DeliveryOrderStatus::STATUS_CANCEL,
+            ])
+            ->get()
+            ->keyBy('number');
     }
 }

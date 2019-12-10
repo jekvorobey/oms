@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Console\Commands\CancelExpiredOrders;
+use App\Console\Commands\UpdateDeliveriesStatus;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -24,7 +26,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('order:cancel_expired')->everyTenMinutes();
+        $schedule->command(CancelExpiredOrders::class)->everyTenMinutes();
+        $schedule->command(UpdateDeliveriesStatus::class)->everyTenMinutes();
     }
 
     /**
