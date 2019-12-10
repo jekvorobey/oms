@@ -59,7 +59,6 @@ use Illuminate\Support\Collection;
  *     @OA\Property(property="basket_id", type="integer", description="id корзины"),
  *     @OA\Property(property="basket", ref="#/components/schemas/BasketItem"),
  *     @OA\Property(property="delivery_type", type="string", description="тип доставки (одним отправлением, несколькими отправлениями)"),
- *     @OA\Property(property="delivery_service", type="string", description="служба доставки (DPD, CDEK и т.д.)"),
  *     @OA\Property(property="delivery_method", type="string", description="способ доставки (самовывоз из ПВЗ, самовывоз из постомата, доставка)"),
  *     @OA\Property(property="number", type="string", description="номер"),
  *     @OA\Property(property="cost", type="number", description="стоимость (расчитывается автоматически)"),

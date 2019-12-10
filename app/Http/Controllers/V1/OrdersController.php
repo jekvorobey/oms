@@ -225,7 +225,6 @@ class OrdersController extends Controller
             'status' => ['nullable', Rule::in(OrderStatus::validValues())],
             'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
 
-            'delivery_service' => ['nullable', Rule::in(array_keys(DeliveryService::allServices()))],
             'delivery_method' => ['nullable', Rule::in(array_keys(DeliveryMethod::allMethods()))],
             'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
             'delivery_comment' => ['nullable', 'string'],
