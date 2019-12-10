@@ -41,4 +41,24 @@ class DeliveryObserver
     {
         History::saveEvent(HistoryType::TYPE_DELETE, $delivery->order, $delivery);
     }
+    
+    /**
+     * Handle the order "saved" event.
+     * @param  Delivery $delivery
+     */
+    public function saving(Delivery $delivery)
+    {
+        $this->setStatusAt($delivery);
+    }
+    
+    /**
+     * Установить дату изменения статуса доставки
+     * @param  Delivery  $delivery
+     */
+    protected function setStatusAt(Delivery $delivery): void
+    {
+        if ($delivery->status != $delivery->getOriginal('status')) {
+            $delivery->status_at = now();
+        }
+    }
 }

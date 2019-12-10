@@ -3,9 +3,6 @@ namespace App\Http\Controllers\V1\Delivery;
 
 use App\Http\Controllers\Controller;
 use App\Models\Delivery\Delivery;
-use App\Models\Delivery\DeliveryMethod;
-use App\Models\Delivery\DeliveryService;
-use App\Models\Delivery\DeliveryStatus;
 use App\Models\Order\Order;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
@@ -15,11 +12,13 @@ use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Rest\RestSerializable;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
+use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\DeliveryOrderStatus;
+use Greensight\Logistics\Dto\Lists\DeliveryService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -84,9 +83,9 @@ class DeliveryController extends Controller
     protected function inputValidators(): array
     {
         return [
-            'status' => ['nullable', Rule::in(DeliveryStatus::validValues())],
-            'delivery_method' => [new RequiredOnPost(), Rule::in(DeliveryMethod::validValues())],
-            'delivery_service' => [new RequiredOnPost(), Rule::in(DeliveryService::validValues())],
+            'status' => ['nullable', Rule::in(array_keys(DeliveryOrderStatus::allStatuses()))],
+            'delivery_method' => [new RequiredOnPost(), Rule::in(array_keys(DeliveryMethod::allMethods()))],
+            'delivery_service' => [new RequiredOnPost(), Rule::in(array_keys(DeliveryService::allServices()))],
             'xml_id' => ['nullable', 'string'],
             'tariff_id' => ['nullable', 'integer'],
             'point_id' => ['nullable', 'integer'],

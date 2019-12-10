@@ -5,8 +5,6 @@ namespace App\Http\Controllers\V1;
 use App\Core\Order\OrderReader;
 use App\Core\Order\OrderWriter;
 use App\Http\Controllers\Controller;
-use App\Models\Delivery\DeliveryMethod;
-use App\Models\Delivery\DeliveryService;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
@@ -14,6 +12,8 @@ use App\Models\Order\OrderComment;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Greensight\CommonMsa\Rest\RestQuery;
+use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Dto\Lists\DeliveryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -166,7 +166,7 @@ class OrdersController extends Controller
             'certificate' => 'nullable|integer',
     
             'delivery_type' => ['required', Rule::in(DeliveryType::validValues())],
-            'delivery_method' => ['required', Rule::in(DeliveryMethod::validValues())],
+            'delivery_method' => ['required', Rule::in(array_keys(DeliveryMethod::allMethods()))],
             'delivery_address' => ['nullable', 'array'],
             'delivery_comment' => ['nullable', 'string'],
             
@@ -225,8 +225,7 @@ class OrdersController extends Controller
             'status' => ['nullable', Rule::in(OrderStatus::validValues())],
             'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
 
-            'delivery_service' => ['nullable', Rule::in(DeliveryService::validValues())],
-            'delivery_method' => ['nullable', Rule::in(DeliveryMethod::validValues())],
+            'delivery_method' => ['nullable', Rule::in(array_keys(DeliveryMethod::allMethods()))],
             'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
             'delivery_comment' => ['nullable', 'string'],
             'delivery_address' => ['nullable', 'array'],
