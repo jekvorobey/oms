@@ -166,7 +166,6 @@ class OrdersController extends Controller
             'certificate' => 'nullable|integer',
     
             'delivery_type' => ['required', Rule::in(DeliveryType::validValues())],
-            'delivery_service' => ['required', Rule::in(array_keys(DeliveryService::allServices()))],
             'delivery_method' => ['required', Rule::in(array_keys(DeliveryMethod::allMethods()))],
             'delivery_address' => ['nullable', 'array'],
             'delivery_comment' => ['nullable', 'string'],
