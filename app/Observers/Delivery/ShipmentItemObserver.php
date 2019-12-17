@@ -71,6 +71,7 @@ class ShipmentItemObserver
     public function deleted(ShipmentItem $shipmentItem)
     {
         $shipmentItem->shipment->costRecalc();
+        $shipmentItem->shipment->recalc();
     }
     
     /**
@@ -81,5 +82,6 @@ class ShipmentItemObserver
     public function saved(ShipmentItem $shipmentItem)
     {
         $shipmentItem->shipment->costRecalc();
+        $shipmentItem->shipment->recalc();
     }
 }

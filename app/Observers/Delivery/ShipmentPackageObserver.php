@@ -70,12 +70,7 @@ class ShipmentPackageObserver
      */
     public function deleted(ShipmentPackage $shipmentPackage)
     {
-        if ($shipmentPackage->shipment->cargo_id) {
-            $shipmentPackage->shipment->cargo->recalc();
-        }
-        if ($shipmentPackage->shipment->delivery_id) {
-            $shipmentPackage->shipment->delivery->recalc();
-        }
+        $shipmentPackage->shipment->recalc();
     }
     
     /**
@@ -105,11 +100,8 @@ class ShipmentPackageObserver
                 break;
             }
         }
-        if ($needRecalc && $shipmentPackage->shipment->cargo_id) {
-            $shipmentPackage->shipment->cargo->recalc();
-        }
-        if ($needRecalc && $shipmentPackage->shipment->delivery_id) {
-            $shipmentPackage->shipment->delivery->recalc();
+        if ($needRecalc) {
+            $shipmentPackage->shipment->recalc();
         }
     }
 }

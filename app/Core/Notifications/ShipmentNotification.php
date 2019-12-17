@@ -83,7 +83,7 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
     
         switch ($type) {
             case HistoryType::TYPE_UPDATE:
-                if($shipment->status = ShipmentStatus::STATUS_ASSEMBLING_PROBLEM) {
+                if($shipment->status == ShipmentStatus::STATUS_ASSEMBLING_PROBLEM) {
                     $notification->type = NotificationDto::TYPE_SHIPMENT_PROBLEM;
                     $notification->setPayloadField('title', "Проблема при сборке отправления");
                     $notification->setPayloadField('body', "Возникла проблема при сборке отправления {$shipment->number} из заказа {$shipment->delivery->order->number}: {$shipment->assembly_problem_comment}");

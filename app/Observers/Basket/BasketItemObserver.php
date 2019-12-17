@@ -13,30 +13,45 @@ use App\Models\History\HistoryType;
  */
 class BasketItemObserver
 {
-//    /**
-//     * Handle the order "saving" event.
-//     * @param  BasketItem $basketItem
-//     */
-//    public function saving(BasketItem $basketItem)
-//    {
-//        if ($basketItem->qty != $basketItem->getOriginal('qty') ||
-//            $basketItem->price != $basketItem->getOriginal('price') ||
-//            $basketItem->discount != $basketItem->getOriginal('discount')
-//        ) {
-//            $basketItem->costRecalc(false);
-//        }
-//    }
+    /**
+     * Handle the order "saving" event.
+     * @param  BasketItem $basketItem
+     */
+    public function saving(BasketItem $basketItem)
+    {
+        /*if ($basketItem->qty != $basketItem->getOriginal('qty') ||
+            $basketItem->price != $basketItem->getOriginal('price') ||
+            $basketItem->discount != $basketItem->getOriginal('discount')
+        ) {
+            $basketItem->costRecalc(false);
+        }*/
+    }
 
-//    /**
-//     * Handle the order "saved" event.
-//     * @param  BasketItem $basketItem
-//     */
-//    public function saved(BasketItem $basketItem)
-//    {
-//        if ($basketItem->basket->order) {
-//            $basketItem->basket->order->costRecalc();
-//        }
-//    }
+    /**
+     * Handle the order "saved" event.
+     * @param  BasketItem $basketItem
+     */
+    public function saved(BasketItem $basketItem)
+    {
+        /*if ($basketItem->basket->order) {
+            $basketItem->basket->order->costRecalc();
+        }*/
+    
+        if ($basketItem->qty != $basketItem->getOriginal('qty')
+        ) {
+            if ($basketItem->shipmentItem) {
+                $basketItem->shipmentItem->shipment->recalc();
+            }
+        }
+    
+        if ($basketItem->qty != $basketItem->getOriginal('qty') ||
+            $basketItem->price != $basketItem->getOriginal('price')
+        ) {
+            if ($basketItem->shipmentItem) {
+                $basketItem->shipmentItem->shipment->costRecalc();
+            }
+        }
+    }
     
     /**
      * Handle the order "created" event.

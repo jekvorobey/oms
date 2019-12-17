@@ -79,7 +79,10 @@ class ShipmentObserver
      */
     public function deleted(Shipment $shipment)
     {
-        $this->recalcCargoOnDelete($shipment);
+        if ($shipment->cargo_id) {
+            $shipment->cargo->recalc();
+        }
+        $shipment->delivery->recalc();
     }
     
     /**
@@ -89,9 +92,11 @@ class ShipmentObserver
      */
     public function saved(Shipment $shipment)
     {
-        $this->recalcCargoOnSaved($shipment);
+        $this->recalcCargoAndDeliveryOnSaved($shipment);
+        $this->recalcCargosOnSaved($shipment);
         $this->markOrderAsProblem($shipment);
         $this->markOrderAsNonProblem($shipment);
+        //$this->upsertDeliveryOrder($shipment);
     }
     
     /**
@@ -124,25 +129,33 @@ class ShipmentObserver
     }
     
     /**
-     * Пересчитать груз при удалении отправления
+     * Пересчитать груз и доставку при сохранении отправления
      * @param Shipment $shipment
      */
-    protected function recalcCargoOnDelete(Shipment $shipment): void
+    protected function recalcCargoAndDeliveryOnSaved(Shipment $shipment): void
     {
-        if ($shipment->cargo_id) {
-            /** @var Cargo $newCargo */
-            $newCargo = Cargo::find($shipment->cargo_id);
-            if ($newCargo) {
-                $newCargo->recalc();
+        $needRecalc = false;
+        foreach (['weight', 'width', 'height', 'length'] as $field) {
+            if ($shipment->getOriginal($field) != $shipment[$field]) {
+                $needRecalc = true;
+                break;
             }
+        }
+        
+        if ($needRecalc) {
+            if ($shipment->cargo_id) {
+                $shipment->cargo->recalc();
+            }
+    
+            $shipment->delivery->recalc();
         }
     }
     
     /**
-     * Пересчитать груз при сохранении отправления
+     * Пересчитать старый и новый грузы при сохранении отправления
      * @param Shipment $shipment
      */
-    protected function recalcCargoOnSaved(Shipment $shipment): void
+    protected function recalcCargosOnSaved(Shipment $shipment): void
     {
         $oldCargoId = $shipment->getOriginal('cargo_id');
         if ($oldCargoId != $shipment->cargo_id) {
@@ -212,7 +225,8 @@ class ShipmentObserver
     protected function upsertDeliveryOrder(Shipment $shipment): void
     {
         if ($shipment->status != $shipment->getOriginal('status') &&
-            $shipment->getOriginal('status') == ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE) {
+            in_array($shipment->status, [ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE, ShipmentStatus::STATUS_ASSEMBLED])
+        ) {
             $shipment->load('delivery.shipments');
             $delivery = $shipment->delivery;
             
@@ -278,7 +292,7 @@ class ShipmentObserver
         $centralStoreAddress = $ibtService->getCentralStoreAddress();
         $deliveryOrderSenderDto = new DeliveryOrderSenderDto($centralStoreAddress);
         $deliveryOrderInputDto->sender = $deliveryOrderSenderDto;
-        $deliveryOrderSenderDto->address_string = implode(', ', [
+        $deliveryOrderSenderDto->address_string = implode(', ', array_filter([
             $deliveryOrderSenderDto->post_index,
             $deliveryOrderSenderDto->region != $deliveryOrderSenderDto->city ? $deliveryOrderSenderDto->region : '',
             $deliveryOrderSenderDto->area,
@@ -287,7 +301,7 @@ class ShipmentObserver
             $deliveryOrderSenderDto->house,
             $deliveryOrderSenderDto->block,
             $deliveryOrderSenderDto->flat,
-        ]);
+        ]));
         $deliveryOrderSenderDto->company_name = $ibtService->getCompanyName();
         $deliveryOrderSenderDto->contact_name = $ibtService->getCentralStoreContactName();
         $deliveryOrderSenderDto->email = $ibtService->getCentralStoreEmail();
@@ -296,7 +310,7 @@ class ShipmentObserver
         //Информация об получателе заказа
         $deliveryOrderRecipientDto = new DeliveryOrderRecipientDto($delivery->order->delivery_address);
         $deliveryOrderInputDto->recipient = $deliveryOrderRecipientDto;
-        $deliveryOrderRecipientDto->address_string = implode(', ', [
+        $deliveryOrderRecipientDto->address_string = implode(', ', array_filter([
             $deliveryOrderRecipientDto->post_index,
             $deliveryOrderRecipientDto->region != $deliveryOrderRecipientDto->city ? $deliveryOrderRecipientDto->region : '',
             $deliveryOrderRecipientDto->area,
@@ -305,7 +319,7 @@ class ShipmentObserver
             $deliveryOrderRecipientDto->house,
             $deliveryOrderRecipientDto->block,
             $deliveryOrderRecipientDto->flat,
-        ]);
+        ]));
         $deliveryOrderRecipientDto->contact_name = $delivery->order->receiver_name;
         $deliveryOrderRecipientDto->email = $delivery->order->receiver_email;
         $deliveryOrderRecipientDto->phone = $delivery->order->receiver_phone;
@@ -315,16 +329,16 @@ class ShipmentObserver
         $deliveryOrderInputDto->places = $places;
         $packageNumber = 1;
         foreach ($delivery->shipments as $shipment) {
-            if (!is_null($shipment->packages)) {
+            if ($shipment->packages && $shipment->packages->isNotEmpty()) {
                 foreach ($shipment->packages as $package) {
                     $deliveryOrderPlaceDto = new DeliveryOrderPlaceDto();
                     $places->push($deliveryOrderPlaceDto);
                     $deliveryOrderPlaceDto->number = $packageNumber++;
                     $deliveryOrderPlaceDto->code = $package->id;
-                    $deliveryOrderPlaceDto->width = $package->width;
-                    $deliveryOrderPlaceDto->height = $package->height;
-                    $deliveryOrderPlaceDto->length = $package->length;
-                    $deliveryOrderPlaceDto->weight = $package->weight;
+                    $deliveryOrderPlaceDto->width = (int)ceil($package->width);
+                    $deliveryOrderPlaceDto->height = (int)ceil($package->height);
+                    $deliveryOrderPlaceDto->length = (int)ceil($package->length);
+                    $deliveryOrderPlaceDto->weight = (int)ceil($package->weight);
     
                     $items = collect();
                     $deliveryOrderPlaceDto->items = $items;
@@ -335,10 +349,10 @@ class ShipmentObserver
                         $deliveryOrderItemDto->articul = $basketItem->offer_id; //todo Добавить сохранение артикула товара в корзине
                         $deliveryOrderItemDto->name = $basketItem->name;
                         $deliveryOrderItemDto->quantity = $basketItem->qty;
-                        $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? $basketItem->product['height'] : 0;
-                        $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? $basketItem->product['width'] : 0;
-                        $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? $basketItem->product['length'] : 0;
-                        $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? $basketItem->product['weight'] : 0;
+                        $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int)ceil($basketItem->product['height']) : 0;
+                        $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
+                        $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
+                        $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
                         $deliveryOrderItemDto->cost = $basketItem->qty > 0 ? $basketItem->price / $basketItem->qty : 0;
                     }
                 }
@@ -347,10 +361,10 @@ class ShipmentObserver
                 $places->push($deliveryOrderPlaceDto);
                 $deliveryOrderPlaceDto->number = $packageNumber++;
                 $deliveryOrderPlaceDto->code = $shipment->number;
-                $deliveryOrderPlaceDto->width = 30;//todo Доделать примерный расчет замеров по размерам товаров
-                $deliveryOrderPlaceDto->height = 30;//todo Доделать примерный расчет замеров по размерам товаров
-                $deliveryOrderPlaceDto->length = 30;//todo Доделать примерный расчет замеров по размерам товаров
-                $deliveryOrderPlaceDto->weight = 0;
+                $deliveryOrderPlaceDto->width = (int)ceil($shipment->width);
+                $deliveryOrderPlaceDto->height = (int)ceil($shipment->height);
+                $deliveryOrderPlaceDto->length = (int)ceil($shipment->length);
+                $deliveryOrderPlaceDto->weight = (int)ceil($shipment->weight);
     
                 $items = collect();
                 $deliveryOrderPlaceDto->items = $items;
@@ -361,11 +375,10 @@ class ShipmentObserver
                     $deliveryOrderItemDto->articul = $basketItem->offer_id; //todo Добавить сохранение артикула товара в корзине
                     $deliveryOrderItemDto->name = $basketItem->name;
                     $deliveryOrderItemDto->quantity = $basketItem->qty;
-                    $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? $basketItem->product['height'] : 0;
-                    $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? $basketItem->product['width'] : 0;
-                    $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? $basketItem->product['length'] : 0;
-                    $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? $basketItem->product['weight'] : 0;
-                    $deliveryOrderPlaceDto->weight += $basketItem->qty * $deliveryOrderItemDto->weight;
+                    $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int)ceil($basketItem->product['height']) : 0;
+                    $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
+                    $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
+                    $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
                     $deliveryOrderItemDto->cost = $basketItem->qty > 0 ? $basketItem->price / $basketItem->qty : 0;
                 }
             }

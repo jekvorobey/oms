@@ -29,6 +29,10 @@ use Pim\Services\ProductService\ProductService;
  *
  * @property string $number - номер отправления (номер_заказа/порядковый_номер_отправления)
  * @property float $cost - сумма товаров отправления (расчитывается автоматически)
+ * @property float $width - ширина (расчитывается автоматически)
+ * @property float $height - высота (расчитывается автоматически)
+ * @property float $length - длина (расчитывается автоматически)
+ * @property float $weight - вес (расчитывается автоматически)
  * @property string $required_shipping_at - требуемая дата отгрузки
  * @property string $assembly_problem_comment - последнее сообщение мерчанта о проблеме со сборкой
  *
@@ -43,6 +47,8 @@ use Pim\Services\ProductService\ProductService;
  */
 class Shipment extends OmsModel
 {
+    use WithWeightAndSizes;
+    
     /**
      * Заполняемые поля модели
      */
@@ -64,6 +70,9 @@ class Shipment extends OmsModel
      * @var array
      */
     protected $fillable = self::FILLABLE;
+    
+    /** @var array */
+    private const SIDES = ['width', 'height', 'length'];
     
     /** @var string */
     protected $table = 'shipments';
@@ -119,10 +128,10 @@ class Shipment extends OmsModel
     public function costRecalc(bool $save = true): void
     {
         $cost = 0.0;
-        $this->load('items.basketItem');
+        $this->load('basketItems');
     
-        foreach ($this->items as $item) {
-            $cost += $item->basketItem->price;
+        foreach ($this->basketItems as $basketItem) {
+            $cost += $basketItem->price * $basketItem->qty;
         }
         
         $this->cost = $cost;
@@ -139,6 +148,113 @@ class Shipment extends OmsModel
     public function getPackageQtyAttribute(): int
     {
         return (int)$this->packages()->count();
+    }
+    
+    /**
+     * Рассчитать вес доставки
+     * @return float
+     */
+    public function calcWeight(): float
+    {
+        $weight = 0;
+        $this->load(['packages', 'basketItems']);
+        
+        if ($this->packages && $this->packages->isNotEmpty()) {
+            foreach ($this->packages as $package) {
+                $weight += $package->weight;
+            }
+        } else {
+            foreach ($this->basketItems as $basketItem) {
+                $weight += $basketItem->product['weight'] * $basketItem->qty;
+            }
+        }
+        
+        return $weight;
+    }
+    
+    /**
+     * Рассчитать объем доставки
+     * @return float
+     */
+    public function calcVolume(): float
+    {
+        $volume = 0;
+        $this->load(['packages', 'basketItems']);
+        
+        if ($this->packages && $this->packages->isNotEmpty()) {
+            foreach ($this->packages as $package) {
+                $volume += $package->width * $package->height * $package->length;
+            }
+        } else {
+            foreach ($this->basketItems as $basketItem) {
+                $volume += $basketItem->product['width'] * $basketItem->product['height'] * $basketItem->product['length'] * $basketItem->qty;
+            }
+        }
+        
+        return $volume;
+    }
+    
+    /**
+     * Рассчитать значение максимальной стороны (длины, ширины или высоты) из всех отправлений доставки
+     * @return float
+     */
+    public function calcMaxSide(): float
+    {
+        $maxSide = 0;
+        $this->load(['packages', 'basketItems']);
+    
+        if ($this->packages && $this->packages->isNotEmpty()) {
+            foreach ($this->packages as $package) {
+                foreach (self::SIDES as $side) {
+                    if ($package[$side] > $maxSide) {
+                        $maxSide = $package[$side];
+                    }
+                }
+            }
+        } else {
+            foreach ($this->basketItems as $basketItem) {
+                foreach (self::SIDES as $side) {
+                    if ($basketItem->product[$side] > $maxSide) {
+                        $maxSide = $basketItem->product[$side];
+                    }
+                }
+            }
+        }
+        
+        return $maxSide;
+    }
+    
+    /**
+     * Определить название максимальной стороны (длины, ширины или высоты) из всех отправлений доставки
+     * @param  float  $maxSide
+     * @return string
+     */
+    public function identifyMaxSideName(float $maxSide): string
+    {
+        $maxSideName = 'width';
+        $this->load(['packages', 'basketItems']);
+    
+        if ($this->packages && $this->packages->isNotEmpty()) {
+            foreach ($this->packages as $package) {
+                foreach (self::SIDES as $side) {
+                    if ($package[$side] > $maxSide) {
+                        $maxSide = $package[$side];
+                        $maxSideName = $side;
+                    }
+                }
+            }
+        } else {
+            foreach ($this->basketItems as $basketItem) {
+                foreach (self::SIDES as $side) {
+                    if ($basketItem->product[$side] > $maxSide) {
+                        $maxSide = $basketItem->product[$side];
+                        $maxSideName = $side;
+                    }
+                }
+            }
+        }
+        
+        return $maxSideName;
     }
     
     /**

@@ -60,20 +60,18 @@ class DeliverySeeder extends Seeder
                 $delivery = new Delivery();
                 $delivery->order_id = $order->id;
                 $delivery->delivery_method = $faker->randomElement(array_keys(DeliveryMethod::allMethods()));
-                $delivery->delivery_service = $faker->randomElement(array_keys(DeliveryService::allServices()));
+                $delivery->delivery_service = $faker->randomElement([
+                    DeliveryService::SERVICE_B2CPL,
+                ]);
                 $delivery->tariff_id = isset($tariffs[$delivery->delivery_service]) ?
                     $faker->randomElement($tariffs[$delivery->delivery_service]->pluck('id')->toArray()) : 0;
                 $delivery->point_id = (
                     isset($points[$delivery->delivery_service]) &&
                     in_array($delivery->delivery_method, [DeliveryMethod::METHOD_OUTPOST_PICKUP, DeliveryMethod::METHOD_POSTOMAT_PICKUP])) ?
                     $faker->randomElement($points[$delivery->delivery_service]->pluck('id')->toArray()) : 0;
-                $delivery->xml_id = $delivery->tariff_id ? $faker->uuid : '';
+                $delivery->xml_id = '';
                 $delivery->number = $order->number . '-' . $i;
                 $delivery->cost = $faker->randomFloat(2, 0, 500);
-                $delivery->width = $faker->numberBetween(1, 100);
-                $delivery->height = $faker->numberBetween(1, 100);
-                $delivery->length = $faker->numberBetween(1, 100);
-                $delivery->weight = $faker->numberBetween(100, 1000);
                 $delivery->delivery_at = $order->created_at->modify('+' . rand(1, 7) . ' days');
                 $delivery->created_at = $order->created_at;
                 $delivery->save();
