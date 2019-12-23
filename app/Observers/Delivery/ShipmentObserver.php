@@ -96,7 +96,7 @@ class ShipmentObserver
         $this->recalcCargosOnSaved($shipment);
         $this->markOrderAsProblem($shipment);
         $this->markOrderAsNonProblem($shipment);
-        //$this->upsertDeliveryOrder($shipment);
+        $this->upsertDeliveryOrder($shipment);
     }
     
     /**
@@ -239,21 +239,25 @@ class ShipmentObserver
                 }
             }
             
-            $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
-            /** @var DeliveryOrderService $deliveryOrderService */
-            $deliveryOrderService = resolve(DeliveryOrderService::class);
-            if (!$delivery->xml_id) {
-                $deliveryOrderOutputDto = $deliveryOrderService->createOrder($delivery->delivery_service, $deliveryOrderInputDto);
-                if ($deliveryOrderOutputDto->xml_id) {
-                    $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
-                    $delivery->save();
+            try {
+                $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
+                /** @var DeliveryOrderService $deliveryOrderService */
+                $deliveryOrderService = resolve(DeliveryOrderService::class);
+                if (!$delivery->xml_id) {
+                    $deliveryOrderOutputDto = $deliveryOrderService->createOrder($delivery->delivery_service, $deliveryOrderInputDto);
+                    if ($deliveryOrderOutputDto->xml_id) {
+                        $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
+                        $delivery->save();
+                    }
+                } else {
+                    $deliveryOrderService->updateOrder(
+                        $delivery->delivery_service,
+                        $delivery->xml_id,
+                        $deliveryOrderInputDto
+                    );
                 }
-            } else {
-                $deliveryOrderService->updateOrder(
-                    $delivery->delivery_service,
-                    $delivery->xml_id,
-                    $deliveryOrderInputDto
-                );
+            } catch (\Exception $e) {
+                //todo Сообщать об ошибке выгрузки заказа в СД
             }
         }
     }
@@ -348,12 +352,12 @@ class ShipmentObserver
                         $items->push($deliveryOrderItemDto);
                         $deliveryOrderItemDto->articul = $basketItem->offer_id; //todo Добавить сохранение артикула товара в корзине
                         $deliveryOrderItemDto->name = $basketItem->name;
-                        $deliveryOrderItemDto->quantity = $basketItem->qty;
+                        $deliveryOrderItemDto->quantity = (float)$basketItem->qty;
                         $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int)ceil($basketItem->product['height']) : 0;
                         $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
                         $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
                         $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
-                        $deliveryOrderItemDto->cost = $basketItem->qty > 0 ? $basketItem->price / $basketItem->qty : 0;
+                        $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->price / $basketItem->qty : 0, 2);
                     }
                 }
             } else {
@@ -374,12 +378,12 @@ class ShipmentObserver
                     $items->push($deliveryOrderItemDto);
                     $deliveryOrderItemDto->articul = $basketItem->offer_id; //todo Добавить сохранение артикула товара в корзине
                     $deliveryOrderItemDto->name = $basketItem->name;
-                    $deliveryOrderItemDto->quantity = $basketItem->qty;
+                    $deliveryOrderItemDto->quantity = (float)$basketItem->qty;
                     $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int)ceil($basketItem->product['height']) : 0;
                     $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
                     $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
                     $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
-                    $deliveryOrderItemDto->cost = $basketItem->qty > 0 ? $basketItem->price / $basketItem->qty : 0;
+                    $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->price / $basketItem->qty : 0, 2);
                 }
             }
         }
