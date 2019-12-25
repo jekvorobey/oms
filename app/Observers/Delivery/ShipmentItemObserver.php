@@ -13,7 +13,7 @@ use App\Models\History\HistoryType;
 class ShipmentItemObserver
 {
     /**
-     * Handle the order "created" event.
+     * Handle the shipment item "created" event.
      * @param  ShipmentItem $shipmentItem
      * @return void
      */
@@ -30,7 +30,7 @@ class ShipmentItemObserver
     }
     
     /**
-     * Handle the order "updated" event.
+     * Handle the shipment item "updated" event.
      * @param  ShipmentItem $shipmentItem
      * @return void
      */
@@ -47,7 +47,7 @@ class ShipmentItemObserver
     }
     
     /**
-     * Handle the order "deleting" event.
+     * Handle the shipment item "deleting" event.
      * @param  ShipmentItem $shipmentItem
      * @throws \Exception
      */
@@ -64,7 +64,7 @@ class ShipmentItemObserver
     }
     
     /**
-     * Handle the order "deleted" event.
+     * Handle the shipment item "deleted" event.
      * @param  ShipmentItem $shipmentItem
      * @throws \Exception
      */
@@ -75,7 +75,7 @@ class ShipmentItemObserver
     }
     
     /**
-     * Handle the order "saved" event.
+     * Handle the shipment item "saved" event.
      * @param  ShipmentItem $shipmentItem
      * @throws \Exception
      */

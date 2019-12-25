@@ -14,7 +14,7 @@ use App\Models\History\HistoryType;
 class BasketItemObserver
 {
     /**
-     * Handle the order "saving" event.
+     * Handle the basket item "saving" event.
      * @param  BasketItem $basketItem
      */
     public function saving(BasketItem $basketItem)
@@ -28,7 +28,7 @@ class BasketItemObserver
     }
 
     /**
-     * Handle the order "saved" event.
+     * Handle the basket item "saved" event.
      * @param  BasketItem $basketItem
      */
     public function saved(BasketItem $basketItem)
@@ -54,7 +54,7 @@ class BasketItemObserver
     }
     
     /**
-     * Handle the order "created" event.
+     * Handle the basket item "created" event.
      * @param  BasketItem $basketItem
      */
     public function created(BasketItem $basketItem)
@@ -65,7 +65,7 @@ class BasketItemObserver
     }
     
     /**
-     * Handle the order "updated" event.
+     * Handle the basket item "updated" event.
      * @param  BasketItem $basketItem
      */
     public function updated(BasketItem $basketItem)
@@ -76,7 +76,7 @@ class BasketItemObserver
     }
     
     /**
-     * Handle the order "deleting" event.
+     * Handle the basket item "deleting" event.
      * @param  BasketItem $basketItem
      * @throws \Exception
      */

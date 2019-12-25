@@ -3,6 +3,7 @@
 namespace App\Observers\Delivery;
 
 use App\Models\Delivery\Cargo;
+use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
@@ -25,7 +26,7 @@ use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 class ShipmentObserver
 {
     /**
-     * Handle the order "created" event.
+     * Handle the shipment "created" event.
      * @param  Shipment $shipment
      * @return void
      */
@@ -35,7 +36,7 @@ class ShipmentObserver
     }
     
     /**
-     * Handle the order "updating" event.
+     * Handle the shipment "updating" event.
      * @param  Shipment $shipment
      * @return bool
      */
@@ -49,7 +50,7 @@ class ShipmentObserver
     }
     
     /**
-     * Handle the order "updated" event.
+     * Handle the shipment "updated" event.
      * @param  Shipment $shipment
      * @return void
      */
@@ -59,7 +60,7 @@ class ShipmentObserver
     }
     
     /**
-     * Handle the order "deleting" event.
+     * Handle the shipment "deleting" event.
      * @param  Shipment $shipment
      * @throws \Exception
      */
@@ -73,7 +74,7 @@ class ShipmentObserver
     }
     
     /**
-     * Handle the order "deleted" event.
+     * Handle the shipment "deleted" event.
      * @param  Shipment $shipment
      * @throws \Exception
      */
@@ -86,7 +87,16 @@ class ShipmentObserver
     }
     
     /**
-     * Handle the order "saved" event.
+     * Handle the shipment "saving" event.
+     * @param  Shipment  $shipment
+     */
+    public function saving(Shipment $shipment)
+    {
+        $this->add2Cargo($shipment);
+    }
+    
+    /**
+     * Handle the shipment "saved" event.
      * @param  Shipment $shipment
      * @throws \Exception
      */
@@ -389,5 +399,41 @@ class ShipmentObserver
         }
         
         return $deliveryOrderInputDto;
+    }
+    
+    /**
+     * Добавить отправление в груз
+     * @param Shipment $shipment
+     */
+    protected function add2Cargo(Shipment $shipment): void
+    {
+        if ($shipment->status != $shipment->getOriginal('status') &&
+            $shipment->status == ShipmentStatus::STATUS_ASSEMBLED
+        ) {
+            $shipment->load('delivery');
+            
+            $cargo = Cargo::query()
+                ->select('id')
+                ->where('merchant_id', $shipment->merchant_id)
+                ->where('store_id', $shipment->store_id)
+                ->where('delivery_service', $shipment->delivery->delivery_service)
+                ->where('status', CargoStatus::STATUS_CREATED)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            if (is_null($cargo)) {
+                $cargo = new Cargo();
+                $cargo->merchant_id = $shipment->merchant_id;
+                $cargo->store_id = $shipment->store_id;
+                $cargo->delivery_service = $shipment->delivery->delivery_service;
+                $cargo->status = CargoStatus::STATUS_CREATED;
+                $cargo->width = 0;
+                $cargo->height = 0;
+                $cargo->length = 0;
+                $cargo->weight = 0;
+                $cargo->save();
+            }
+            
+            $shipment->cargo_id = $cargo->id;
+        }
     }
 }

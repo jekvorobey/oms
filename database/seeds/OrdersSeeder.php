@@ -99,6 +99,7 @@ class OrdersSeeder extends Seeder
                 $basketItem->qty = $faker->randomDigitNotNull;
                 $basketItem->price = $faker->randomFloat(2, 100, 1000);
                 $basketItem->discount = $faker->randomFloat(2, 0, $basketItem->price/3);
+                $basketItem->cost = $basketItem->price + $basketItem->discount;
                 $basketItem->product = [
                     'store_id' => $offerStock->store_id,
                     'weight' => $product->weight,

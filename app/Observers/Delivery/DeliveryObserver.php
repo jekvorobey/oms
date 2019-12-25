@@ -13,7 +13,7 @@ use App\Models\History\HistoryType;
 class DeliveryObserver
 {
     /**
-     * Handle the order "created" event.
+     * Handle the delivery "created" event.
      * @param  Delivery $delivery
      * @return void
      */
@@ -23,7 +23,7 @@ class DeliveryObserver
     }
     
     /**
-     * Handle the order "updated" event.
+     * Handle the delivery "updated" event.
      * @param  Delivery $delivery
      * @return void
      */
@@ -33,7 +33,7 @@ class DeliveryObserver
     }
     
     /**
-     * Handle the order "deleting" event.
+     * Handle the delivery "deleting" event.
      * @param  Delivery $delivery
      * @throws \Exception
      */
@@ -43,7 +43,7 @@ class DeliveryObserver
     }
     
     /**
-     * Handle the order "saved" event.
+     * Handle the delivery "saved" event.
      * @param  Delivery $delivery
      */
     public function saving(Delivery $delivery)
