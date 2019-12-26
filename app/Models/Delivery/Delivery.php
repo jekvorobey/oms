@@ -24,7 +24,7 @@ use Illuminate\Support\Collection;
  * @property string $status_xml_id - статус заказа на доставку в службе доставки
  * @property int $tariff_id - идентификатор тарифа на доставку из сервиса логистики
  * @property int $point_id - идентификатор пункта самовывоза из сервиса логистики
- * @property string $number - номер доставки (номер_заказа-порядковый_номер_отправления)
+ * @property string $number - номер доставки (номер_заказа-порядковый_номер_доставки)
  * @property float $cost - стоимость доставки, полученная от службы доставки (не влияет на общую стоимость доставки по заказу!)
  * @property float $width - ширина (расчитывается автоматически)
  * @property float $height - высота (расчитывается автоматически)
@@ -81,9 +81,14 @@ class Delivery extends OmsModel
      */
     protected static $restIncludes = ['shipments'];
     
-    public static function makeNumber(string $number, int $i): string
+    /**
+     * @param  string  $orderNumber - номер заказа
+     * @param  int  $i - порядковый номер доставки в заказе
+     * @return string
+     */
+    public static function makeNumber(string $orderNumber, int $i): string
     {
-        return $number . '_' . $i;
+        return $orderNumber . '-' . $i;
     }
     
     /**
