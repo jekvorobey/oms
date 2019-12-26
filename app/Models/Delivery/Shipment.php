@@ -27,7 +27,7 @@ use Pim\Services\ProductService\ProductService;
  * @property int $status
  * @property int $cargo_id
  *
- * @property string $number - номер отправления (номер_заказа/порядковый_номер_отправления)
+ * @property string $number - номер отправления (номер_доставки/порядковый_номер_отправления)
  * @property float $cost - сумма товаров отправления (расчитывается автоматически)
  * @property float $width - ширина (расчитывается автоматически)
  * @property float $height - высота (расчитывается автоматически)
@@ -83,13 +83,13 @@ class Shipment extends OmsModel
     protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems'];
     
     /**
-     * @param  string  $orderNumber - номер заказа
+     * @param  string  $deliveryNumber - номер доставки
      * @param  int  $i - порядковый номер отправления в заказе
      * @return string
      */
-    public static function makeNumber(string $orderNumber, int $i): string
+    public static function makeNumber(string $deliveryNumber, int $i): string
     {
-        return $orderNumber . '/' . $i;
+        return $deliveryNumber . '/' . $i;
     }
     
     /**
