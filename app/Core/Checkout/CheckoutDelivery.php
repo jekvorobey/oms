@@ -5,21 +5,17 @@ namespace App\Core\Checkout;
 class CheckoutDelivery
 {
     /** @var int */
+    public $tariffId;
+    /** @var int */
     public $deliveryMethod;
     /** @var int */
     public $deliveryService;
+    /** @var int */
+    public $pointId;
     /** @var string */
-    public $number;
+    public $selectedDate;
     /** @var float */
     public $cost;
-    /** @var int */
-    public $width;
-    /** @var int */
-    public $height;
-    /** @var int */
-    public $length;
-    /** @var int */
-    public $weight;
     /** @var CheckoutShipment[] */
     public $shipments;
     
@@ -27,14 +23,12 @@ class CheckoutDelivery
     {
         $delivery = new self();
         @([
+            'tariffId' => $delivery->tariffId,
             'deliveryMethod' => $delivery->deliveryMethod,
             'deliveryService' => $delivery->deliveryService,
-            'number' => $delivery->number,
+            'pointId' => $delivery->pointId,
+            'selectedDate' => $delivery->selectedDate,
             'cost' => $delivery->cost,
-            'width' => $delivery->width,
-            'height' => $delivery->height,
-            'length' => $delivery->length,
-            'weight' => $delivery->weight,
             'shipments' => $shipments,
         ] = $data);
         

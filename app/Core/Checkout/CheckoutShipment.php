@@ -8,8 +8,6 @@ class CheckoutShipment
     public $merchantId;
     /** @var int */
     public $storeId;
-    /** @var string */
-    public $number;
     /** @var float */
     public $cost;
     /** @var string */
@@ -23,7 +21,6 @@ class CheckoutShipment
         @([
             'merchantId' => $shipment->merchantId,
             'storeId' => $shipment->storeId,
-            'number' => $shipment->number,
             'cost' => $shipment->cost,
             'date' => $shipment->date,
             'items' => $shipment->items

@@ -81,6 +81,11 @@ class Order extends OmsModel
     /** @var string */
     public $notificator = OrderNotification::class;
     
+    public static function makeNumber($customerId): string
+    {
+        return $customerId . '-' . time() % 3600;
+    }
+    
     /**
      * @return HasOne
      */
@@ -134,7 +139,7 @@ class Order extends OmsModel
 //            $this->save();
 //        }
     }
-
+    
     /**
      * Создать корзину, прявязанную к заказу.
      *

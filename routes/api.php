@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::namespace('V1')->prefix('v1')->group(function () {
+    Route::prefix('checkout')->group(function () {
+        Route::post('commit', 'CheckoutController@commit');
+    });
+    
     Route::prefix('baskets')->group(function () {
         Route::get('by-user/{userId}', 'BasketController@getCurrentBasket');
 

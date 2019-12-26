@@ -82,6 +82,11 @@ class Shipment extends OmsModel
      */
     protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems'];
     
+    public static function makeNumber(string $deliveryNumber, int $j): string
+    {
+        return $deliveryNumber . '_' . $j;
+    }
+    
     /**
      * @return BelongsTo
      */
