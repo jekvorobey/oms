@@ -154,10 +154,11 @@ class CheckoutOrder
     {
         $offerToBasketMap = $this->offerToBasketMap();
         
+        $shipmentNumber = 1;
         foreach ($this->deliveries as $i => $checkoutDelivery) {
             $delivery = new Delivery();
             $delivery->order_id = $this->order->id;
-            $delivery->number = Delivery::makeNumber($this->order->number, $i);
+            $delivery->number = Delivery::makeNumber($this->order->number, ++$i);
             
             $delivery->delivery_method = $checkoutDelivery->deliveryMethod;
             $delivery->delivery_service = $checkoutDelivery->deliveryService;
@@ -169,13 +170,13 @@ class CheckoutOrder
             
             $delivery->save();
             
-            foreach ($checkoutDelivery->shipments as $j => $checkoutShipment) {
+            foreach ($checkoutDelivery->shipments as $checkoutShipment) {
                 $shipment = new Shipment();
                 $shipment->delivery_id = $delivery->id;
                 $shipment->merchant_id = 1;// todo
                 $shipment->required_shipping_at = Carbon::now()->addDays(5);
                 $shipment->store_id = $checkoutShipment->storeId;
-                $shipment->number = Shipment::makeNumber($delivery->number, $j);
+                $shipment->number = Shipment::makeNumber($this->order->number, $shipmentNumber++);
                 $shipment->cost = $checkoutShipment->cost;
                 
                 $shipment->save();
