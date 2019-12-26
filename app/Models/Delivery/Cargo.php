@@ -3,6 +3,8 @@
 namespace App\Models\Delivery;
 
 use App\Models\OmsModel;
+use Greensight\CommonMsa\Rest\RestQuery;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -147,5 +149,32 @@ class Cargo extends OmsModel
         }
         
         return $maxSideName;
+    }
+    
+    /**
+     * @param  Builder  $query
+     * @param  RestQuery  $restQuery
+     * @return Builder
+     * @throws \Pim\Core\PimException
+     */
+    public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
+    {
+        $modifiedRestQuery = clone $restQuery;
+        
+        //Фильтр по номеру отправления в грузе
+        $shipmentNumberFilter = $restQuery->getFilter('shipment_number');
+        if($shipmentNumberFilter) {
+            [$op, $value] = $shipmentNumberFilter[0];
+            $cargoIds = array_filter(Shipment::query()
+                ->select('cargo_id')
+                ->where('number', $op, $value)
+                ->get()
+                ->pluck('cargo_id')
+                ->all());
+            $modifiedRestQuery->setFilter('id', $cargoIds);
+            $modifiedRestQuery->removeFilter('shipment_number');
+        }
+        
+        return parent::modifyQuery($query, $modifiedRestQuery);
     }
 }
