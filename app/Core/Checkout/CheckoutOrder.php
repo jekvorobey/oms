@@ -176,7 +176,7 @@ class CheckoutOrder
                 $shipment->merchant_id = 1;// todo
                 $shipment->required_shipping_at = Carbon::now()->addDays(5);
                 $shipment->store_id = $checkoutShipment->storeId;
-                $shipment->number = Shipment::makeNumber($this->order->number, $shipmentNumber++);
+                $shipment->number = Shipment::makeNumber($delivery->number, $shipmentNumber++);
                 $shipment->cost = $checkoutShipment->cost;
                 
                 $shipment->save();
