@@ -17,6 +17,10 @@ class HistoryType
     const TYPE_DELETE = 3;
     /** @var int - создание комментария к заказу */
     const TYPE_COMMENT = 4;
+    /** @var int - добавление связи одной сущности к другой */
+    const TYPE_CREATE_LINK = 5;
+    /** @var int - удаление связи одной сущности к другой */
+    const TYPE_DELETE_LINK = 6;
     
     /** @var int */
     public $id;
@@ -33,6 +37,8 @@ class HistoryType
             new self(self::TYPE_UPDATE, 'Обновление сущности'),
             new self(self::TYPE_DELETE, 'Удаление сущности'),
             new self(self::TYPE_COMMENT, 'Создание комментария к заказу'),
+            new self(self::TYPE_CREATE_LINK, 'Добавление связи одной сущности к другой'),
+            new self(self::TYPE_DELETE_LINK, 'Удаление связи одной сущности к другой'),
         ];
     }
     /**
@@ -45,6 +51,8 @@ class HistoryType
             self::TYPE_UPDATE,
             self::TYPE_DELETE,
             self::TYPE_COMMENT,
+            self::TYPE_CREATE_LINK,
+            self::TYPE_DELETE_LINK,
         ];
     }
     

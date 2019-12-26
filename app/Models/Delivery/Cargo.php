@@ -24,6 +24,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float $length - длина (расчитывается автоматически)
  * @property float $weight - вес (расчитывается автоматически)
  *
+ * //dynamic attributes
+ * @property int $package_qty - кол-во коробок груза
+ *
  * @property-read Collection|Shipment[] $shipments
  */
 class Cargo extends OmsModel
@@ -71,6 +74,17 @@ class Cargo extends OmsModel
     public function shipments(): HasMany
     {
         return $this->hasMany(Shipment::class);
+    }
+    
+    /**
+     * Кол-во коробок груза
+     * @return int
+     */
+    public function getPackageQtyAttribute(): int
+    {
+        return (int)$this->shipments->reduce(function ($sum, Shipment $shipment) {
+            return $sum + $shipment->packages()->count();
+        });
     }
     
     /**
@@ -160,6 +174,16 @@ class Cargo extends OmsModel
     public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
     {
         $modifiedRestQuery = clone $restQuery;
+    
+        $fields = $restQuery->getFields(static::restEntity());
+        if (in_array('package_qty', $fields)) {
+            $modifiedRestQuery->removeField(static::restEntity());
+            if (($key = array_search('package_qty', $fields)) !== false) {
+                unset($fields[$key]);
+            }
+            $restQuery->addFields(static::restEntity(), $fields);
+            $query->with('shipments.packages');
+        }
         
         //Фильтр по номеру отправления в грузе
         $shipmentNumberFilter = $restQuery->getFilter('shipment_number');
@@ -176,5 +200,20 @@ class Cargo extends OmsModel
         }
         
         return parent::modifyQuery($query, $modifiedRestQuery);
+    }
+    
+    /**
+     * @param  RestQuery  $restQuery
+     * @return array
+     */
+    public function toRest(RestQuery $restQuery): array
+    {
+        $result = $this->toArray();
+        
+        if (in_array('package_qty', $restQuery->getFields(static::restEntity()))) {
+            $result['package_qty'] = $this->package_qty;
+        }
+        
+        return $result;
     }
 }

@@ -107,6 +107,7 @@ class ShipmentObserver
         $this->markOrderAsProblem($shipment);
         $this->markOrderAsNonProblem($shipment);
         $this->upsertDeliveryOrder($shipment);
+        $this->add2CargoHistory($shipment);
     }
     
     /**
@@ -434,6 +435,23 @@ class ShipmentObserver
             }
             
             $shipment->cargo_id = $cargo->id;
+        }
+    }
+    
+    /**
+     * Добавить информацию о добавлении/удалении отправления в/из груз/а
+     * @param  Shipment  $shipment
+     */
+    protected function add2CargoHistory(Shipment $shipment): void
+    {
+        if ($shipment->cargo_id != $shipment->getOriginal('cargo_id')) {
+            if ($shipment->getOriginal('cargo_id')) {
+                History::saveEvent(HistoryType::TYPE_DELETE_LINK, Cargo::find($shipment->getOriginal('cargo_id')), $shipment);
+            }
+            
+            if ($shipment->cargo_id) {
+                History::saveEvent(HistoryType::TYPE_CREATE_LINK, Cargo::find($shipment->cargo_id), $shipment);
+            }
         }
     }
 }
