@@ -141,7 +141,7 @@ class Shipment extends OmsModel
         $this->load('basketItems');
     
         foreach ($this->basketItems as $basketItem) {
-            $cost += $basketItem->price * $basketItem->qty;
+            $cost += $basketItem->price;
         }
         
         $this->cost = $cost;
@@ -161,7 +161,7 @@ class Shipment extends OmsModel
     }
     
     /**
-     * Рассчитать вес доставки
+     * Рассчитать вес отправления
      * @return float
      */
     public function calcWeight(): float
@@ -183,7 +183,7 @@ class Shipment extends OmsModel
     }
     
     /**
-     * Рассчитать объем доставки
+     * Рассчитать объем отправления
      * @return float
      */
     public function calcVolume(): float
@@ -205,7 +205,7 @@ class Shipment extends OmsModel
     }
     
     /**
-     * Рассчитать значение максимальной стороны (длины, ширины или высоты) из всех отправлений доставки
+     * Рассчитать значение максимальной стороны (длины, ширины или высоты) из всех отправлений
      * @return float
      */
     public function calcMaxSide(): float
@@ -235,7 +235,7 @@ class Shipment extends OmsModel
     }
     
     /**
-     * Определить название максимальной стороны (длины, ширины или высоты) из всех отправлений доставки
+     * Определить название максимальной стороны (длины, ширины или высоты) из всех отправлений
      * @param  float  $maxSide
      * @return string
      */
