@@ -29,13 +29,8 @@ use Illuminate\Support\Collection;
  * @property int $certificate
  *
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
- * @property int $delivery_method - способ доставки (самовывоз из ПВЗ, самовывоз из постомата, доставка)
  * @property float $delivery_cost - стоимость доставки iBT
- * @property array $delivery_address - адрес доставки
  * @property string $delivery_comment - комментарий к доставке
- * @property string $receiver_name - имя получателя
- * @property string $receiver_phone - телефон получателя
- * @property string $receiver_email - e-mail получателя
  *
  * @property int $status - статус
  * @property \Illuminate\Support\Carbon|null $status_at - дата установки статуса заказа
@@ -73,17 +68,13 @@ use Illuminate\Support\Collection;
  */
 class Order extends OmsModel
 {
-    /** @var array */
-    protected $casts = [
-        'delivery_address' => 'array'
-    ];
-    
     /** @var string */
     public $notificator = OrderNotification::class;
     
     public static function makeNumber($customerId): string
     {
-        return $customerId . '-' . time() % 3600;
+        $ordersCount = self::query()->where('customer_id', $customerId)->count('id');
+        return $customerId . '-' . ($ordersCount + 1);
     }
     
     /**
