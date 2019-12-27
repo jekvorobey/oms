@@ -30,6 +30,12 @@ use Illuminate\Support\Collection;
  * @property float $height - высота (расчитывается автоматически)
  * @property float $length - длина (расчитывается автоматически)
  * @property float $weight - вес (расчитывается автоматически)
+ *
+ * @property string $receiver_name - имя получателя
+ * @property string $receiver_phone - телефон получателя
+ * @property string $receiver_email - e-mail получателя
+ * @property array $delivery_address - адрес доставки
+ *
  * @property Carbon $delivery_at
  * @property Carbon $status_at
  * @property Carbon $status_xml_id_at
@@ -69,6 +75,7 @@ class Delivery extends OmsModel
     
     /** @var array */
     protected $casts = [
+        'delivery_address' => 'array',
         'delivery_at' => 'datetime',
         'weight' => 'float',
         'width' => 'float',

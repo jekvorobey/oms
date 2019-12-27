@@ -42,18 +42,9 @@ class CheckoutOrder
     // delivery data
     /** @var int */
     public $deliveryTypeId;
-    /** @var int */
-    public $deliveryMethodId;
     /** @var float */
     public $deliveryCost;
-    /** @var array */
-    public $deliveryAddress;
-    /** @var string */
-    public $receiverName;
-    /** @var string */
-    public $receiverPhone;
-    /** @var string */
-    public $receiverEmail;
+
     
     /** @var CheckoutDelivery[] */
     public $deliveries;
@@ -78,12 +69,7 @@ class CheckoutOrder
             'prices' => $prices,
             
             'deliveryTypeId' => $order->deliveryTypeId,
-            'deliveryMethodId' => $order->deliveryMethodId,
             'deliveryCost' => $order->deliveryCost,
-            'deliveryAddress' => $order->deliveryAddress,
-            'receiverName' => $order->receiverName,
-            'receiverPhone' => $order->receiverPhone,
-            'receiverEmail' => $order->receiverEmail,
             'deliveries' => $deliveries
         ] = $data);
         
@@ -137,14 +123,8 @@ class CheckoutOrder
         $order->promocode = $this->promocode;
         // todo save certificates
         
-        $order->delivery_method = $this->deliveryMethodId;
         $order->delivery_type = $this->deliveryTypeId;
         $order->delivery_cost = $this->deliveryCost;
-        $order->delivery_address = $this->deliveryAddress;
-        
-        $order->receiver_name = $this->receiverName;
-        $order->receiver_email = $this->receiverEmail;
-        $order->receiver_phone = $this->receiverPhone;
         
         $order->save();
         $this->order = $order;
@@ -165,6 +145,11 @@ class CheckoutOrder
             $delivery->tariff_id = $checkoutDelivery->tariffId;
             $delivery->cost = $checkoutDelivery->cost;
             
+            $delivery->receiver_name = $checkoutDelivery->receiverName;
+            $delivery->receiver_email = $checkoutDelivery->receiverEmail;
+            $delivery->receiver_phone = $checkoutDelivery->receiverPhone;
+            $delivery->delivery_address = $checkoutDelivery->deliveryAddress;
+            
             $delivery->point_id = $checkoutDelivery->pointId;
             $delivery->delivery_at = $checkoutDelivery->selectedDate;
             
@@ -177,7 +162,6 @@ class CheckoutOrder
                 $shipment->required_shipping_at = Carbon::now()->addDays(5);
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($delivery->number, $shipmentNumber++);
-                $shipment->cost = $checkoutShipment->cost;
                 
                 $shipment->save();
                 

@@ -32,13 +32,6 @@ class Orders extends Migration
             $table->integer('type')->unsigned();
             $table->json('product');
             $table->string('name');
-            
-//            $table->bigInteger('store_id')->unsigned()->nullable();
-//            $table->decimal('weight', 18, 4);
-//            $table->decimal('width', 18, 4);
-//            $table->decimal('height', 18, 4);
-//            $table->decimal('length', 18, 4);
-            
             $table->decimal('qty', 18, 4);
             $table->decimal('price', 18, 4)->nullable();
             $table->decimal('discount', 18, 4)->nullable();
@@ -66,15 +59,10 @@ class Orders extends Migration
             $table->integer('spent_bonus')->default(0);
             $table->integer('added_bonus')->default(0);
             $table->string('promocode')->nullable();
-            $table->string('certificate')->nullable();
+            $table->json('certificates')->nullable();
             // delivery
             $table->tinyInteger('delivery_type')->unsigned();
-            $table->tinyInteger('delivery_method')->unsigned();
-            $table->json('delivery_address');
             $table->text('delivery_comment')->nullable();
-            $table->string('receiver_name')->nullable();
-            $table->string('receiver_phone')->nullable();
-            $table->string('receiver_email')->nullable();
             // statuses
             $table->tinyInteger('status')->unsigned()->default(1);
             $table->dateTime('status_at')->nullable();
@@ -159,6 +147,12 @@ class Orders extends Migration
             $table->integer('tariff_id')->nullable();
             $table->integer('point_id')->nullable();
             $table->string('number');
+    
+            $table->json('delivery_address')->nullable();
+            $table->string('receiver_name')->nullable();
+            $table->string('receiver_phone')->nullable();
+            $table->string('receiver_email')->nullable();
+            
             $table->decimal('cost', 18, 4)->default(0.0);
             $table->decimal('width', 18, 4)->default(0.0);
             $table->decimal('height', 18, 4)->default(0.0);

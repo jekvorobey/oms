@@ -12,6 +12,16 @@ class CheckoutDelivery
     public $deliveryService;
     /** @var int */
     public $pointId;
+    
+    /** @var array */
+    public $deliveryAddress;
+    /** @var string */
+    public $receiverName;
+    /** @var string */
+    public $receiverPhone;
+    /** @var string */
+    public $receiverEmail;
+    
     /** @var string */
     public $selectedDate;
     /** @var float */
@@ -27,6 +37,10 @@ class CheckoutDelivery
             'deliveryMethod' => $delivery->deliveryMethod,
             'deliveryService' => $delivery->deliveryService,
             'pointId' => $delivery->pointId,
+            'deliveryAddress' => $delivery->deliveryAddress,
+            'receiverName' => $delivery->receiverName,
+            'receiverPhone' => $delivery->receiverPhone,
+            'receiverEmail' => $delivery->receiverEmail,
             'selectedDate' => $delivery->selectedDate,
             'cost' => $delivery->cost,
             'shipments' => $shipments,

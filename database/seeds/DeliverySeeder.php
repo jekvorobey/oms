@@ -65,15 +65,50 @@ class DeliverySeeder extends Seeder
                 ]);
                 $delivery->tariff_id = isset($tariffs[$delivery->delivery_service]) ?
                     $faker->randomElement($tariffs[$delivery->delivery_service]->pluck('id')->toArray()) : 0;
-                $delivery->point_id = (
-                    isset($points[$delivery->delivery_service]) &&
-                    in_array($delivery->delivery_method, [DeliveryMethod::METHOD_OUTPOST_PICKUP, DeliveryMethod::METHOD_POSTOMAT_PICKUP])) ?
-                    $faker->randomElement($points[$delivery->delivery_service]->pluck('id')->toArray()) : 0;
+               
                 $delivery->xml_id = '';
                 $delivery->number = $order->number . '-' . $i;
                 $delivery->cost = $faker->randomFloat(2, 0, 500);
                 $delivery->delivery_at = $order->created_at->modify('+' . rand(1, 7) . ' days');
                 $delivery->created_at = $order->created_at;
+    
+                $order->receiver_name = $faker->name;
+                $order->receiver_phone = $faker->phoneNumber;
+                $order->receiver_email = $faker->email;
+                
+                if (
+                    isset($points[$delivery->delivery_service]) &&
+                    in_array($delivery->delivery_method, [
+                        DeliveryMethod::METHOD_OUTPOST_PICKUP, DeliveryMethod::METHOD_POSTOMAT_PICKUP
+                    ])
+                ) {
+                    $delivery->point_id = $faker->randomElement($points[$delivery->delivery_service]->pluck('id')->toArray());
+                } else {
+                    $region = $faker->randomElement([
+                        'Москва г',
+                        'Московская обл',
+                        'Тверская обл',
+                        'Калужская обл',
+                        'Рязанская обл',
+                    ]);
+                    $delivery->delivery_address = [
+                        'country_code' => 'RU',
+                        'post_index' => $faker->postcode,
+                        'region' => $region,
+                        'region_guid' => $faker->uuid,
+                        'area' => '',
+                        'area_guid' => '',
+                        'city' => 'г. ' . $faker->city,
+                        'city_guid' => $faker->uuid,
+                        'street' => 'ул. ' . explode(' ', $faker->streetName)[0],
+                        'house' => 'д. ' . $faker->buildingNumber,
+                        'block' => '',
+                        'flat' => '',
+                        'porch' => '',
+                        'intercom' => '',
+                        'comment' => '',
+                    ];
+                }
                 $delivery->save();
     
                 $deliveryShipmentNumber = 1;
@@ -92,7 +127,7 @@ class DeliverySeeder extends Seeder
                     $shipment->delivery_id = $delivery->id;
                     $shipment->merchant_id = $store->merchant_id;
                     $shipment->store_id = $storeId;
-                    $shipment->number = $order->number . '/' . $shipmentNumber;
+                    $shipment->number = $delivery->number . '/' . $shipmentNumber;
                     $shipment->created_at = $order->created_at->modify('+' . rand(1, 7) . ' minutes');
                     $shipment->required_shipping_at = $order->created_at->modify('+3 hours');
                     $shipment->save();
