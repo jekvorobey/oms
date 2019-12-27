@@ -91,6 +91,15 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             });
         });
     });
+    
+    Route::prefix('cargos')->group(function () {
+        Route::prefix('{id}')->group(function () {
+            Route::prefix('history')->group(function () {
+                Route::get('count', 'HistoryController@countByCargo');
+                Route::get('', 'HistoryController@readByCargo');
+            });
+        });
+    });
 
     Route::namespace('Delivery')->group(function () {
         Route::prefix('deliveries')->group(function () {
@@ -167,10 +176,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::post('', 'CargoController@create');
 
             Route::prefix('{id}')->group(function () {
-                Route::prefix('history')->group(function () {
-                    Route::get('count', 'HistoryController@countByCargo');
-                    Route::get('', 'HistoryController@readByCargo');
-                });
                 Route::get('', 'CargoController@read');
                 Route::put('','CargoController@update');
                 Route::delete('','CargoController@delete');

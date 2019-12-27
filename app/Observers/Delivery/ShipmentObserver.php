@@ -408,19 +408,22 @@ class ShipmentObserver
      */
     protected function add2Cargo(Shipment $shipment): void
     {
-        if ($shipment->status != $shipment->getOriginal('status') &&
+        if (!$shipment->cargo_id &&
             $shipment->status == ShipmentStatus::STATUS_ASSEMBLED
         ) {
             $shipment->load('delivery');
             
-            $cargo = Cargo::query()
+            $cargoQuery = Cargo::query()
                 ->select('id')
                 ->where('merchant_id', $shipment->merchant_id)
                 ->where('store_id', $shipment->store_id)
                 ->where('delivery_service', $shipment->delivery->delivery_service)
                 ->where('status', CargoStatus::STATUS_CREATED)
-                ->orderBy('created_at', 'desc')
-                ->first();
+                ->orderBy('created_at', 'desc');
+            if ($shipment->getOriginal('cargo_id')) {
+                $cargoQuery->where('id', '!=', $shipment->getOriginal('cargo_id'));
+            }
+            $cargo = $cargoQuery->first();
             if (is_null($cargo)) {
                 $cargo = new Cargo();
                 $cargo->merchant_id = $shipment->merchant_id;

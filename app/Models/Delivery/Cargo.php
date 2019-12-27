@@ -66,7 +66,7 @@ class Cargo extends OmsModel
     /**
      * @var array
      */
-    protected static $restIncludes = ['shipments'];
+    protected static $restIncludes = ['shipments', 'shipments.basketItems'];
     
     /**
      * @return HasMany

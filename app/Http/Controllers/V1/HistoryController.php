@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Delivery\Cargo;
 use App\Models\Delivery\Shipment;
 use App\Models\History\History;
 use App\Models\Order\Order;
@@ -12,7 +13,6 @@ use Greensight\CommonMsa\Rest\RestSerializable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
 
 /**
  * Class HistoryController
@@ -39,6 +39,7 @@ class HistoryController extends Controller
      *     ),
      * )
      *
+     * @param int $orderId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -52,7 +53,7 @@ class HistoryController extends Controller
      *     path="/api/v1/shipments/{$id}/history",
      *     tags={"shipment-history"},
      *     summary="Получить список событий изменения отправлений",
-     *     operationId="listOrderHistory",
+     *     operationId="listShipmentHistory",
      *     @OA\Response(
      *         response=200,
      *         description="OK",
@@ -66,12 +67,41 @@ class HistoryController extends Controller
      *     ),
      * )
      *
+     * @param int $shipmentId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function readByShipment(int $shipmentId, Request $request): JsonResponse
     {
         return $this->readByMainEntity(Shipment::class, $shipmentId, $request);
+    }
+    
+    /**
+     * @OA\Get(
+     *     path="/api/v1/cargo/{$id}/history",
+     *     tags={"cargo-history"},
+     *     summary="Получить список событий изменения груза",
+     *     operationId="listCargoHistory",
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items",type="array",
+     *                @OA\Items(
+     *                     @OA\Property(property="id",type="integer")
+     *                )
+     *             )
+     *         )
+     *     ),
+     * )
+     *
+     * @param int $cargoId
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function readByCargo(int $cargoId, Request $request): JsonResponse
+    {
+        return $this->readByMainEntity(Cargo::class, $cargoId, $request);
     }
     
     /**
@@ -121,6 +151,7 @@ class HistoryController extends Controller
      *     ),
      * )
      *
+     * @param int $orderId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -142,12 +173,34 @@ class HistoryController extends Controller
      *     ),
      * )
      *
+     * @param int $shipmentId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function countByShipment(int $shipmentId, Request $request): JsonResponse
     {
         return $this->countByMainEntity(Shipment::class, $shipmentId, $request);
+    }
+    
+    /**
+     * @OA\Get(
+     *     path="/api/v1/cargos/{id}/history/count",
+     *     tags={"cargo-history"},
+     *     summary="Получить количество событий изменения груза",
+     *     operationId="countCargoHistory",
+     *     @OA\Response(
+     *         response=200,
+     *         description="OK",
+     *         @OA\JsonContent(ref="#/components/schemas/CountResult")
+     *     ),
+     * )
+     * @param int $cargoId
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function countByCargo(int $cargoId, Request $request): JsonResponse
+    {
+        return $this->countByMainEntity(Cargo::class, $cargoId, $request);
     }
     
     /**
