@@ -121,7 +121,7 @@ class CheckoutOrder
         $order->spent_bonus = $this->spentBonus;
         $order->added_bonus = $this->addedBonus;
         $order->promocode = $this->promocode;
-        // todo save certificates
+        $order->certificates = $this->certificates;
         
         $order->delivery_type = $this->deliveryTypeId;
         $order->delivery_cost = $this->deliveryCost;
