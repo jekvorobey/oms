@@ -32,7 +32,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Cargo extends OmsModel
 {
     use WithWeightAndSizes;
-    
+
     /**
      * Заполняемые поля модели
      */
@@ -43,18 +43,18 @@ class Cargo extends OmsModel
         'delivery_service',
         'xml_id',
     ];
-    
+
     /**
      * @var array
      */
     protected $fillable = self::FILLABLE;
-    
+
     /** @var array */
     private const SIDES = ['width', 'height', 'length'];
-    
+
     /** @var string */
     protected $table = 'cargo';
-    
+
     /** @var array */
     protected $casts = [
         'weight' => 'float',
@@ -62,12 +62,12 @@ class Cargo extends OmsModel
         'height' => 'float',
         'length' => 'float',
     ];
-    
+
     /**
      * @var array
      */
     protected static $restIncludes = ['shipments', 'shipments.basketItems'];
-    
+
     /**
      * @return HasMany
      */
@@ -75,7 +75,7 @@ class Cargo extends OmsModel
     {
         return $this->hasMany(Shipment::class);
     }
-    
+
     /**
      * Кол-во коробок груза
      * @return int
@@ -86,7 +86,7 @@ class Cargo extends OmsModel
             return $sum + $shipment->packages()->count();
         });
     }
-    
+
     /**
      * Рассчитать вес груза
      * @return float
@@ -94,16 +94,16 @@ class Cargo extends OmsModel
     public function calcWeight(): float
     {
         $weight = 0;
-        
+
         foreach ($this->shipments as $shipment) {
             foreach ($shipment->packages as $package) {
                 $weight += $package->weight;
             }
         }
-        
+
         return $weight;
     }
-    
+
     /**
      * Рассчитать объем груза
      * @return float
@@ -111,16 +111,16 @@ class Cargo extends OmsModel
     public function calcVolume(): float
     {
         $volume = 0;
-        
+
         foreach ($this->shipments as $shipment) {
             foreach ($shipment->packages as $package) {
                 $volume += $package->width * $package->height * $package->length;
             }
         }
-        
+
         return $volume;
     }
-    
+
     /**
      * Рассчитать значение максимальной стороны (длины, ширины или высоты) из всех коробок груза
      * @return float
@@ -128,7 +128,7 @@ class Cargo extends OmsModel
     public function calcMaxSide(): float
     {
         $maxSide = 0;
-    
+
         foreach ($this->shipments as $shipment) {
             foreach ($shipment->packages as $package) {
                 foreach (self::SIDES as $side) {
@@ -138,10 +138,10 @@ class Cargo extends OmsModel
                 }
             }
         }
-        
+
         return $maxSide;
     }
-    
+
     /**
      * Определить название максимальной стороны (длины, ширины или высоты) из всех коробок груза
      * @param  float  $maxSide
@@ -150,7 +150,7 @@ class Cargo extends OmsModel
     public function identifyMaxSideName(float $maxSide): string
     {
         $maxSideName = 'width';
-    
+
         foreach ($this->shipments as $shipment) {
             foreach ($shipment->packages as $package) {
                 foreach (self::SIDES as $side) {
@@ -161,10 +161,10 @@ class Cargo extends OmsModel
                 }
             }
         }
-        
+
         return $maxSideName;
     }
-    
+
     /**
      * @param  Builder  $query
      * @param  RestQuery  $restQuery
@@ -174,7 +174,7 @@ class Cargo extends OmsModel
     public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
     {
         $modifiedRestQuery = clone $restQuery;
-    
+
         $fields = $restQuery->getFields(static::restEntity());
         if (in_array('package_qty', $fields)) {
             $modifiedRestQuery->removeField(static::restEntity());
@@ -184,7 +184,7 @@ class Cargo extends OmsModel
             $restQuery->addFields(static::restEntity(), $fields);
             $query->with('shipments.packages');
         }
-        
+
         //Фильтр по номеру отправления в грузе
         $shipmentNumberFilter = $restQuery->getFilter('shipment_number');
         if($shipmentNumberFilter) {
@@ -198,10 +198,10 @@ class Cargo extends OmsModel
             $modifiedRestQuery->setFilter('id', $cargoIds);
             $modifiedRestQuery->removeFilter('shipment_number');
         }
-        
+
         return parent::modifyQuery($query, $modifiedRestQuery);
     }
-    
+
     /**
      * @param  RestQuery  $restQuery
      * @return array
@@ -209,11 +209,11 @@ class Cargo extends OmsModel
     public function toRest(RestQuery $restQuery): array
     {
         $result = $this->toArray();
-        
+
         if (in_array('package_qty', $restQuery->getFields(static::restEntity()))) {
             $result['package_qty'] = $this->package_qty;
         }
-        
+
         return $result;
     }
 }

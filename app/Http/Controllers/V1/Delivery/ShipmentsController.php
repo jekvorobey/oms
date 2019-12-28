@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\V1\Delivery;
 
 use App\Http\Controllers\Controller;
+use App\Models\Delivery\Cargo;
+use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
@@ -15,6 +17,7 @@ use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Rest\RestSerializable;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -204,6 +207,48 @@ class ShipmentsController extends Controller
     public function read(Request $request, RequestInitiator $client): JsonResponse
     {
         return $this->readTrait($request, $client);
+    }
+    
+    /**
+     * Получить собранные неотгруженные отправления со схожими параметрами для текущего груза (склад, служба доставки)
+     * @param  Request  $request
+     * @param  RequestInitiator  $client
+     * @return JsonResponse
+     */
+    public function similarUnshippedShipments(Request $request, RequestInitiator $client): JsonResponse
+    {
+        //todo Проверка прав
+        $validatedData = $request->validate([
+            'cargo_id' => 'integer|required',
+        ]);
+        
+        $cargo = Cargo::find($validatedData['cargo_id']);
+        $similarCargosIds = Cargo::query()
+            ->select('id')
+            ->where('id', '!=', $cargo->id)
+            ->where('merchant_id', $cargo->merchant_id)
+            ->where('store_id', $cargo->store_id)
+            ->whereIn('status', [CargoStatus::STATUS_CREATED, CargoStatus::STATUS_REQUEST_SEND])
+            ->where('delivery_service', $cargo->delivery_service)
+            ->pluck('id')
+            ->all();
+    
+        $shipments = Shipment::query()
+            ->where('merchant_id', $cargo->merchant_id)
+            ->where('store_id', $cargo->store_id)
+            ->where(function(Builder $q) use ($similarCargosIds) {
+                $q->whereNull('cargo_id')
+                    ->orWhereIn('cargo_id', $similarCargosIds);
+            })
+            ->where('status', ShipmentStatus::STATUS_ASSEMBLED)
+            ->whereHas('delivery', function(Builder $q) use ($cargo){
+                $q->where('delivery_service', $cargo->delivery_service);
+            })
+            ->get();
+        
+        return response()->json([
+            'items' => $shipments
+        ]);
     }
     
     /**

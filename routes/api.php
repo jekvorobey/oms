@@ -123,6 +123,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::prefix('shipments')->group(function () {
             Route::get('count', 'ShipmentsController@count');
             Route::get('', 'ShipmentsController@read');
+            Route::get('similar-unshipped-shipments', 'ShipmentsController@similarUnshippedShipments');
 
             Route::prefix('{id}')->group(function () {
                 Route::get('', 'ShipmentsController@read');
