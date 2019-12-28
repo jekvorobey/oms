@@ -55,7 +55,7 @@ class Orders extends Migration
             // итоговая стоимость заказа совсем скидками и доставкой
             $table->decimal('price', 18, 4)->default(0.0);
             $table->decimal('delivery_cost', 18, 4)->default(0.0);
-    
+
             $table->integer('spent_bonus')->default(0);
             $table->integer('added_bonus')->default(0);
             $table->string('promocode')->nullable();
@@ -72,7 +72,7 @@ class Orders extends Migration
             $table->dateTime('is_problem_at')->nullable();
             // management
             $table->text('manager_comment')->nullable();
-            
+
             $table->timestamps();
 
             $table->foreign('basket_id')->references('id')->on('baskets');
@@ -131,6 +131,7 @@ class Orders extends Migration
             $table->decimal('height', 18, 4);
             $table->decimal('length', 18, 4);
             $table->decimal('weight', 18, 4);
+            $table->text('shipping_problem_comment')->nullable();
 
             $table->timestamps();
         });
@@ -147,12 +148,12 @@ class Orders extends Migration
             $table->integer('tariff_id')->nullable();
             $table->integer('point_id')->nullable();
             $table->string('number');
-    
+
             $table->json('delivery_address')->nullable();
             $table->string('receiver_name')->nullable();
             $table->string('receiver_phone')->nullable();
             $table->string('receiver_email')->nullable();
-            
+
             $table->decimal('cost', 18, 4)->default(0.0);
             $table->decimal('width', 18, 4)->default(0.0);
             $table->decimal('height', 18, 4)->default(0.0);

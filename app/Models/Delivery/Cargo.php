@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property float $height - высота (расчитывается автоматически)
  * @property float $length - длина (расчитывается автоматически)
  * @property float $weight - вес (расчитывается автоматически)
+ * @property string $shipping_problem_comment - последнее сообщение мерчанта о проблеме с отгрузкой
  *
  * //dynamic attributes
  * @property int $package_qty - кол-во коробок груза
@@ -42,6 +43,7 @@ class Cargo extends OmsModel
         'status',
         'delivery_service',
         'xml_id',
+        'shipping_problem_comment',
     ];
 
     /**
