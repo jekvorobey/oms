@@ -158,7 +158,7 @@ class CheckoutOrder
             foreach ($checkoutDelivery->shipments as $checkoutShipment) {
                 $shipment = new Shipment();
                 $shipment->delivery_id = $delivery->id;
-                $shipment->merchant_id = 1;// todo
+                $shipment->merchant_id = $checkoutShipment->merchantId;
                 $shipment->required_shipping_at = Carbon::now()->addDays(5);
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($delivery->number, $shipmentNumber++);
