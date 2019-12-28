@@ -121,7 +121,7 @@ class CheckoutOrder
         $order->spent_bonus = $this->spentBonus;
         $order->added_bonus = $this->addedBonus;
         $order->promocode = $this->promocode;
-        // todo save certificates
+        $order->certificates = $this->certificates;
         
         $order->delivery_type = $this->deliveryTypeId;
         $order->delivery_cost = $this->deliveryCost;
@@ -158,7 +158,7 @@ class CheckoutOrder
             foreach ($checkoutDelivery->shipments as $checkoutShipment) {
                 $shipment = new Shipment();
                 $shipment->delivery_id = $delivery->id;
-                $shipment->merchant_id = 1;// todo
+                $shipment->merchant_id = $checkoutShipment->merchantId;
                 $shipment->required_shipping_at = Carbon::now()->addDays(5);
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($delivery->number, $shipmentNumber++);

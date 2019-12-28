@@ -26,7 +26,7 @@ use Illuminate\Support\Collection;
  * @property int $spent_bonus
  * @property int $added_bonus
  * @property string $promocode
- * @property int $certificate
+ * @property array $certificates
  *
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
  * @property float $delivery_cost - стоимость доставки iBT
@@ -70,6 +70,10 @@ class Order extends OmsModel
 {
     /** @var string */
     public $notificator = OrderNotification::class;
+    
+    protected $casts = [
+        'certificates' => 'array',
+    ];
     
     public static function makeNumber($customerId): string
     {
