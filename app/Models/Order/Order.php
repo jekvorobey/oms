@@ -217,4 +217,13 @@ class Order extends OmsModel
         $this->status = OrderStatus::STATUS_CANCEL;
         $this->save();
     }
+    
+    /**
+     * @todo брать почту пользователя оформившего заказ
+     * @return string
+     */
+    public function customerEmail(): string
+    {
+        return 'mail@example.com';
+    }
 }
