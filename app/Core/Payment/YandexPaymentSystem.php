@@ -45,7 +45,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
             'description' => "Заказ №{$order->id}",
             'receipt' => [
                 "tax_system_code" => "2",
-                'email' => $order->receiver_email,
+                'email' => $order->customerEmail(),
                 'items' => $this->generateItems($order->basket),
             ],
         ], $idempotenceKey);

@@ -11,6 +11,7 @@ use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class CheckoutOrder
@@ -49,10 +50,6 @@ class CheckoutOrder
     /** @var CheckoutDelivery[] */
     public $deliveries;
     
-    // ========== runtime data
-    /** @var Order */
-    private $order;
-    
     public static function fromArray(array $data): self
     {
         $order = new self();
@@ -85,23 +82,32 @@ class CheckoutOrder
         return $order;
     }
     
-    public function save()
+    /**
+     * @throws Exception
+     * @return int
+     */
+    public function save(): int
     {
-        DB::transaction(function () {
+        return DB::transaction(function () {
             $this->commitPrices();
-            $this->createOrder();
-            $this->createShipments();
-            $this->createPayment();
+            $order = $this->createOrder();
+            $this->createShipments($order);
+            $this->createPayment($order);
+            
+            return $order->id;
         });
     }
     
+    /**
+     * @throws Exception
+     */
     private function commitPrices(): void
     {
         $basket = $this->basket();
         foreach ($basket->items as $item) {
             $priceItem = $this->prices[$item->offer_id] ?? null;
             if (!$priceItem) {
-                throw new \Exception('price is not supplied for basket item');
+                throw new Exception('price is not supplied for basket item');
             }
             $item->cost = $priceItem->cost;
             $item->price = $priceItem->price;
@@ -110,7 +116,7 @@ class CheckoutOrder
         }
     }
     
-    private function createOrder(): void
+    private function createOrder(): Order
     {
         $order = new Order();
         $order->customer_id = $this->customerId;
@@ -127,18 +133,22 @@ class CheckoutOrder
         $order->delivery_cost = $this->deliveryCost;
         
         $order->save();
-        $this->order = $order;
+        return $order;
     }
     
-    private function createShipments(): void
+    /**
+     * @param Order $order
+     * @throws Exception
+     */
+    private function createShipments(Order $order): void
     {
         $offerToBasketMap = $this->offerToBasketMap();
         
         $shipmentNumber = 1;
         foreach ($this->deliveries as $i => $checkoutDelivery) {
             $delivery = new Delivery();
-            $delivery->order_id = $this->order->id;
-            $delivery->number = Delivery::makeNumber($this->order->number, ++$i);
+            $delivery->order_id = $order->id;
+            $delivery->number = Delivery::makeNumber($order->number, ++$i);
             
             $delivery->delivery_method = $checkoutDelivery->deliveryMethod;
             $delivery->delivery_service = $checkoutDelivery->deliveryService;
@@ -168,7 +178,7 @@ class CheckoutOrder
                 foreach ($checkoutShipment->items as $offerId) {
                     $basketItemId = $offerToBasketMap[$offerId] ?? null;
                     if (!$basketItemId) {
-                        throw new \Exception('shipment has which not in basket');
+                        throw new Exception('shipment has which not in basket');
                     }
                     $shipmentItem = new ShipmentItem();
                     $shipmentItem->shipment_id = $shipment->id;
@@ -180,16 +190,20 @@ class CheckoutOrder
         }
     }
     
-    private function createPayment(): void
+    /**
+     * @param Order $order
+     * @throws Exception
+     */
+    private function createPayment(Order $order): void
     {
         $payment = new Payment();
         $payment->type = $this->paymentMethodId;
         $payment->payment_system = PaymentSystem::YANDEX;
-        $payment->order_id = $this->order->id;
+        $payment->order_id = $order->id;
         $payment->sum = $this->price;
     
         $writer = new OrderWriter();
-        $writer->setPayments($this->order, collect([$payment]));
+        $writer->setPayments($order, collect([$payment]));
     }
     
     private function basket(): ?Basket
