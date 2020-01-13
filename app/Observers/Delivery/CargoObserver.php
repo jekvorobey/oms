@@ -6,6 +6,7 @@ use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
+use Greensight\Logistics\Services\CourierCallService\CourierCallService;
 
 /**
  * Class CargoObserver
@@ -45,6 +46,8 @@ class CargoObserver
     public function updated(Cargo $cargo)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, $cargo, $cargo);
+
+        $this->onCancel($cargo);
     }
 
     /**
@@ -73,5 +76,30 @@ class CargoObserver
         }
 
         return true;
+    }
+
+    /**
+     * Отменить заявку на вызов курьера
+     */
+    protected function onCancel(Cargo $cargo): void
+    {
+        if ($cargo->status != $cargo->getOriginal('status') &&
+            $cargo->status == CargoStatus::STATUS_CANCEL
+        ) {
+            //Отменяем заявку на вызов курьера
+            if ($cargo->xml_id) {
+                /** @var CourierCallService $courierCallService */
+                $courierCallService = resolve(CourierCallService::class);
+                $courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
+            }
+
+            $cargo->load('shipments');
+            if ($cargo->shipments->isNotEmpty()) {
+                foreach ($cargo->shipments as $shipment) {
+                    $shipment->cargo_id = null;
+                    $shipment->save();
+                }
+            }
+        }
     }
 }
