@@ -53,8 +53,7 @@ class CargoExport extends Command
             /** @var StoreService $storeService */
             $storeService = resolve(StoreService::class);
             $storeQuery = $storeService->newQuery()
-                ->include('storeContact')
-                ->include('storePickupTime');
+                ->include('storeContact', 'storePickupTime');
             $store = $storeService->store($cargo->store_id, $storeQuery);
             if (is_null($store)) {
                 //todo Добавить оповещение о невыгруженном грузе
@@ -91,9 +90,11 @@ class CargoExport extends Command
             $deliveryCargoDto->width = $cargo->width;
             $deliveryCargoDto->height = $cargo->height;
             $deliveryCargoDto->length = $cargo->length;
+            $orderIds = [];
             foreach ($cargo->shipments as $shipment) {
-                $deliveryCargoDto->order_ids[] = $shipment->delivery->xml_id;
+                $orderIds[] = $shipment->delivery->xml_id;
             }
+            $deliveryCargoDto->order_ids = $orderIds;
 
             /** @var CourierCallService $courierCallService */
             $courierCallService = resolve(CourierCallService::class);
@@ -102,6 +103,10 @@ class CargoExport extends Command
             /** @var Collection|StorePickupTimeDto[] $storePickupTimes */
             $storePickupTimes = collect();
             for ($day = 1; $day <= 7; $day++) {
+                if (is_null($store->storePickupTime())) {
+                    continue;
+                }
+
                 /** @var StorePickupTimeDto $pickupTimeDto */
                 //Ищем время отгрузку с учетом службы доставки
                 $pickupTimeDto = $store->storePickupTime()->filter(function (StorePickupTimeDto $item) use (
@@ -139,10 +144,12 @@ class CargoExport extends Command
                 $deliveryCargoDto->time = $storePickupTimes[$dayOfWeek]->pickup_time;
 
                 try {
+                    dump($courierCallInputDto);
                     $courierCallOutputDto = $courierCallService->createCourierCall(
                         $cargo->delivery_service,
                         $courierCallInputDto
                     );
+                    dump($courierCallOutputDto);
                     if ($courierCallOutputDto->success) {
                         $cargo->xml_id = $courierCallOutputDto->xml_id;
                         $cargo->status = CargoStatus::STATUS_REQUEST_SEND;
