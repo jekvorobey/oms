@@ -23,6 +23,7 @@ use Pim\Services\ProductService\ProductService;
  *
  * @property int $delivery_id
  * @property int $merchant_id
+ * @property int $delivery_service_zero_mile - сервис доставки нулевой мили
  * @property int $store_id
  * @property int $status
  * @property int $cargo_id
@@ -48,7 +49,7 @@ use Pim\Services\ProductService\ProductService;
 class Shipment extends OmsModel
 {
     use WithWeightAndSizes;
-    
+
     /**
      * Заполняемые поля модели
      */
@@ -62,26 +63,26 @@ class Shipment extends OmsModel
         'required_shipping_at',
         'assembly_problem_comment',
     ];
-    
+
     /** @var string */
     public $notificator = ShipmentNotification::class;
-    
+
     /**
      * @var array
      */
     protected $fillable = self::FILLABLE;
-    
+
     /** @var array */
     private const SIDES = ['width', 'height', 'length'];
-    
+
     /** @var string */
     protected $table = 'shipments';
-    
+
     /**
      * @var array
      */
     protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems'];
-    
+
     /**
      * @param  string  $deliveryNumber - номер доставки
      * @param  int  $i - порядковый номер отправления в заказе
@@ -91,7 +92,7 @@ class Shipment extends OmsModel
     {
         return $deliveryNumber . '/' . $i;
     }
-    
+
     /**
      * @return BelongsTo
      */
@@ -99,7 +100,7 @@ class Shipment extends OmsModel
     {
         return $this->belongsTo(Delivery::class);
     }
-    
+
     /**
      * @return HasMany
      */
@@ -107,7 +108,7 @@ class Shipment extends OmsModel
     {
         return $this->hasMany(ShipmentItem::class);
     }
-    
+
     /**
      * @return BelongsToMany
      */
@@ -115,7 +116,7 @@ class Shipment extends OmsModel
     {
         return $this->belongsToMany(BasketItem::class, (new ShipmentItem())->getTable());
     }
-    
+
     /**
      * @return HasMany
      */
@@ -123,7 +124,7 @@ class Shipment extends OmsModel
     {
         return $this->hasMany(ShipmentPackage::class);
     }
-    
+
     /**
      * @return BelongsTo
      */
@@ -131,7 +132,7 @@ class Shipment extends OmsModel
     {
         return $this->belongsTo(Cargo::class);
     }
-    
+
     /**
      * Пересчитать сумму товаров отправления
      */
@@ -139,18 +140,18 @@ class Shipment extends OmsModel
     {
         $cost = 0.0;
         $this->load('basketItems');
-    
+
         foreach ($this->basketItems as $basketItem) {
             $cost += $basketItem->price;
         }
-        
+
         $this->cost = $cost;
-        
+
         if ($save) {
             $this->save();
         }
     }
-    
+
     /**
      * Кол-во коробок отправления
      * @return int
@@ -159,7 +160,7 @@ class Shipment extends OmsModel
     {
         return (int)$this->packages()->count();
     }
-    
+
     /**
      * Рассчитать вес отправления
      * @return float
@@ -168,7 +169,7 @@ class Shipment extends OmsModel
     {
         $weight = 0;
         $this->load(['packages', 'basketItems']);
-        
+
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {
                 $weight += $package->weight;
@@ -178,10 +179,10 @@ class Shipment extends OmsModel
                 $weight += $basketItem->product['weight'] * $basketItem->qty;
             }
         }
-        
+
         return $weight;
     }
-    
+
     /**
      * Рассчитать объем отправления
      * @return float
@@ -190,7 +191,7 @@ class Shipment extends OmsModel
     {
         $volume = 0;
         $this->load(['packages', 'basketItems']);
-        
+
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {
                 $volume += $package->width * $package->height * $package->length;
@@ -200,10 +201,10 @@ class Shipment extends OmsModel
                 $volume += $basketItem->product['width'] * $basketItem->product['height'] * $basketItem->product['length'] * $basketItem->qty;
             }
         }
-        
+
         return $volume;
     }
-    
+
     /**
      * Рассчитать значение максимальной стороны (длины, ширины или высоты) из всех отправлений
      * @return float
@@ -212,7 +213,7 @@ class Shipment extends OmsModel
     {
         $maxSide = 0;
         $this->load(['packages', 'basketItems']);
-    
+
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {
                 foreach (self::SIDES as $side) {
@@ -230,10 +231,10 @@ class Shipment extends OmsModel
                 }
             }
         }
-        
+
         return $maxSide;
     }
-    
+
     /**
      * Определить название максимальной стороны (длины, ширины или высоты) из всех отправлений
      * @param  float  $maxSide
@@ -243,7 +244,7 @@ class Shipment extends OmsModel
     {
         $maxSideName = 'width';
         $this->load(['packages', 'basketItems']);
-    
+
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {
                 foreach (self::SIDES as $side) {
@@ -263,10 +264,10 @@ class Shipment extends OmsModel
                 }
             }
         }
-        
+
         return $maxSideName;
     }
-    
+
     /**
      * @param  Builder  $query
      * @param  RestQuery  $restQuery
@@ -276,7 +277,7 @@ class Shipment extends OmsModel
     public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
     {
         $modifiedRestQuery = clone $restQuery;
-    
+
         $fields = $restQuery->getFields(static::restEntity());
         if (in_array('package_qty', $fields)) {
             $modifiedRestQuery->removeField(static::restEntity());
@@ -286,10 +287,10 @@ class Shipment extends OmsModel
             $restQuery->addFields(static::restEntity(), $fields);
             $query->with('packages');
         }
-    
+
         $merchantFilter = $restQuery->getFilter('merchant_id');
         $merchantId = $merchantFilter ? $merchantFilter[0][1] : 0;
-    
+
         //Функция-фильтр id отправлений по id офферов
         $filterByOfferIds = function ($offerIds) {
             $shipmentIds = [];
@@ -308,7 +309,7 @@ class Shipment extends OmsModel
                     $shipmentIds = [-1];
                 }
             }
-            
+
             return $shipmentIds;
         };
         //Фильтр по коду оффера мерчанта из ERP мерчанта
@@ -324,7 +325,7 @@ class Shipment extends OmsModel
                 $offerQuery->setFilter('merchant_id', $merchantId);
             }
             $offerIds = $offerService->offers($offerQuery)->pluck('id')->toArray();
-    
+
             $shipmentIds = $filterByOfferIds($offerIds);
             $existShipmentIds = $modifiedRestQuery->getFilter('id') ? $modifiedRestQuery->getFilter('id')[0][1] : [];
             if ($existShipmentIds) {
@@ -333,7 +334,7 @@ class Shipment extends OmsModel
             $modifiedRestQuery->setFilter('id', $shipmentIds);
             $modifiedRestQuery->removeFilter('offer_xml_id');
         }
-        
+
         //Функция-фильтр по свойству товара
         $filterByProductField = function ($filterField, $productField) use (
             $restQuery,
@@ -344,14 +345,14 @@ class Shipment extends OmsModel
             $productVendorCodeFilter = $restQuery->getFilter($filterField);
             if($productVendorCodeFilter) {
                 [$op, $value] = $productVendorCodeFilter[0];
-        
+
                 /** @var ProductService $productService */
                 $productService = resolve(ProductService::class);
                 $productQuery = $productService->newQuery()
                     ->addFields(ProductDto::entity(), 'id')
                     ->setFilter($productField, $op, $value);
                 $productIds = $productService->products($productQuery)->pluck('id')->toArray();
-        
+
                 $offerIds = [];
                 if ($productIds) {
                     /** @var OfferService $offerService */
@@ -364,7 +365,7 @@ class Shipment extends OmsModel
                     }
                     $offerIds = $offerService->offers($offerQuery)->pluck('id')->toArray();
                 }
-        
+
                 $shipmentIds = $filterByOfferIds($offerIds);
                 $existShipmentIds = $modifiedRestQuery->getFilter('id') ? $modifiedRestQuery->getFilter('id')[0][1] : [];
                 if ($existShipmentIds) {
@@ -378,10 +379,10 @@ class Shipment extends OmsModel
         $filterByProductField('product_vendor_code', 'vendor_code');
         //Фильтр по бренду товара
         $filterByProductField('brands', 'brand_id');
-        
+
         return parent::modifyQuery($query, $modifiedRestQuery);
     }
-    
+
     /**
      * @param  RestQuery  $restQuery
      * @return array
@@ -389,11 +390,11 @@ class Shipment extends OmsModel
     public function toRest(RestQuery $restQuery): array
     {
         $result = $this->toArray();
-        
+
         if (in_array('package_qty', $restQuery->getFields(static::restEntity()))) {
             $result['package_qty'] = $this->package_qty;
         }
-        
+
         return $result;
     }
 }

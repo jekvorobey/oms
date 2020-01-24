@@ -172,6 +172,7 @@ class Orders extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('delivery_id')->unsigned();
             $table->bigInteger('merchant_id')->unsigned();
+            $table->tinyInteger('delivery_service_zero_mile')->unsigned()->nullable();
             $table->bigInteger('store_id')->unsigned();
             $table->bigInteger('cargo_id')->unsigned()->nullable();
             $table->tinyInteger('status', false, true)->default(1);
