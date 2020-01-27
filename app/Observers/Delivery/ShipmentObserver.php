@@ -9,14 +9,15 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
+use Exception;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderCostDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderInputDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderItemDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderPlaceDto;
-use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderRecipientDto;
-use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderSenderDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput\RecipientDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput\SenderDto;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 
 /**
@@ -62,7 +63,7 @@ class ShipmentObserver
     /**
      * Handle the shipment "deleting" event.
      * @param  Shipment $shipment
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleting(Shipment $shipment)
     {
@@ -76,7 +77,7 @@ class ShipmentObserver
     /**
      * Handle the shipment "deleted" event.
      * @param  Shipment $shipment
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleted(Shipment $shipment)
     {
@@ -98,7 +99,7 @@ class ShipmentObserver
     /**
      * Handle the shipment "saved" event.
      * @param  Shipment $shipment
-     * @throws \Exception
+     * @throws Exception
      */
     public function saved(Shipment $shipment)
     {
@@ -267,7 +268,7 @@ class ShipmentObserver
                         $deliveryOrderInputDto
                     );
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 //todo Сообщать об ошибке выгрузки заказа в СД
             }
         }
@@ -305,39 +306,39 @@ class ShipmentObserver
         /** @var IbtService $ibtService */
         $ibtService = resolve(IbtService::class);
         $centralStoreAddress = $ibtService->getCentralStoreAddress();
-        $deliveryOrderSenderDto = new DeliveryOrderSenderDto($centralStoreAddress);
-        $deliveryOrderInputDto->sender = $deliveryOrderSenderDto;
-        $deliveryOrderSenderDto->address_string = implode(', ', array_filter([
-            $deliveryOrderSenderDto->post_index,
-            $deliveryOrderSenderDto->region != $deliveryOrderSenderDto->city ? $deliveryOrderSenderDto->region : '',
-            $deliveryOrderSenderDto->area,
-            $deliveryOrderSenderDto->city,
-            $deliveryOrderSenderDto->street,
-            $deliveryOrderSenderDto->house,
-            $deliveryOrderSenderDto->block,
-            $deliveryOrderSenderDto->flat,
+        $senderDto = new SenderDto($centralStoreAddress);
+        $deliveryOrderInputDto->sender = $senderDto;
+        $senderDto->address_string = implode(', ', array_filter([
+            $senderDto->post_index,
+            $senderDto->region != $senderDto->city ? $senderDto->region : '',
+            $senderDto->area,
+            $senderDto->city,
+            $senderDto->street,
+            $senderDto->house,
+            $senderDto->block,
+            $senderDto->flat,
         ]));
-        $deliveryOrderSenderDto->company_name = $ibtService->getCompanyName();
-        $deliveryOrderSenderDto->contact_name = $ibtService->getCentralStoreContactName();
-        $deliveryOrderSenderDto->email = $ibtService->getCentralStoreEmail();
-        $deliveryOrderSenderDto->phone = $ibtService->getCentralStorePhone();
+        $senderDto->company_name = $ibtService->getCompanyName();
+        $senderDto->contact_name = $ibtService->getCentralStoreContactName();
+        $senderDto->email = $ibtService->getCentralStoreEmail();
+        $senderDto->phone = $ibtService->getCentralStorePhone();
     
         //Информация об получателе заказа
-        $deliveryOrderRecipientDto = new DeliveryOrderRecipientDto($delivery->order->delivery_address);
-        $deliveryOrderInputDto->recipient = $deliveryOrderRecipientDto;
-        $deliveryOrderRecipientDto->address_string = implode(', ', array_filter([
-            $deliveryOrderRecipientDto->post_index,
-            $deliveryOrderRecipientDto->region != $deliveryOrderRecipientDto->city ? $deliveryOrderRecipientDto->region : '',
-            $deliveryOrderRecipientDto->area,
-            $deliveryOrderRecipientDto->city,
-            $deliveryOrderRecipientDto->street,
-            $deliveryOrderRecipientDto->house,
-            $deliveryOrderRecipientDto->block,
-            $deliveryOrderRecipientDto->flat,
+        $recipientDto = new RecipientDto($delivery->delivery_address);
+        $deliveryOrderInputDto->recipient = $recipientDto;
+        $recipientDto->address_string = implode(', ', array_filter([
+            $recipientDto->post_index,
+            $recipientDto->region != $recipientDto->city ? $recipientDto->region : '',
+            $recipientDto->area,
+            $recipientDto->city,
+            $recipientDto->street,
+            $recipientDto->house,
+            $recipientDto->block,
+            $recipientDto->flat,
         ]));
-        $deliveryOrderRecipientDto->contact_name = $delivery->order->receiver_name;
-        $deliveryOrderRecipientDto->email = $delivery->order->receiver_email;
-        $deliveryOrderRecipientDto->phone = $delivery->order->receiver_phone;
+        $recipientDto->contact_name = $delivery->receiver_name;
+        $recipientDto->email = $delivery->receiver_email;
+        $recipientDto->phone = $delivery->receiver_phone;
         
         //Информация о местах (коробках) заказа
         $places = collect();
@@ -411,13 +412,21 @@ class ShipmentObserver
         if (!$shipment->cargo_id &&
             $shipment->status == ShipmentStatus::STATUS_ASSEMBLED
         ) {
-            $shipment->load('delivery');
+            /**
+             * Если у отправления указана служба доставки на нулевой миле, то используем её для груза.
+             * Иначе для груза используем службы доставки для доставки, к которой принадлежит отправление
+             */
+            $deliveryService = $shipment->delivery_service_zero_mile;
+            if (!$deliveryService) {
+                $shipment->load('delivery');
+                $deliveryService = $shipment->delivery->delivery_service;
+            }
             
             $cargoQuery = Cargo::query()
                 ->select('id')
                 ->where('merchant_id', $shipment->merchant_id)
                 ->where('store_id', $shipment->store_id)
-                ->where('delivery_service', $shipment->delivery->delivery_service)
+                ->where('delivery_service', $deliveryService)
                 ->where('status', CargoStatus::STATUS_CREATED)
                 ->orderBy('created_at', 'desc');
             if ($shipment->getOriginal('cargo_id')) {
@@ -428,7 +437,7 @@ class ShipmentObserver
                 $cargo = new Cargo();
                 $cargo->merchant_id = $shipment->merchant_id;
                 $cargo->store_id = $shipment->store_id;
-                $cargo->delivery_service = $shipment->delivery->delivery_service;
+                $cargo->delivery_service = $deliveryService;
                 $cargo->status = CargoStatus::STATUS_CREATED;
                 $cargo->width = 0;
                 $cargo->height = 0;
