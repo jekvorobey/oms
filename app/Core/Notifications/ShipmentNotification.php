@@ -57,6 +57,7 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
     
         /** @var OperatorService $operatorService */
         $operatorService = resolve(OperatorService::class);
+        /** @var NotificationService $notificationService */
         $notificationService = resolve(NotificationService::class);
     
         // Получаем id юзеров и операторов выбранных мерчантов

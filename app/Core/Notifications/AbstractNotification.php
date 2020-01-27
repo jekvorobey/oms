@@ -16,9 +16,9 @@ class AbstractNotification
     protected static function getBaseNotification(): NotificationDto
     {
         return new NotificationDto([
+            'type' => '',
             'status' => 0,
             'payload' => [
-                'type' => '',
                 'title' => '',
                 'body' => ''
             ]
