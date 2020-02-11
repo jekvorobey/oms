@@ -78,9 +78,7 @@ class DeliverySeeder extends Seeder
                 
                 if (
                     isset($points[$delivery->delivery_service]) &&
-                    in_array($delivery->delivery_method, [
-                        DeliveryMethod::METHOD_OUTPOST_PICKUP, DeliveryMethod::METHOD_POSTOMAT_PICKUP
-                    ])
+                    $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP
                 ) {
                     $delivery->point_id = $faker->randomElement($points[$delivery->delivery_service]->pluck('id')->toArray());
                 } else {
