@@ -49,12 +49,12 @@ class PaymentsController extends Controller
     public function getByOrder(Request $request)
     {
         $data = $this->validate($request, [
-            'type' => 'required|integer',
+            'payment_method' => 'required|integer',
             'orderId' => 'required|integer',
         ]);
         $payment = Payment::query()
             ->where('order_id', $data['orderId'])
-            ->where('type', $data['type'])
+            ->where('payment_method', $data['payment_method'])
             ->first();
         if (!$payment) {
             throw new NotFoundHttpException('payment not found');

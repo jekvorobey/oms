@@ -17,7 +17,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     Route::prefix('checkout')->group(function () {
         Route::post('commit', 'CheckoutController@commit');
     });
-    
+
     Route::prefix('baskets')->group(function () {
         Route::get('by-user/{userId}', 'BasketController@getCurrentBasket');
 
@@ -81,6 +81,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::post('start', 'PaymentsController@start');
         });
         Route::get('byOrder', 'PaymentsController@getByOrder');
+        Route::get('', 'PaymentsController@payments');
     });
 
     Route::prefix('shipments')->group(function () {
@@ -91,7 +92,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             });
         });
     });
-    
+
     Route::prefix('cargos')->group(function () {
         Route::prefix('{id}')->group(function () {
             Route::prefix('history')->group(function () {
