@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Class Orders
@@ -110,7 +110,7 @@ class Orders extends Migration
             $table->tinyInteger('status', false, true)->default(1);
 
             $table->float('sum');
-            $table->tinyInteger('type', false, true);
+            $table->tinyInteger('payment_method', false, true);
             $table->dateTime('payed_at')->nullable();
             $table->dateTime('expires_at')->nullable();
             $table->dateTime('created_at');

@@ -21,7 +21,7 @@ class CheckoutOrder
     public $customerId;
     /** @var int */
     public $basketId;
-    
+
     // marketing data
     /** @var float */
     public $cost;
@@ -39,17 +39,17 @@ class CheckoutOrder
     public $certificates;
     /** @var CheckoutItemPrice[] */
     public $prices;
-    
+
     // delivery data
     /** @var int */
     public $deliveryTypeId;
     /** @var float */
     public $deliveryCost;
 
-    
+
     /** @var CheckoutDelivery[] */
     public $deliveries;
-    
+
     public static function fromArray(array $data): self
     {
         $order = new self();
@@ -64,24 +64,24 @@ class CheckoutOrder
             'promocode' => $order->promocode,
             'certificates' => $order->certificates,
             'prices' => $prices,
-            
+
             'deliveryTypeId' => $order->deliveryTypeId,
             'deliveryCost' => $order->deliveryCost,
             'deliveries' => $deliveries
         ] = $data);
-        
+
         foreach ($prices as $priceData) {
             $checkoutItemPrice = CheckoutItemPrice::fromArray($priceData);
             $order->prices[$checkoutItemPrice->offerId] = $checkoutItemPrice;
         }
-        
+
         foreach ($deliveries as $deliveryData) {
             $order->deliveries[] = CheckoutDelivery::fromArray($deliveryData);
         }
-        
+
         return $order;
     }
-    
+
     /**
      * @throws Exception
      * @return int
@@ -93,11 +93,11 @@ class CheckoutOrder
             $order = $this->createOrder();
             $this->createShipments($order);
             $this->createPayment($order);
-            
+
             return $order->id;
         });
     }
-    
+
     /**
      * @throws Exception
      */
@@ -115,7 +115,7 @@ class CheckoutOrder
             $item->save();
         }
     }
-    
+
     private function createOrder(): Order
     {
         $order = new Order();
@@ -128,14 +128,14 @@ class CheckoutOrder
         $order->added_bonus = $this->addedBonus;
         $order->promocode = $this->promocode;
         $order->certificates = $this->certificates;
-        
+
         $order->delivery_type = $this->deliveryTypeId;
         $order->delivery_cost = $this->deliveryCost;
-        
+
         $order->save();
         return $order;
     }
-    
+
     /**
      * @param Order $order
      * @throws Exception
@@ -143,28 +143,28 @@ class CheckoutOrder
     private function createShipments(Order $order): void
     {
         $offerToBasketMap = $this->offerToBasketMap();
-        
+
         $shipmentNumber = 1;
         foreach ($this->deliveries as $i => $checkoutDelivery) {
             $delivery = new Delivery();
             $delivery->order_id = $order->id;
             $delivery->number = Delivery::makeNumber($order->number, ++$i);
-            
+
             $delivery->delivery_method = $checkoutDelivery->deliveryMethod;
             $delivery->delivery_service = $checkoutDelivery->deliveryService;
             $delivery->tariff_id = $checkoutDelivery->tariffId;
             $delivery->cost = $checkoutDelivery->cost;
-            
+
             $delivery->receiver_name = $checkoutDelivery->receiverName;
             $delivery->receiver_email = $checkoutDelivery->receiverEmail;
             $delivery->receiver_phone = $checkoutDelivery->receiverPhone;
             $delivery->delivery_address = $checkoutDelivery->deliveryAddress;
-            
+
             $delivery->point_id = $checkoutDelivery->pointId;
             $delivery->delivery_at = $checkoutDelivery->selectedDate;
-            
+
             $delivery->save();
-            
+
             foreach ($checkoutDelivery->shipments as $checkoutShipment) {
                 $shipment = new Shipment();
                 $shipment->delivery_id = $delivery->id;
@@ -172,9 +172,9 @@ class CheckoutOrder
                 $shipment->required_shipping_at = Carbon::now()->addDays(5);
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($delivery->number, $shipmentNumber++);
-                
+
                 $shipment->save();
-                
+
                 foreach ($checkoutShipment->items as $offerId) {
                     $basketItemId = $offerToBasketMap[$offerId] ?? null;
                     if (!$basketItemId) {
@@ -183,13 +183,13 @@ class CheckoutOrder
                     $shipmentItem = new ShipmentItem();
                     $shipmentItem->shipment_id = $shipment->id;
                     $shipmentItem->basket_item_id = $basketItemId;
-                    
+
                     $shipmentItem->save();
                 }
             }
         }
     }
-    
+
     /**
      * @param Order $order
      * @throws Exception
@@ -197,15 +197,15 @@ class CheckoutOrder
     private function createPayment(Order $order): void
     {
         $payment = new Payment();
-        $payment->type = $this->paymentMethodId;
+        $payment->payment_method = $this->paymentMethodId;
         $payment->payment_system = PaymentSystem::YANDEX;
         $payment->order_id = $order->id;
         $payment->sum = $this->price;
-    
+
         $writer = new OrderWriter();
         $writer->setPayments($order, collect([$payment]));
     }
-    
+
     private function basket(): ?Basket
     {
         static $basket = null;
@@ -214,7 +214,7 @@ class CheckoutOrder
         }
         return $basket;
     }
-    
+
     private function offerToBasketMap(): array
     {
         $result = [];
