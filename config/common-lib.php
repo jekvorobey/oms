@@ -56,7 +56,7 @@ return [
      *      store - использовать сохранённый токен (для фронтэнд rest-клиентов)
      * Если указать другое значние, то необходимо самостоятельно зарегистрировать TokenHolder.
      */
-    'tokenHolderDriver' => 'store',
+    'tokenHolderDriver' => 'request',
 
     /*
      * Способ сохранения токена для варианта tokenHolderDriver = store
@@ -64,5 +64,5 @@ return [
      *      session - хранить токен в сессии
      * Если указать другое значние, то необходимо самостоятельно зарегистрировать TokenStore.
      */
-    'tokenStoreDriver' => 'session',
+    'tokenStoreDriver' => '',
 ];

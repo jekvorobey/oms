@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::namespace('V1')->prefix('v1')->group(function () {
+    Route::prefix('checkout')->group(function () {
+        Route::post('commit', 'CheckoutController@commit');
+    });
+
     Route::prefix('baskets')->group(function () {
         Route::get('by-user/{userId}', 'BasketController@getCurrentBasket');
 
@@ -77,6 +81,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::post('start', 'PaymentsController@start');
         });
         Route::get('byOrder', 'PaymentsController@getByOrder');
+        Route::get('', 'PaymentsController@payments');
     });
 
     Route::prefix('shipments')->group(function () {
@@ -84,6 +89,15 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::prefix('history')->group(function () {
                 Route::get('count', 'HistoryController@countByShipment');
                 Route::get('', 'HistoryController@readByShipment');
+            });
+        });
+    });
+
+    Route::prefix('cargos')->group(function () {
+        Route::prefix('{id}')->group(function () {
+            Route::prefix('history')->group(function () {
+                Route::get('count', 'HistoryController@countByCargo');
+                Route::get('', 'HistoryController@readByCargo');
             });
         });
     });
@@ -110,6 +124,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::prefix('shipments')->group(function () {
             Route::get('count', 'ShipmentsController@count');
             Route::get('', 'ShipmentsController@read');
+            Route::get('similar-unshipped-shipments', 'ShipmentsController@similarUnshippedShipments');
 
             Route::prefix('{id}')->group(function () {
                 Route::get('', 'ShipmentsController@read');
@@ -163,10 +178,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::post('', 'CargoController@create');
 
             Route::prefix('{id}')->group(function () {
-                Route::prefix('history')->group(function () {
-                    Route::get('count', 'HistoryController@countByCargo');
-                    Route::get('', 'HistoryController@readByCargo');
-                });
                 Route::get('', 'CargoController@read');
                 Route::put('','CargoController@update');
                 Route::delete('','CargoController@delete');

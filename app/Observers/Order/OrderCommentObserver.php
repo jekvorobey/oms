@@ -14,7 +14,7 @@ use App\Models\Order\OrderComment;
 class OrderCommentObserver
 {
     /**
-     * Handle the order "created" event.
+     * Handle the order comment "created" event.
      * @param  Order  $order
      * @return void
      */
@@ -24,7 +24,7 @@ class OrderCommentObserver
     }
 
     /**
-     * Handle the order "updated" event.
+     * Handle the order comment "updated" event.
      * @param  Order  $order
      * @return void
      */

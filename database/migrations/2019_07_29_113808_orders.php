@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Class Orders
@@ -32,13 +32,6 @@ class Orders extends Migration
             $table->integer('type')->unsigned();
             $table->json('product');
             $table->string('name');
-            
-//            $table->bigInteger('store_id')->unsigned()->nullable();
-//            $table->decimal('weight', 18, 4);
-//            $table->decimal('width', 18, 4);
-//            $table->decimal('height', 18, 4);
-//            $table->decimal('length', 18, 4);
-            
             $table->decimal('qty', 18, 4);
             $table->decimal('price', 18, 4)->nullable();
             $table->decimal('discount', 18, 4)->nullable();
@@ -62,19 +55,14 @@ class Orders extends Migration
             // итоговая стоимость заказа совсем скидками и доставкой
             $table->decimal('price', 18, 4)->default(0.0);
             $table->decimal('delivery_cost', 18, 4)->default(0.0);
-    
+
             $table->integer('spent_bonus')->default(0);
             $table->integer('added_bonus')->default(0);
             $table->string('promocode')->nullable();
-            $table->string('certificate')->nullable();
+            $table->json('certificates')->nullable();
             // delivery
             $table->tinyInteger('delivery_type')->unsigned();
-            $table->tinyInteger('delivery_method')->unsigned();
-            $table->json('delivery_address');
             $table->text('delivery_comment')->nullable();
-            $table->string('receiver_name')->nullable();
-            $table->string('receiver_phone')->nullable();
-            $table->string('receiver_email')->nullable();
             // statuses
             $table->tinyInteger('status')->unsigned()->default(1);
             $table->dateTime('status_at')->nullable();
@@ -84,7 +72,7 @@ class Orders extends Migration
             $table->dateTime('is_problem_at')->nullable();
             // management
             $table->text('manager_comment')->nullable();
-            
+
             $table->timestamps();
 
             $table->foreign('basket_id')->references('id')->on('baskets');
@@ -122,7 +110,7 @@ class Orders extends Migration
             $table->tinyInteger('status', false, true)->default(1);
 
             $table->float('sum');
-            $table->tinyInteger('type', false, true);
+            $table->tinyInteger('payment_method', false, true);
             $table->dateTime('payed_at')->nullable();
             $table->dateTime('expires_at')->nullable();
             $table->dateTime('created_at');
@@ -143,6 +131,7 @@ class Orders extends Migration
             $table->decimal('height', 18, 4);
             $table->decimal('length', 18, 4);
             $table->decimal('weight', 18, 4);
+            $table->text('shipping_problem_comment')->nullable();
 
             $table->timestamps();
         });
@@ -159,6 +148,12 @@ class Orders extends Migration
             $table->integer('tariff_id')->nullable();
             $table->integer('point_id')->nullable();
             $table->string('number');
+
+            $table->json('delivery_address')->nullable();
+            $table->string('receiver_name')->nullable();
+            $table->string('receiver_phone')->nullable();
+            $table->string('receiver_email')->nullable();
+
             $table->decimal('cost', 18, 4)->default(0.0);
             $table->decimal('width', 18, 4)->default(0.0);
             $table->decimal('height', 18, 4)->default(0.0);
@@ -177,12 +172,17 @@ class Orders extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('delivery_id')->unsigned();
             $table->bigInteger('merchant_id')->unsigned();
+            $table->tinyInteger('delivery_service_zero_mile')->unsigned()->nullable();
             $table->bigInteger('store_id')->unsigned();
             $table->bigInteger('cargo_id')->unsigned()->nullable();
             $table->tinyInteger('status', false, true)->default(1);
 
             $table->string('number');
             $table->decimal('cost', 18, 4)->default(0.0);
+            $table->decimal('width', 18, 4)->default(0.0);
+            $table->decimal('height', 18, 4)->default(0.0);
+            $table->decimal('length', 18, 4)->default(0.0);
+            $table->decimal('weight', 18, 4)->default(0.0);
             $table->timestamp('required_shipping_at');
             $table->text('assembly_problem_comment')->nullable();
 

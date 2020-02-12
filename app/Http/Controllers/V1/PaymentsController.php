@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\V1;
 
+use App\Core\Payment\LocalPaymentSystem;
 use App\Core\Payment\YandexPaymentSystem;
 use App\Http\Controllers\Controller;
-use App\Core\Payment\LocalPaymentSystem;
 use App\Models\Payment\Payment;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -45,24 +45,39 @@ class PaymentsController extends Controller
             'paymentLink' => $link
         ]);
     }
-    
+
     public function getByOrder(Request $request)
     {
         $data = $this->validate($request, [
-            'type' => 'required|integer',
+            'payment_method' => 'required|integer',
             'orderId' => 'required|integer',
         ]);
         $payment = Payment::query()
             ->where('order_id', $data['orderId'])
-            ->where('type', $data['type'])
+            ->where('payment_method', $data['payment_method'])
             ->first();
         if (!$payment) {
             throw new NotFoundHttpException('payment not found');
         }
-        
+
         return response()->json($payment);
     }
-    
+
+    public function payments(Request $request)
+    {
+        $data = $this->validate($request, [
+            'orderIds' => 'required|array',
+        ]);
+        $payments = Payment::query()
+            ->whereIn('order_id', $data['orderIds'])
+            ->get();
+        if (!$payments) {
+            throw new NotFoundHttpException('payments not found');
+        }
+
+        return response()->json(['items' => $payments]);
+    }
+
     /**
      * @OA\Post(
      *     path="/api/v1/payments/handler/local",
@@ -81,7 +96,7 @@ class PaymentsController extends Controller
         $paymentSystem->handlePushPayment($request->all());
         return response('ok');
     }
-    
+
     public function handlerYandex(Request $request)
     {
         $paymentSystem = new YandexPaymentSystem();

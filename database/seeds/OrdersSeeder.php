@@ -99,6 +99,7 @@ class OrdersSeeder extends Seeder
                 $basketItem->qty = $faker->randomDigitNotNull;
                 $basketItem->price = $faker->randomFloat(2, 100, 1000);
                 $basketItem->discount = $faker->randomFloat(2, 0, $basketItem->price/3);
+                $basketItem->cost = $basketItem->price + $basketItem->discount;
                 $basketItem->product = [
                     'store_id' => $offerStock->store_id,
                     'weight' => $product->weight,
@@ -120,39 +121,11 @@ class OrdersSeeder extends Seeder
             $order->manager_comment = $faker->realText();
 
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
-            $order->delivery_method = $faker->randomElement(array_keys(DeliveryMethod::allMethods()));
-            $region = $faker->randomElement([
-                'Москва г',
-                'Московская обл',
-                'Тверская обл',
-                'Калужская обл',
-                'Рязанская обл',
-            ]);
-            $order->delivery_address = [
-                'country_code' => 'RU',
-                'post_index' => $faker->postcode,
-                'region' => $region,
-                'region_guid' => $faker->uuid,
-                'area' => '',
-                'area_guid' => '',
-                'city' => 'г. ' . $faker->city,
-                'city_guid' => $faker->uuid,
-                'street' => 'ул. ' . explode(' ', $faker->streetName)[0],
-                'house' => 'д. ' . $faker->buildingNumber,
-                'block' => '',
-                'flat' => '',
-                'porch' => '',
-                'intercom' => '',
-                'comment' => '',
-            ];
+            
             $order->delivery_cost = $faker->randomFloat(2, 0, 500);
             $order->cost = $faker->randomFloat(2, 100, 500);
             $order->price = $order->cost + $order->delivery_cost;
-
-            $order->receiver_name = $faker->name;
-            $order->receiver_phone = $faker->phoneNumber;
-            $order->receiver_email = $faker->email;
-
+            
             $order->save();
             $basket->is_belongs_to_order = true;
             $basket->save();

@@ -20,7 +20,7 @@ use Illuminate\Support\Collection;
  * @property Carbon $payed_at
  * @property Carbon $expires_at
  * @property int $status
- * @property int $type
+ * @property int $payment_method
  * @property int $payment_system
  * @property array $data
  *
@@ -33,7 +33,7 @@ class Payment extends OmsModel
 
     protected $dates = ['created_at', 'payed_at', 'expires_at'];
     protected $casts = ['data' => 'array'];
-    
+
     /**
      * Получить оплату по id
      *
@@ -46,7 +46,7 @@ class Payment extends OmsModel
         $payment = Payment::query()->where('id', $id)->first();
         return $payment;
     }
-    
+
     /**
      * Получить список просроченных оплат.
      *
@@ -69,7 +69,7 @@ class Payment extends OmsModel
             $this->data = [];
         }
     }
-    
+
     /**
      * Начать оплату.
      * Переводит оплату в статус PaymentStatus::STARTED, задаёт время когда оплата станет просроченной,
@@ -89,10 +89,10 @@ class Payment extends OmsModel
         }
         $this->save();
         $paymentSystem->createExternalPayment($this, $returnUrl);
-        
+
         return $paymentSystem->paymentLink($this);
     }
-    
+
     public function timeout(): void
     {
         $this->status = PaymentStatus::STATUS_TIMEOUT;

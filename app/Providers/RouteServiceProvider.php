@@ -23,7 +23,12 @@ class RouteServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Route::pattern('id', '[0-9]+');
+        Route::pattern('userId', '[0-9]+');
+        Route::pattern('basketId', '[0-9]+');
+        Route::pattern('basketItemId', '[0-9]+');
+        Route::pattern('offerId', '[0-9]+');
+        Route::pattern('exportId', '[0-9]+');
 
         parent::boot();
     }
@@ -51,8 +56,7 @@ class RouteServiceProvider extends ServiceProvider
      */
     protected function mapWebRoutes()
     {
-        Route::middleware('web')
-             ->namespace($this->namespace)
+        Route::namespace($this->namespace)
              ->group(base_path('routes/web.php'));
     }
 
@@ -66,7 +70,6 @@ class RouteServiceProvider extends ServiceProvider
     protected function mapApiRoutes()
     {
         Route::prefix('api')
-             ->middleware('api')
              ->namespace($this->namespace)
              ->group(base_path('routes/api.php'));
     }

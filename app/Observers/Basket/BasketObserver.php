@@ -11,7 +11,7 @@ use App\Models\Basket\Basket;
 class BasketObserver
 {
     /**
-     * Handle the order "deleting" event.
+     * Handle the basket "deleting" event.
      * @param  Basket $basket
      * @throws \Exception
      */

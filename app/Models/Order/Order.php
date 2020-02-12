@@ -26,16 +26,11 @@ use Illuminate\Support\Collection;
  * @property int $spent_bonus
  * @property int $added_bonus
  * @property string $promocode
- * @property int $certificate
+ * @property array $certificates
  *
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
- * @property int $delivery_method - способ доставки (самовывоз из ПВЗ, самовывоз из постомата, доставка)
  * @property float $delivery_cost - стоимость доставки iBT
- * @property array $delivery_address - адрес доставки
  * @property string $delivery_comment - комментарий к доставке
- * @property string $receiver_name - имя получателя
- * @property string $receiver_phone - телефон получателя
- * @property string $receiver_email - e-mail получателя
  *
  * @property int $status - статус
  * @property \Illuminate\Support\Carbon|null $status_at - дата установки статуса заказа
@@ -73,13 +68,18 @@ use Illuminate\Support\Collection;
  */
 class Order extends OmsModel
 {
-    /** @var array */
-    protected $casts = [
-        'delivery_address' => 'array'
-    ];
-    
     /** @var string */
     public $notificator = OrderNotification::class;
+    
+    protected $casts = [
+        'certificates' => 'array',
+    ];
+    
+    public static function makeNumber($customerId): string
+    {
+        $ordersCount = self::query()->where('customer_id', $customerId)->count('id');
+        return $customerId . '-' . ($ordersCount + 1);
+    }
     
     /**
      * @return HasOne
@@ -134,7 +134,7 @@ class Order extends OmsModel
 //            $this->save();
 //        }
     }
-
+    
     /**
      * Создать корзину, прявязанную к заказу.
      *
@@ -216,5 +216,14 @@ class Order extends OmsModel
     {
         $this->status = OrderStatus::STATUS_CANCEL;
         $this->save();
+    }
+    
+    /**
+     * @todo брать почту пользователя оформившего заказ
+     * @return string
+     */
+    public function customerEmail(): string
+    {
+        return 'mail@example.com';
     }
 }

@@ -13,33 +13,48 @@ use App\Models\History\HistoryType;
  */
 class BasketItemObserver
 {
-//    /**
-//     * Handle the order "saving" event.
-//     * @param  BasketItem $basketItem
-//     */
-//    public function saving(BasketItem $basketItem)
-//    {
-//        if ($basketItem->qty != $basketItem->getOriginal('qty') ||
-//            $basketItem->price != $basketItem->getOriginal('price') ||
-//            $basketItem->discount != $basketItem->getOriginal('discount')
-//        ) {
-//            $basketItem->costRecalc(false);
-//        }
-//    }
+    /**
+     * Handle the basket item "saving" event.
+     * @param  BasketItem $basketItem
+     */
+    public function saving(BasketItem $basketItem)
+    {
+        /*if ($basketItem->qty != $basketItem->getOriginal('qty') ||
+            $basketItem->price != $basketItem->getOriginal('price') ||
+            $basketItem->discount != $basketItem->getOriginal('discount')
+        ) {
+            $basketItem->costRecalc(false);
+        }*/
+    }
 
-//    /**
-//     * Handle the order "saved" event.
-//     * @param  BasketItem $basketItem
-//     */
-//    public function saved(BasketItem $basketItem)
-//    {
-//        if ($basketItem->basket->order) {
-//            $basketItem->basket->order->costRecalc();
-//        }
-//    }
+    /**
+     * Handle the basket item "saved" event.
+     * @param  BasketItem $basketItem
+     */
+    public function saved(BasketItem $basketItem)
+    {
+        /*if ($basketItem->basket->order) {
+            $basketItem->basket->order->costRecalc();
+        }*/
+    
+        if ($basketItem->qty != $basketItem->getOriginal('qty')
+        ) {
+            if ($basketItem->shipmentItem) {
+                $basketItem->shipmentItem->shipment->recalc();
+            }
+        }
+    
+        if ($basketItem->qty != $basketItem->getOriginal('qty') ||
+            $basketItem->price != $basketItem->getOriginal('price')
+        ) {
+            if ($basketItem->shipmentItem) {
+                $basketItem->shipmentItem->shipment->costRecalc();
+            }
+        }
+    }
     
     /**
-     * Handle the order "created" event.
+     * Handle the basket item "created" event.
      * @param  BasketItem $basketItem
      */
     public function created(BasketItem $basketItem)
@@ -50,7 +65,7 @@ class BasketItemObserver
     }
     
     /**
-     * Handle the order "updated" event.
+     * Handle the basket item "updated" event.
      * @param  BasketItem $basketItem
      */
     public function updated(BasketItem $basketItem)
@@ -61,7 +76,7 @@ class BasketItemObserver
     }
     
     /**
-     * Handle the order "deleting" event.
+     * Handle the basket item "deleting" event.
      * @param  BasketItem $basketItem
      * @throws \Exception
      */
