@@ -64,7 +64,7 @@ class OrderNotification extends AbstractNotification implements NotificationInte
                 break;
         }
     
-        if(!isset($notification->type)) {
+        if(!$notification->type) {
             return;
         }
     
