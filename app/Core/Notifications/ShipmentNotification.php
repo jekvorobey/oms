@@ -51,7 +51,7 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
                 break;
         }
     
-        if(!isset($notification->type)) {
+        if(!$notification->type) {
             return;
         }
     
