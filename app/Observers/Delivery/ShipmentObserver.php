@@ -11,6 +11,7 @@ use App\Models\History\History;
 use App\Models\History\HistoryType;
 use Exception;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
+use Greensight\Logistics\Dto\Lists\ShipmentMethod;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderCostDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderInputDto;
@@ -291,7 +292,7 @@ class ShipmentObserver
         $deliveryOrderDto->height = $delivery->height;
         $deliveryOrderDto->length = $delivery->length;
         $deliveryOrderDto->width = $delivery->width;
-        $deliveryOrderDto->pickup_type = 1; //todo указано жестко, т.к. не понятно кто будет доставлять заказ от мерчанта до РЦ на нулевой миле
+        $deliveryOrderDto->shipment_method = ShipmentMethod::METHOD_DS_COURIER;
         $deliveryOrderDto->delivery_method = $delivery->delivery_method;
         $deliveryOrderDto->tariff_id = $delivery->tariff_id;
         $deliveryOrderDto->delivery_date = $delivery->delivery_at;
