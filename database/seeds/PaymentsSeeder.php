@@ -37,6 +37,10 @@ class PaymentsSeeder extends Seeder
             $payment->save();
 
             $payment->start('https://dev_front.ibt-mas.greensight.ru/');
+            if ($payment->payment_system == PaymentSystem::YANDEX) {
+                /** Для увеличения интервала между запросами к Яндекс.Кассе */
+                sleep($faker->randomFloat(0, 1, 10));
+            }
 
             $payment->status = $faker->randomElement(PaymentStatus::validValues());
             if ($payment->status == PaymentStatus::PAID) {

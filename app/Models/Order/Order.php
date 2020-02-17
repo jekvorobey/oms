@@ -174,8 +174,9 @@ class Order extends OmsModel
     /**
      * Обновить статус оплаты заказа в соотвествии со статусами оплат
      */
-    public function refreshPaymentStatus()
+    public function refreshPaymentStatus(): void
     {
+        $this->refresh();
         $all = $this->payments->count();
         $statuses = [];
         foreach ($this->payments as $payment) {
@@ -183,13 +184,11 @@ class Order extends OmsModel
         }
 
         if ($this->allIs($statuses, $all, PaymentStatus::PAID)) {
-            $this->payment_status = PaymentStatus::PAID;
+            $this->setPaymentStatusPaid();
         } elseif ($this->atLeastOne($statuses, PaymentStatus::TIMEOUT) && !$this->atLeastOne($statuses, PaymentStatus::PAID)) {
-            $this->payment_status = PaymentStatus::TIMEOUT;
-            $this->status = OrderStatus::STATUS_CANCEL;
+            $this->setPaymentStatusTimeout(false);
+            $this->cancel();
         }
-
-        $this->save();
     }
     
     /**
@@ -215,11 +214,59 @@ class Order extends OmsModel
 
     /**
      * Отменить заказ.
+     * @return bool
      */
-    public function cancel(): void
+    public function cancel(bool $save = true): bool
     {
-        $this->status = OrderStatus::STATUS_CANCEL;
-        $this->save();
+        return $this->setStatus(OrderStatus::STATUS_CANCEL, $save);
+    }
+
+    /**
+     * Установить статус заказа
+     * @param  int  $status
+     * @param  bool  $save
+     * @return bool
+     */
+    protected function setStatus(int $status, bool $save = true): bool
+    {
+        $this->status = $status;
+        $this->status_at = now();
+
+        return $save ? $this->save() : true;
+    }
+
+    /**
+     * Установить статус оплаты заказа на "Оплачено"
+     * @param  bool  $save
+     * @return bool
+     */
+    public function setPaymentStatusPaid(bool $save = true): bool
+    {
+        return $this->setPaymentStatus(PaymentStatus::PAID, $save);
+    }
+
+    /**
+     * Установить статус оплаты заказа на "Просрочено"
+     * @param  bool  $save
+     * @return bool
+     */
+    public function setPaymentStatusTimeout(bool $save = true): bool
+    {
+        return $this->setPaymentStatus(PaymentStatus::TIMEOUT, $save);
+    }
+
+    /**
+     * Установить статус оплаты заказа
+     * @param  int  $status
+     * @param  bool  $save
+     * @return bool
+     */
+    protected function setPaymentStatus(int $status, bool $save = true): bool
+    {
+        $this->payment_status = $status;
+        $this->payment_status_at = now();
+
+        return $save ? $this->save() : true;
     }
     
     /**
