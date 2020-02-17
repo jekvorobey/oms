@@ -52,7 +52,7 @@ class Orders extends Migration
             // prices & marketing
             // полная стоимость заказанных товаров
             $table->decimal('cost', 18, 4)->default(0.0);
-            // итоговая стоимость заказа совсем скидками и доставкой
+            // итоговая стоимость заказа со всеми скидками и доставкой
             $table->decimal('price', 18, 4)->default(0.0);
             $table->decimal('delivery_cost', 18, 4)->default(0.0);
 

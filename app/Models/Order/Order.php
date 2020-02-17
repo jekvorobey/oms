@@ -144,8 +144,16 @@ class Order extends OmsModel
     {
         $basket = new Basket();
         $basket->customer_id = $this->customer_id;
-        $basket->order_id = $this->id;
-        return $basket->save() ? $basket : null;
+        $basket->is_belongs_to_order = true;
+
+        if ($basket->save()) {
+            $this->basket_id = $basket->id;
+            $this->save();
+
+            return $basket;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -159,6 +167,7 @@ class Order extends OmsModel
         if (!$basket) {
             $basket = $this->createBasket();
         }
+
         return $basket;
     }
 
@@ -173,16 +182,11 @@ class Order extends OmsModel
             $statuses[$payment->status] = isset($statuses[$payment->status]) ? $statuses[$payment->status] + 1 : 1;
         }
 
-        // todo уточнить логику смены статуса
-        if ($this->allIs($statuses, $all, PaymentStatus::STATUS_DONE)) {
-            $this->payment_status = PaymentStatus::STATUS_DONE;
-        } elseif ($this->atLeastOne($statuses, PaymentStatus::STATUS_TIMEOUT) && !$this->atLeastOne($statuses, PaymentStatus::STATUS_DONE)) {
-            $this->payment_status = PaymentStatus::STATUS_TIMEOUT;
+        if ($this->allIs($statuses, $all, PaymentStatus::PAID)) {
+            $this->payment_status = PaymentStatus::PAID;
+        } elseif ($this->atLeastOne($statuses, PaymentStatus::TIMEOUT) && !$this->atLeastOne($statuses, PaymentStatus::PAID)) {
+            $this->payment_status = PaymentStatus::TIMEOUT;
             $this->status = OrderStatus::STATUS_CANCEL;
-        } elseif ($this->payment_status == PaymentStatus::STATUS_CREATED && $this->atLeastOne($statuses, PaymentStatus::STATUS_STARTED)) {
-            $this->payment_status = PaymentStatus::STATUS_STARTED;
-        } elseif ($this->atLeastOne($statuses, PaymentStatus::STATUS_DONE)) {
-            $this->payment_status = PaymentStatus::STATUS_PARTIAL_DONE;
         }
 
         $this->save();

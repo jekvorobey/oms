@@ -138,7 +138,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     
     protected function succeededPayment(\YandexCheckout\Model\PaymentInterface $payment, Payment $localPayment)
     {
-        $localPayment->status = \App\Models\Payment\PaymentStatus::STATUS_DONE;
+        $localPayment->status = \App\Models\Payment\PaymentStatus::PAID;
         $localPayment->payed_at = Carbon::now();
         $localPayment->save();
     }

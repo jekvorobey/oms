@@ -28,10 +28,14 @@ use Illuminate\Support\Collection;
  */
 class Payment extends OmsModel
 {
+    /** @var bool */
     public $timestamps = false;
+    /** @var bool */
     protected static $unguarded = true;
 
+    /** @var array */
     protected $dates = ['created_at', 'payed_at', 'expires_at'];
+    /** @var array */
     protected $casts = ['data' => 'array'];
 
     /**
@@ -54,11 +58,15 @@ class Payment extends OmsModel
      */
     public static function expiredPayments(): Collection
     {
-        return Payment::query()->where('status', PaymentStatus::STATUS_STARTED)
+        return Payment::query()->where('status', PaymentStatus::NOT_PAID)
             ->where('expires_at', '<', Carbon::now()->format('Y-m-d H:i:s'))
             ->get(['id', 'order_id']);
     }
 
+    /**
+     * Payment constructor.
+     * @param  array  $attributes
+     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -72,8 +80,7 @@ class Payment extends OmsModel
 
     /**
      * Начать оплату.
-     * Переводит оплату в статус PaymentStatus::STARTED, задаёт время когда оплата станет просроченной,
-     * и создаёт оплату во внешней системе оплаты.
+     * Задаёт время когда оплата станет просроченной, и создаёт оплату во внешней системе оплаты.
      *
      * @param Payment $payment
      * @param string $returnUrl
@@ -82,7 +89,6 @@ class Payment extends OmsModel
     public function start(string $returnUrl)
     {
         $paymentSystem = $this->paymentSystem();
-        $this->status = PaymentStatus::STATUS_STARTED;
         $hours = $paymentSystem->duration();
         if ($hours) {
             $this->expires_at = Carbon::now()->addHours($hours);
@@ -95,10 +101,13 @@ class Payment extends OmsModel
 
     public function timeout(): void
     {
-        $this->status = PaymentStatus::STATUS_TIMEOUT;
+        $this->status = PaymentStatus::TIMEOUT;
         $this->save();
     }
 
+    /**
+     * @return PaymentSystemInterface|null
+     */
     public function paymentSystem(): ?PaymentSystemInterface
     {
         switch ($this->payment_system) {
@@ -108,6 +117,9 @@ class Payment extends OmsModel
         return null;
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
