@@ -7,7 +7,6 @@ use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
-use App\Models\Delivery\ShipmentPackageStatus;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
 use Greensight\CommonMsa\Rest\Controller\UpdateAction;
@@ -20,7 +19,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -90,7 +88,6 @@ class ShipmentPackagesController extends Controller
     {
         return [
             'package_id' => [new RequiredOnPost(), 'integer'],
-            'status' => ['nullable', Rule::in(ShipmentPackageStatus::validValues())],
             'width' => [new RequiredOnPost(), 'numeric'],
             'height' => [new RequiredOnPost(), 'numeric'],
             'length' => [new RequiredOnPost(), 'numeric'],

@@ -5,11 +5,16 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
+use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\B2CplDeliveryOrderStatus;
+use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\DeliveryOrderStatus;
 use Greensight\Logistics\Dto\Lists\DeliveryService;
 use Greensight\Logistics\Services\ListsService\ListsService;
+use Greensight\Store\Dto\Package\PackageType;
 use Greensight\Store\Dto\StoreDto;
+use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -37,6 +42,11 @@ class DeliverySeeder extends Seeder
         $restQuery->addFields(StoreDto::entity(), 'id', 'merchant_id');
         /** @var Collection|StoreDto[] $stores */
         $stores = $storeService->stores($restQuery)->keyBy('id');
+
+        /** @var PackageService $packageService */
+        $packageService = resolve(PackageService::class);
+        $packages = $packageService->packages($packageService->newQuery()
+            ->setFilter('type', PackageType::TYPE_BOX))->keyBy('id');
     
         /** @var ListsService $listsService */
         $listsService = resolve(ListsService::class);
@@ -55,7 +65,7 @@ class DeliverySeeder extends Seeder
             $shipmentsCount = (int)$basketItemsByStore->count()/$deliveriesCount;
     
             $shipmentNumber = 1;
-            for ($i = 1; $i <= $deliveriesCount; $i++) {
+            for ($deliveryNum = 1; $deliveryNum <= $deliveriesCount; $deliveryNum++) {
                 //Создаем доставку
                 $delivery = new Delivery();
                 $delivery->order_id = $order->id;
@@ -63,18 +73,24 @@ class DeliverySeeder extends Seeder
                 $delivery->delivery_service = $faker->randomElement([
                     DeliveryService::SERVICE_B2CPL,
                 ]);
+                $delivery->setStatus($faker->randomElement(array_keys(DeliveryOrderStatus::allStatuses())));
+                switch($delivery->delivery_service) {
+                    case DeliveryService::SERVICE_B2CPL:
+                        $delivery->setStatusXmlId($faker->randomElement(array_keys(B2CplDeliveryOrderStatus::allStatuses())));
+                        break;
+                }
                 $delivery->tariff_id = isset($tariffs[$delivery->delivery_service]) ?
                     $faker->randomElement($tariffs[$delivery->delivery_service]->pluck('id')->toArray()) : 0;
                
-                $delivery->xml_id = '';
-                $delivery->number = $order->number . '-' . $i;
+                $delivery->xml_id = $delivery->status > DeliveryOrderStatus::STATUS_CREATED ? $faker->uuid : '';
+                $delivery->number = Delivery::makeNumber($order->number, $deliveryNum);
                 $delivery->cost = $faker->randomFloat(2, 0, 500);
                 $delivery->delivery_at = $order->created_at->modify('+' . rand(1, 7) . ' days');
                 $delivery->created_at = $order->created_at;
-    
-                $order->receiver_name = $faker->name;
-                $order->receiver_phone = $faker->phoneNumber;
-                $order->receiver_email = $faker->email;
+
+                $delivery->receiver_name = $faker->name;
+                $delivery->receiver_phone = $faker->phoneNumber;
+                $delivery->receiver_email = $faker->email;
                 
                 if (
                     isset($points[$delivery->delivery_service]) &&
@@ -114,7 +130,7 @@ class DeliverySeeder extends Seeder
                     if (!$storeId) {
                         continue;
                     }
-                    if ($deliveryShipmentNumber > $shipmentsCount && $i != $deliveriesCount ) {
+                    if ($deliveryShipmentNumber > $shipmentsCount && $deliveryNum != $deliveriesCount ) {
                         break;
                     }
                     
@@ -125,7 +141,7 @@ class DeliverySeeder extends Seeder
                     $shipment->delivery_id = $delivery->id;
                     $shipment->merchant_id = $store->merchant_id;
                     $shipment->store_id = $storeId;
-                    $shipment->number = $delivery->number . '/' . $shipmentNumber;
+                    $shipment->number = Shipment::makeNumber($delivery->number, $shipmentNumber);
                     $shipment->created_at = $order->created_at->modify('+' . rand(1, 7) . ' minutes');
                     $shipment->required_shipping_at = $order->created_at->modify('+3 hours');
                     $shipment->save();
@@ -142,6 +158,16 @@ class DeliverySeeder extends Seeder
                     $shipmentNumber++;
                     $deliveryShipmentNumber++;
                     $basketItemsByStore->forget($storeId);
+
+                    //Создаем коробки для отправлений в сборке или собранных
+                    if ($shipment->status > ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE) {
+                        /** @var int $shipmentPackagesCount - количество коробок в отправлении */
+                        $shipmentPackagesCount = $faker->randomFloat(0, 1, 3);
+                        for ($shipmentPackageNum = 1; $shipmentPackageNum <= $shipmentPackagesCount; $shipmentPackageNum++) {
+                            $shipmentPackage = $shipment->createPackage($faker->randomElement($packages->pluck('id')->all()));
+                            //todo Доделать создание содержимого коробок
+                        }
+                    }
                 }
             }
         }

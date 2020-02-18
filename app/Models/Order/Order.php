@@ -8,7 +8,6 @@ use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
 use App\Models\OmsModel;
 use App\Models\Payment\Payment;
-use App\Models\Payment\PaymentStatus;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
@@ -112,161 +111,31 @@ class Order extends OmsModel
     {
         return $this->hasOne(OrderComment::class);
     }
-    
-    /**
-     * Пересчитать сумму товаров заказа
-     */
-    public function costRecalc(bool $save = true): void
-    {
-        // todo сложный момент с пересчётом стоимости заказа при его изменении. Какие цены брять? как применять уже применённые скидки?
-//        $cost = 0.0;
-//        $this->load('basket.items', 'deliveries');
-//
-//        //Считаем сумму позиций в корзине
-//        foreach ($this->basket->items as $item) {
-//            $cost += $item->cost;
-//        }
-//        //Прибавляем стоимость за доставку
-//        $cost += $this->delivery_cost;
-//
-//        $this->cost = $cost;
-//        if ($save) {
-//            $this->save();
-//        }
-    }
-    
-    /**
-     * Создать корзину, прявязанную к заказу.
-     *
-     * @return Basket|null
-     */
-    protected function createBasket(): ?Basket
-    {
-        $basket = new Basket();
-        $basket->customer_id = $this->customer_id;
-        $basket->is_belongs_to_order = true;
-
-        if ($basket->save()) {
-            $this->basket_id = $basket->id;
-            $this->save();
-
-            return $basket;
-        } else {
-            return null;
-        }
-    }
 
     /**
-     * Получить существующую или создать новую корзину заказа.
-     *
-     * @return Basket|null
-     */
-    public function getOrCreateBasket(): ?Basket
-    {
-        $basket = $this->basket;
-        if (!$basket) {
-            $basket = $this->createBasket();
-        }
-
-        return $basket;
-    }
-
-    /**
-     * Обновить статус оплаты заказа в соотвествии со статусами оплат
-     */
-    public function refreshPaymentStatus(): void
-    {
-        $this->refresh();
-        $all = $this->payments->count();
-        $statuses = [];
-        foreach ($this->payments as $payment) {
-            $statuses[$payment->status] = isset($statuses[$payment->status]) ? $statuses[$payment->status] + 1 : 1;
-        }
-
-        if ($this->allIs($statuses, $all, PaymentStatus::PAID)) {
-            $this->setPaymentStatusPaid();
-        } elseif ($this->atLeastOne($statuses, PaymentStatus::TIMEOUT) && !$this->atLeastOne($statuses, PaymentStatus::PAID)) {
-            $this->setPaymentStatusTimeout(false);
-            $this->cancel();
-        }
-    }
-    
-    /**
-     * @param  array  $statuses
-     * @param  int  $count
+     * Установить статус заказа (без сохранения!)
      * @param  int  $status
-     * @return bool
+     * @return self
      */
-    protected function allIs(array $statuses, int $count, int $status): bool
-    {
-        return ($statuses[$status] ?? 0) == $count;
-    }
-    
-    /**
-     * @param  array  $statuses
-     * @param  int  $status
-     * @return bool
-     */
-    protected function atLeastOne(array $statuses, int $status): bool
-    {
-        return ($statuses[$status] ?? 0) > 0;
-    }
-
-    /**
-     * Отменить заказ.
-     * @return bool
-     */
-    public function cancel(bool $save = true): bool
-    {
-        return $this->setStatus(OrderStatus::STATUS_CANCEL, $save);
-    }
-
-    /**
-     * Установить статус заказа
-     * @param  int  $status
-     * @param  bool  $save
-     * @return bool
-     */
-    protected function setStatus(int $status, bool $save = true): bool
+    public function setStatus(int $status): self
     {
         $this->status = $status;
         $this->status_at = now();
 
-        return $save ? $this->save() : true;
+        return $this;
     }
 
     /**
-     * Установить статус оплаты заказа на "Оплачено"
-     * @param  bool  $save
-     * @return bool
-     */
-    public function setPaymentStatusPaid(bool $save = true): bool
-    {
-        return $this->setPaymentStatus(PaymentStatus::PAID, $save);
-    }
-
-    /**
-     * Установить статус оплаты заказа на "Просрочено"
-     * @param  bool  $save
-     * @return bool
-     */
-    public function setPaymentStatusTimeout(bool $save = true): bool
-    {
-        return $this->setPaymentStatus(PaymentStatus::TIMEOUT, $save);
-    }
-
-    /**
-     * Установить статус оплаты заказа
+     * Установить статус оплаты заказа (без сохранения!)
      * @param  int  $status
-     * @param  bool  $save
-     * @return bool
+     * @return self
      */
-    protected function setPaymentStatus(int $status, bool $save = true): bool
+    public function setPaymentStatus(int $status): self
     {
         $this->payment_status = $status;
         $this->payment_status_at = now();
 
-        return $save ? $this->save() : true;
+        return $this;
     }
     
     /**

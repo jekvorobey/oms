@@ -113,6 +113,34 @@ class Delivery extends OmsModel
     {
         return $this->hasMany(Shipment::class);
     }
+
+    /**
+     * Установить статус доставки
+     * @param  int  $status
+     * @param  bool  $save
+     * @return bool
+     */
+    public function setStatus(int $status, bool $save = true): bool
+    {
+        $this->status = $status;
+        $this->status_at = now();
+
+        return $save ? $this->save() : true;
+    }
+
+    /**
+     * Установить статус доставки у службы доставки
+     * @param  int  $status
+     * @param  bool  $save
+     * @return bool
+     */
+    public function setStatusXmlId(int $status, bool $save = true): bool
+    {
+        $this->status_xml_id = $status;
+        $this->status_xml_id_at = now();
+
+        return $save ? $this->save() : true;
+    }
     
     /**
      * Рассчитать вес доставки

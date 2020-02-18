@@ -22,34 +22,13 @@ use Illuminate\Support\Collection;
  */
 class Basket extends OmsModel
 {
+    /** @var int - корзина с товарами */
     public const TYPE_PRODUCT = 1;
+    /** @var int - корзина с мастер-классами */
     public const TYPE_MASTER = 2;
     
     /** @var bool */
     protected static $unguarded = true;
-    
-    /**
-     * Получить текущую корзину пользователя.
-     * @param int $type
-     * @param int $customerId
-     * @return Basket
-     */
-    public static function findFreeUserBasket(int $type, int $customerId): self
-    {
-        $basket = self::query()
-            ->where('customer_id', $customerId)
-            ->where('type', $type)
-            ->where('is_belongs_to_order', 0)
-            ->first();
-        if (!$basket) {
-            $basket = new self();
-            $basket->customer_id = $customerId;
-            $basket->type = $type;
-            $basket->save();
-        }
-        
-        return $basket;
-    }
     
     /**
      * @return HasOne
@@ -65,50 +44,5 @@ class Basket extends OmsModel
     public function items(): HasMany
     {
         return $this->hasMany(BasketItem::class);
-    }
-    
-    /**
-     * Получить объект товар корзины, даже если его нет в БД.
-     * @param  int  $offerId
-     * @return BasketItem
-     */
-    public function itemByOffer(int $offerId): BasketItem
-    {
-        $item = $this->items->first(function (BasketItem $item) use ($offerId) {
-            return $item->offer_id == $offerId;
-        });
-        
-        if (!$item) {
-            $item = new BasketItem();
-            $item->offer_id = $offerId;
-            $item->basket_id = $this->id;
-            $item->type = $this->type;
-        }
-        
-        return $item;
-    }
-    
-    /**
-     * Создать/изменить/удалить товар корзины.
-     * @param  int  $offerId
-     * @param  array  $data
-     * @return bool|null
-     * @throws \Exception
-     */
-    public function setItem(int $offerId, array $data): bool
-    {
-        $item = $this->itemByOffer($offerId);
-        $ok = true;
-        if ($item->id && isset($data['qty']) && !$data['qty']) {
-            $ok = $item->delete();
-        } else {
-            if (isset($data['qty']) && $data['qty'] > 0) {
-                $item->qty = $data['qty'];
-            }
-            $item->setDataByType();
-            $item->fill($data);
-            $ok = $item->save();
-        }
-        return $ok;
     }
 }

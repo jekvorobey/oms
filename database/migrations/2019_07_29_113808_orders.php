@@ -209,7 +209,6 @@ class Orders extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('shipment_id')->unsigned();
             $table->bigInteger('package_id')->unsigned();
-            $table->tinyInteger('status', false, true)->default(1);
 
             $table->decimal('width', 18, 4);
             $table->decimal('height', 18, 4);

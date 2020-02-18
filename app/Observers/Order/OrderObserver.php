@@ -2,7 +2,6 @@
 
 namespace App\Observers\Order;
 
-use App\Models\Basket\Basket;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\Order;
@@ -22,7 +21,8 @@ class OrderObserver
     public function created(Order $order)
     {
         History::saveEvent(HistoryType::TYPE_CREATE, $order, $order);
-        $order->basket->is_belongs_to_order = 1;
+
+        $order->basket->is_belongs_to_order = true;
         $order->basket->save();
     }
 
@@ -53,10 +53,6 @@ class OrderObserver
         
         if ($order->is_problem != $order->getOriginal('is_problem')) {
             $order->is_problem_at = Carbon::now();
-        }
-
-        if ($order->delivery_cost != $order->getOriginal('delivery_cost')) {
-            $order->costRecalc(false);
         }
     }
 
