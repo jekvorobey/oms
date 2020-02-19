@@ -1,19 +1,30 @@
 <?php
 
-namespace App\Core\Payment;
+namespace App\Services\PaymentService\PaymentSystems;
 
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Validator;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Class LocalPaymentSystem
+ * @package App\Services\PaymentService\PaymentSystems
+ */
 class LocalPaymentSystem implements PaymentSystemInterface
 {
+    /** @var string */
     public const STATUS_DONE = 'done';
 
+    /**
+     * @param  Payment  $payment
+     * @param  string  $returnLink
+     * @throws Exception
+     */
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
         $uuid = Uuid::uuid1()->toString();
@@ -26,11 +37,18 @@ class LocalPaymentSystem implements PaymentSystemInterface
         $payment->save();
     }
 
+    /**
+     * @param  Payment  $payment
+     * @return string
+     */
     public function paymentLink(Payment $payment): string
     {
         return $payment->data['paymentLink'];
     }
 
+    /**
+     * @param  array  $data
+     */
     public function handlePushPayment(array $data): void
     {
         $validator = Validator::make($data, [
@@ -54,7 +72,10 @@ class LocalPaymentSystem implements PaymentSystemInterface
             $payment->save();
         }
     }
-    
+
+    /**
+     * @return int|null
+     */
     public function duration(): ?int
     {
         return 1;

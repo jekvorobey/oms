@@ -148,22 +148,26 @@ class BasketController extends Controller
     
     /**
      * @param int $basketId
+     * @param BasketService $basketService
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      * @throws \Exception
      */
-    public function dropBasket(int $basketId): Response
+    public function dropBasket(int $basketId, BasketService $basketService): Response
     {
-        /** @var Basket $basket */
-        $basket = Basket::find($basketId);
-        $ok = $basket->delete();
-        if (!$ok) {
+        if (!$basketService->deleteBasket($basketId)) {
             throw new HttpException(500, 'unable to delete basket');
         }
         
         return response('', 204);
     }
-    
-    public function commitItemsPrice(int $basketId, Request $request)
+
+    /**
+     * @param  int  $basketId
+     * @param  Request  $request
+     * @param BasketService $basketService
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
+     */
+    public function commitItemsPrice(int $basketId, Request $request, BasketService $basketService): Response
     {
         $data = $this->validate($request, [
             'items' => 'required|array',
@@ -172,8 +176,8 @@ class BasketController extends Controller
             'items.*.cost' => 'required|numeric',
             'items.*.price' => 'required|numeric',
         ]);
-        /** @var Basket $basket */
-        $basket = Basket::find($basketId);
+        //todo Скорее всего надо перенести код ниже в BasketService
+        $basket = $basketService->getBasket($basketId);
         $priceMap = [];
         foreach ($data['items'] as $dataItem) {
             $priceMap[$dataItem['offerId']] = $dataItem;

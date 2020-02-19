@@ -7,10 +7,10 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
+use App\Services\DeliveryService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\B2CplDeliveryOrderStatus;
 use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\DeliveryOrderStatus;
-use Greensight\Logistics\Dto\Lists\DeliveryService;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Store\Dto\Package\PackageType;
 use Greensight\Store\Dto\StoreDto;
@@ -30,11 +30,15 @@ class DeliverySeeder extends Seeder
 
     /**
      * @throws PimException
+     * @throws Exception
      */
     public function run()
     {
         $faker = Faker\Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
+
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = resolve(DeliveryService::class);
     
         /** @var StoreService $storeService */
         $storeService = resolve(StoreService::class);
@@ -161,11 +165,18 @@ class DeliverySeeder extends Seeder
 
                     //Создаем коробки для отправлений в сборке или собранных
                     if ($shipment->status > ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE) {
-                        /** @var int $shipmentPackagesCount - количество коробок в отправлении */
-                        $shipmentPackagesCount = $faker->randomFloat(0, 1, 3);
-                        for ($shipmentPackageNum = 1; $shipmentPackageNum <= $shipmentPackagesCount; $shipmentPackageNum++) {
-                            //$shipmentPackage = $shipment->createPackage($faker->randomElement($packages->pluck('id')->all()));
-                            //todo Доделать создание содержимого коробок
+                        $shipmentPackage = $deliveryService->createShipmentPackage(
+                            $shipment->id,
+                            $faker->randomElement($packages->pluck('id')->all())
+                        );
+
+                        foreach ($shipment->basketItems as $basketItem) {
+                            $deliveryService->setShipmentPackageItem(
+                                $shipmentPackage->id,
+                                $basketItem->id,
+                                $basketItem->qty,
+                                0
+                            );
                         }
                     }
                 }

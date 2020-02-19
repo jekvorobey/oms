@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\V1\Delivery;
 
 use App\Http\Controllers\Controller;
-use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
+use App\Services\DeliveryService;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
 use Greensight\CommonMsa\Rest\Controller\UpdateAction;
@@ -363,54 +363,30 @@ class ShipmentPackagesController extends Controller
      * @param  int  $shipmentPackageId
      * @param  int  $basketItemId
      * @param  Request  $request
+     * @param  DeliveryService  $deliveryService
      * @return Response
      */
-    public function setItem(int $shipmentPackageId, int $basketItemId, Request $request, RequestInitiator $client): Response
+    public function setItem(int $shipmentPackageId, int $basketItemId, Request $request, DeliveryService $deliveryService): Response
     {
-        // todo добавить проверку прав
-        $qty = (float) $request->input('qty');
-        $setBy = (int) $request->input('set_by');
-    
-        $ok = true;
-        /** @var Model|RestSerializable $modelClass */
-        $modelClass = $this->modelItemsClass();
-        $shipmentPackageItem = $modelClass::query()
-            ->where('shipment_package_id', $shipmentPackageId)
-            ->where('basket_item_id', $basketItemId)
-            ->first();
-        if (!$qty && !is_null($shipmentPackageItem)) {
-            //Удаляем элемент из коробки отправления
-            try {
-                $ok = $shipmentPackageItem->delete();
-            } catch (\Exception $e) {
-                $ok = false;
-                $message = $e->getMessage();
+        $data = $this->validate($request, [
+            'qty' => ['required', 'numeric'],
+            'set_by' => ['required', 'integer'],
+        ]);
+
+        try {
+            $ok = $deliveryService->setShipmentPackageItem(
+                $shipmentPackageId,
+                $basketItemId,
+                $data['qty'],
+                $data['set_by']
+            );
+            if (!$ok) {
+                throw new HttpException(500);
             }
-        } else {
-            /** @var BasketItem $basketItem */
-            $basketItem = BasketItem::find($basketItemId);
-            
-            if (!$setBy) {
-                $ok = false;
-                $message = 'set_by is empty';
-            } elseif ($basketItem->qty < $qty) {
-                $ok = false;
-                $message = 'shipment package qty can\'t be more than basket item qty';
-            } else {
-                if (is_null($shipmentPackageItem)) {
-                    $shipmentPackageItem = new $modelClass();
-                }
-                $shipmentPackageItem->updateOrCreate([
-                    'shipment_package_id' => $shipmentPackageId,
-                    'basket_item_id' => $basketItemId,
-                ], ['qty' => $qty, 'set_by' => $setBy]);
-            }
+
+            return response('', 204);
+        } catch (\Exception $e) {
+            throw new HttpException(500, $e->getMessage());
         }
-    
-        if (!$ok) {
-            throw new HttpException(500, $message);
-        }
-    
-        return response('', 204);
     }
 }

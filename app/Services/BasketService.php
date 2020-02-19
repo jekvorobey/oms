@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
+use Exception;
 
 /**
  * Класс-бизнес логики по работе с корзинами
@@ -98,7 +99,7 @@ class BasketService
      * @param  int  $offerId
      * @param  array  $data
      * @return bool|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function setItem(int $basketId, int $offerId, array $data): bool
     {
@@ -124,5 +125,21 @@ class BasketService
         }
 
         return $ok;
+    }
+
+    /**
+     * Удалить корзину
+     * @param  int  $basketId
+     * @return bool
+     * @throws Exception
+     */
+    public function deleteBasket(int $basketId): bool
+    {
+        $basket = $this->getBasket($basketId);
+        if (is_null($basket)) {
+            return false;
+        }
+
+        return !$basket->is_belongs_to_order ? $basket->delete() : false;
     }
 }

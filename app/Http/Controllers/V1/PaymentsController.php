@@ -2,17 +2,29 @@
 
 namespace App\Http\Controllers\V1;
 
-use App\Core\Payment\LocalPaymentSystem;
-use App\Core\Payment\YandexPaymentSystem;
 use App\Http\Controllers\Controller;
 use App\Models\Payment\Payment;
+use App\Services\PaymentService\PaymentService;
+use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
+use App\Services\PaymentService\PaymentSystems\YandexPaymentSystem;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+/**
+ * Class PaymentsController
+ * @package App\Http\Controllers\V1
+ */
 class PaymentsController extends Controller
 {
     /**
+     * @param  int  $id
+     * @param  Request  $request
+     * @param  PaymentService  $paymentService
+     * @return \Illuminate\Http\JsonResponse
+     *
      * @OA\Post(
      *     path="/api/v1/payments/{id}/start",
      *     tags={"payment"},
@@ -28,25 +40,29 @@ class PaymentsController extends Controller
      *     ),
      * )
      */
-    public function start(int $id, Request $request)
+    public function start(int $id, Request $request, PaymentService $paymentService)
     {
         $returnUrl = $request->get('returnUrl');
         if (!$returnUrl) {
             throw new BadRequestHttpException('missing returnUrl');
         }
 
-        $payment = Payment::findById($id);
+        $payment = $paymentService->getPayment($id);
         if (!$payment) {
             throw new NotFoundHttpException();
         }
-        $link = $payment->start($returnUrl);
+        $link = $paymentService->start($payment->id, $returnUrl);
 
         return response()->json([
             'paymentLink' => $link
         ]);
     }
 
-    public function getByOrder(Request $request)
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
+    public function getByOrder(Request $request): JsonResponse
     {
         $data = $this->validate($request, [
             'payment_method' => 'required|integer',
@@ -63,7 +79,11 @@ class PaymentsController extends Controller
         return response()->json($payment);
     }
 
-    public function payments(Request $request)
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     */
+    public function payments(Request $request): JsonResponse
     {
         $data = $this->validate($request, [
             'orderIds' => 'required|array',
@@ -79,6 +99,7 @@ class PaymentsController extends Controller
     }
 
     /**
+     * @return Response
      * @OA\Post(
      *     path="/api/v1/payments/handler/local",
      *     tags={"payment"},
@@ -90,20 +111,32 @@ class PaymentsController extends Controller
      *     ),
      * )
      */
-    public function handlerLocal(Request $request)
+    public function handlerLocal(Request $request): Response
     {
         $paymentSystem = new LocalPaymentSystem();
         $paymentSystem->handlePushPayment($request->all());
+
         return response('ok');
     }
 
-    public function handlerYandex(Request $request)
+    /**
+     * @param  Request  $request
+     * @return JsonResponse
+     * @throws \YandexCheckout\Common\Exceptions\ApiException
+     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
+     * @throws \YandexCheckout\Common\Exceptions\ExtensionNotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
+     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
+     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
+     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
+     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
+     */
+    public function handlerYandex(Request $request): JsonResponse
     {
         $paymentSystem = new YandexPaymentSystem();
-        $ok = $paymentSystem->handlePushPayment($request->all());
-        if (!$ok) {
-            throw new BadRequestHttpException();
-        }
+        $paymentSystem->handlePushPayment($request->all());
+
         return response()->json([
             'processed' => 1
         ]);

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Core\Payment;
+namespace App\Services\PaymentService\PaymentSystems;
 
 use App\Models\Basket\Basket;
 use App\Models\Payment\Payment;
@@ -11,6 +11,10 @@ use YandexCheckout\Model\Notification\NotificationWaitingForCapture;
 use YandexCheckout\Model\NotificationEventType;
 use YandexCheckout\Model\PaymentStatus;
 
+/**
+ * Class YandexPaymentSystem
+ * @package App\Services\PaymentService\PaymentSystems
+ */
 class YandexPaymentSystem implements PaymentSystemInterface
 {
     /** @var Client */
@@ -23,7 +27,19 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         $this->yandexService = resolve(Client::class);
     }
-    
+
+    /**
+     * @param  Payment  $payment
+     * @param  string  $returnLink
+     * @throws \YandexCheckout\Common\Exceptions\ApiException
+     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
+     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
+     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
+     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
+     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
+     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
+     */
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
         $order = $payment->order;
@@ -57,7 +73,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
         
         $payment->save();
     }
-    
+
+    /**
+     * @param  Basket  $basket
+     * @return array
+     */
     protected function generateItems(Basket $basket)
     {
         $items = [];
@@ -88,12 +108,20 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         return $payment->data['paymentUrl'];
     }
-    
+
     /**
      * Обработать данные от платёжной ситсемы о совершении платежа.
-     *
-     * @param array $data
-     * @return bool
+     * @param  array  $data
+     * @return void
+     * @throws \YandexCheckout\Common\Exceptions\ApiException
+     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
+     * @throws \YandexCheckout\Common\Exceptions\ExtensionNotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
+     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
+     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
+     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
+     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
      */
     public function handlePushPayment(array $data): void
     {
@@ -116,7 +144,19 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 break;
         }
     }
-    
+
+    /**
+     * @param  \YandexCheckout\Model\PaymentInterface  $payment
+     * @param  Payment  $localPayment
+     * @throws \YandexCheckout\Common\Exceptions\ApiException
+     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
+     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
+     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
+     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
+     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
+     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
+     */
     protected function capturePayment(\YandexCheckout\Model\PaymentInterface $payment, Payment $localPayment): void
     {
         $this->yandexService->capturePayment(
@@ -135,7 +175,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
             uniqid('', true)
         );
     }
-    
+
+    /**
+     * @param  \YandexCheckout\Model\PaymentInterface  $payment
+     * @param  Payment  $localPayment
+     */
     protected function succeededPayment(\YandexCheckout\Model\PaymentInterface $payment, Payment $localPayment)
     {
         $localPayment->status = \App\Models\Payment\PaymentStatus::PAID;

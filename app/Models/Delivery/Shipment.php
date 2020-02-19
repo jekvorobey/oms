@@ -6,7 +6,6 @@ use App\Core\Notifications\ShipmentNotification;
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
 use Greensight\CommonMsa\Rest\RestQuery;
-use Greensight\Store\Services\PackageService\PackageService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -132,27 +131,6 @@ class Shipment extends OmsModel
     public function cargo(): BelongsTo
     {
         return $this->belongsTo(Cargo::class);
-    }
-
-    /**
-     * Создать коробку отправления
-     * @param  int  $packageId
-     * @return ShipmentPackage|null
-     */
-    public function createPackage(int $packageId): ?ShipmentPackage
-    {
-        /** @var PackageService $packageService */
-        $packageService = resolve(PackageService::class);
-        $package = $packageService->package($packageId);
-
-        $shipmentPackage = new ShipmentPackage();
-        $shipmentPackage->shipment_id = $this->id;
-        $shipmentPackage->wrapper_weight = $package->weight;
-        $shipmentPackage->width = $package->width;
-        $shipmentPackage->height = $package->height;
-        $shipmentPackage->length = $package->length;
-
-        return $shipmentPackage->save() ? $shipmentPackage : null;
     }
 
     /**

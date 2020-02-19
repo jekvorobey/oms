@@ -25,7 +25,9 @@ use App\Observers\Order\OrderCommentObserver;
 use App\Observers\Order\OrderObserver;
 use App\Observers\Payment\PaymentObserver;
 use App\Services\BasketService;
+use App\Services\DeliveryService;
 use App\Services\OrderService;
+use App\Services\PaymentService\PaymentService;
 use Illuminate\Support\ServiceProvider;
 use L5Swagger\L5SwaggerServiceProvider;
 use YandexCheckout\Client;
@@ -64,6 +66,12 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->singleton(OrderService::class, function () {
             return new OrderService();
+        });
+        $this->app->singleton(PaymentService::class, function () {
+            return new PaymentService();
+        });
+        $this->app->singleton(DeliveryService::class, function () {
+            return new DeliveryService();
         });
 
         $this->addObservers();

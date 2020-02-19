@@ -1,11 +1,13 @@
 <?php
 
-
-namespace App\Core\Payment;
-
+namespace App\Services\PaymentService\PaymentSystems;
 
 use App\Models\Payment\Payment;
 
+/**
+ * Interface PaymentSystemInterface
+ * @package App\Services\PaymentService\PaymentSystems
+ */
 interface PaymentSystemInterface
 {
     /**

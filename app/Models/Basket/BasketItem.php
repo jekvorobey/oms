@@ -5,14 +5,10 @@ namespace App\Models\Basket;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\OmsModel;
-use Greensight\Store\Dto\StockDto;
-use Greensight\Store\Services\StockService\StockService;
-use Greensight\Store\Services\StoreService\StoreService;
+use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
-use Pim\Services\ProductService\ProductService;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
@@ -48,10 +44,15 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  */
 class BasketItem extends OmsModel
 {
+    /** @var array */
     protected $casts = [
         'product' => 'array'
     ];
-    
+
+    /**
+     * BasketItem constructor.
+     * @param  array  $attributes
+     */
     public function __construct(array $attributes = [])
     {
         $this->product = [];
@@ -80,20 +81,11 @@ class BasketItem extends OmsModel
     {
         return $this->hasOne(ShipmentPackageItem::class);
     }
-    
-//    /**
-//     * Пересчитать сумму позиции корзины
-//     * @param bool $save
-//     */
-//    public function costRecalc(bool $save = true): void
-//    {
-//        $this->cost = $this->qty * $this->price - $this->discount;
-//        if ($save) {
-//            $this->save();
-//        }
-//    }
-    
-    public function setDataByType()
+
+    /**
+     * @throws Exception
+     */
+    public function setDataByType(): void
     {
         if($this->type == Basket::TYPE_PRODUCT) {
             if (isset($this->product['store_id'])) {
@@ -114,7 +106,7 @@ class BasketItem extends OmsModel
                 'length' => $offerInfo->length,
             ];
         } else {
-            throw new \Exception('Masterclass type is not supported yet...');
+            throw new Exception('Masterclass type is not supported yet...');
         }
     }
 }
