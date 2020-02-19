@@ -164,7 +164,7 @@ class DeliverySeeder extends Seeder
                         /** @var int $shipmentPackagesCount - количество коробок в отправлении */
                         $shipmentPackagesCount = $faker->randomFloat(0, 1, 3);
                         for ($shipmentPackageNum = 1; $shipmentPackageNum <= $shipmentPackagesCount; $shipmentPackageNum++) {
-                            $shipmentPackage = $shipment->createPackage($faker->randomElement($packages->pluck('id')->all()));
+                            //$shipmentPackage = $shipment->createPackage($faker->randomElement($packages->pluck('id')->all()));
                             //todo Доделать создание содержимого коробок
                         }
                     }

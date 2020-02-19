@@ -19,7 +19,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('baskets')->group(function () {
-        Route::get('by-user/{userId}', 'BasketController@getCurrentBasket');
+        Route::get('by-customer/{customerId}', 'BasketController@getCurrentBasket');
 
         Route::prefix('{basketId}')->group(function () {
             Route::put('items/{offerId}', 'BasketController@setItemByBasket');

@@ -69,11 +69,16 @@ class Order extends OmsModel
 {
     /** @var string */
     public $notificator = OrderNotification::class;
-    
+
+    /** @var array */
     protected $casts = [
         'certificates' => 'array',
     ];
-    
+
+    /**
+     * @param $customerId
+     * @return string
+     */
     public static function makeNumber($customerId): string
     {
         $ordersCount = self::query()->where('customer_id', $customerId)->count('id');
