@@ -11,6 +11,7 @@ use App\Services\DeliveryService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\B2CplDeliveryOrderStatus;
 use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\DeliveryOrderStatus;
+use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Store\Dto\Package\PackageType;
 use Greensight\Store\Dto\StoreDto;
@@ -50,7 +51,7 @@ class DeliverySeeder extends Seeder
         /** @var PackageService $packageService */
         $packageService = resolve(PackageService::class);
         $packages = $packageService->packages($packageService->newQuery()
-            ->setFilter('type', PackageType::TYPE_BOX))->keyBy('id');
+            ->setFilter('type', PackageType::TYPE_BOX));
     
         /** @var ListsService $listsService */
         $listsService = resolve(ListsService::class);
@@ -75,12 +76,17 @@ class DeliverySeeder extends Seeder
                 $delivery->order_id = $order->id;
                 $delivery->delivery_method = $faker->randomElement(array_keys(DeliveryMethod::allMethods()));
                 $delivery->delivery_service = $faker->randomElement([
-                    DeliveryService::SERVICE_B2CPL,
+                    LogisticsDeliveryService::SERVICE_B2CPL,
                 ]);
-                $delivery->setStatus($faker->randomElement(array_keys(DeliveryOrderStatus::allStatuses())));
                 switch($delivery->delivery_service) {
-                    case DeliveryService::SERVICE_B2CPL:
+                    case LogisticsDeliveryService::SERVICE_B2CPL:
                         $delivery->setStatusXmlId($faker->randomElement(array_keys(B2CplDeliveryOrderStatus::allStatuses())));
+                        $b2cplStatus = B2CplDeliveryOrderStatus::statusById($delivery->status_xml_id);
+                        if (isset($b2cplStatus['delivery_status_id'])) {
+                            $delivery->setStatus($b2cplStatus['delivery_status_id']);
+                        } else {
+                            $delivery->setStatus($faker->randomElement(array_keys(DeliveryOrderStatus::allStatuses())));
+                        }
                         break;
                 }
                 $delivery->tariff_id = isset($tariffs[$delivery->delivery_service]) ?
@@ -142,6 +148,7 @@ class DeliverySeeder extends Seeder
                     /** @var Collection|BasketItem[] $itemsByStore */
                     $store = $stores[$storeId];
                     $shipment = new Shipment();
+                    $shipment->status = $faker->randomElement(ShipmentStatus::validValues());
                     $shipment->delivery_id = $delivery->id;
                     $shipment->merchant_id = $store->merchant_id;
                     $shipment->store_id = $storeId;
@@ -170,14 +177,22 @@ class DeliverySeeder extends Seeder
                             $faker->randomElement($packages->pluck('id')->all())
                         );
 
-                        foreach ($shipment->basketItems as $basketItem) {
-                            $deliveryService->setShipmentPackageItem(
-                                $shipmentPackage->id,
-                                $basketItem->id,
-                                $basketItem->qty,
-                                0
-                            );
+                        if ($shipmentPackage) {
+                            foreach ($shipment->basketItems as $basketItem) {
+                                $deliveryService->setShipmentPackageItem(
+                                    $shipmentPackage->id,
+                                    $basketItem->id,
+                                    $basketItem->qty,
+                                    0
+                                );
+                            }
                         }
+                    }
+
+                    //Добавляем собранные отправления в груз
+                    try {
+                        $deliveryService->addShipment2Cargo($shipment->id);
+                    } catch (Exception $e) {
                     }
                 }
             }

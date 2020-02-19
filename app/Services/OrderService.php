@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Basket\Basket;
+use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
@@ -135,6 +136,55 @@ class OrderService
         $order->setPaymentStatus($status);
 
         return $save ? $order->save() : true;
+    }
+
+    /**
+     * Пометить заказ как проблемный
+     * @param int $orderId
+     * @param bool $save
+     * @return bool
+     */
+    public function markAsProblem(int $orderId, bool $save = true): bool
+    {
+        $order = $this->getOrder($orderId);
+        if (is_null($order)) {
+            return false;
+        }
+
+        $order->is_problem = true;
+
+        return $save ? $order->save() : true;
+    }
+
+    /**
+     * Пометить заказ как непроблемный, если все его отправления непроблемные
+     * @param int $orderId
+     * @param bool $save
+     * @return bool
+     */
+    public function markAsNonProblem(int $orderId, bool $save = true): bool
+    {
+        $order = $this->getOrder($orderId);
+        $order->load('deliveries.shipments');
+        if (is_null($order)) {
+            return false;
+        }
+
+        $isAllShipmentsOk = true;
+        foreach ($order->deliveries as $delivery) {
+            foreach ($delivery->shipments as $shipment) {
+                if (in_array($shipment->status, [
+                    ShipmentStatus::STATUS_ASSEMBLING_PROBLEM, ShipmentStatus::STATUS_TIMEOUT
+                ])) {
+                    $isAllShipmentsOk = false;
+                    break 2;
+                }
+            }
+        }
+
+        $order->is_problem = !$isAllShipmentsOk;
+
+        return $save && !$order->is_problem ? $order->save() : true;
     }
 
     /**

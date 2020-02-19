@@ -115,31 +115,31 @@ class Delivery extends OmsModel
     }
 
     /**
-     * Установить статус доставки
+     * Установить статус доставки (без сохранения!)
      * @param  int  $status
      * @param  bool  $save
-     * @return bool
+     * @return self
      */
-    public function setStatus(int $status, bool $save = true): bool
+    public function setStatus(int $status): self
     {
         $this->status = $status;
         $this->status_at = now();
 
-        return $save ? $this->save() : true;
+        return $this;
     }
 
     /**
-     * Установить статус доставки у службы доставки
-     * @param  int  $status
+     * Установить статус доставки у службы доставки (без сохранения!)
+     * @param  string  $status
      * @param  bool  $save
-     * @return bool
+     * @return self
      */
-    public function setStatusXmlId(int $status, bool $save = true): bool
+    public function setStatusXmlId(string $status, bool $save = true): self
     {
         $this->status_xml_id = $status;
         $this->status_xml_id_at = now();
 
-        return $save ? $this->save() : true;
+        return $this;
     }
     
     /**
