@@ -23,7 +23,6 @@ class CancelExpiredOrders extends Command
     {
         $payments = $paymentService->expiredPayments();
         foreach ($payments as $payment) {
-            $paymentService->addPayment2Cache($payment);
             $paymentService->timeout($payment->id);
         }
     }

@@ -31,27 +31,28 @@ class PaymentsSeeder extends Seeder
         /** @var Collection|Order[] $orders */
         $orders = Order::query()->get();
         foreach ($orders as $order) {
-            $payment = new Payment();
-            $payment->created_at = $order->created_at;
-            $payment->order_id = $order->id;
-            $payment->payment_system = $faker->randomElement(PaymentSystem::validValues());
-            $payment->status = PaymentStatus::NOT_PAID;
-            $payment->sum = $order->price;
-            $payment->payment_method = $faker->randomElement(PaymentMethod::validValues());
-            $payment->save();
-            $paymentService->addPayment2Cache($payment);
+            if ($order->payments->isEmpty()) {
+                $payment = new Payment();
+                $payment->created_at = $order->created_at;
+                $payment->order_id = $order->id;
+                $payment->payment_system = $faker->randomElement(PaymentSystem::validValues());
+                $payment->status = PaymentStatus::NOT_PAID;
+                $payment->sum = $order->price;
+                $payment->payment_method = $faker->randomElement(PaymentMethod::validValues());
+                $payment->save();
 
-            $paymentService->start($payment->id, 'https://dev_front.ibt-mas.greensight.ru/');
-            if ($payment->payment_system == PaymentSystem::YANDEX) {
-                /** Для увеличения интервала между запросами к Яндекс.Кассе */
-                sleep($faker->randomFloat(0, 5, 10));
-            }
+                $paymentService->start($payment->id, 'https://dev_front.ibt-mas.greensight.ru/');
+                if ($payment->payment_system == PaymentSystem::YANDEX) {
+                    /** Для увеличения интервала между запросами к Яндекс.Кассе */
+                    sleep($faker->randomFloat(0, 5, 10));
+                }
 
-            $payment->status = $faker->randomElement(PaymentStatus::validValues());
-            if ($payment->status == PaymentStatus::PAID) {
-                $payment->payed_at = $faker->dateTimeBetween($payment->created_at, $payment->expires_at);
+                $payment->status = $faker->randomElement(PaymentStatus::validValues());
+                if ($payment->status == PaymentStatus::PAID) {
+                    $payment->payed_at = $faker->dateTimeBetween($payment->created_at, $payment->expires_at);
+                }
+                $payment->save();
             }
-            $payment->save();
         }
     }
 }

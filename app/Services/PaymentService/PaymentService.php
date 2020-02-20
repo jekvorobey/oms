@@ -14,9 +14,6 @@ use Illuminate\Support\Collection;
  */
 class PaymentService
 {
-    /** @var array|Payment[] - кэш объектов заказов с id в качестве ключа */
-    public static $paymentsCached = [];
-
     /**
      * Получить объект оплаты по его id
      * @param  int  $paymentId
@@ -24,19 +21,7 @@ class PaymentService
      */
     public function getPayment(int $paymentId): ?Payment
     {
-        if (!isset(static::$paymentsCached[$paymentId])) {
-            static::$paymentsCached[$paymentId] = Payment::find($paymentId);
-        }
-
-        return static::$paymentsCached[$paymentId];
-    }
-
-    /**
-     * @param  Payment  $payment
-     */
-    public function addPayment2Cache(Payment $payment): void
-    {
-        static::$paymentsCached[$payment->id] = $payment;
+        return Payment::find($paymentId);
     }
 
     /**
@@ -49,7 +34,7 @@ class PaymentService
     public function start(int $paymentId, string $returnUrl): ?string
     {
         $payment = $this->getPayment($paymentId);
-        if ($payment) {
+        if (is_null($payment)) {
             return null;
         }
 
@@ -72,7 +57,7 @@ class PaymentService
     public function timeout(int $paymentId): bool
     {
         $payment = $this->getPayment($paymentId);
-        if ($payment) {
+        if (is_null($payment)) {
             return false;
         }
 

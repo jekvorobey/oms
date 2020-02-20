@@ -117,7 +117,6 @@ class ShipmentObserver
         ) {
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
-            $deliveryService->addShipment2Cache($shipment);
 
             return $deliveryService->checkAllShipmentProductsPacked($shipment->id);
         }

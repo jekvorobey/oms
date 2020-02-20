@@ -13,9 +13,6 @@ use Exception;
  */
 class BasketService
 {
-    /** @var array|Basket[] - кэш объектов заказов с id в качестве ключа */
-    public static $basketsCached = [];
-
     /**
      * Получить объект корзины по его id
      * @param  int  $basketId
@@ -23,11 +20,7 @@ class BasketService
      */
     public function getBasket(int $basketId): ?Basket
     {
-        if (!isset(static::$basketsCached[$basketId])) {
-            static::$basketsCached[$basketId] = Basket::find($basketId);
-        }
-
-        return static::$basketsCached[$basketId];
+        return Basket::find($basketId);
     }
 
     /**
@@ -43,7 +36,7 @@ class BasketService
             ->where('type', $type)
             ->where('is_belongs_to_order', 0)
             ->first();
-        if (!$basket) {
+        if (is_null($basket)) {
             $basket = $this->createBasket($type, $customerId);
         }
 
@@ -75,7 +68,7 @@ class BasketService
     public function itemByOffer(int $basketId, int $offerId): ?BasketItem
     {
         $basket = $this->getBasket($basketId);
-        if ($basket) {
+        if (is_null($basket)) {
             return null;
         }
 

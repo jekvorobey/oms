@@ -26,11 +26,6 @@ use Greensight\Store\Services\PackageService\PackageService;
  */
 class DeliveryService
 {
-    /** @var array|Delivery[] - кэш доставок с id в качестве ключа */
-    public static $deliveriesCached = [];
-    /** @var array|Shipment[] - кэш отправлений с id в качестве ключа */
-    public static $shipmentsCached = [];
-
     /**
      * Получить объект отправления по его id
      * @param  int  $deliveryId
@@ -38,19 +33,7 @@ class DeliveryService
      */
     public function getDelivery(int $deliveryId): ?Delivery
     {
-        if (!isset(static::$deliveriesCached[$deliveryId])) {
-            static::$deliveriesCached[$deliveryId] = Delivery::find($deliveryId);
-        }
-
-        return static::$deliveriesCached[$deliveryId];
-    }
-
-    /**
-     * @param  Delivery  $delivery
-     */
-    public function addDelivery2Cache(Delivery $delivery): void
-    {
-        static::$deliveriesCached[$delivery->id] = $delivery;
+        return Delivery::find($deliveryId);
     }
 
     /**
@@ -60,19 +43,7 @@ class DeliveryService
      */
     public function getShipment(int $shipmentId): ?Shipment
     {
-        if (!isset(static::$shipmentsCached[$shipmentId])) {
-            static::$shipmentsCached[$shipmentId] = Shipment::find($shipmentId);
-        }
-
-        return static::$shipmentsCached[$shipmentId];
-    }
-
-    /**
-     * @param  Shipment  $delivery
-     */
-    public function addShipment2Cache(Shipment $delivery): void
-    {
-        static::$shipmentsCached[$delivery->id] = $delivery;
+        return Shipment::find($shipmentId);
     }
 
     /**
@@ -84,7 +55,7 @@ class DeliveryService
     public function createShipmentPackage(int $shipmentId, int $packageId): ?ShipmentPackage
     {
         $shipment = $this->getShipment($shipmentId);
-        if (!$shipment) {
+        if (is_null($shipment)) {
             return null;
         }
 
@@ -174,7 +145,7 @@ class DeliveryService
     public function addShipment2Cargo(int $shipmentId): void
     {
         $shipment = $this->getShipment($shipmentId);
-        if (!$shipment) {
+        if (is_null($shipment)) {
             throw new Exception('Отправление не найдено');
         }
         if ($shipment->status != ShipmentStatus::STATUS_ASSEMBLED) {

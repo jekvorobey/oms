@@ -15,14 +15,6 @@ use App\Models\Payment\PaymentStatus;
  */
 class OrderService
 {
-    /** @var array|Order[] - кэш объектов заказов с id в качестве ключа */
-    public static $ordersCached = [];
-
-    public function createOrder(): Order
-    {
-        //todo
-    }
-
     /**
      * Получить объект заказа по его id
      * @param  int  $orderId
@@ -30,11 +22,7 @@ class OrderService
      */
     public function getOrder(int $orderId): ?Order
     {
-        if (!isset(static::$ordersCached[$orderId])) {
-            static::$ordersCached[$orderId] = Order::find($orderId);
-        }
-
-        return static::$ordersCached[$orderId];
+        return Order::find($orderId);
     }
 
     /**
