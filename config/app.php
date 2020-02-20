@@ -177,6 +177,7 @@ return [
         \Pim\PimLibServiceProvider::class,
         \Greensight\Store\StoreLibServiceProvider::class,
         \Greensight\Logistics\LogisticsLibServiceProvider::class,
+        \Greensight\Customer\CustomerLibServiceProvider::class,
         L5Swagger\L5SwaggerServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
