@@ -28,6 +28,94 @@ class DeliverySeeder extends Seeder
 {
     /** @var int */
     const FAKER_SEED = 123456;
+    /** @var array */
+    const REAL_ADDRESSES = [
+        [
+            'country_code' => 'RU',
+            'post_index' => '124482',
+            'region' => 'Москва',
+            'region_guid' => '0c5b2444-70a0-4932-980c-b4dc0d3f02b5',
+            'area' => '',
+            'area_guid' => '',
+            'city' => 'г Зеленоград',
+            'city_guid' => 'ec44c0ee-bf24-41c8-9e1c-76136ab05cbf',
+            'street' => '',
+            'house' => 'к 305',
+            'block' => '',
+            'flat' => 'офис 301',
+            'porch' => '',
+            'intercom' => '',
+            'comment' => '',
+        ],
+        [
+            'country_code' => 'RU',
+            'post_index' => '170034',
+            'region' => 'Тверская обл',
+            'region_guid' => '61723327-1c20-42fe-8dfa-402638d9b396',
+            'area' => '',
+            'area_guid' => '',
+            'city' => 'г Тверь',
+            'city_guid' => 'c52ea942-555e-45c6-9751-58897717b02f',
+            'street' => 'ул Дарвина',
+            'house' => 'д 1',
+            'block' => '',
+            'flat' => 'кв 1',
+            'porch' => '',
+            'intercom' => '',
+            'comment' => '',
+        ],
+        [
+            'country_code' => 'RU',
+            'post_index' => '141503',
+            'region' => 'Московская обл',
+            'region_guid' => '29251dcf-00a1-4e34-98d4-5c47484a36d4',
+            'area' => 'Солнечногорский р-н',
+            'area_guid' => '395203ad-a8a5-4708-944c-790ec93bf8a3',
+            'city' => 'г Солнечногорск',
+            'city_guid' => 'd4dadcfd-355d-4fe9-963d-48ad122a7778',
+            'street' => 'ул Красная',
+            'house' => 'д 120',
+            'block' => '',
+            'flat' => 'кв 23',
+            'porch' => '1',
+            'intercom' => '23',
+            'comment' => '',
+        ],
+        [
+            'country_code' => 'RU',
+            'post_index' => '141503',
+            'region' => 'Московская обл',
+            'region_guid' => '29251dcf-00a1-4e34-98d4-5c47484a36d4',
+            'area' => 'Солнечногорский р-н',
+            'area_guid' => '395203ad-a8a5-4708-944c-790ec93bf8a3',
+            'city' => 'г Солнечногорск',
+            'city_guid' => 'd4dadcfd-355d-4fe9-963d-48ad122a7778',
+            'street' => 'ул Красная',
+            'house' => 'д 120',
+            'block' => '',
+            'flat' => 'кв 23',
+            'porch' => '1',
+            'intercom' => '23',
+            'comment' => '',
+        ],
+        [
+            'country_code' => 'RU',
+            'post_index' => '420036',
+            'region' => 'Респ Татарстан',
+            'region_guid' => '0c089b04-099e-4e0e-955a-6bf1ce525f1a',
+            'area' => '',
+            'area_guid' => '',
+            'city' => 'г Казань',
+            'city_guid' => '93b3df57-4c89-44df-ac42-96f05e9cd3b9',
+            'street' => 'ул Ульяны Громовой',
+            'house' => 'д 3',
+            'block' => '',
+            'flat' => 'кв 12',
+            'porch' => '2',
+            'intercom' => '12',
+            'comment' => '',
+        ],
+    ];
 
     /**
      * @throws PimException
@@ -108,30 +196,7 @@ class DeliverySeeder extends Seeder
                 ) {
                     $delivery->point_id = $faker->randomElement($points[$delivery->delivery_service]->pluck('id')->toArray());
                 } else {
-                    $region = $faker->randomElement([
-                        'Москва г',
-                        'Московская обл',
-                        'Тверская обл',
-                        'Калужская обл',
-                        'Рязанская обл',
-                    ]);
-                    $delivery->delivery_address = [
-                        'country_code' => 'RU',
-                        'post_index' => $faker->postcode,
-                        'region' => $region,
-                        'region_guid' => $faker->uuid,
-                        'area' => '',
-                        'area_guid' => '',
-                        'city' => 'г. ' . $faker->city,
-                        'city_guid' => $faker->uuid,
-                        'street' => 'ул. ' . explode(' ', $faker->streetName)[0],
-                        'house' => 'д. ' . $faker->buildingNumber,
-                        'block' => '',
-                        'flat' => '',
-                        'porch' => '',
-                        'intercom' => '',
-                        'comment' => '',
-                    ];
+                    $delivery->delivery_address = $faker->randomElement(static::REAL_ADDRESSES);
                 }
                 $delivery->save();
     
