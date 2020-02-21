@@ -13,23 +13,27 @@ use Pim\Services\OfferService\OfferService;
 class OrderReader
 {
     const PAGE_SIZE = 10;
-    
+
     public function byId(int $id): ?Order
     {
         /** @var Order $order */
         $order = Order::query()->where('id', $id)->first();
         return $order;
     }
-    
+
     public function list(RestQuery $restQuery): Collection
     {
         $query = Order::query();
-        
+
         $this->addInclude($query, $restQuery);
         $this->addSelect($query, $restQuery);
         $this->addFilter($query, $restQuery);
         $this->addPagination($query, $restQuery);
-    
+
+        foreach ($restQuery->sortIterator() as [$field, $dir]) {
+            $query->orderBy($field, $dir);
+        }
+
         return $query->get();
     }
 
@@ -39,24 +43,24 @@ class OrderReader
             $query->with('deliveries.shipments.basketItems');
         }
     }
-    
+
     public function count(RestQuery $restQuery): array
     {
         $pagination = $restQuery->getPage();
         $pageSize = $pagination ? $pagination['limit'] : self::PAGE_SIZE;
-        
+
         $query = Order::query();
         $this->addFilter($query, $restQuery);
         $total = $query->count();
         $pages = ceil($total / $pageSize);
-        
+
         return [
             'total' => $total,
             'pages' => $pages,
             'pageSize' => $pageSize,
         ];
     }
-    
+
     /**
      * @param Builder $query
      * @param RestQuery $restQuery
@@ -66,7 +70,7 @@ class OrderReader
         if ($fields = $restQuery->getFields('order')) {
             $query->select($fields);
         }
-        
+
         if ($restQuery->isIncluded('basket') || $restQuery->isIncluded('basketitem')) {
             $query->with([
                 'basket' => function (Relation $query) use ($restQuery) {
@@ -90,7 +94,7 @@ class OrderReader
             ]);
         }
     }
-    
+
     /**
      * @param Builder $query
      * @param RestQuery $restQuery
@@ -108,16 +112,16 @@ class OrderReader
             $offerQuery->addFields(OfferDto::entity(), 'id')
                 ->setFilter('merchant_id', $op, $value);
             $offersIds = $offerService->offers($offerQuery)->pluck('id')->toArray();
-        
+
             $query->whereHas('basket', function (Builder $query) use ($offersIds) {
                 $query->whereHas('items', function (Builder $query) use ($offersIds) {
                     $query->whereIn('offer_id', $offersIds);
                 });
             });
-        
+
             $restQuery->removeFilter('merchant_id');
         }
-        
+
         foreach ($restQuery->filterIterator() as [$field, $op, $value]) {
             if ($op == '=' && is_array($value)) {
                 $query->whereIn($field, $value);
@@ -126,7 +130,7 @@ class OrderReader
             }
         }
     }
-    
+
     /**
      * @param Builder $query
      * @param RestQuery $restQuery
