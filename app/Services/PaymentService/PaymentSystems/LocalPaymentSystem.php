@@ -39,11 +39,11 @@ class LocalPaymentSystem implements PaymentSystemInterface
 
     /**
      * @param  Payment  $payment
-     * @return string
+     * @return string|null
      */
-    public function paymentLink(Payment $payment): string
+    public function paymentLink(Payment $payment): ?string
     {
-        return $payment->data['paymentLink'];
+        return $payment->data['paymentLink'] ?? null;
     }
 
     /**
