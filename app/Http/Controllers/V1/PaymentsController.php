@@ -4,12 +4,14 @@ namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\YandexPaymentSystem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -51,7 +53,15 @@ class PaymentsController extends Controller
         if (!$payment) {
             throw new NotFoundHttpException();
         }
-        $link = $paymentService->start($payment->id, $returnUrl);
+
+        if ($payment->status != PaymentStatus::NOT_PAID) {
+            throw new AccessDeniedHttpException();
+        }
+
+        $link = $payment->paymentSystem()->paymentLink($payment);
+        if (!$link) {
+            $link = $paymentService->start($payment->id, $returnUrl);
+        }
 
         return response()->json([
             'paymentLink' => $link
