@@ -25,11 +25,19 @@ class OrderReader
     {
         $query = Order::query();
         
+        $this->addInclude($query, $restQuery);
         $this->addSelect($query, $restQuery);
         $this->addFilter($query, $restQuery);
         $this->addPagination($query, $restQuery);
     
         return $query->get();
+    }
+
+    public function addInclude(Builder $query, RestQuery $restQuery): void
+    {
+        if ($restQuery->isIncluded('deliveries.shipments.basketItems')) {
+            $query->with('deliveries.shipments.basketItems');
+        }
     }
     
     public function count(RestQuery $restQuery): array
