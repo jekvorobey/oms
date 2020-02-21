@@ -141,15 +141,15 @@ class CargoExport extends Command
                     continue;
                 }
                 $deliveryCargoDto->date = $date->format('d.m.Y');
-                $deliveryCargoDto->time = $storePickupTimes[$dayOfWeek]->pickup_time;
+                $deliveryCargoDto->timeCode = $storePickupTimes[$dayOfWeek]->pickup_time_code;
+                $deliveryCargoDto->timeStart = $storePickupTimes[$dayOfWeek]->pickup_time_start;
+                $deliveryCargoDto->timeEnd = $storePickupTimes[$dayOfWeek]->pickup_time_end;
 
                 try {
-                    dump($courierCallInputDto);
                     $courierCallOutputDto = $courierCallService->createCourierCall(
                         $cargo->delivery_service,
                         $courierCallInputDto
                     );
-                    dump($courierCallOutputDto);
                     if ($courierCallOutputDto->success) {
                         $cargo->xml_id = $courierCallOutputDto->xml_id;
                         $cargo->status = CargoStatus::STATUS_REQUEST_SEND;
@@ -158,7 +158,6 @@ class CargoExport extends Command
                         break;
                     }
                 } catch (\Exception $e) {
-                    dump($e->getMessage());
                 }
             }
         }
