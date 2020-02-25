@@ -11,7 +11,15 @@ use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
 use Exception;
+use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
+use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
+use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
+use Greensight\Logistics\Services\CourierCallService\CourierCallService;
+use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\PackageService\PackageService;
+use Greensight\Store\Services\StoreService\StoreService;
+use Illuminate\Support\Collection;
+use MerchantManagement\Services\MerchantService\MerchantService;
 
 /**
  * Класс-бизнес логики по работе с сущностями доставки:
@@ -192,5 +200,128 @@ class DeliveryService
 
         $shipment->cargo_id = $cargo->id;
         $shipment->save();
+    }
+
+    /**
+     * Создать заявку на вызов курьера для забора груза
+     * @param  Cargo  $cargo
+     * @throws Exception
+     */
+    public function createCourierCall(Cargo $cargo): void
+    {
+        if ($cargo->status != CargoStatus::STATUS_CREATED) {
+            throw new Exception('Груз не в статусе "Создан"');
+        }
+        if ($cargo->xml_id) {
+            throw new Exception('Для груза уже создана заявка на вызов курьера с номером "' . $cargo->xml_id . '"');
+        }
+        if ($cargo->shipments->isEmpty()) {
+            throw new Exception('Груз не содержит отправлений');
+        }
+
+        /** @var StoreService $storeService */
+        $storeService = resolve(StoreService::class);
+        $storeQuery = $storeService->newQuery()
+            ->include('storeContact', 'storePickupTime');
+        $store = $storeService->store($cargo->store_id, $storeQuery);
+        if (is_null($store)) {
+            //todo Добавить оповещение о невыгруженном грузе
+            return;
+        }
+
+        /** @var MerchantService $merchantService */
+        $merchantService = resolve(MerchantService::class);
+        $merchant = $merchantService->merchant($store->merchant_id);
+
+        $courierCallInputDto = new CourierCallInputDto();
+
+        $senderDto = new SenderDto();
+        $courierCallInputDto->sender = $senderDto;
+        $senderDto->address_string = isset($store->address['address_string']) ? $store->address['address_string'] : '';
+        $senderDto->post_index = isset($store->address['post_index']) ? $store->address['post_index'] : '';
+        $senderDto->country_code = isset($store->address['country_code']) ? $store->address['country_code'] : '';
+        $senderDto->region = isset($store->address['region']) ? $store->address['region'] : '';
+        $senderDto->area = isset($store->address['area']) ? $store->address['area'] : '';
+        $senderDto->city = isset($store->address['city']) ? $store->address['city'] : '';
+        $senderDto->city_guid = isset($store->address['city_guid']) ? $store->address['city_guid'] : '';
+        $senderDto->street = isset($store->address['street']) ? $store->address['street'] : '';
+        $senderDto->house = isset($store->address['house']) ? $store->address['house'] : '';
+        $senderDto->block = isset($store->address['block']) ? $store->address['block'] : '';
+        $senderDto->flat = isset($store->address['flat']) ? $store->address['flat'] : '';
+        $senderDto->company_name = $merchant->legal_name;
+        $senderDto->contact_name = !is_null($store->storeContact()) ? $store->storeContact()[0]->name : '';
+        $senderDto->email = !is_null($store->storeContact()) ? $store->storeContact()[0]->email : '';
+        $senderDto->phone = !is_null($store->storeContact()) ? $store->storeContact()[0]->phone : '';
+
+        $deliveryCargoDto = new DeliveryCargoDto();
+        $courierCallInputDto->cargo = $deliveryCargoDto;
+        $deliveryCargoDto->weight = $cargo->weight;
+        $deliveryCargoDto->width = $cargo->width;
+        $deliveryCargoDto->height = $cargo->height;
+        $deliveryCargoDto->length = $cargo->length;
+        $orderIds = [];
+        foreach ($cargo->shipments as $shipment) {
+            if ($shipment->delivery->xml_id) {
+                $orderIds[] = $shipment->delivery->xml_id;
+            }
+        }
+        $deliveryCargoDto->order_ids = $orderIds;
+
+        /** @var CourierCallService $courierCallService */
+        $courierCallService = resolve(CourierCallService::class);
+
+        //Получаем доступные дни недели для отгрузки грузов курьерам службы доставки текущего груза
+        /** @var Collection|StorePickupTimeDto[] $storePickupTimes */
+        $storePickupTimes = collect();
+        if ($store->storePickupTime()) {
+            for ($day = 1; $day <= 7; $day++) {
+                /** @var StorePickupTimeDto $pickupTimeDto */
+                //Ищем время отгрузки с учетом службы доставки
+                $pickupTimeDto = $store->storePickupTime()->filter(function (StorePickupTimeDto $item) use (
+                    $day,
+                    $cargo
+                ) {
+                    return $item->day == $day &&
+                        $item->delivery_service == $cargo->delivery_service &&
+                        ($item->pickup_time_code || ($item->pickup_time_start && $item->pickup_time_end));
+                })->first();
+
+                if (!is_null($pickupTimeDto)) {
+                    $storePickupTimes->put($day, $pickupTimeDto);
+                }
+            }
+        }
+
+        $dayPlus = 0;
+        $date = new \DateTime();
+        while ($dayPlus <= 6) {
+            //Получаем номер дня недели (1 - понедельник, ..., 7 - воскресенье)
+            $dayOfWeek = $date->format('N');
+            if (!$storePickupTimes->has($dayOfWeek)) {
+                continue;
+            }
+            $deliveryCargoDto->date = $date->format('d.m.Y');
+            $deliveryCargoDto->timeCode = $storePickupTimes[$dayOfWeek]->pickup_time_code;
+            $deliveryCargoDto->timeStart = $storePickupTimes[$dayOfWeek]->pickup_time_start;
+            $deliveryCargoDto->timeEnd = $storePickupTimes[$dayOfWeek]->pickup_time_end;
+
+            try {
+                $courierCallOutputDto = $courierCallService->createCourierCall(
+                    $cargo->delivery_service,
+                    $courierCallInputDto
+                );
+                if ($courierCallOutputDto->success) {
+                    $cargo->xml_id = $courierCallOutputDto->xml_id;
+                    $cargo->status = CargoStatus::STATUS_REQUEST_SEND;
+
+                    $cargo->save();
+                    break;
+                }
+            } catch (\Exception $e) {
+            }
+
+            $date = $date->modify('+' . $dayPlus . 'day' . ($dayPlus > 1 ?  's': ''));
+            $dayPlus++;
+        }
     }
 }
