@@ -15,10 +15,13 @@ use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
 use Greensight\Logistics\Services\CourierCallService\CourierCallService;
+use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use MerchantManagement\Services\MerchantService\MerchantService;
 
 /**
@@ -52,6 +55,16 @@ class DeliveryService
     public function getShipment(int $shipmentId): ?Shipment
     {
         return Shipment::find($shipmentId);
+    }
+
+    /**
+     * Получить объект груза по его id
+     * @param  int  $cargoId
+     * @return Cargo|null
+     */
+    public function getCargo(int $cargoId): ?Cargo
+    {
+        return Cargo::find($cargoId);
     }
 
     /**
@@ -322,6 +335,89 @@ class DeliveryService
 
             $date = $date->modify('+' . $dayPlus . 'day' . ($dayPlus > 1 ?  's': ''));
             $dayPlus++;
+        }
+    }
+
+    /**
+     * Отменить груз (все отправления груза отвязываются от него!)
+     * @param  int  $cargoId
+     * @param  bool  $save
+     * @return bool
+     */
+    public function cancelCargo(int $cargoId, bool $save = true): bool
+    {
+        /** @var Cargo $cargo */
+        $cargo = Cargo::query()->where('id', $cargoId)->with('shipments')->first();
+        if (is_null($cargo)) {
+            return false;
+        }
+
+        $result = DB::transaction(function () use ($cargo, $save) {
+            $cargo->status = CargoStatus::STATUS_CANCEL;
+            if ($save) {
+                $cargo->save();
+            }
+
+            if ($cargo->shipments->isNotEmpty()) {
+                foreach ($cargo->shipments as $shipment) {
+                    $shipment->cargo_id = null;
+                    $shipment->save();
+                }
+            }
+
+            return true;
+        });
+
+        if ($result) {
+            $this->cancelCourierCall($cargo);
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Отменить заявку на вызов курьера для забора груза
+     * @param  Cargo  $cargo
+     */
+    protected function cancelCourierCall(Cargo $cargo): void
+    {
+        if ($cargo->xml_id) {
+            /** @var CourierCallService $courierCallService */
+            $courierCallService = resolve(CourierCallService::class);
+            $courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
+        }
+    }
+
+    public function updateDeliveryStatusFromDeliveryService(): void
+    {
+        $deliveries = Delivery::deliveriesAtWork();
+
+        if ($deliveries->isNotEmpty()) {
+            /** @var DeliveryOrderService $deliveryOrderService */
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
+
+            $deliveriesByService = $deliveries->groupBy('delivery_service');
+            foreach ($deliveriesByService as $deliveryServiceId => $items) {
+                try {
+                    /** @var Collection|Delivery[] $items */
+                    $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders($deliveryServiceId,
+                        $items->pluck('xml_id')->all());
+                    foreach ($deliveryOrderStatusDtos as $deliveryOrderStatusDto) {
+                        if ($deliveries->has($deliveryOrderStatusDto->number)) {
+                            $delivery = $deliveries[$deliveryOrderStatusDto->number];
+                            if ($deliveryOrderStatusDto->success) {
+                                $delivery->status = $deliveryOrderStatusDto->status;
+                                $delivery->status_xml_id = $deliveryOrderStatusDto->status_xml_id;
+                                $delivery->status_xml_id_at = new Carbon($deliveryOrderStatusDto->status_date);
+                                $delivery->save();
+                            }
+                        }
+                    }
+                } catch (\Exception $e) {
+                }
+            }
         }
     }
 }

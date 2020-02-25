@@ -227,7 +227,6 @@ class Delivery extends OmsModel
                 DeliveryOrderStatus::STATUS_LOST,
                 DeliveryOrderStatus::STATUS_CANCEL,
             ])
-            ->get()
-            ->keyBy('number');
+            ->get();
     }
 }
