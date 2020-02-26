@@ -310,9 +310,12 @@ class DeliveryService
         while ($dayPlus <= 6) {
             //Получаем номер дня недели (1 - понедельник, ..., 7 - воскресенье)
             $dayOfWeek = $date->format('N');
+            $date = $date->modify('+' . $dayPlus . 'day' . ($dayPlus > 1 ?  's': ''));
+            $dayPlus++;
             if (!$storePickupTimes->has($dayOfWeek)) {
                 continue;
             }
+
             $deliveryCargoDto->date = $date->format('d.m.Y');
             $deliveryCargoDto->timeCode = $storePickupTimes[$dayOfWeek]->pickup_time_code;
             $deliveryCargoDto->timeStart = $storePickupTimes[$dayOfWeek]->pickup_time_start;
@@ -332,9 +335,6 @@ class DeliveryService
                 }
             } catch (\Exception $e) {
             }
-
-            $date = $date->modify('+' . $dayPlus . 'day' . ($dayPlus > 1 ?  's': ''));
-            $dayPlus++;
         }
     }
 
