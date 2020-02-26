@@ -14,7 +14,7 @@ class CancelExpiredOrders extends Command
     /** @var string */
     protected $signature = 'order:cancel_expired';
     /** @var string */
-    protected $description = 'Отменить заказы у которых истёк срок оплаты неоплаченных оплат';
+    protected $description = 'Отменить заказы, у которых истёк срок оплаты неоплаченных оплат';
 
     /**
      * @param  PaymentService  $paymentService
