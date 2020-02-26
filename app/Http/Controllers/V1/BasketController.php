@@ -4,8 +4,8 @@ namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Basket\Basket;
-use App\Models\Basket\BasketItem;
-use App\Models\Order\Order;
+use App\Services\BasketService;
+use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -39,16 +39,16 @@ class BasketController extends Controller
      * )
      * @param int $customerId
      * @param Request $request
+     * @param BasketService $basketService
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getCurrentBasket(int $customerId, Request $request): JsonResponse
+    public function getCurrentBasket(int $customerId, Request $request, BasketService $basketService): JsonResponse
     {
         $data = $this->validate($request, [
             'type' => 'required|integer'
         ]);
     
-        /** @var Basket $basket */
-        $basket = Basket::findFreeUserBasket($data['type'], $customerId);
+        $basket = $basketService->findFreeUserBasket($data['type'], $customerId);
         $response = [
             'id' => $basket->id,
         ];
@@ -63,48 +63,51 @@ class BasketController extends Controller
      * @param int $basketId
      * @param int $offerId
      * @param Request $request
+     * @param BasketService $basketService
      * @return JsonResponse
      * @throws \Exception
      */
-    public function setItemByBasket(int $basketId, int $offerId, Request $request): JsonResponse
+    public function setItemByBasket(int $basketId, int $offerId, Request $request, BasketService $basketService): JsonResponse
     {
-        /** @var Basket $basket */
-        $basket = Basket::find($basketId);
+        $basket = $basketService->getBasket($basketId);
         if (!$basket) {
             throw new NotFoundHttpException('basket not found');
         }
         
-        return $this->setItem($basket, $offerId, $request);
+        return $this->setItem($basketId, $offerId, $request);
     }
     
     /**
-     * @param int $id
+     * @param int $orderId
      * @param int $offerId
      * @param Request $request
+     * @param OrderService $orderService
      * @return JsonResponse
      * @throws \Exception
      */
-    public function setItemByOrder(int $id, int $offerId, Request $request): JsonResponse
+    public function setItemByOrder(int $orderId, int $offerId, Request $request, OrderService $orderService): JsonResponse
     {
-        /** @var Order $order */
-        $order = Order::find($id);
+        $order = $orderService->getOrder($orderId);
         if (!$order) {
             throw new NotFoundHttpException('order not found');
         }
-        $basket = $order->getOrCreateBasket();
         
-        return $this->setItem($basket, $offerId, $request);
+        return $this->setItem($order->basket_id, $offerId, $request);
     }
     
     /**
-     * @param Basket $basket
+     * @param int $basketId
      * @param int $offerId
      * @param Request $request
+     *
      * @return JsonResponse
      * @throws \Exception
      */
-    protected function setItem(Basket $basket, int $offerId, Request $request): JsonResponse
+    protected function setItem(int $basketId, int $offerId, Request $request): JsonResponse
     {
+        /** @var BasketService $basketService */
+        $basketService = resolve(BasketService::class);
+
         $data = $request->all();
         $validator = Validator::make($data, [
             'qty' => 'integer',
@@ -112,13 +115,13 @@ class BasketController extends Controller
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
         }
-        $ok = $basket->setItem($offerId, $data);
+        $ok = $basketService->setItem($basketId, $offerId, $data);
         if (!$ok) {
             throw new HttpException(500, 'unable to save basket item');
         }
         $response = [];
         if ($request->get('items')) {
-            $response['items'] = $this->getItems($basket);
+            $response['items'] = $this->getItems($basketService->getBasket($basketId));
         }
         
         return response()->json($response);
@@ -127,12 +130,12 @@ class BasketController extends Controller
     /**
      * @param int $basketId
      * @param Request $request
+     * @param BasketService $basketService
      * @return JsonResponse
      */
-    public function getBasket(int $basketId, Request $request): JsonResponse
+    public function getBasket(int $basketId, Request $request, BasketService $basketService): JsonResponse
     {
-        /** @var Basket $basket */
-        $basket = Basket::find($basketId);
+        $basket = $basketService->getBasket($basketId);
         $response = [
             'id' => $basket->id,
         ];
@@ -145,22 +148,26 @@ class BasketController extends Controller
     
     /**
      * @param int $basketId
+     * @param BasketService $basketService
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      * @throws \Exception
      */
-    public function dropBasket(int $basketId): Response
+    public function dropBasket(int $basketId, BasketService $basketService): Response
     {
-        /** @var Basket $basket */
-        $basket = Basket::find($basketId);
-        $ok = $basket->delete();
-        if (!$ok) {
+        if (!$basketService->deleteBasket($basketId)) {
             throw new HttpException(500, 'unable to delete basket');
         }
         
         return response('', 204);
     }
-    
-    public function commitItemsPrice(int $basketId, Request $request)
+
+    /**
+     * @param  int  $basketId
+     * @param  Request  $request
+     * @param BasketService $basketService
+     * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
+     */
+    public function commitItemsPrice(int $basketId, Request $request, BasketService $basketService): Response
     {
         $data = $this->validate($request, [
             'items' => 'required|array',
@@ -169,8 +176,8 @@ class BasketController extends Controller
             'items.*.cost' => 'required|numeric',
             'items.*.price' => 'required|numeric',
         ]);
-        /** @var Basket $basket */
-        $basket = Basket::find($basketId);
+        //todo Скорее всего надо перенести код ниже в BasketService
+        $basket = $basketService->getBasket($basketId);
         $priceMap = [];
         foreach ($data['items'] as $dataItem) {
             $priceMap[$dataItem['offerId']] = $dataItem;

@@ -52,7 +52,7 @@ class Orders extends Migration
             // prices & marketing
             // полная стоимость заказанных товаров
             $table->decimal('cost', 18, 4)->default(0.0);
-            // итоговая стоимость заказа совсем скидками и доставкой
+            // итоговая стоимость заказа со всеми скидками и доставкой
             $table->decimal('price', 18, 4)->default(0.0);
             $table->decimal('delivery_cost', 18, 4)->default(0.0);
 
@@ -209,7 +209,6 @@ class Orders extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('shipment_id')->unsigned();
             $table->bigInteger('package_id')->unsigned();
-            $table->tinyInteger('status', false, true)->default(1);
 
             $table->decimal('width', 18, 4);
             $table->decimal('height', 18, 4);

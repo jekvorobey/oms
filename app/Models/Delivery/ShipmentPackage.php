@@ -14,7 +14,6 @@ use Illuminate\Support\Collection;
  *
  * @property int $shipment_id
  * @property int $package_id
- * @property int $status
  *
  * @property float $width
  * @property float $height

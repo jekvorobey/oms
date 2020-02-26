@@ -6,7 +6,8 @@ use App\Models\Delivery\DeliveryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
 use App\Models\Order\OrderStatus;
-use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Customer\Dto\CustomerDto;
+use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Store\Dto\StockDto;
 use Greensight\Store\Services\StockService\StockService;
 use Illuminate\Database\Seeder;
@@ -35,13 +36,19 @@ class OrdersSeeder extends Seeder
     {
         $faker = Faker\Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
+
+        /** @var CustomerService $customerService */
+        $customerService = resolve(CustomerService::class);
+        $restQuery = $customerService->newQuery();
+        $restQuery->addFields(CustomerDto::entity(), 'id', 'user_id');
+        $customers = $customerService->customers($restQuery)->keyBy('id');
     
         /** @var Collection|Basket[] $baskets */
         $baskets = collect();
         for ($i = 0; $i < self::ORDERS_COUNT; $i++) {
             $basket = new Basket();
             $basket->type = Basket::TYPE_PRODUCT;
-            $basket->customer_id = $this->customerId($faker);
+            $basket->customer_id = $faker->randomElement($customers->pluck('id')->all());
             if ($basket->save()) {
                 $baskets->push($basket);
             }
@@ -56,6 +63,7 @@ class OrdersSeeder extends Seeder
         /** @var StockService $stockService */
         $stockService = resolve(StockService::class);
         $stocks = collect();
+        /** @var Collection|OfferDto[] $chunkedOffers */
         foreach ($offers->chunk(50) as $chunkedOffers) {
             $restQuery = $stockService->newQuery();
             $restQuery->addFields(StockDto::entity(), 'store_id', 'offer_id')
@@ -79,7 +87,7 @@ class OrdersSeeder extends Seeder
 
         foreach ($baskets as $basket) {
             /** @var Collection|OfferDto[] $basketOffers */
-            $basketOffers = $offers->random(rand(3, 5));
+            $basketOffers = $offers->random($faker->randomFloat(0, 3, 5));
 
             foreach ($basketOffers as $basketOffer) {
                 if (!$stocks->has($basketOffer->id)) {
@@ -114,9 +122,9 @@ class OrdersSeeder extends Seeder
         foreach ($baskets as $basket) {
             $order = new Order();
             $order->basket_id = $basket->id;
-            $order->customer_id = $this->customerId($faker);
-            $order->number = 'IBT' . $faker->dateTimeThisYear()->format('Ymdhis');
-            $order->status = $faker->randomElement(OrderStatus::validValues());
+            $order->customer_id = $basket->customer_id;
+            $order->number = Order::makeNumber($order->customer_id);
+            $order->setStatus($faker->randomElement(OrderStatus::validValues()));
             $order->created_at = $faker->dateTimeThisYear();
             $order->manager_comment = $faker->realText();
 
@@ -138,14 +146,5 @@ class OrdersSeeder extends Seeder
                 $comment->save();
             }
         }
-    }
-
-    /**
-     * @param  \Faker\Generator  $faker
-     * @return int
-     */
-    protected function customerId(Faker\Generator $faker): int
-    {
-        return $faker->randomElement([1, 2, 3, 4, 5]);
     }
 }

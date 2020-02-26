@@ -3,14 +3,16 @@
 namespace App\Observers\Delivery;
 
 use App\Models\Delivery\Cargo;
-use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
+use App\Services\DeliveryService;
+use App\Services\OrderService;
 use Exception;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
+use Greensight\Logistics\Dto\Lists\ShipmentMethod;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderCostDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderInputDto;
@@ -88,15 +90,6 @@ class ShipmentObserver
     }
     
     /**
-     * Handle the shipment "saving" event.
-     * @param  Shipment  $shipment
-     */
-    public function saving(Shipment $shipment)
-    {
-        $this->add2Cargo($shipment);
-    }
-    
-    /**
      * Handle the shipment "saved" event.
      * @param  Shipment $shipment
      * @throws Exception
@@ -108,6 +101,7 @@ class ShipmentObserver
         $this->markOrderAsProblem($shipment);
         $this->markOrderAsNonProblem($shipment);
         $this->upsertDeliveryOrder($shipment);
+        $this->add2Cargo($shipment);
         $this->add2CargoHistory($shipment);
     }
     
@@ -121,20 +115,10 @@ class ShipmentObserver
         if ($shipment->status != $shipment->getOriginal('status') &&
             $shipment->status == ShipmentStatus::STATUS_ASSEMBLED
         ) {
-            $shipment->load('items.basketItem', 'packages.items');
-        
-            $shipmentItems = [];
-            foreach ($shipment->items as $shipmentItem) {
-                $shipmentItems[$shipmentItem->basket_item_id] = $shipmentItem->basketItem->qty;
-            }
-        
-            foreach ($shipment->packages as $package) {
-                foreach ($package->items as $packageItem) {
-                    $shipmentItems[$packageItem->basket_item_id] -= $packageItem->qty;
-                }
-            }
-        
-            return empty(array_filter($shipmentItems));
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+
+            return $deliveryService->checkAllShipmentProductsPacked($shipment->id);
         }
         
         return true;
@@ -196,9 +180,9 @@ class ShipmentObserver
     {
         if ($shipment->status != $shipment->getOriginal('status') &&
             in_array($shipment->status, [ShipmentStatus::STATUS_ASSEMBLING_PROBLEM, ShipmentStatus::STATUS_TIMEOUT])) {
-            $order = $shipment->delivery->order;
-            $order->is_problem = true;
-            $order->save();
+            /** @var OrderService $orderService */
+            $orderService = resolve(OrderService::class);
+            $orderService->markAsProblem($shipment->delivery->order_id);
         }
     }
     
@@ -210,21 +194,9 @@ class ShipmentObserver
     {
         if ($shipment->status != $shipment->getOriginal('status') &&
             $shipment->getOriginal('status') == ShipmentStatus::STATUS_ASSEMBLING_PROBLEM) {
-            $order = $shipment->delivery->order;
-            $isAllShipmentsOk = true;
-            foreach ($order->deliveries as $delivery) {
-                foreach ($delivery->shipments as $shipment) {
-                    if (in_array($shipment->status, [
-                        ShipmentStatus::STATUS_ASSEMBLING_PROBLEM, ShipmentStatus::STATUS_TIMEOUT
-                    ])) {
-                        $isAllShipmentsOk = false;
-                        break 2;
-                    }
-                }
-            }
-        
-            $order->is_problem = !$isAllShipmentsOk;
-            $order->save();
+            /** @var OrderService $orderService */
+            $orderService = resolve(OrderService::class);
+            $orderService->markAsNonProblem($shipment->delivery->order_id);
         }
     }
     
@@ -252,6 +224,7 @@ class ShipmentObserver
             }
             
             try {
+                //todo Перенести кож ниже в \App\Services\DeliveryService
                 $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
                 /** @var DeliveryOrderService $deliveryOrderService */
                 $deliveryOrderService = resolve(DeliveryOrderService::class);
@@ -281,6 +254,7 @@ class ShipmentObserver
      */
     protected function formDeliveryOrder(Delivery $delivery): DeliveryOrderInputDto
     {
+        //todo Перенести в \App\Services\DeliveryService
         $delivery->load(['order', 'shipments.packages.items.basketItem']);
         $deliveryOrderInputDto = new DeliveryOrderInputDto();
         
@@ -291,7 +265,7 @@ class ShipmentObserver
         $deliveryOrderDto->height = $delivery->height;
         $deliveryOrderDto->length = $delivery->length;
         $deliveryOrderDto->width = $delivery->width;
-        $deliveryOrderDto->pickup_type = 1; //todo указано жестко, т.к. не понятно кто будет доставлять заказ от мерчанта до РЦ на нулевой миле
+        $deliveryOrderDto->shipment_method = ShipmentMethod::METHOD_DS_COURIER;
         $deliveryOrderDto->delivery_method = $delivery->delivery_method;
         $deliveryOrderDto->tariff_id = $delivery->tariff_id;
         $deliveryOrderDto->delivery_date = $delivery->delivery_at;
@@ -409,44 +383,11 @@ class ShipmentObserver
      */
     protected function add2Cargo(Shipment $shipment): void
     {
-        if (!$shipment->cargo_id &&
-            $shipment->status == ShipmentStatus::STATUS_ASSEMBLED
-        ) {
-            /**
-             * Если у отправления указана служба доставки на нулевой миле, то используем её для груза.
-             * Иначе для груза используем службы доставки для доставки, к которой принадлежит отправление
-             */
-            $deliveryService = $shipment->delivery_service_zero_mile;
-            if (!$deliveryService) {
-                $shipment->load('delivery');
-                $deliveryService = $shipment->delivery->delivery_service;
-            }
-            
-            $cargoQuery = Cargo::query()
-                ->select('id')
-                ->where('merchant_id', $shipment->merchant_id)
-                ->where('store_id', $shipment->store_id)
-                ->where('delivery_service', $deliveryService)
-                ->where('status', CargoStatus::STATUS_CREATED)
-                ->orderBy('created_at', 'desc');
-            if ($shipment->getOriginal('cargo_id')) {
-                $cargoQuery->where('id', '!=', $shipment->getOriginal('cargo_id'));
-            }
-            $cargo = $cargoQuery->first();
-            if (is_null($cargo)) {
-                $cargo = new Cargo();
-                $cargo->merchant_id = $shipment->merchant_id;
-                $cargo->store_id = $shipment->store_id;
-                $cargo->delivery_service = $deliveryService;
-                $cargo->status = CargoStatus::STATUS_CREATED;
-                $cargo->width = 0;
-                $cargo->height = 0;
-                $cargo->length = 0;
-                $cargo->weight = 0;
-                $cargo->save();
-            }
-            
-            $shipment->cargo_id = $cargo->id;
+        try {
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+            $deliveryService->addShipment2Cargo($shipment->id);
+        } catch (Exception $e) {
         }
     }
     

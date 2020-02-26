@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Core\Payment;
+namespace App\Services\PaymentService\PaymentSystems;
 
 use App\Models\Basket\Basket;
 use App\Models\Payment\Payment;
@@ -11,11 +11,15 @@ use YandexCheckout\Model\Notification\NotificationWaitingForCapture;
 use YandexCheckout\Model\NotificationEventType;
 use YandexCheckout\Model\PaymentStatus;
 
+/**
+ * Class YandexPaymentSystem
+ * @package App\Services\PaymentService\PaymentSystems
+ */
 class YandexPaymentSystem implements PaymentSystemInterface
 {
     /** @var Client */
     private $yandexService;
-    
+
     /**
      * YandexPaymentSystem constructor.
      */
@@ -23,12 +27,24 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         $this->yandexService = resolve(Client::class);
     }
-    
+
+    /**
+     * @param  Payment  $payment
+     * @param  string  $returnLink
+     * @throws \YandexCheckout\Common\Exceptions\ApiException
+     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
+     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
+     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
+     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
+     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
+     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
+     */
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
         $order = $payment->order;
         $idempotenceKey = uniqid('', true);
-        
+
         $response = $this->yandexService->createPayment([
             'amount' => [
                 'value' => number_format($order->price, 2, '.', ''),
@@ -49,15 +65,19 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'items' => $this->generateItems($order->basket),
             ],
         ], $idempotenceKey);
-    
+
         $data = $payment->data;
         $data['externalPaymentId'] = $response['id'];
         $data['paymentUrl'] = $response['confirmation']['confirmation_url'];
         $payment->data = $data;
-        
+
         $payment->save();
     }
-    
+
+    /**
+     * @param  Basket  $basket
+     * @return array
+     */
     protected function generateItems(Basket $basket)
     {
         $items = [];
@@ -74,39 +94,47 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 "payment_subject" => "commodity"
             ];
         }
-    
+
         return $items;
     }
-    
+
     /**
      * Получить от внешней системы ссылку страницы оплаты.
      *
      * @param Payment $payment
-     * @return string
+     * @return string|null
      */
-    public function paymentLink(Payment $payment): string
+    public function paymentLink(Payment $payment): ?string
     {
         return $payment->data['paymentUrl'];
     }
-    
+
     /**
      * Обработать данные от платёжной ситсемы о совершении платежа.
-     *
-     * @param array $data
-     * @return bool
+     * @param  array  $data
+     * @return void
+     * @throws \YandexCheckout\Common\Exceptions\ApiException
+     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
+     * @throws \YandexCheckout\Common\Exceptions\ExtensionNotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
+     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
+     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
+     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
+     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
      */
     public function handlePushPayment(array $data): void
     {
         $notification = ($data['event'] === NotificationEventType::PAYMENT_SUCCEEDED)
             ? new NotificationSucceeded($data)
             : new NotificationWaitingForCapture($data);
-    
+
         $payment = $this->yandexService->getPaymentInfo($notification->getObject()->getId());
         /** @var Payment $localPayment */
         $localPayment = Payment::query()
             ->where('data->externalPaymentId', $payment->id)
             ->firstOrFail();
-        
+
         switch ($payment->getStatus()) {
             case PaymentStatus::WAITING_FOR_CAPTURE:
                 $this->capturePayment($payment, $localPayment);
@@ -116,7 +144,19 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 break;
         }
     }
-    
+
+    /**
+     * @param  \YandexCheckout\Model\PaymentInterface  $payment
+     * @param  Payment  $localPayment
+     * @throws \YandexCheckout\Common\Exceptions\ApiException
+     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
+     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
+     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
+     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
+     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
+     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
+     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
+     */
     protected function capturePayment(\YandexCheckout\Model\PaymentInterface $payment, Payment $localPayment): void
     {
         $this->yandexService->capturePayment(
@@ -135,14 +175,18 @@ class YandexPaymentSystem implements PaymentSystemInterface
             uniqid('', true)
         );
     }
-    
+
+    /**
+     * @param  \YandexCheckout\Model\PaymentInterface  $payment
+     * @param  Payment  $localPayment
+     */
     protected function succeededPayment(\YandexCheckout\Model\PaymentInterface $payment, Payment $localPayment)
     {
-        $localPayment->status = \App\Models\Payment\PaymentStatus::STATUS_DONE;
+        $localPayment->status = \App\Models\Payment\PaymentStatus::PAID;
         $localPayment->payed_at = Carbon::now();
         $localPayment->save();
     }
-    
+
     /**
      * Время в часах, в течение которого можно совершить платёж после его создания.
      * Если за эт овремя платёж не совершён - заказ отменяется.

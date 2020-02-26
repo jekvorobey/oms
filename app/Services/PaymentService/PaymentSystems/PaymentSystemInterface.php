@@ -1,11 +1,13 @@
 <?php
 
-
-namespace App\Core\Payment;
-
+namespace App\Services\PaymentService\PaymentSystems;
 
 use App\Models\Payment\Payment;
 
+/**
+ * Interface PaymentSystemInterface
+ * @package App\Services\PaymentService\PaymentSystems
+ */
 interface PaymentSystemInterface
 {
     /**
@@ -20,9 +22,9 @@ interface PaymentSystemInterface
      * Получить от внешней системы ссылку страницы оплаты.
      *
      * @param Payment $payment
-     * @return string
+     * @return string|null
      */
-    public function paymentLink(Payment $payment): string;
+    public function paymentLink(Payment $payment): ?string;
 
     /**
      * Обработать данные от платёжной ситсемы о совершении платежа.
@@ -30,7 +32,7 @@ interface PaymentSystemInterface
      * @param array $data
      */
     public function handlePushPayment(array $data): void;
-    
+
     /**
      * Время в часах, в течение которого можно совершить платёж после его создания.
      * Если за эт овремя платёж не совершён - заказ отменяется.

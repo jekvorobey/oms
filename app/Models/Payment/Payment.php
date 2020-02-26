@@ -2,14 +2,13 @@
 
 namespace App\Models\Payment;
 
-use App\Core\Payment\LocalPaymentSystem;
-use App\Core\Payment\PaymentSystemInterface;
-use App\Core\Payment\YandexPaymentSystem;
 use App\Models\OmsModel;
 use App\Models\Order\Order;
+use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
+use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
+use App\Services\PaymentService\PaymentSystems\YandexPaymentSystem;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Collection;
 
 /**
  * Class Payment
@@ -28,37 +27,20 @@ use Illuminate\Support\Collection;
  */
 class Payment extends OmsModel
 {
+    /** @var bool */
     public $timestamps = false;
+    /** @var bool */
     protected static $unguarded = true;
 
+    /** @var array */
     protected $dates = ['created_at', 'payed_at', 'expires_at'];
+    /** @var array */
     protected $casts = ['data' => 'array'];
 
     /**
-     * Получить оплату по id
-     *
-     * @param int $id
-     * @return Payment|null
+     * Payment constructor.
+     * @param  array  $attributes
      */
-    public static function findById(int $id): ?Payment
-    {
-        /** @var Payment $payment */
-        $payment = Payment::query()->where('id', $id)->first();
-        return $payment;
-    }
-
-    /**
-     * Получить список просроченных оплат.
-     *
-     * @return Collection|Payment[]
-     */
-    public static function expiredPayments(): Collection
-    {
-        return Payment::query()->where('status', PaymentStatus::STATUS_STARTED)
-            ->where('expires_at', '<', Carbon::now()->format('Y-m-d H:i:s'))
-            ->get(['id', 'order_id']);
-    }
-
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -71,34 +53,8 @@ class Payment extends OmsModel
     }
 
     /**
-     * Начать оплату.
-     * Переводит оплату в статус PaymentStatus::STARTED, задаёт время когда оплата станет просроченной,
-     * и создаёт оплату во внешней системе оплаты.
-     *
-     * @param Payment $payment
-     * @param string $returnUrl
-     * @return string адрес страницы оплаты во внешней системе
+     * @return PaymentSystemInterface|null
      */
-    public function start(string $returnUrl)
-    {
-        $paymentSystem = $this->paymentSystem();
-        $this->status = PaymentStatus::STATUS_STARTED;
-        $hours = $paymentSystem->duration();
-        if ($hours) {
-            $this->expires_at = Carbon::now()->addHours($hours);
-        }
-        $this->save();
-        $paymentSystem->createExternalPayment($this, $returnUrl);
-
-        return $paymentSystem->paymentLink($this);
-    }
-
-    public function timeout(): void
-    {
-        $this->status = PaymentStatus::STATUS_TIMEOUT;
-        $this->save();
-    }
-
     public function paymentSystem(): ?PaymentSystemInterface
     {
         switch ($this->payment_system) {
@@ -108,6 +64,9 @@ class Payment extends OmsModel
         return null;
     }
 
+    /**
+     * @return BelongsTo
+     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

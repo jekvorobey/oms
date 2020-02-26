@@ -5,6 +5,7 @@ namespace App\Observers\Payment;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Payment\Payment;
+use App\Services\OrderService;
 
 /**
  * Class PaymentObserver
@@ -40,7 +41,9 @@ class PaymentObserver
     public function saved(Payment $payment)
     {
         if ($payment->getOriginal('status') != $payment->status) {
-            $payment->order->refreshPaymentStatus();
+            /** @var OrderService $orderService */
+            $orderService = resolve(OrderService::class);
+            $orderService->refreshPaymentStatus($payment->order->id);
         }
     }
     
