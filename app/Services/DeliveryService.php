@@ -96,6 +96,25 @@ class DeliveryService
     }
 
     /**
+     * Удалить коробку отправления со всем её содержимым
+     * @param  int  $shipmentPackageId
+     * @return bool
+     */
+    public function deleteShipmentPackage(int $shipmentPackageId): bool
+    {
+        /** @var ShipmentPackage $shipmentPackage */
+        $shipmentPackage = ShipmentPackage::query()->where('id', $shipmentPackageId)->with('items')->first();
+
+        return DB::transaction(function () use ($shipmentPackage) {
+            foreach ($shipmentPackage->items as $item) {
+                $item->delete();
+            }
+
+            return $shipmentPackage->delete();
+        });
+    }
+
+    /**
      * Добавить/обновить/удалить элемент (собранный товар с одного склада одного мерчанта) коробки отправления
      * @param  int  $shipmentPackageId
      * @param  int  $basketItemId

@@ -7,7 +7,6 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Services\DeliveryService;
-use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
 use Greensight\CommonMsa\Rest\Controller\UpdateAction;
 use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
@@ -34,9 +33,6 @@ class ShipmentPackagesController extends Controller
     }
     use UpdateAction {
         update as updateTrait;
-    }
-    use DeleteAction {
-        delete as deleteTrait;
     }
     
     /**
@@ -99,10 +95,9 @@ class ShipmentPackagesController extends Controller
      * Подсчитать кол-во коробок отправления
      * @param int $shipmentId
      * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return \Illuminate\Http\JsonResponse
      */
-    public function countByShipment(int $shipmentId, Request $request, RequestInitiator $client): JsonResponse
+    public function countByShipment(int $shipmentId, Request $request): JsonResponse
     {
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelClass();
@@ -190,12 +185,10 @@ class ShipmentPackagesController extends Controller
      * Список коробок отправления
      * @param  int  $shipmentId
      * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return JsonResponse
      */
-    public function readByShipment(int $shipmentId, Request $request, RequestInitiator $client): JsonResponse
+    public function readByShipment(int $shipmentId, Request $request): JsonResponse
     {
-        //todo Проверка прав
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelClass();
         $restQuery = new RestQuery($request);
@@ -247,10 +240,10 @@ class ShipmentPackagesController extends Controller
     }
     
     /**
-     * Удалить коробку отправления
+     * Удалить коробку отправления со всем её содержимым
      * @param  int  $id
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
-     * @throws \Exception
+     * @param DeliveryService $deliveryService
+     * @return Response
      *
      * @OA\Delete(
      *     path="/api/v1/shipment-packages/{id}",
@@ -264,19 +257,27 @@ class ShipmentPackagesController extends Controller
      *     ),
      * )
      */
-    public function delete(int $id, RequestInitiator $client): Response
+    public function delete(int $id, DeliveryService $deliveryService): Response
     {
-        return $this->deleteTrait($id, $client);
+        try {
+            $ok = $deliveryService->deleteShipmentPackage($id);
+            if (!$ok) {
+                throw new HttpException(500);
+            }
+
+            return response('', 204);
+        } catch (\Exception $e) {
+            throw new HttpException(500, $e->getMessage());
+        }
     }
     
     /**
      * Подсчитать кол-во элементов (товаров с одного склада одного мерчанта) коробки отправления
      * @param  int  $shipmentPackageId
      * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return JsonResponse
      */
-    public function countItems(int $shipmentPackageId, Request $request, RequestInitiator $client): JsonResponse
+    public function countItems(int $shipmentPackageId, Request $request): JsonResponse
     {
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelItemsClass();
@@ -302,10 +303,9 @@ class ShipmentPackagesController extends Controller
      * Список элементов (товаров с одного склада одного мерчанта) отправления
      * @param  int  $shipmentPackageId
      * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return JsonResponse
      */
-    public function readItems(int $shipmentPackageId, Request $request, RequestInitiator $client): JsonResponse
+    public function readItems(int $shipmentPackageId, Request $request): JsonResponse
     {
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelItemsClass();
@@ -333,12 +333,10 @@ class ShipmentPackagesController extends Controller
      * @param  int  $shipmentPackageId
      * @param  int  $basketItemId
      * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return JsonResponse
      */
-    public function readItem(int $shipmentPackageId, int $basketItemId, Request $request, RequestInitiator $client): JsonResponse
+    public function readItem(int $shipmentPackageId, int $basketItemId, Request $request): JsonResponse
     {
-        //todo Проверка прав
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelItemsClass();
         $restQuery = new RestQuery($request);
