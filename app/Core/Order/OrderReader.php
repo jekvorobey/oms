@@ -42,6 +42,9 @@ class OrderReader
         if ($restQuery->isIncluded('deliveries.shipments.basketItems')) {
             $query->with('deliveries.shipments.basketItems');
         }
+        if ($restQuery->isIncluded('deliveries.shipments.packages')) {
+            $query->with('deliveries.shipments.packages');
+        }
     }
 
     public function count(RestQuery $restQuery): array
