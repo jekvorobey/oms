@@ -10,6 +10,7 @@ use App\Models\OmsModel;
 use App\Models\Payment\Payment;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -32,11 +33,15 @@ use Illuminate\Support\Collection;
  * @property string $delivery_comment - комментарий к доставке
  *
  * @property int $status - статус
- * @property \Illuminate\Support\Carbon|null $status_at - дата установки статуса заказа
+ * @property Carbon|null $status_at - дата установки статуса заказа
  * @property int $payment_status - статус оплаты
- * @property \Illuminate\Support\Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property Carbon|null $payment_status_at - дата установки статуса оплаты
  * @property int $is_problem - флаг, что заказ проблемный
- * @property \Illuminate\Support\Carbon|null $is_problem_at - дата установки флага проблемного заказа
+ * @property Carbon|null $is_problem_at - дата установки флага проблемного заказа
+ * @property int $is_canceled - флаг, что заказ отменен
+ * @property Carbon|null $is_canceled_at - дата установки флага отмены заказа
+ * @property int $is_require_check - флаг, что заказ требует проверки
+ * @property Carbon|null $is_require_check_at - дата установки флага, что заказ требует проверки
  * @property string $manager_comment - комментарий менеджера
  *
  * @property string $number - номер
