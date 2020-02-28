@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
 /**
+ * Разовая команда!
  * Class ShipmentCostRecalc
  * @package App\Console\Commands
  */

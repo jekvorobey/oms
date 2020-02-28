@@ -5,7 +5,6 @@ namespace App\Core\Notifications;
 use App\Models\History\HistoryType;
 use App\Models\OmsModel;
 use App\Models\Order\Order;
-use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 use Greensight\Message\Dto\Notification\NotificationDto;
 
@@ -50,7 +49,7 @@ class OrderNotification extends AbstractNotification implements NotificationInte
                     $notification->setPayloadField('title', "Оплачен заказ");
                     $notification->setPayloadField('body', "Заказ {$order->number} оплачен");
                 }
-                if($order->status == OrderStatus::STATUS_CANCEL) {
+                if($order->is_canceled) {
                     $notification->type = NotificationDto::TYPE_ORDER_CANCEL;
                     $notification->setPayloadField('title', "Отмена заказа");
                     $notification->setPayloadField('body', "Заказ {$order->number} был отменён");

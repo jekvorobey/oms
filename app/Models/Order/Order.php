@@ -41,7 +41,6 @@ use Illuminate\Support\Collection;
  * @property int $is_canceled - флаг, что заказ отменен
  * @property Carbon|null $is_canceled_at - дата установки флага отмены заказа
  * @property int $is_require_check - флаг, что заказ требует проверки
- * @property Carbon|null $is_require_check_at - дата установки флага, что заказ требует проверки
  * @property string $manager_comment - комментарий менеджера
  *
  * @property string $number - номер

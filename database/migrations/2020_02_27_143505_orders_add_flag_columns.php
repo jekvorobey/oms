@@ -17,7 +17,6 @@ class OrdersAddFlagColumns extends Migration
             $table->boolean('is_canceled')->default(false)->after('is_problem_at');
             $table->dateTime('is_canceled_at')->nullable()->after('is_canceled');
             $table->boolean('is_require_check')->default(false)->after('is_canceled_at');
-            $table->dateTime('is_require_check_at')->nullable()->after('is_require_check');
         });
     }
 
@@ -32,7 +31,6 @@ class OrdersAddFlagColumns extends Migration
             $table->dropColumn('is_canceled');
             $table->dropColumn('is_canceled_at');
             $table->dropColumn('is_require_check');
-            $table->dropColumn('is_require_check_at');
         });
     }
 }

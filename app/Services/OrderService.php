@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Basket\Basket;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
-use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 
 /**
@@ -80,7 +79,8 @@ class OrderService
             return false;
         }
 
-        $order->setStatus(OrderStatus::STATUS_CANCEL);
+        $order->is_canceled = true;
+        $order->is_canceled_at = now();
 
         return $save ? $order->save() : true;
     }
