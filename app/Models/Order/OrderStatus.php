@@ -20,15 +20,15 @@ class OrderStatus
     /** @var int - передан на доставку */
     public const TRANSFERRED_TO_DELIVERY = 5;
     /** @var int - в процессе доставки */
-    public const DELIVERING = 5;
+    public const DELIVERING = 6;
     /** @var int - находится в Пункте Выдачи */
-    public const READY_FOR_RECIPIENT = 6;
+    public const READY_FOR_RECIPIENT = 7;
     /** @var int - доставлен */
-    public const DONE = 7;
+    public const DONE = 8;
     /** @var int - возвращен */
-    public const RETURNED = 8;
+    public const RETURNED = 9;
     /** @var int - предзаказ: ожидаем поступления товара */
-    public const PRE_ORDER = 9;
+    public const PRE_ORDER = 10;
 
     /** @var int */
     public $id;
