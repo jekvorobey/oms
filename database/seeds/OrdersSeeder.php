@@ -6,6 +6,7 @@ use App\Models\Delivery\DeliveryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
 use App\Models\Order\OrderStatus;
+use App\Services\OrderService;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Store\Dto\StockDto;
@@ -36,6 +37,9 @@ class OrdersSeeder extends Seeder
     {
         $faker = Faker\Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
+
+        /** @var OrderService $orderService */
+        $orderService = resolve(OrderService::class);
 
         /** @var CustomerService $customerService */
         $customerService = resolve(CustomerService::class);
@@ -133,12 +137,18 @@ class OrdersSeeder extends Seeder
             $order->delivery_cost = $faker->randomFloat(2, 0, 500);
             $order->cost = $faker->randomFloat(2, 100, 500);
             $order->price = $order->cost + $order->delivery_cost;
+
+            $order->is_require_check = $faker->boolean();
             
             $order->save();
             $basket->is_belongs_to_order = true;
             $basket->save();
 
-            if (rand(0,1)) {
+            if ($faker->boolean()) {
+                $orderService->cancel($order->id);
+            }
+
+            if ($faker->boolean()) {
                 $comment = new OrderComment();
                 $comment->order_id = $order->id;
                 $comment->text = $faker->text(100);
