@@ -88,9 +88,6 @@ class BasketItem extends OmsModel
     public function setDataByType(): void
     {
         if($this->type == Basket::TYPE_PRODUCT) {
-            if (isset($this->product['store_id'])) {
-                return;
-            }
             /** @var OfferService $offerService */
             $offerService = resolve(OfferService::class);
             $offerInfo = $offerService->offerInfo($this->offer_id);
@@ -98,13 +95,17 @@ class BasketItem extends OmsModel
                 throw new BadRequestHttpException('offer without stocks');
             }
             $this->name = $offerInfo->name;
-            $this->product = [
-                'store_id' => $offerInfo->store_id,
+            $this->product = array_merge($this->product, [
                 'weight' => $offerInfo->weight,
                 'width' => $offerInfo->width,
                 'height' => $offerInfo->height,
                 'length' => $offerInfo->length,
-            ];
+            ]);
+            if (!isset($this->product['store_id'])) {
+                $product = $this->product;
+                $product['store_id'] = $offerInfo->store_id;
+                $this->product = $product;
+            }
         } else {
             throw new Exception('Masterclass type is not supported yet...');
         }
