@@ -112,8 +112,8 @@ class BasketService
             if (isset($data['qty']) && $data['qty'] > 0) {
                 $item->qty = $data['qty'];
             }
-            $item->setDataByType();
             $item->fill($data);
+            $item->setDataByType();
             $ok = $item->save();
         }
 

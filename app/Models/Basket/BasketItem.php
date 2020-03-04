@@ -95,12 +95,12 @@ class BasketItem extends OmsModel
                 throw new BadRequestHttpException('offer without stocks');
             }
             $this->name = $offerInfo->name;
-            $this->product = [
+            $this->product = array_merge($this->product, [
                 'weight' => $offerInfo->weight,
                 'width' => $offerInfo->width,
                 'height' => $offerInfo->height,
                 'length' => $offerInfo->length,
-            ];
+            ]);
             if (!isset($this->product['store_id'])) {
                 $product = $this->product;
                 $product['store_id'] = $offerInfo->store_id;
