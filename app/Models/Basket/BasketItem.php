@@ -102,7 +102,9 @@ class BasketItem extends OmsModel
                 'length' => $offerInfo->length,
             ];
             if (!isset($this->product['store_id'])) {
-                $this->product['store_id'] = $offerInfo->store_id;
+                $product = $this->product;
+                $product['store_id'] = $offerInfo->store_id;
+                $this->product = $product;
             }
         } else {
             throw new Exception('Masterclass type is not supported yet...');
