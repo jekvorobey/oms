@@ -111,6 +111,8 @@ class BasketController extends Controller
         $data = $request->all();
         $validator = Validator::make($data, [
             'qty' => 'integer',
+            'product' => 'array',
+            'product.store_id' => 'integer'
         ]);
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
