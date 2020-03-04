@@ -106,7 +106,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
      */
     public function paymentLink(Payment $payment): ?string
     {
-        return $payment->data['paymentUrl'];
+        return $payment->data['paymentUrl'] ?? null;
     }
 
     /**
