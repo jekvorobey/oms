@@ -115,6 +115,18 @@ class Delivery extends OmsModel
     }
 
     /**
+     * @param $value
+     */
+    protected function setDeliveryAddressAttribute($value)
+    {
+        $value = (array)$value;
+        foreach ($value as &$item) {
+            $item = (string)$item;
+        }
+        $this->attributes['delivery_address'] = json_encode($value);
+    }
+
+    /**
      * Установить статус доставки (без сохранения!)
      * @param  int  $status
      * @param  bool  $save
