@@ -564,12 +564,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-cm-lib.git",
-                "reference": "0ab8ae4c5a7993d29bda3acd68ed5aa42a50a413"
+                "reference": "c96b0377e8e516720bbdbd180b4b17018e8410e4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cm-lib/repository/archive.zip?sha=0ab8ae4c5a7993d29bda3acd68ed5aa42a50a413",
-                "reference": "0ab8ae4c5a7993d29bda3acd68ed5aa42a50a413",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cm-lib/repository/archive.zip?sha=c96b0377e8e516720bbdbd180b4b17018e8410e4",
+                "reference": "c96b0377e8e516720bbdbd180b4b17018e8410e4",
                 "shasum": ""
             },
             "require": {
@@ -604,7 +604,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2020-02-28T10:03:55+00:00"
+            "time": "2020-03-05T13:21:23+00:00"
         },
         {
             "name": "greensight/ibt-common-lib",
@@ -669,12 +669,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-logistics-lib.git",
-                "reference": "586088d3a10e604c0f1f022137889888c545dc04"
+                "reference": "cddb112f19df9c96bd1cece78282e57cf078364e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=586088d3a10e604c0f1f022137889888c545dc04",
-                "reference": "586088d3a10e604c0f1f022137889888c545dc04",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=cddb112f19df9c96bd1cece78282e57cf078364e",
+                "reference": "cddb112f19df9c96bd1cece78282e57cf078364e",
                 "shasum": ""
             },
             "require": {
@@ -709,7 +709,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2020-02-28T12:38:09+00:00"
+            "time": "2020-03-06T09:54:47+00:00"
         },
         {
             "name": "greensight/ibt-merchant-management-lib",
@@ -802,12 +802,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-pim-lib.git",
-                "reference": "a850de4f758f21e073e0a39ec73a0402644e3803"
+                "reference": "ddf7468e8a37610af706749b9d63215630ba9d41"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=a850de4f758f21e073e0a39ec73a0402644e3803",
-                "reference": "a850de4f758f21e073e0a39ec73a0402644e3803",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=ddf7468e8a37610af706749b9d63215630ba9d41",
+                "reference": "ddf7468e8a37610af706749b9d63215630ba9d41",
                 "shasum": ""
             },
             "require": {
@@ -831,7 +831,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2020-03-03T06:50:35+00:00"
+            "time": "2020-03-05T14:22:13+00:00"
         },
         {
             "name": "greensight/ibt-store-lib",
@@ -4571,29 +4571,27 @@
         },
         {
             "name": "guidocella/eloquent-populator",
-            "version": "v2.1.7",
+            "version": "v2.1.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guidocella/eloquent-populator.git",
-                "reference": "4f049b8fbb99aa1c7751a70442bb9ed860b8a69e"
+                "reference": "31b4b32e18716164855e0bbbf696753bd47040c1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guidocella/eloquent-populator/zipball/4f049b8fbb99aa1c7751a70442bb9ed860b8a69e",
-                "reference": "4f049b8fbb99aa1c7751a70442bb9ed860b8a69e",
+                "url": "https://api.github.com/repos/guidocella/eloquent-populator/zipball/31b4b32e18716164855e0bbbf696753bd47040c1",
+                "reference": "31b4b32e18716164855e0bbbf696753bd47040c1",
                 "shasum": ""
             },
             "require": {
                 "doctrine/dbal": "^2.5",
                 "fzaninotto/faker": "^1.4",
-                "illuminate/database": "^5.3||^6",
+                "illuminate/database": "^5.3||^6||^7",
                 "php": ">=5.6.4"
             },
             "require-dev": {
-                "dimsav/laravel-translatable": "^6",
-                "laravel/laravel": "^6",
-                "phpunit/phpunit": "^8",
-                "themsaid/laravel-multilingual": "^1"
+                "laravel/laravel": "^7",
+                "phpunit/phpunit": "^8"
             },
             "type": "library",
             "autoload": {
@@ -4615,7 +4613,7 @@
                 "faker",
                 "laravel"
             ],
-            "time": "2019-09-03T14:33:44+00:00"
+            "time": "2020-03-04T21:01:10+00:00"
         },
         {
             "name": "hamcrest/hamcrest-php",
@@ -4880,18 +4878,18 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "role": "Developer",
-                    "email": "arne@blankerts.de"
+                    "email": "arne@blankerts.de",
+                    "role": "Developer"
                 },
                 {
                     "name": "Sebastian Heuer",
-                    "role": "Developer",
-                    "email": "sebastian@phpeople.de"
+                    "email": "sebastian@phpeople.de",
+                    "role": "Developer"
                 },
                 {
                     "name": "Sebastian Bergmann",
-                    "role": "Developer",
-                    "email": "sebastian@phpunit.de"
+                    "email": "sebastian@phpunit.de",
+                    "role": "Developer"
                 }
             ],
             "description": "Component for reading phar.io manifest information from a PHP Archive (PHAR)",
@@ -4927,18 +4925,18 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "role": "Developer",
-                    "email": "arne@blankerts.de"
+                    "email": "arne@blankerts.de",
+                    "role": "Developer"
                 },
                 {
                     "name": "Sebastian Heuer",
-                    "role": "Developer",
-                    "email": "sebastian@phpeople.de"
+                    "email": "sebastian@phpeople.de",
+                    "role": "Developer"
                 },
                 {
                     "name": "Sebastian Bergmann",
-                    "role": "Developer",
-                    "email": "sebastian@phpunit.de"
+                    "email": "sebastian@phpunit.de",
+                    "role": "Developer"
                 }
             ],
             "description": "Library for handling version information and constraints",
@@ -5097,16 +5095,16 @@
         },
         {
             "name": "phpspec/prophecy",
-            "version": "v1.10.2",
+            "version": "v1.10.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpspec/prophecy.git",
-                "reference": "b4400efc9d206e83138e2bb97ed7f5b14b831cd9"
+                "reference": "451c3cd1418cf640de218914901e51b064abb093"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/b4400efc9d206e83138e2bb97ed7f5b14b831cd9",
-                "reference": "b4400efc9d206e83138e2bb97ed7f5b14b831cd9",
+                "url": "https://api.github.com/repos/phpspec/prophecy/zipball/451c3cd1418cf640de218914901e51b064abb093",
+                "reference": "451c3cd1418cf640de218914901e51b064abb093",
                 "shasum": ""
             },
             "require": {
@@ -5156,7 +5154,7 @@
                 "spy",
                 "stub"
             ],
-            "time": "2020-01-20T15:57:02+00:00"
+            "time": "2020-03-05T15:02:03+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -5259,8 +5257,8 @@
             "authors": [
                 {
                     "name": "Sebastian Bergmann",
-                    "role": "lead",
-                    "email": "sebastian@phpunit.de"
+                    "email": "sebastian@phpunit.de",
+                    "role": "lead"
                 }
             ],
             "description": "FilterIterator implementation that filters files based on a list of suffixes.",
@@ -5301,8 +5299,8 @@
             "authors": [
                 {
                     "name": "Sebastian Bergmann",
-                    "role": "lead",
-                    "email": "sebastian@phpunit.de"
+                    "email": "sebastian@phpunit.de",
+                    "role": "lead"
                 }
             ],
             "description": "Simple template engine.",
@@ -5350,8 +5348,8 @@
             "authors": [
                 {
                     "name": "Sebastian Bergmann",
-                    "role": "lead",
-                    "email": "sebastian@phpunit.de"
+                    "email": "sebastian@phpunit.de",
+                    "role": "lead"
                 }
             ],
             "description": "Utility class for timing",
@@ -6052,8 +6050,8 @@
             "authors": [
                 {
                     "name": "Sebastian Bergmann",
-                    "role": "lead",
-                    "email": "sebastian@phpunit.de"
+                    "email": "sebastian@phpunit.de",
+                    "role": "lead"
                 }
             ],
             "description": "Library that helps with managing the version number of Git-hosted PHP projects",
@@ -6093,8 +6091,8 @@
             "authors": [
                 {
                     "name": "Arne Blankerts",
-                    "role": "Developer",
-                    "email": "arne@blankerts.de"
+                    "email": "arne@blankerts.de",
+                    "role": "Developer"
                 }
             ],
             "description": "A small library for converting tokenized PHP source code into XML and potentially other formats",
