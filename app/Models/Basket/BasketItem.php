@@ -24,6 +24,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @property float|null $price - цена элемента корзины со скидкой (cost - discount)
  * @property float|null $discount - скидка элемента корзины (offerDiscount * qty)
  * @property float|null $cost - стоимость элемента корзины без скидок (offerCost * qty)
+ * @property int|null $referrer_id - ID РП, по чьей ссылке товар был добавлен в корзину
  * @property array $product - данные зависящие от типа товара
  *
  * @property-read Basket $basket
@@ -65,7 +66,7 @@ class BasketItem extends OmsModel
     {
         return $this->belongsTo(Basket::class);
     }
-    
+
     /**
      * @return HasOne
      */
@@ -73,7 +74,7 @@ class BasketItem extends OmsModel
     {
         return $this->hasOne(ShipmentItem::class);
     }
-    
+
     /**
      * @return HasOne
      */

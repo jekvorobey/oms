@@ -112,6 +112,9 @@ class BasketService
             if (isset($data['qty']) && $data['qty'] > 0) {
                 $item->qty = $data['qty'];
             }
+            if (array_key_exists('referrer_id', $data) && !$data['referrer_id']) {
+                unset($data['referrer_id']);
+            }
             $item->fill($data);
             $item->setDataByType();
             $ok = $item->save();
