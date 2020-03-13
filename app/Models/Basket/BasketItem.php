@@ -84,15 +84,17 @@ class BasketItem extends OmsModel
     }
 
     /**
+     * @param array $data
      * @throws Exception
      */
-    public function setDataByType(): void
+    public function setDataByType(array $data = []): void
     {
         if($this->type == Basket::TYPE_PRODUCT) {
             /** @var OfferService $offerService */
             $offerService = resolve(OfferService::class);
             $offerInfo = $offerService->offerInfo($this->offer_id);
-            if (!$offerInfo->store_id) {
+            $offerStocks = $offerInfo->stocks->keyBy('store_id');
+            if ((isset($data['product']['store_id']) && (!$offerStocks->has($data['product']['store_id']) || $offerStocks[$data['product']['store_id']]->qty <= 0)) || $offerStocks->isEmpty()) {
                 throw new BadRequestHttpException('offer without stocks');
             }
             $this->name = $offerInfo->name;
