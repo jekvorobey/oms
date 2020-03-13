@@ -84,13 +84,13 @@ class Shipment extends OmsModel
     protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems'];
 
     /**
-     * @param  string  $deliveryNumber - номер доставки
+     * @param  int  $orderNumber - порядковый номер заказа
      * @param  int  $i - порядковый номер отправления в заказе
      * @return string
      */
-    public static function makeNumber(string $deliveryNumber, int $i): string
+    public static function makeNumber(int $orderNumber, int $i): string
     {
-        return $deliveryNumber . '/' . $i;
+        return $orderNumber . '-' . $i;
     }
 
     /**

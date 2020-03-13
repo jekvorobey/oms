@@ -80,15 +80,14 @@ class Order extends OmsModel
     ];
 
     /**
-     * @param $customerId
-     * @return string
+     * @return integer
      */
-    public static function makeNumber($customerId): string
+    public static function makeNumber(): int
     {
-        $ordersCount = self::query()->where('customer_id', $customerId)->count('id');
-        return $customerId . '-' . ($ordersCount + 1);
+        $ordersCount = self::all()->last()->id+1000000;
+        return (int)$ordersCount + 1;
     }
-    
+
     /**
      * @return HasOne
      */
@@ -96,7 +95,7 @@ class Order extends OmsModel
     {
         return $this->hasOne(Basket::class, 'id', 'basket_id');
     }
-    
+
     /**
      * @return HasMany
      */
@@ -104,7 +103,7 @@ class Order extends OmsModel
     {
         return $this->hasMany(Payment::class);
     }
-    
+
     /**
      * @return HasMany
      */
@@ -112,7 +111,7 @@ class Order extends OmsModel
     {
         return $this->hasMany(Delivery::class);
     }
-    
+
     /**
      * @return HasOne
      */
@@ -146,7 +145,7 @@ class Order extends OmsModel
 
         return $this;
     }
-    
+
     /**
      * @todo брать почту пользователя оформившего заказ
      * @return string
