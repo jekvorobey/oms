@@ -116,7 +116,7 @@ class BasketService
                 unset($data['referrer_id']);
             }
             $item->fill($data);
-            $item->setDataByType();
+            $item->setDataByType($data);
             $ok = $item->save();
         }
 
