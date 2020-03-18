@@ -7,13 +7,13 @@ use App\Core\Order\OrderWriter;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Order\Order;
-use App\Models\Order\OrderStatus;
 use App\Models\Order\OrderComment;
+use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use Carbon\Carbon;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
-use Greensight\Logistics\Dto\Lists\DeliveryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -51,7 +51,7 @@ class OrdersController extends Controller
     public function read(Request $request): JsonResponse
     {
         $reader = new OrderReader();
-        
+
         return response()->json([
             'items' => $reader->list(new RestQuery($request)),
         ]);
@@ -76,7 +76,7 @@ class OrdersController extends Controller
     public function count(Request $request): JsonResponse
     {
         $reader = new OrderReader();
-        
+
         return response()->json($reader->count(new RestQuery($request)));
     }
 
@@ -156,20 +156,20 @@ class OrdersController extends Controller
         $validator = Validator::make($data, [
             'basket_id' => 'required|integer',
             'customer_id' => 'required|integer',
-            
+
             'cost' => 'required|numeric',
             'price' => 'required|numeric',
-            
+
             'spent_bonus' => 'required|integer',
             'added_bonus' => 'required|integer',
             'promocode' => 'nullable|string',
             'certificate' => 'nullable|integer',
-    
+
             'delivery_type' => ['required', Rule::in(DeliveryType::validValues())],
             'delivery_method' => ['required', Rule::in(array_keys(DeliveryMethod::allMethods()))],
             'delivery_address' => ['nullable', 'array'],
             'delivery_comment' => ['nullable', 'string'],
-            
+
             'receiver_name' => ['nullable', 'string'],
             'receiver_phone' => ['nullable', 'string'],
             'receiver_email' => ['nullable', 'string', 'email'],
@@ -276,7 +276,7 @@ class OrdersController extends Controller
         if (!$ok) {
             throw new HttpException(500, 'unable to save order');
         }
-        
+
         return response('', 204);
     }
 
@@ -312,6 +312,47 @@ class OrdersController extends Controller
         }
 
         return response('', 204);
+    }
+
+    public function doneReferral()
+    {
+        $data = $this->validate(request(), [
+            'date_from' => 'nullable|integer',
+            'date_to' => 'nullable|integer',
+        ]);
+
+        $builder = Order::query()->where('status', OrderStatus::DONE);
+
+        if (isset($data['date_from'])) {
+            $builder->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+        }
+
+        if (isset($data['date_to'])) {
+            $builder->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
+        }
+
+        $orders = $builder->with(['basket.items'])->get();
+
+        return response()->json([
+            'items' => $orders->map(function (Order $order) {
+                $items = [];
+                foreach ($order->basket->items as $item) {
+                    $items[] = [
+                        'name' => $item->name,
+                        'qty' => $item->qty,
+                        'price' => $item->price,
+                        'referrer_id' => $item->referrer_id,
+                    ];
+                }
+
+                return [
+                    'customer_id' => $order->customer_id,
+                    'created_at' => $order->created_at->format('Y-m-d H:i:s'),
+                    'number' => $order->number,
+                    'items' => $items,
+                ];
+            }),
+        ]);
     }
 }
 

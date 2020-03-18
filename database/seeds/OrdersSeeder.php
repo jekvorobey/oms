@@ -46,7 +46,7 @@ class OrdersSeeder extends Seeder
         $restQuery = $customerService->newQuery();
         $restQuery->addFields(CustomerDto::entity(), 'id', 'user_id');
         $customers = $customerService->customers($restQuery)->keyBy('id');
-    
+
         /** @var Collection|Basket[] $baskets */
         $baskets = collect();
         for ($i = 0; $i < self::ORDERS_COUNT; $i++) {
@@ -63,7 +63,7 @@ class OrdersSeeder extends Seeder
         $restQuery = $offerService->newQuery();
         $restQuery->addFields(OfferDto::entity(), 'id', 'product_id');
         $offers = $offerService->offers($restQuery);
-    
+
         /** @var StockService $stockService */
         $stockService = resolve(StockService::class);
         $stocks = collect();
@@ -74,7 +74,7 @@ class OrdersSeeder extends Seeder
                 ->setFilter('offer_id', $chunkedOffers->pluck('id')->toArray());
             /** @var Collection|StockDto[] $stocks */
             $chunkedStocks = $stockService->stocks($restQuery)->groupBy('offer_id');
-            
+
             //Мержим коллекции $stocks и $chunkedStocks, метод $stocks->merge() не работает для многомерных коллекций
             foreach ($chunkedStocks as $key => $stock) {
                 $stocks->put($key, $stock);
@@ -102,7 +102,7 @@ class OrdersSeeder extends Seeder
                 /** @var StockDto $offerStock */
                 $offerStock = $offerStocks->random();
                 $product = $products[$basketOffer->product_id];
-                
+
                 $basketItem = new BasketItem();
                 $basketItem->type = Basket::TYPE_PRODUCT;
                 $basketItem->basket_id = $basket->id;
@@ -127,19 +127,19 @@ class OrdersSeeder extends Seeder
             $order = new Order();
             $order->basket_id = $basket->id;
             $order->customer_id = $basket->customer_id;
-            $order->number = Order::makeNumber($order->customer_id);
+            $order->number = Order::makeNumber();
             $order->setStatus($faker->randomElement(OrderStatus::validValues()));
             $order->created_at = $faker->dateTimeThisYear();
             $order->manager_comment = $faker->realText();
 
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
-            
+
             $order->delivery_cost = $faker->randomFloat(2, 0, 500);
             $order->cost = $faker->randomFloat(2, 100, 500);
             $order->price = $order->cost + $order->delivery_cost;
 
             $order->is_require_check = $faker->boolean();
-            
+
             $order->save();
             $basket->is_belongs_to_order = true;
             $basket->save();

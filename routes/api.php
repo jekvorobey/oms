@@ -34,6 +34,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('count', 'OrdersExportController@count');
             Route::get('', 'OrdersExportController@read');
         });
+        Route::prefix('done')->group(function () {
+            Route::get('referral', 'OrdersController@doneReferral');
+        });
 
         Route::get('count', 'OrdersController@count');
         Route::prefix('{id}')->group(function () {

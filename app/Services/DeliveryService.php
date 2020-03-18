@@ -336,9 +336,9 @@ class DeliveryService
             }
 
             $deliveryCargoDto->date = $date->format('d.m.Y');
-            $deliveryCargoDto->timeCode = $storePickupTimes[$dayOfWeek]->pickup_time_code;
-            $deliveryCargoDto->timeStart = $storePickupTimes[$dayOfWeek]->pickup_time_start;
-            $deliveryCargoDto->timeEnd = $storePickupTimes[$dayOfWeek]->pickup_time_end;
+            $deliveryCargoDto->time_code = $storePickupTimes[$dayOfWeek]->pickup_time_code;
+            $deliveryCargoDto->time_start = $storePickupTimes[$dayOfWeek]->pickup_time_start;
+            $deliveryCargoDto->time_end = $storePickupTimes[$dayOfWeek]->pickup_time_end;
 
             try {
                 $courierCallOutputDto = $courierCallService->createCourierCall(

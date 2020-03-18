@@ -24,6 +24,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @property float|null $price - цена элемента корзины со скидкой (cost - discount)
  * @property float|null $discount - скидка элемента корзины (offerDiscount * qty)
  * @property float|null $cost - стоимость элемента корзины без скидок (offerCost * qty)
+ * @property int|null $referrer_id - ID РП, по чьей ссылке товар был добавлен в корзину
  * @property array $product - данные зависящие от типа товара
  *
  * @property-read Basket $basket
@@ -65,7 +66,7 @@ class BasketItem extends OmsModel
     {
         return $this->belongsTo(Basket::class);
     }
-    
+
     /**
      * @return HasOne
      */
@@ -73,7 +74,7 @@ class BasketItem extends OmsModel
     {
         return $this->hasOne(ShipmentItem::class);
     }
-    
+
     /**
      * @return HasOne
      */
@@ -83,15 +84,17 @@ class BasketItem extends OmsModel
     }
 
     /**
+     * @param array $data
      * @throws Exception
      */
-    public function setDataByType(): void
+    public function setDataByType(array $data = []): void
     {
         if($this->type == Basket::TYPE_PRODUCT) {
             /** @var OfferService $offerService */
             $offerService = resolve(OfferService::class);
             $offerInfo = $offerService->offerInfo($this->offer_id);
-            if (!$offerInfo->store_id) {
+            $offerStocks = $offerInfo->stocks->keyBy('store_id');
+            if ((isset($data['product']['store_id']) && (!$offerStocks->has($data['product']['store_id']) || $offerStocks[$data['product']['store_id']]->qty <= 0)) || $offerStocks->isEmpty()) {
                 throw new BadRequestHttpException('offer without stocks');
             }
             $this->name = $offerInfo->name;

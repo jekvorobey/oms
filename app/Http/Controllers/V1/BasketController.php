@@ -47,7 +47,7 @@ class BasketController extends Controller
         $data = $this->validate($request, [
             'type' => 'required|integer'
         ]);
-    
+
         $basket = $basketService->findFreeUserBasket($data['type'], $customerId);
         $response = [
             'id' => $basket->id,
@@ -55,10 +55,10 @@ class BasketController extends Controller
         if ($request->get('items')) {
             $response['items'] = $this->getItems($basket);
         }
-    
+
         return response()->json($response);
     }
-    
+
     /**
      * @param int $basketId
      * @param int $offerId
@@ -73,10 +73,10 @@ class BasketController extends Controller
         if (!$basket) {
             throw new NotFoundHttpException('basket not found');
         }
-        
+
         return $this->setItem($basketId, $offerId, $request);
     }
-    
+
     /**
      * @param int $orderId
      * @param int $offerId
@@ -91,10 +91,10 @@ class BasketController extends Controller
         if (!$order) {
             throw new NotFoundHttpException('order not found');
         }
-        
+
         return $this->setItem($order->basket_id, $offerId, $request);
     }
-    
+
     /**
      * @param int $basketId
      * @param int $offerId
@@ -110,6 +110,7 @@ class BasketController extends Controller
 
         $data = $request->all();
         $validator = Validator::make($data, [
+            'referrer_id' => 'nullable|integer',
             'qty' => 'integer',
             'product' => 'array',
             'product.store_id' => 'integer'
@@ -125,10 +126,10 @@ class BasketController extends Controller
         if ($request->get('items')) {
             $response['items'] = $this->getItems($basketService->getBasket($basketId));
         }
-        
+
         return response()->json($response);
     }
-    
+
     /**
      * @param int $basketId
      * @param Request $request
@@ -144,10 +145,10 @@ class BasketController extends Controller
         if ($request->get('items')) {
             $response['items'] = $this->getItems($basket);
         }
-        
+
         return response()->json($response);
     }
-    
+
     /**
      * @param int $basketId
      * @param BasketService $basketService
@@ -159,7 +160,7 @@ class BasketController extends Controller
         if (!$basketService->deleteBasket($basketId)) {
             throw new HttpException(500, 'unable to delete basket');
         }
-        
+
         return response('', 204);
     }
 
@@ -197,10 +198,10 @@ class BasketController extends Controller
             $item->discount = $cost - $price;
             $item->save();
         }
-        
+
         return response('', 204);
     }
-    
+
     /**
      * @param Basket $basket
      * @return array

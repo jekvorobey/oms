@@ -120,7 +120,7 @@ class CheckoutOrder
     {
         $order = new Order();
         $order->customer_id = $this->customerId;
-        $order->number = Order::makeNumber($this->customerId);
+        $order->number = Order::makeNumber();
         $order->basket_id = $this->basketId;
         $order->cost = $this->cost;
         $order->price = $this->price;
@@ -171,8 +171,7 @@ class CheckoutOrder
                 $shipment->merchant_id = $checkoutShipment->merchantId;
                 $shipment->required_shipping_at = Carbon::now()->addDays(5);
                 $shipment->store_id = $checkoutShipment->storeId;
-                $shipment->number = Shipment::makeNumber($delivery->number, $shipmentNumber++);
-
+                $shipment->number = Shipment::makeNumber($order->number, $shipmentNumber++);
                 $shipment->save();
 
                 foreach ($checkoutShipment->items as $offerId) {
