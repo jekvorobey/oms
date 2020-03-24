@@ -338,6 +338,7 @@ class OrdersController extends Controller
                 $items = [];
                 foreach ($order->basket->items as $item) {
                     $items[] = [
+                        'offer_id' => $item->offer_id,
                         'name' => $item->name,
                         'qty' => $item->qty,
                         'price' => $item->price,
