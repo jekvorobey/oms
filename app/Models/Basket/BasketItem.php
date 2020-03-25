@@ -106,7 +106,7 @@ class BasketItem extends OmsModel
             ]);
             if (!isset($this->product['store_id'])) {
                 $product = $this->product;
-                $product['store_id'] = $offerInfo->store_id;
+                $product['store_id'] = $offerInfo->stocks->sortBy('qty')[0]->store_id;
                 $this->product = $product;
             }
         } else {
