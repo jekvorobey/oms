@@ -185,7 +185,6 @@ class DeliverySeeder extends Seeder
                 $delivery->tariff_id = isset($tariffs[$delivery->delivery_service]) ?
                     $faker->randomElement($tariffs[$delivery->delivery_service]->pluck('id')->toArray()) : 0;
                
-                $delivery->xml_id = $delivery->status > DeliveryOrderStatus::STATUS_CREATED ? $faker->uuid : '';
                 $delivery->number = Delivery::makeNumber($order->number, $deliveryNum);
                 $delivery->cost = $faker->randomFloat(2, 0, 500);
                 $delivery->delivery_at = $order->created_at->modify('+' . rand(1, 7) . ' days');
