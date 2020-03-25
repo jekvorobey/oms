@@ -11,6 +11,7 @@ use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
 use Exception;
+use Greensight\CommonMsa\Dto\AbstractDto;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
@@ -476,7 +477,7 @@ class DeliveryService
         $deliveryOrderDto->shipment_method = ShipmentMethod::METHOD_DS_COURIER;
         $deliveryOrderDto->delivery_method = $delivery->delivery_method;
         $deliveryOrderDto->tariff_id = $delivery->tariff_id;
-        $deliveryOrderDto->delivery_date = $delivery->delivery_at;
+        $deliveryOrderDto->delivery_date = $delivery->delivery_at->format(AbstractDto::DATE_FORMAT);
         $deliveryOrderDto->point_out_id = $delivery->point_id;
 
         //Информация о стоимосте заказа
@@ -524,7 +525,7 @@ class DeliveryService
                 $recipientDto->area = $pointDto->address['area'] ?? '';
                 $recipientDto->city = $pointDto->address['city'] ?? '';
                 $recipientDto->city_guid = $pointDto->city_guid;
-                $recipientDto->street = $pointDto->address['street'] ?? '';
+                $recipientDto->street = $pointDto->address['street'] ?? 'улица'; //у cdek улица обязательна
                 $recipientDto->house = $pointDto->address['house'] ?? '';
                 $recipientDto->block = $pointDto->address['block'] ?? '';
                 $recipientDto->flat = $pointDto->address['flat'] ?? '';
