@@ -203,15 +203,6 @@ class ShipmentObserver
             $shipment->load('delivery.shipments');
             $delivery = $shipment->delivery;
             
-            foreach ($delivery->shipments as $deliveryShipment) {
-                if (!in_array($deliveryShipment->status, [
-                    ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE,
-                    ShipmentStatus::STATUS_ASSEMBLED,
-                ])) {
-                    return;
-                }
-            }
-            
             try {
                 /** @var DeliveryService $deliveryService */
                 $deliveryService = resolve(DeliveryService::class);

@@ -264,6 +264,9 @@ class DeliverySeeder extends Seeder
                     } catch (Exception $e) {
                     }
                 }
+
+                //Создаем заказ на доставку у службы доставки
+                $deliveryService->saveDeliveryOrder($delivery);
             }
         }
     }

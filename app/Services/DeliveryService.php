@@ -423,6 +423,18 @@ class DeliveryService
      */
     public function saveDeliveryOrder(Delivery $delivery): void
     {
+        /**
+         * Проверяем, что товары по всем отправлениям заказа в наличии или отравления в сборке
+         */
+        foreach ($delivery->shipments as $deliveryShipment) {
+            if (!in_array($deliveryShipment->status, [
+                ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE,
+                ShipmentStatus::STATUS_ASSEMBLED,
+            ])) {
+                return;
+            }
+        }
+
         $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
         /** @var DeliveryOrderService $deliveryOrderService */
         $deliveryOrderService = resolve(DeliveryOrderService::class);
