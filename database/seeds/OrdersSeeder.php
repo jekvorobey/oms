@@ -89,7 +89,11 @@ class OrdersSeeder extends Seeder
         /** @var Collection|ProductDto[] $products */
         $products = $productService->products($restQuery)->keyBy('id');
 
+        $basketsCost = [];
+        $basketsPrice = [];
         foreach ($baskets as $basket) {
+            $basketsCost[$basket->id] = 0;
+            $basketsPrice[$basket->id] = 0;
             /** @var Collection|OfferDto[] $basketOffers */
             $basketOffers = $offers->random($faker->randomFloat(0, 3, 5));
 
@@ -119,6 +123,9 @@ class OrdersSeeder extends Seeder
                     'length' => $product->length,
                 ];
                 $basketItem->save();
+
+                $basketsCost[$basket->id] += $basketItem->cost;
+                $basketsPrice[$basket->id] += $basketItem->price;
             }
         }
 
@@ -134,8 +141,8 @@ class OrdersSeeder extends Seeder
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
             $order->delivery_cost = $faker->numberBetween(0, 500);
             $order->delivery_price = $faker->numberBetween(0, intval($order->delivery_cost / 2));
-            $order->cost = $faker->randomFloat(2, 100, 500);
-            $order->price = $order->cost + $order->delivery_cost;
+            $order->cost = $basketsCost[$basket->id] + $order->delivery_cost;
+            $order->price = $basketsPrice[$basket->id] + $order->delivery_price;
 
             $order->is_require_check = $faker->boolean();
 

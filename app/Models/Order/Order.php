@@ -85,7 +85,7 @@ class Order extends OmsModel
      */
     public static function makeNumber(): int
     {
-        $ordersCount = self::all()->last()->id+1000000;
+        $ordersCount = (self::all()->last()->id ?? 0) + 1000000;
         return (int)$ordersCount + 1;
     }
 

@@ -133,7 +133,7 @@ class DeliverySeeder extends Seeder
 
         /** @var DeliveryService $deliveryService */
         $deliveryService = resolve(DeliveryService::class);
-    
+
         /** @var StoreService $storeService */
         $storeService = resolve(StoreService::class);
         $restQuery = $storeService->newQuery();
@@ -145,23 +145,23 @@ class DeliverySeeder extends Seeder
         $packageService = resolve(PackageService::class);
         $packages = $packageService->packages($packageService->newQuery()
             ->setFilter('type', PackageType::TYPE_BOX));
-    
+
         /** @var ListsService $listsService */
         $listsService = resolve(ListsService::class);
         $tariffs = $listsService->tariffs()->groupBy('delivery_service');
         $points = $listsService->points()->groupBy('delivery_service');
-        
+
         /** @var Collection|Order[] $orders */
         $orders = Order::query()->with('basket', 'basket.items')->get();
         foreach ($orders as $order) {
             $basketItemsByStore = $order->basket->items->groupBy('product.store_id');
-            
+
             /** @var int $deliveriesCount - кол-во доставок в заказе (от 1 до кол-ва складов = отправлений) */
             $deliveriesCount = $order->delivery_type == DeliveryType::TYPE_SPLIT ?
                 $faker->numberBetween(1, $basketItemsByStore->count()) : 1;
             /** @var int $shipmentsCount - кол-во отправлений в доставке */
             $shipmentsCount = (int)$basketItemsByStore->count()/$deliveriesCount;
-    
+
             $shipmentNumber = 1;
             for ($deliveryNum = 1; $deliveryNum <= $deliveriesCount; $deliveryNum++) {
                 //Создаем доставку
@@ -184,7 +184,7 @@ class DeliverySeeder extends Seeder
                 }
                 $delivery->tariff_id = isset($tariffs[$delivery->delivery_service]) ?
                     $faker->randomElement($tariffs[$delivery->delivery_service]->pluck('id')->toArray()) : 0;
-               
+
                 $delivery->number = Delivery::makeNumber($order->number, $deliveryNum);
                 $delivery->cost = $faker->randomFloat(2, 0, 500);
                 $delivery->delivery_at = $order->created_at->modify('+' . rand(1, 7) . ' days');
@@ -193,7 +193,7 @@ class DeliverySeeder extends Seeder
                 $delivery->receiver_name = $faker->name;
                 $delivery->receiver_phone = $faker->phoneNumber;
                 $delivery->receiver_email = $faker->email;
-                
+
                 if (
                     isset($points[$delivery->delivery_service]) &&
                     $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP
@@ -203,7 +203,7 @@ class DeliverySeeder extends Seeder
                     $delivery->delivery_address = $faker->randomElement(static::REAL_ADDRESSES);
                 }
                 $delivery->save();
-    
+
                 $deliveryShipmentNumber = 1;
                 foreach ($basketItemsByStore as $storeId => $itemsByStore) {
                     if (!$storeId) {
@@ -212,7 +212,7 @@ class DeliverySeeder extends Seeder
                     if ($deliveryShipmentNumber > $shipmentsCount && $deliveryNum != $deliveriesCount ) {
                         break;
                     }
-                    
+
                     //Создаем отправление
                     /** @var Collection|BasketItem[] $itemsByStore */
                     $store = $stores[$storeId];
@@ -221,11 +221,11 @@ class DeliverySeeder extends Seeder
                     $shipment->delivery_id = $delivery->id;
                     $shipment->merchant_id = $store->merchant_id;
                     $shipment->store_id = $storeId;
-                    $shipment->number = Shipment::makeNumber($delivery->number, $shipmentNumber);
+                    $shipment->number = Shipment::makeNumber($order->number, $shipmentNumber);
                     $shipment->created_at = $order->created_at->modify('+' . rand(1, 7) . ' minutes');
                     $shipment->required_shipping_at = $order->created_at->modify('+3 hours');
                     $shipment->save();
-                    
+
                     foreach ($itemsByStore as $item) {
                         //Создаем состав отправления
                         $shipmentItem = new ShipmentItem();
@@ -234,7 +234,7 @@ class DeliverySeeder extends Seeder
                         $shipmentItem->created_at = $shipment->created_at;
                         $shipmentItem->save();
                     }
-    
+
                     $shipmentNumber++;
                     $deliveryShipmentNumber++;
                     $basketItemsByStore->forget($storeId);
