@@ -43,8 +43,10 @@ class CheckoutOrder
     // delivery data
     /** @var int */
     public $deliveryTypeId;
-    /** @var float */
+    /** @var int */
     public $deliveryCost;
+    /** @var int */
+    public $deliveryPrice;
 
 
     /** @var CheckoutDelivery[] */
@@ -66,6 +68,7 @@ class CheckoutOrder
             'prices' => $prices,
 
             'deliveryTypeId' => $order->deliveryTypeId,
+            'deliveryPrice' => $order->deliveryPrice,
             'deliveryCost' => $order->deliveryCost,
             'deliveries' => $deliveries
         ] = $data);
@@ -111,7 +114,6 @@ class CheckoutOrder
             }
             $item->cost = $priceItem->cost;
             $item->price = $priceItem->price;
-            $item->discount = $priceItem->cost - $priceItem->price;
             $item->save();
         }
     }
@@ -131,6 +133,7 @@ class CheckoutOrder
 
         $order->delivery_type = $this->deliveryTypeId;
         $order->delivery_cost = $this->deliveryCost;
+        $order->delivery_price = $this->deliveryPrice;
 
         $order->save();
         return $order;

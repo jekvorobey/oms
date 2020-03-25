@@ -29,7 +29,8 @@ use Illuminate\Support\Collection;
  * @property array $certificates
  *
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
- * @property float $delivery_cost - стоимость доставки iBT
+ * @property float $delivery_price - стоимость доставки iBT (с учетом скидки)
+ * @property float $delivery_cost - стоимость доставки iBT (без учета скидки)
  * @property string $delivery_comment - комментарий к доставке
  *
  * @property int $status - статус

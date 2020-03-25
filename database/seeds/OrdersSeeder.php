@@ -109,9 +109,8 @@ class OrdersSeeder extends Seeder
                 $basketItem->offer_id = $basketOffer->id;
                 $basketItem->name = $product->name;
                 $basketItem->qty = $faker->randomDigitNotNull;
-                $basketItem->price = $faker->randomFloat(2, 100, 1000);
-                $basketItem->discount = $faker->randomFloat(2, 0, $basketItem->price/3);
-                $basketItem->cost = $basketItem->price + $basketItem->discount;
+                $basketItem->cost = $faker->numberBetween(100, 1000);
+                $basketItem->price = $faker->numberBetween(0, intval($basketItem->cost / 2));
                 $basketItem->product = [
                     'store_id' => $offerStock->store_id,
                     'weight' => $product->weight,
@@ -133,8 +132,8 @@ class OrdersSeeder extends Seeder
             $order->manager_comment = $faker->realText();
 
             $order->delivery_type = $faker->randomElement(DeliveryType::validValues());
-
-            $order->delivery_cost = $faker->randomFloat(2, 0, 500);
+            $order->delivery_cost = $faker->numberBetween(0, 500);
+            $order->delivery_price = $faker->numberBetween(0, intval($order->delivery_cost / 2));
             $order->cost = $faker->randomFloat(2, 100, 500);
             $order->price = $order->cost + $order->delivery_cost;
 
