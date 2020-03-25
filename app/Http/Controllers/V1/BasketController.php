@@ -195,7 +195,6 @@ class BasketController extends Controller
             ] = $priceMap[$item->offer_id];
             $item->cost = $cost;
             $item->price = $price;
-            $item->discount = $cost - $price;
             $item->save();
         }
 
