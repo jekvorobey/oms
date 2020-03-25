@@ -15,6 +15,7 @@ use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
+use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderCostDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderDto;
@@ -24,6 +25,7 @@ use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderPlaceDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\RecipientDto;
 use Greensight\Logistics\Services\CourierCallService\CourierCallService;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
+use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
@@ -470,6 +472,7 @@ class DeliveryService
         $deliveryOrderDto->height = $delivery->height;
         $deliveryOrderDto->length = $delivery->length;
         $deliveryOrderDto->width = $delivery->width;
+        $deliveryOrderDto->weight = $delivery->weight;
         $deliveryOrderDto->shipment_method = ShipmentMethod::METHOD_DS_COURIER;
         $deliveryOrderDto->delivery_method = $delivery->delivery_method;
         $deliveryOrderDto->tariff_id = $delivery->tariff_id;
@@ -503,8 +506,31 @@ class DeliveryService
         $senderDto->phone = $ibtService->getCentralStorePhone();
 
         //Информация об получателе заказа
-        $recipientDto = new RecipientDto($delivery->delivery_address);
+        $recipientDto = new RecipientDto((array)$delivery->delivery_address);
         $deliveryOrderInputDto->recipient = $recipientDto;
+
+        //Для самовывоза указываем адрес ПВЗ
+        if (!$delivery->delivery_address && $delivery->point_id) {
+            /** @var ListsService $listsService */
+            $listsService = resolve(ListsService::class);
+            $pointQuery = $listsService->newQuery()
+                ->setFilter('id', $delivery->point_id)
+                ->addFields(PointDto::entity(), 'address', 'city_guid');
+            /** @var PointDto|null $pointDto */
+            $pointDto = $listsService->points($pointQuery)->first();
+            if ($pointDto) {
+                $recipientDto->post_index = $pointDto->address['post_index'] ?? '';
+                $recipientDto->region = $pointDto->address['region'] ?? '';
+                $recipientDto->area = $pointDto->address['area'] ?? '';
+                $recipientDto->city = $pointDto->address['city'] ?? '';
+                $recipientDto->city_guid = $pointDto->city_guid;
+                $recipientDto->street = $pointDto->address['street'] ?? '';
+                $recipientDto->house = $pointDto->address['house'] ?? '';
+                $recipientDto->block = $pointDto->address['block'] ?? '';
+                $recipientDto->flat = $pointDto->address['flat'] ?? '';
+            }
+        }
+
         $recipientDto->address_string = implode(', ', array_filter([
             $recipientDto->post_index,
             $recipientDto->region != $recipientDto->city ? $recipientDto->region : '',
@@ -587,7 +613,7 @@ class DeliveryService
      */
     public function updateDeliveryStatusFromDeliveryService(): void
     {
-        $deliveries = Delivery::deliveriesAtWork();
+        $deliveries = Delivery::deliveriesInDelivery();
 
         if ($deliveries->isNotEmpty()) {
             /** @var DeliveryOrderService $deliveryOrderService */
