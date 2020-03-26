@@ -71,7 +71,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         });
 
         Route::get('', 'OrdersController@read');
-        Route::post('', 'OrdersController@create');
     });
 
     Route::prefix('payments')->group(function () {
