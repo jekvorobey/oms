@@ -4,25 +4,10 @@ namespace App\Core\Order;
 
 use App\Models\Order\Order;
 use App\Models\Payment\Payment;
-use Carbon\Carbon;
-use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 
 class OrderWriter
 {
-    public function create(array $data): ?int
-    {
-        $now = CarbonImmutable::now();
-        $order = new Order();
-        $order->fill($data);
-        if (!$order->delivery_address) {
-            $order->delivery_address = [];
-        }
-        $order->number = 'IBT' . $now->format('Ymdhis');
-        return $order->save() ? $order->id : null;
-    }
-    
-
     /**
      * Задать список оплат для заказа.
      *
