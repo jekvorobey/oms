@@ -21,6 +21,7 @@ use Illuminate\Support\Collection;
  * @property int $delivery_service
  *
  * @property string $xml_id - идентификатор заказа на доставку в службе доставки
+ * @property string $error_xml_id - текст последней ошибки при создании/обновлении заказа на доставку в службе доставки
  * @property string $status_xml_id - статус заказа на доставку в службе доставки
  * @property int $tariff_id - идентификатор тарифа на доставку из сервиса логистики
  * @property int $point_id - идентификатор пункта самовывоза из сервиса логистики

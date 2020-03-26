@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\Delivery\Delivery;
 use App\Services\DeliveryService;
-use Exception;
 use Illuminate\Console\Command;
 
 /**
@@ -45,10 +44,7 @@ class DeliverOrderUpsert extends Command
                     continue;
                 }
 
-                try {
-                    $deliveryService->saveDeliveryOrder($delivery);
-                } catch (Exception $e) {
-                }
+                $deliveryService->saveDeliveryOrder($delivery);
             }
         }
     }

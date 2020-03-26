@@ -441,18 +441,27 @@ class DeliveryService
         $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
         /** @var DeliveryOrderService $deliveryOrderService */
         $deliveryOrderService = resolve(DeliveryOrderService::class);
-        if (!$delivery->xml_id) {
-            $deliveryOrderOutputDto = $deliveryOrderService->createOrder($delivery->delivery_service, $deliveryOrderInputDto);
-            if ($deliveryOrderOutputDto->xml_id) {
-                $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
-                $delivery->save();
+        try {
+            if (!$delivery->xml_id) {
+                $deliveryOrderOutputDto = $deliveryOrderService->createOrder($delivery->delivery_service,
+                    $deliveryOrderInputDto);
+                if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->xml_id) {
+                    $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
+                    $delivery->save();
+                } elseif ($deliveryOrderOutputDto->message) {
+                    $delivery->error_xml_id = $deliveryOrderOutputDto->message;
+                    $delivery->save();
+                }
+            } else {
+                $deliveryOrderService->updateOrder(
+                    $delivery->delivery_service,
+                    $delivery->xml_id,
+                    $deliveryOrderInputDto
+                );
             }
-        } else {
-            $deliveryOrderService->updateOrder(
-                $delivery->delivery_service,
-                $delivery->xml_id,
-                $deliveryOrderInputDto
-            );
+        } catch (Exception $e) {
+            $delivery->error_xml_id = $e->getMessage();
+            $delivery->save();
         }
     }
 
