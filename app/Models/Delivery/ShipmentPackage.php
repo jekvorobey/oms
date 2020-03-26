@@ -15,6 +15,7 @@ use Illuminate\Support\Collection;
  * @property int $shipment_id
  * @property int $package_id
  *
+ * @property string $xml_id - идентификатор места в заказе на доставку в службе доставки
  * @property float $width
  * @property float $height
  * @property float $length

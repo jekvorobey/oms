@@ -150,6 +150,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 
                 Route::put('','ShipmentsController@update');
                 Route::delete('','ShipmentsController@delete');
+                Route::get('barcodes', 'ShipmentsController@barcodes');
             });
         });
 

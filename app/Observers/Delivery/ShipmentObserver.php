@@ -200,16 +200,12 @@ class ShipmentObserver
         if ($shipment->status != $shipment->getOriginal('status') &&
             in_array($shipment->status, [ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE, ShipmentStatus::STATUS_ASSEMBLED])
         ) {
-            $shipment->load('delivery.shipments');
+            $shipment->loadMissing('delivery.shipments');
             $delivery = $shipment->delivery;
-            
-            try {
-                /** @var DeliveryService $deliveryService */
-                $deliveryService = resolve(DeliveryService::class);
-                $deliveryService->saveDeliveryOrder($delivery);
-            } catch (Exception $e) {
-                //todo Сообщать об ошибке выгрузки заказа в СД
-            }
+
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+            $deliveryService->saveDeliveryOrder($delivery);
         }
     }
     

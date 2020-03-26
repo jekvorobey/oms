@@ -430,8 +430,8 @@ class DeliveryService
         /**
          * Проверяем, что товары по всем отправлениям заказа в наличии или отравления в сборке
          */
-        foreach ($delivery->shipments as $deliveryShipment) {
-            if (!in_array($deliveryShipment->status, [
+        foreach ($delivery->shipments as $shipment) {
+            if (!in_array($shipment->status, [
                 ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE,
                 ShipmentStatus::STATUS_ASSEMBLED,
             ])) {
@@ -443,24 +443,47 @@ class DeliveryService
         /** @var DeliveryOrderService $deliveryOrderService */
         $deliveryOrderService = resolve(DeliveryOrderService::class);
         try {
-            $delivery->error_xml_id = '';
-
             if (!$delivery->xml_id) {
                 $deliveryOrderOutputDto = $deliveryOrderService->createOrder($delivery->delivery_service,
                     $deliveryOrderInputDto);
                 if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->xml_id) {
                     $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
+                    $delivery->error_xml_id = '';
                     $delivery->save();
                 } elseif ($deliveryOrderOutputDto->message) {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
                     $delivery->save();
                 }
             } else {
-                $deliveryOrderService->updateOrder(
+                $deliveryOrderOutputDto = $deliveryOrderService->updateOrder(
                     $delivery->delivery_service,
                     $delivery->xml_id,
                     $deliveryOrderInputDto
                 );
+                if ($deliveryOrderOutputDto->success) {
+                    $delivery->error_xml_id = '';
+                    $delivery->save();
+                } elseif ($deliveryOrderOutputDto->message) {
+                    $delivery->error_xml_id = $deliveryOrderOutputDto->message;
+                    $delivery->save();
+                }
+            }
+
+            /**
+             * Указываем информация о кодах мест (коробок) в службе доставки
+             */
+            if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->places->isNotEmpty()) {
+                foreach ($deliveryOrderOutputDto->places as $place) {
+                    foreach ($delivery->shipments as $shipment) {
+                        foreach ($shipment->packages as $package) {
+                            if ($place->code == $package->id || $place->code == $shipment->number) {
+                                $package->xml_id = $place->code_xml_id;
+                                $package->save();
+                                break 2;
+                            }
+                        }
+                    }
+                }
             }
         } catch (Exception $e) {
             $delivery->error_xml_id = $e->getMessage();
