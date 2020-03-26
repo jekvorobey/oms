@@ -514,23 +514,23 @@
         },
         {
             "name": "firebase/php-jwt",
-            "version": "v5.1.0",
+            "version": "v5.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/firebase/php-jwt.git",
-                "reference": "4566062c68f76f43d44f1643f4970fe89757d4c6"
+                "reference": "feb0e820b8436873675fd3aca04f3728eb2185cb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/firebase/php-jwt/zipball/4566062c68f76f43d44f1643f4970fe89757d4c6",
-                "reference": "4566062c68f76f43d44f1643f4970fe89757d4c6",
+                "url": "https://api.github.com/repos/firebase/php-jwt/zipball/feb0e820b8436873675fd3aca04f3728eb2185cb",
+                "reference": "feb0e820b8436873675fd3aca04f3728eb2185cb",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^4.8|^5"
+                "phpunit/phpunit": ">=4.8 <=9"
             },
             "type": "library",
             "autoload": {
@@ -556,7 +556,11 @@
             ],
             "description": "A simple library to encode and decode JSON Web Tokens (JWT) in PHP. Should conform to the current spec.",
             "homepage": "https://github.com/firebase/php-jwt",
-            "time": "2020-02-24T23:15:03+00:00"
+            "keywords": [
+                "jwt",
+                "php"
+            ],
+            "time": "2020-03-25T18:49:23+00:00"
         },
         {
             "name": "greensight/ibt-cm-lib",
@@ -564,12 +568,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-cm-lib.git",
-                "reference": "347ed2011d06a861943245532a81c0d8c46b41fd"
+                "reference": "af750b1b65d338104cecc65c0ab6bd632ba5624a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cm-lib/repository/archive.zip?sha=347ed2011d06a861943245532a81c0d8c46b41fd",
-                "reference": "347ed2011d06a861943245532a81c0d8c46b41fd",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cm-lib/repository/archive.zip?sha=af750b1b65d338104cecc65c0ab6bd632ba5624a",
+                "reference": "af750b1b65d338104cecc65c0ab6bd632ba5624a",
                 "shasum": ""
             },
             "require": {
@@ -604,7 +608,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2020-03-24T07:36:34+00:00"
+            "time": "2020-03-25T11:05:10+00:00"
         },
         {
             "name": "greensight/ibt-common-lib",
@@ -612,12 +616,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-common-ms-code.git",
-                "reference": "11c90a8a529756855fd2123765e36fba8e2c2abb"
+                "reference": "948a0aa8ce55dace2678531f17089d0cda7e6228"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-common-ms-code/repository/archive.zip?sha=11c90a8a529756855fd2123765e36fba8e2c2abb",
-                "reference": "11c90a8a529756855fd2123765e36fba8e2c2abb",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-common-ms-code/repository/archive.zip?sha=948a0aa8ce55dace2678531f17089d0cda7e6228",
+                "reference": "948a0aa8ce55dace2678531f17089d0cda7e6228",
                 "shasum": ""
             },
             "require": {
@@ -661,7 +665,7 @@
                 }
             ],
             "description": "iBT common code for all microservices",
-            "time": "2020-03-18T15:43:19+00:00"
+            "time": "2020-03-25T13:52:07+00:00"
         },
         {
             "name": "greensight/ibt-logistics-lib",
@@ -669,12 +673,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-logistics-lib.git",
-                "reference": "ab75b83e10e2ee8211c010700025065cdfac5889"
+                "reference": "428282151900ce6ea2c1e1b19e40eb8f9db6870b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=ab75b83e10e2ee8211c010700025065cdfac5889",
-                "reference": "ab75b83e10e2ee8211c010700025065cdfac5889",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=428282151900ce6ea2c1e1b19e40eb8f9db6870b",
+                "reference": "428282151900ce6ea2c1e1b19e40eb8f9db6870b",
                 "shasum": ""
             },
             "require": {
@@ -709,7 +713,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2020-03-24T10:19:59+00:00"
+            "time": "2020-03-26T11:00:23+00:00"
         },
         {
             "name": "greensight/ibt-merchant-management-lib",
@@ -802,12 +806,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-pim-lib.git",
-                "reference": "016ae9334871ff902a1766639d001e6209a80513"
+                "reference": "d83644bcdd17308b7fb55a479f9d7ab0fb1e7fb6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=016ae9334871ff902a1766639d001e6209a80513",
-                "reference": "016ae9334871ff902a1766639d001e6209a80513",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=d83644bcdd17308b7fb55a479f9d7ab0fb1e7fb6",
+                "reference": "d83644bcdd17308b7fb55a479f9d7ab0fb1e7fb6",
                 "shasum": ""
             },
             "require": {
@@ -831,7 +835,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2020-03-18T11:34:21+00:00"
+            "time": "2020-03-26T07:56:02+00:00"
         },
         {
             "name": "greensight/ibt-store-lib",
@@ -1660,16 +1664,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "2.31.0",
+            "version": "2.32.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/briannesbitt/Carbon.git",
-                "reference": "bbc0ab53f41a4c6f223c18efcdbd9bc725eb5d2d"
+                "reference": "7410a349613bf32d02d8aaed1c669698ddd2b718"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/bbc0ab53f41a4c6f223c18efcdbd9bc725eb5d2d",
-                "reference": "bbc0ab53f41a4c6f223c18efcdbd9bc725eb5d2d",
+                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/7410a349613bf32d02d8aaed1c669698ddd2b718",
+                "reference": "7410a349613bf32d02d8aaed1c669698ddd2b718",
                 "shasum": ""
             },
             "require": {
@@ -1678,6 +1682,7 @@
                 "symfony/translation": "^3.4 || ^4.0 || ^5.0"
             },
             "require-dev": {
+                "doctrine/orm": "^2.7",
                 "friendsofphp/php-cs-fixer": "^2.14 || ^3.0",
                 "kylekatarnls/multi-tester": "^1.1",
                 "phpmd/phpmd": "^2.8",
@@ -1726,7 +1731,7 @@
                 "datetime",
                 "time"
             ],
-            "time": "2020-03-01T11:11:58+00:00"
+            "time": "2020-03-24T16:01:47+00:00"
         },
         {
             "name": "nikic/php-parser",
