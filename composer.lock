@@ -673,12 +673,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-logistics-lib.git",
-                "reference": "6f584ab9477b7c9777ddb978dd2066180537e006"
+                "reference": "06ce387c365c85b660b5c6bc425560fc1b43d271"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=6f584ab9477b7c9777ddb978dd2066180537e006",
-                "reference": "6f584ab9477b7c9777ddb978dd2066180537e006",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=06ce387c365c85b660b5c6bc425560fc1b43d271",
+                "reference": "06ce387c365c85b660b5c6bc425560fc1b43d271",
                 "shasum": ""
             },
             "require": {
@@ -713,7 +713,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2020-03-26T15:21:30+00:00"
+            "time": "2020-03-26T16:18:06+00:00"
         },
         {
             "name": "greensight/ibt-merchant-management-lib",
