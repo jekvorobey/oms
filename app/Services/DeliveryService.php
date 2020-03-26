@@ -426,6 +426,7 @@ class DeliveryService
      */
     public function saveDeliveryOrder(Delivery $delivery): void
     {
+        $delivery->loadMissing('shipments');
         /**
          * Проверяем, что товары по всем отправлениям заказа в наличии или отравления в сборке
          */
@@ -442,6 +443,8 @@ class DeliveryService
         /** @var DeliveryOrderService $deliveryOrderService */
         $deliveryOrderService = resolve(DeliveryOrderService::class);
         try {
+            $delivery->error_xml_id = '';
+
             if (!$delivery->xml_id) {
                 $deliveryOrderOutputDto = $deliveryOrderService->createOrder($delivery->delivery_service,
                     $deliveryOrderInputDto);
@@ -472,7 +475,7 @@ class DeliveryService
      */
     protected function formDeliveryOrder(Delivery $delivery): DeliveryOrderInputDto
     {
-        $delivery->load(['order', 'shipments.packages.items.basketItem']);
+        $delivery->loadMissing(['order', 'shipments.packages.items.basketItem']);
         $deliveryOrderInputDto = new DeliveryOrderInputDto();
 
         //Информация о заказе
@@ -493,6 +496,7 @@ class DeliveryService
         $deliveryOrderCostDto = new DeliveryOrderCostDto();
         $deliveryOrderInputDto->cost = $deliveryOrderCostDto;
         $deliveryOrderCostDto->delivery_cost = $delivery->cost;
+        $deliveryOrderCostDto->assessed_cost = $delivery->shipments->sum('cost');
 
         //Информация об отправителе заказа
         /** @var IbtService $ibtService */
