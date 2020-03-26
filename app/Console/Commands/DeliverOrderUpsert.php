@@ -19,7 +19,7 @@ class DeliverOrderUpsert extends Command
      *
      * @var string
      */
-    protected $signature = 'delivery_order:upsert';
+    protected $signature = 'delivery_order:upsert {deliveryId?}';
 
     /**
      * The console command description.
@@ -34,12 +34,17 @@ class DeliverOrderUpsert extends Command
     public function handle()
     {
         $deliveries = Delivery::deliveriesAtWork(true);
+        $deliveryId = $this->argument('deliveryId');
 
         if ($deliveries->isNotEmpty()) {
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
 
             foreach ($deliveries as $delivery) {
+                if ($deliveryId && $delivery->id != $deliveryId) {
+                    continue;
+                }
+
                 try {
                     $deliveryService->saveDeliveryOrder($delivery);
                 } catch (Exception $e) {
