@@ -8,6 +8,8 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Order\Order;
+use App\Models\Order\OrderDiscount;
+use App\Models\Order\OrderDiscounts;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
@@ -39,6 +41,8 @@ class CheckoutOrder
     public $certificates;
     /** @var CheckoutItemPrice[] */
     public $prices;
+    /** @var OrderDiscount[] */
+    public $discounts;
 
     // delivery data
     /** @var int */
@@ -66,6 +70,7 @@ class CheckoutOrder
             'promocode' => $order->promocode,
             'certificates' => $order->certificates,
             'prices' => $prices,
+            'discounts' => $discounts,
 
             'deliveryTypeId' => $order->deliveryTypeId,
             'deliveryPrice' => $order->deliveryPrice,
@@ -82,6 +87,11 @@ class CheckoutOrder
             $order->deliveries[] = CheckoutDelivery::fromArray($deliveryData);
         }
 
+        $order->discounts = [];
+        foreach ($discounts as $discount) {
+            $order->discounts[] = new OrderDiscount($discount);
+        }
+
         return $order;
     }
 
@@ -96,6 +106,9 @@ class CheckoutOrder
             $order = $this->createOrder();
             $this->createShipments($order);
             $this->createPayment($order);
+            if (!empty($this->discounts)) {
+                $this->createOrderDiscounts($order);
+            }
 
             return $order->id;
         });
@@ -137,6 +150,17 @@ class CheckoutOrder
 
         $order->save();
         return $order;
+    }
+
+    /**
+     * @param Order $order
+     */
+    private function createOrderDiscounts(Order $order)
+    {
+        $orderDiscounts = new OrderDiscounts();
+        $orderDiscounts->order_id = $order->id;
+        $orderDiscounts->discounts = $this->discounts;
+        $orderDiscounts->save();
     }
 
     /**

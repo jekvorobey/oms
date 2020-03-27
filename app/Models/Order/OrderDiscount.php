@@ -53,10 +53,10 @@ class OrderDiscount
     /**
      * Влияние скидки на офферы
      * Формат:
-     * { offer_id: int, change: int }
+     * { offer_id: int, product_id: int, change: int }
      * @var array|null
      */
-    public $offers;
+    public $items;
 
     /**
      * OrderDiscount constructor.
@@ -67,17 +67,18 @@ class OrderDiscount
         $this->id = intval($params['id']);
         $this->name = $params['name'];
         $this->type = intval($params['type']);
-        $this->change = intval($params['type']);
+        $this->change = intval($params['change']);
         $this->merchant_id = isset($params['merchant_id']) ? intval($params['merchant_id']) : null;
         $this->visible_in_catalog = isset($params['visible_in_catalog']) && $params['visible_in_catalog'];
         $this->promo_code_only = isset($params['promo_code_only']) && $params['promo_code_only'];
-        $this->offers = null;
-        if (isset($params['offers']) && !empty($params['offers'])) {
-            $this->offers = [];
-            foreach ($params['offers'] as $offer) {
-                $this->offers[] = [
-                    'offer_id' => intval($offer['offer_id']),
-                    'change' => intval($offer['change']),
+        $this->items = null;
+        if (isset($params['items']) && !empty($params['items'])) {
+            $this->items = [];
+            foreach ($params['items'] as $item) {
+                $this->items[] = [
+                    'product_id' => intval($item['product_id']),
+                    'offer_id' => intval($item['offer_id']),
+                    'change' => intval($item['change']),
                 ];
             }
         }
@@ -96,7 +97,7 @@ class OrderDiscount
             'merchant_id' => $this->merchant_id,
             'visible_in_catalog' => $this->visible_in_catalog,
             'promo_code_only' => $this->promo_code_only,
-            'offers' => $this->offers,
+            'items' => $this->items,
         ];
     }
 }
