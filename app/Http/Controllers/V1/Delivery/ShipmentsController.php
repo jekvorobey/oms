@@ -9,6 +9,8 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
+use App\Services\DeliveryService;
+use Greensight\CommonMsa\Dto\FileDto;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
@@ -16,6 +18,7 @@ use Greensight\CommonMsa\Rest\Controller\UpdateAction;
 use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Rest\RestSerializable;
+use Greensight\CommonMsa\Services\FileService\FileService;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -485,5 +488,33 @@ class ShipmentsController extends Controller
         }
         
         return response('', 204);
+    }
+
+    /**
+     * @param  int  $shipmentId
+     * @param  DeliveryService  $deliveryService
+     * @param  FileService  $fileService
+     * @return JsonResponse
+     */
+    public function barcodes(int $shipmentId, DeliveryService $deliveryService, FileService $fileService): JsonResponse
+    {
+        $deliveryOrderBarcodesDto = $deliveryService->getShipmentBarcodes($shipmentId);
+
+        if ($deliveryOrderBarcodesDto) {
+            if ($deliveryOrderBarcodesDto->success && $deliveryOrderBarcodesDto->file_id) {
+                /** @var FileDto $fileDto */
+                $fileDto = $fileService->getFiles([$deliveryOrderBarcodesDto->file_id])->first();
+
+                return response()->json([
+                    'absolute_url' => $fileDto->absoluteUrl(),
+                    'original_name' => $fileDto->original_name,
+                    'size' => $fileDto->size,
+                ]);
+            } else {
+                throw new HttpException(500, $deliveryOrderBarcodesDto->message);
+            }
+        }
+
+        throw new HttpException(500);
     }
 }

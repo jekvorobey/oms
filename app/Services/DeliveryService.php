@@ -18,6 +18,7 @@ use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
+use Greensight\Logistics\Dto\Order\DeliveryOrderBarcodesDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderCostDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderInputDto;
@@ -606,12 +607,12 @@ class DeliveryService
                         $items->push($deliveryOrderItemDto);
                         $deliveryOrderItemDto->articul = $basketItem->offer_id; //todo Добавить сохранение артикула товара в корзине
                         $deliveryOrderItemDto->name = $basketItem->name;
-                        $deliveryOrderItemDto->quantity = (float)$basketItem->qty;
+                        $deliveryOrderItemDto->quantity = (float)$item->qty;
                         $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int)ceil($basketItem->product['height']) : 0;
                         $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
                         $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
                         $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
-                        $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->price / $basketItem->qty : 0, 2);
+                        $deliveryOrderItemDto->cost = round($item->qty > 0 ? $basketItem->price / $item->qty : 0, 2);
                     }
                 }
             } else {
@@ -676,6 +677,43 @@ class DeliveryService
                 } catch (\Exception $e) {
                 }
             }
+        }
+    }
+
+    /**
+     * Получить файл со штрихкодами коробок для заказа на доставку
+     * Штрихкоды можно получить только для доставок, у которых все отправления собраны по коробкам
+     * @param  int $shipmentId
+     * @return DeliveryOrderBarcodesDto|null
+     */
+    public function getShipmentBarcodes(int $shipmentId): ?DeliveryOrderBarcodesDto
+    {
+        /** @var Shipment $shipment */
+        $shipment = Shipment::query()
+            ->where('id', $shipmentId)
+            ->with('delivery', 'packages')
+            ->first();
+        $delivery = $shipment->delivery;
+
+        if (!$delivery->xml_id) {
+            return null;
+        }
+        if ($shipment->status < ShipmentStatus::STATUS_ASSEMBLED) {
+            return null;
+        }
+
+        try {
+            /** @var DeliveryOrderService $deliveryOrderService */
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
+            $deliveryOrderBarcodesDto = $deliveryOrderService->barcodesOrder(
+                $delivery->delivery_service,
+                $delivery->xml_id,
+                array_filter($shipment->packages->pluck('xml_id')->toArray())
+            );
+
+            return $deliveryOrderBarcodesDto;
+        } catch (Exception $e) {
+            return null;
         }
     }
 }
