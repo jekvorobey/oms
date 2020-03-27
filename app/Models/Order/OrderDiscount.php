@@ -67,7 +67,7 @@ class OrderDiscount
         $this->id = intval($params['id']);
         $this->name = $params['name'];
         $this->type = intval($params['type']);
-        $this->change = intval($params['type']);
+        $this->change = intval($params['change']);
         $this->merchant_id = isset($params['merchant_id']) ? intval($params['merchant_id']) : null;
         $this->visible_in_catalog = isset($params['visible_in_catalog']) && $params['visible_in_catalog'];
         $this->promo_code_only = isset($params['promo_code_only']) && $params['promo_code_only'];
