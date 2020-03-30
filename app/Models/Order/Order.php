@@ -3,11 +3,18 @@
 namespace App\Models\Order;
 
 use App\Core\Notifications\OrderNotification;
+use App\Core\OrderSmsNotify;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
 use App\Models\OmsModel;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
+use Greensight\CommonMsa\Dto\UserDto;
+use Greensight\CommonMsa\Rest\RestQuery;
+use Greensight\CommonMsa\Services\AuthService\UserService;
+use Greensight\Customer\Dto\CustomerDto;
+use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
@@ -29,7 +36,8 @@ use Illuminate\Support\Collection;
  * @property array $certificates
  *
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
- * @property float $delivery_cost - стоимость доставки iBT
+ * @property float $delivery_price - стоимость доставки iBT (с учетом скидки)
+ * @property float $delivery_cost - стоимость доставки iBT (без учета скидки)
  * @property string $delivery_comment - комментарий к доставке
  *
  * @property int $status - статус
@@ -74,6 +82,11 @@ class Order extends OmsModel
     /** @var string */
     public $notificator = OrderNotification::class;
 
+    /** @var UserDto */
+    protected $user;
+    /** @var CustomerDto */
+    protected $customer;
+
     /** @var array */
     protected $casts = [
         'certificates' => 'array',
@@ -84,7 +97,7 @@ class Order extends OmsModel
      */
     public static function makeNumber(): int
     {
-        $ordersCount = self::all()->last()->id+1000000;
+        $ordersCount = (self::all()->last()->id ?? 0) + 1000000;
         return (int)$ordersCount + 1;
     }
 
@@ -146,6 +159,22 @@ class Order extends OmsModel
         return $this;
     }
 
+    public function getUser(): UserDto
+    {
+        if (is_null($this->customer)) {
+            /** @var CustomerService $customerService */
+            $customerService = resolve(CustomerService::class);
+            $this->customer = $customerService->customers((new RestQuery())->setFilter('id', $this->customer_id))->first();
+        }
+        if (is_null($this->user)) {
+            /** @var UserService $userService */
+            $userService = resolve(UserService::class);
+            $this->user = $userService->users((new RestQuery())->setFilter('id', $this->customer->user_id))->first();
+        }
+
+        return $this->user;
+    }
+
     /**
      * @todo брать почту пользователя оформившего заказ
      * @return string
@@ -153,5 +182,20 @@ class Order extends OmsModel
     public function customerEmail(): string
     {
         return 'mail@example.com';
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        self::updated(function (Order $order) {
+            $oldPaymentStatus = $order->getOriginal('payment_status');
+            $newPaymentStatus = $order->payment_status;
+            if ($oldPaymentStatus != $newPaymentStatus) {
+                if ($newPaymentStatus == PaymentStatus::PAID) {
+                    OrderSmsNotify::payed($order);
+                }
+            }
+        });
     }
 }

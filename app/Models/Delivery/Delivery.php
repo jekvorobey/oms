@@ -21,6 +21,7 @@ use Illuminate\Support\Collection;
  * @property int $delivery_service
  *
  * @property string $xml_id - идентификатор заказа на доставку в службе доставки
+ * @property string $error_xml_id - текст последней ошибки при создании/обновлении заказа на доставку в службе доставки
  * @property string $status_xml_id - статус заказа на доставку в службе доставки
  * @property int $tariff_id - идентификатор тарифа на доставку из сервиса логистики
  * @property int $point_id - идентификатор пункта самовывоза из сервиса логистики
@@ -223,22 +224,52 @@ class Delivery extends OmsModel
         
         return $maxSideName;
     }
+
+    /**
+     * Получить статусы доставок "в работе"
+     * @return array
+     */
+    public static function getStatusAtWork(): array
+    {
+        return [
+            DeliveryOrderStatus::STATUS_DONE,
+            DeliveryOrderStatus::STATUS_RETURNED,
+            DeliveryOrderStatus::STATUS_LOST,
+            DeliveryOrderStatus::STATUS_CANCEL,
+        ];
+    }
     
     /**
-     * Получить доставки в работе: выгружены в СД и еще не доставлены
+     * Получить доставки в работе: еще не доставлены
+     * @param bool $withShipments - подгрузить отправления доставок
      * @return Collection|self[]
      */
-    public static function deliveriesAtWork(): Collection
+    public static function deliveriesAtWork(bool $withShipments = false): Collection
     {
-        return self::query()
+        $query = self::query()
+            ->whereNotIn('status', static::getStatusAtWork());
+        if ($withShipments) {
+            $query->with('shipments');
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Получить доставки в доставке: выгружены в СД и еще не доставлены
+     * @param bool $withShipments - подгрузить отправления доставок
+     * @return Collection|self[]
+     */
+    public static function deliveriesInDelivery(bool $withShipments = false): Collection
+    {
+        $query = self::query()
             ->whereNotNull('xml_id')
             ->where('xml_id', '!=', '')
-            ->whereNotIn('status', [
-                DeliveryOrderStatus::STATUS_DONE,
-                DeliveryOrderStatus::STATUS_RETURNED,
-                DeliveryOrderStatus::STATUS_LOST,
-                DeliveryOrderStatus::STATUS_CANCEL,
-            ])
-            ->get();
+            ->whereNotIn('status', static::getStatusAtWork());
+        if ($withShipments) {
+            $query->with('shipments');
+        }
+
+        return $query->get();
     }
 }

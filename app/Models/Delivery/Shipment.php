@@ -380,6 +380,16 @@ class Shipment extends OmsModel
         //Фильтр по бренду товара
         $filterByProductField('brands', 'brand_id');
 
+        //Фильтр по службе доставки на последней миле
+        $deliveryServiceFilter = $restQuery->getFilter('delivery_service');
+        if($deliveryServiceFilter) {
+            [$op, $value] = $deliveryServiceFilter[0];
+            $query->whereHas('delivery', function (Builder $query) use ($value) {
+                $query->where('delivery_service', $value);
+            });
+            $modifiedRestQuery->removeFilter('delivery_service');
+        }
+
         return parent::modifyQuery($query, $modifiedRestQuery);
     }
 

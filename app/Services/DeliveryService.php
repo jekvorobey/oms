@@ -11,11 +11,23 @@ use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
 use Exception;
+use Greensight\CommonMsa\Dto\AbstractDto;
+use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
+use Greensight\Logistics\Dto\Lists\PointDto;
+use Greensight\Logistics\Dto\Lists\ShipmentMethod;
+use Greensight\Logistics\Dto\Order\DeliveryOrderBarcodesDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderCostDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderInputDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderItemDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderPlaceDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput\RecipientDto;
 use Greensight\Logistics\Services\CourierCallService\CourierCallService;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
+use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
@@ -409,9 +421,237 @@ class DeliveryService
         }
     }
 
+    /**
+     * Сохранить (создать или обновить) заказ на доставку с службе доставке
+     * @param  Delivery  $delivery
+     */
+    public function saveDeliveryOrder(Delivery $delivery): void
+    {
+        $delivery->loadMissing('shipments');
+        /**
+         * Проверяем, что товары по всем отправлениям заказа в наличии или отравления в сборке
+         */
+        foreach ($delivery->shipments as $shipment) {
+            if (!in_array($shipment->status, [
+                ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE,
+                ShipmentStatus::STATUS_ASSEMBLED,
+            ])) {
+                return;
+            }
+        }
+
+        $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
+        /** @var DeliveryOrderService $deliveryOrderService */
+        $deliveryOrderService = resolve(DeliveryOrderService::class);
+        try {
+            if (!$delivery->xml_id) {
+                $deliveryOrderOutputDto = $deliveryOrderService->createOrder($delivery->delivery_service,
+                    $deliveryOrderInputDto);
+                if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->xml_id) {
+                    $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
+                    $delivery->error_xml_id = '';
+                    $delivery->save();
+                } elseif ($deliveryOrderOutputDto->message) {
+                    $delivery->error_xml_id = $deliveryOrderOutputDto->message;
+                    $delivery->save();
+                }
+            } else {
+                $deliveryOrderOutputDto = $deliveryOrderService->updateOrder(
+                    $delivery->delivery_service,
+                    $delivery->xml_id,
+                    $deliveryOrderInputDto
+                );
+                if ($deliveryOrderOutputDto->success) {
+                    $delivery->error_xml_id = '';
+                    $delivery->save();
+                } elseif ($deliveryOrderOutputDto->message) {
+                    $delivery->error_xml_id = $deliveryOrderOutputDto->message;
+                    $delivery->save();
+                }
+            }
+
+            /**
+             * Указываем информация о кодах мест (коробок) в службе доставки
+             */
+            if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->places->isNotEmpty()) {
+                foreach ($deliveryOrderOutputDto->places as $place) {
+                    foreach ($delivery->shipments as $shipment) {
+                        foreach ($shipment->packages as $package) {
+                            if ($place->code == $package->id || $place->code == $shipment->number) {
+                                $package->xml_id = $place->code_xml_id;
+                                $package->save();
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            $delivery->error_xml_id = $e->getMessage();
+            $delivery->save();
+        }
+    }
+
+    /**
+     * Сформировать заказ на доставку
+     * @param Delivery $delivery
+     * @return DeliveryOrderInputDto
+     */
+    protected function formDeliveryOrder(Delivery $delivery): DeliveryOrderInputDto
+    {
+        $delivery->loadMissing(['order', 'shipments.packages.items.basketItem']);
+        $deliveryOrderInputDto = new DeliveryOrderInputDto();
+
+        //Информация о заказе
+        $deliveryOrderDto = new DeliveryOrderDto();
+        $deliveryOrderInputDto->order = $deliveryOrderDto;
+        $deliveryOrderDto->number = $delivery->number;
+        $deliveryOrderDto->height = $delivery->height;
+        $deliveryOrderDto->length = $delivery->length;
+        $deliveryOrderDto->width = $delivery->width;
+        $deliveryOrderDto->weight = $delivery->weight;
+        $deliveryOrderDto->shipment_method = ShipmentMethod::METHOD_DS_COURIER;
+        $deliveryOrderDto->delivery_method = $delivery->delivery_method;
+        $deliveryOrderDto->tariff_id = $delivery->tariff_id;
+        $deliveryOrderDto->delivery_date = $delivery->delivery_at->format(AbstractDto::DATE_FORMAT);
+        $deliveryOrderDto->point_out_id = $delivery->point_id;
+
+        //Информация о стоимосте заказа
+        $deliveryOrderCostDto = new DeliveryOrderCostDto();
+        $deliveryOrderInputDto->cost = $deliveryOrderCostDto;
+        $deliveryOrderCostDto->delivery_cost = $delivery->cost;
+        $deliveryOrderCostDto->assessed_cost = $delivery->shipments->sum('cost');
+
+        //Информация об отправителе заказа
+        /** @var IbtService $ibtService */
+        $ibtService = resolve(IbtService::class);
+        $centralStoreAddress = $ibtService->getCentralStoreAddress();
+        $senderDto = new SenderDto($centralStoreAddress);
+        $deliveryOrderInputDto->sender = $senderDto;
+        $senderDto->address_string = implode(', ', array_filter([
+            $senderDto->post_index,
+            $senderDto->region != $senderDto->city ? $senderDto->region : '',
+            $senderDto->area,
+            $senderDto->city,
+            $senderDto->street,
+            $senderDto->house,
+            $senderDto->block,
+            $senderDto->flat,
+        ]));
+        $senderDto->company_name = $ibtService->getCompanyName();
+        $senderDto->contact_name = $ibtService->getCentralStoreContactName();
+        $senderDto->email = $ibtService->getCentralStoreEmail();
+        $senderDto->phone = $ibtService->getCentralStorePhone();
+
+        //Информация об получателе заказа
+        $recipientDto = new RecipientDto((array)$delivery->delivery_address);
+        $deliveryOrderInputDto->recipient = $recipientDto;
+
+        //Для самовывоза указываем адрес ПВЗ
+        if (!$delivery->delivery_address && $delivery->point_id) {
+            /** @var ListsService $listsService */
+            $listsService = resolve(ListsService::class);
+            $pointQuery = $listsService->newQuery()
+                ->setFilter('id', $delivery->point_id)
+                ->addFields(PointDto::entity(), 'address', 'city_guid');
+            /** @var PointDto|null $pointDto */
+            $pointDto = $listsService->points($pointQuery)->first();
+            if ($pointDto) {
+                $recipientDto->post_index = $pointDto->address['post_index'] ?? '';
+                $recipientDto->region = $pointDto->address['region'] ?? '';
+                $recipientDto->area = $pointDto->address['area'] ?? '';
+                $recipientDto->city = $pointDto->address['city'] ?? '';
+                $recipientDto->city_guid = $pointDto->city_guid;
+                $recipientDto->street = $pointDto->address['street'] ?? 'улица'; //у cdek улица обязательна
+                $recipientDto->house = $pointDto->address['house'] ?? '';
+                $recipientDto->block = $pointDto->address['block'] ?? '';
+                $recipientDto->flat = $pointDto->address['flat'] ?? '';
+            }
+        }
+
+        $recipientDto->address_string = implode(', ', array_filter([
+            $recipientDto->post_index,
+            $recipientDto->region != $recipientDto->city ? $recipientDto->region : '',
+            $recipientDto->area,
+            $recipientDto->city,
+            $recipientDto->street,
+            $recipientDto->house,
+            $recipientDto->block,
+            $recipientDto->flat,
+        ]));
+        $recipientDto->contact_name = $delivery->receiver_name;
+        $recipientDto->email = $delivery->receiver_email;
+        $recipientDto->phone = $delivery->receiver_phone;
+
+        //Информация о местах (коробках) заказа
+        $places = collect();
+        $deliveryOrderInputDto->places = $places;
+        $packageNumber = 1;
+        foreach ($delivery->shipments as $shipment) {
+            if ($shipment->packages && $shipment->packages->isNotEmpty()) {
+                foreach ($shipment->packages as $package) {
+                    $deliveryOrderPlaceDto = new DeliveryOrderPlaceDto();
+                    $places->push($deliveryOrderPlaceDto);
+                    $deliveryOrderPlaceDto->number = $packageNumber++;
+                    $deliveryOrderPlaceDto->code = $package->id;
+                    $deliveryOrderPlaceDto->width = (int)ceil($package->width);
+                    $deliveryOrderPlaceDto->height = (int)ceil($package->height);
+                    $deliveryOrderPlaceDto->length = (int)ceil($package->length);
+                    $deliveryOrderPlaceDto->weight = (int)ceil($package->weight);
+
+                    $items = collect();
+                    $deliveryOrderPlaceDto->items = $items;
+                    foreach ($package->items as $item) {
+                        $basketItem = $item->basketItem;
+                        $deliveryOrderItemDto = new DeliveryOrderItemDto();
+                        $items->push($deliveryOrderItemDto);
+                        $deliveryOrderItemDto->articul = $basketItem->offer_id; //todo Добавить сохранение артикула товара в корзине
+                        $deliveryOrderItemDto->name = $basketItem->name;
+                        $deliveryOrderItemDto->quantity = (float)$item->qty;
+                        $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int)ceil($basketItem->product['height']) : 0;
+                        $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
+                        $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
+                        $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
+                        $deliveryOrderItemDto->cost = round($item->qty > 0 ? $basketItem->price / $item->qty : 0, 2);
+                    }
+                }
+            } else {
+                $deliveryOrderPlaceDto = new DeliveryOrderPlaceDto();
+                $places->push($deliveryOrderPlaceDto);
+                $deliveryOrderPlaceDto->number = $packageNumber++;
+                $deliveryOrderPlaceDto->code = $shipment->number;
+                $deliveryOrderPlaceDto->width = (int)ceil($shipment->width);
+                $deliveryOrderPlaceDto->height = (int)ceil($shipment->height);
+                $deliveryOrderPlaceDto->length = (int)ceil($shipment->length);
+                $deliveryOrderPlaceDto->weight = (int)ceil($shipment->weight);
+
+                $items = collect();
+                $deliveryOrderPlaceDto->items = $items;
+                foreach ($shipment->items as $item) {
+                    $basketItem = $item->basketItem;
+                    $deliveryOrderItemDto = new DeliveryOrderItemDto();
+                    $items->push($deliveryOrderItemDto);
+                    $deliveryOrderItemDto->articul = $basketItem->offer_id; //todo Добавить сохранение артикула товара в корзине
+                    $deliveryOrderItemDto->name = $basketItem->name;
+                    $deliveryOrderItemDto->quantity = (float)$basketItem->qty;
+                    $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int)ceil($basketItem->product['height']) : 0;
+                    $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
+                    $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
+                    $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
+                    $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->price / $basketItem->qty : 0, 2);
+                }
+            }
+        }
+
+        return $deliveryOrderInputDto;
+    }
+
+    /**
+     * Получить от служб доставок и обновить статусы заказов на доставку
+     */
     public function updateDeliveryStatusFromDeliveryService(): void
     {
-        $deliveries = Delivery::deliveriesAtWork();
+        $deliveries = Delivery::deliveriesInDelivery();
 
         if ($deliveries->isNotEmpty()) {
             /** @var DeliveryOrderService $deliveryOrderService */
@@ -437,6 +677,43 @@ class DeliveryService
                 } catch (\Exception $e) {
                 }
             }
+        }
+    }
+
+    /**
+     * Получить файл со штрихкодами коробок для заказа на доставку
+     * Штрихкоды можно получить только для доставок, у которых все отправления собраны по коробкам
+     * @param  int $shipmentId
+     * @return DeliveryOrderBarcodesDto|null
+     */
+    public function getShipmentBarcodes(int $shipmentId): ?DeliveryOrderBarcodesDto
+    {
+        /** @var Shipment $shipment */
+        $shipment = Shipment::query()
+            ->where('id', $shipmentId)
+            ->with('delivery', 'packages')
+            ->first();
+        $delivery = $shipment->delivery;
+
+        if (!$delivery->xml_id) {
+            return null;
+        }
+        if ($shipment->status < ShipmentStatus::STATUS_ASSEMBLED) {
+            return null;
+        }
+
+        try {
+            /** @var DeliveryOrderService $deliveryOrderService */
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
+            $deliveryOrderBarcodesDto = $deliveryOrderService->barcodesOrder(
+                $delivery->delivery_service,
+                $delivery->xml_id,
+                array_filter($shipment->packages->pluck('xml_id')->toArray())
+            );
+
+            return $deliveryOrderBarcodesDto;
+        } catch (Exception $e) {
+            return null;
         }
     }
 }

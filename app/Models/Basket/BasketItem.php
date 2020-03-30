@@ -21,8 +21,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @property int $type - тип товара (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)
  * @property string $name - название товара
  * @property float $qty - кол-во товара
- * @property float|null $price - цена элемента корзины со скидкой (cost - discount)
- * @property float|null $discount - скидка элемента корзины (offerDiscount * qty)
+ * @property float|null $price - цена элемента корзины со скидкой
  * @property float|null $cost - стоимость элемента корзины без скидок (offerCost * qty)
  * @property int|null $referrer_id - ID РП, по чьей ссылке товар был добавлен в корзину
  * @property array $product - данные зависящие от типа товара
@@ -38,9 +37,8 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  *     @OA\Property(property="offer_id", type="integer", description="id предложения мерчанта"),
  *     @OA\Property(property="name", type="string", description="название товара"),
  *     @OA\Property(property="qty", type="integer", description="кол-во"),
- *     @OA\Property(property="price", type="number", description="цена за единицу товара без учета скидки"),
- *     @OA\Property(property="discount", type="number", description="скидка за все кол-во товара"),
- *     @OA\Property(property="cost", type="number", description="сумма за все кол-во товара с учетом скидки (расчитывается автоматически)"),
+ *     @OA\Property(property="price", type="number", description="цена за единицу товара с учетом скидки"),
+ *     @OA\Property(property="cost", type="number", description="сумма за все кол-во товара без учета скидки"),
  * )
  */
 class BasketItem extends OmsModel
@@ -106,7 +104,7 @@ class BasketItem extends OmsModel
             ]);
             if (!isset($this->product['store_id'])) {
                 $product = $this->product;
-                $product['store_id'] = $offerInfo->store_id;
+                $product['store_id'] = $offerInfo->stocks->sortBy('qty')[0]->store_id;
                 $this->product = $product;
             }
         } else {

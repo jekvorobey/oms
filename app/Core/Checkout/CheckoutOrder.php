@@ -8,6 +8,8 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Order\Order;
+use App\Models\Order\OrderDiscount;
+use App\Models\Order\OrderDiscounts;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
@@ -39,12 +41,16 @@ class CheckoutOrder
     public $certificates;
     /** @var CheckoutItemPrice[] */
     public $prices;
+    /** @var OrderDiscount[] */
+    public $discounts;
 
     // delivery data
     /** @var int */
     public $deliveryTypeId;
-    /** @var float */
+    /** @var int */
     public $deliveryCost;
+    /** @var int */
+    public $deliveryPrice;
 
 
     /** @var CheckoutDelivery[] */
@@ -64,8 +70,10 @@ class CheckoutOrder
             'promocode' => $order->promocode,
             'certificates' => $order->certificates,
             'prices' => $prices,
+            'discounts' => $discounts,
 
             'deliveryTypeId' => $order->deliveryTypeId,
+            'deliveryPrice' => $order->deliveryPrice,
             'deliveryCost' => $order->deliveryCost,
             'deliveries' => $deliveries
         ] = $data);
@@ -77,6 +85,11 @@ class CheckoutOrder
 
         foreach ($deliveries as $deliveryData) {
             $order->deliveries[] = CheckoutDelivery::fromArray($deliveryData);
+        }
+
+        $order->discounts = [];
+        foreach ($discounts as $discount) {
+            $order->discounts[] = new OrderDiscount($discount);
         }
 
         return $order;
@@ -93,6 +106,9 @@ class CheckoutOrder
             $order = $this->createOrder();
             $this->createShipments($order);
             $this->createPayment($order);
+            if (!empty($this->discounts)) {
+                $this->createOrderDiscounts($order);
+            }
 
             return $order->id;
         });
@@ -111,7 +127,6 @@ class CheckoutOrder
             }
             $item->cost = $priceItem->cost;
             $item->price = $priceItem->price;
-            $item->discount = $priceItem->cost - $priceItem->price;
             $item->save();
         }
     }
@@ -131,9 +146,21 @@ class CheckoutOrder
 
         $order->delivery_type = $this->deliveryTypeId;
         $order->delivery_cost = $this->deliveryCost;
+        $order->delivery_price = $this->deliveryPrice;
 
         $order->save();
         return $order;
+    }
+
+    /**
+     * @param Order $order
+     */
+    private function createOrderDiscounts(Order $order)
+    {
+        $orderDiscounts = new OrderDiscounts();
+        $orderDiscounts->order_id = $order->id;
+        $orderDiscounts->discounts = $this->discounts;
+        $orderDiscounts->save();
     }
 
     /**

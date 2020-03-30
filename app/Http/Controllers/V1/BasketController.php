@@ -113,7 +113,7 @@ class BasketController extends Controller
             'referrer_id' => 'nullable|integer',
             'qty' => 'integer',
             'product' => 'array',
-            'product.store_id' => 'integer'
+            'product.store_id' => 'nullable|integer'
         ]);
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
@@ -195,7 +195,6 @@ class BasketController extends Controller
             ] = $priceMap[$item->offer_id];
             $item->cost = $cost;
             $item->price = $price;
-            $item->discount = $cost - $price;
             $item->save();
         }
 
