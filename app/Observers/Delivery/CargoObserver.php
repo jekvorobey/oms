@@ -65,9 +65,9 @@ class CargoObserver
     protected function checkHasShipments(Cargo $cargo): bool
     {
         if ($cargo->status != $cargo->getOriginal('status') &&
-            $cargo->status == CargoStatus::STATUS_SHIPPED
+            $cargo->status == CargoStatus::SHIPPED
         ) {
-            $cargo->load('shipments');
+            $cargo->loadMissing('shipments');
 
             return $cargo->shipments->isNotEmpty();
         }

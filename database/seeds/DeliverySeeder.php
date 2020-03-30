@@ -240,7 +240,7 @@ class DeliverySeeder extends Seeder
                     $basketItemsByStore->forget($storeId);
 
                     //Создаем коробки для отправлений в сборке или собранных
-                    if ($shipment->status > ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE) {
+                    if ($shipment->status > ShipmentStatus::AWAITING_CONFIRMATION) {
                         $shipmentPackage = $deliveryService->createShipmentPackage(
                             $shipment->id,
                             $faker->randomElement($packages->pluck('id')->all())

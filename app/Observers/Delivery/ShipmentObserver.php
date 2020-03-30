@@ -102,7 +102,7 @@ class ShipmentObserver
     protected function checkAllProductsPacked(Shipment $shipment): bool
     {
         if ($shipment->status != $shipment->getOriginal('status') &&
-            $shipment->status == ShipmentStatus::STATUS_ASSEMBLED
+            $shipment->status == ShipmentStatus::ASSEMBLED
         ) {
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
@@ -167,8 +167,8 @@ class ShipmentObserver
      */
     protected function markOrderAsProblem(Shipment $shipment): void
     {
-        if ($shipment->status != $shipment->getOriginal('status') &&
-            in_array($shipment->status, [ShipmentStatus::STATUS_ASSEMBLING_PROBLEM, ShipmentStatus::STATUS_TIMEOUT])) {
+        if ($shipment->is_problem != $shipment->getOriginal('is_problem') &&
+            $shipment->is_problem) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->markAsProblem($shipment->delivery->order_id);
@@ -182,7 +182,7 @@ class ShipmentObserver
     protected function markOrderAsNonProblem(Shipment $shipment): void
     {
         if ($shipment->status != $shipment->getOriginal('status') &&
-            $shipment->getOriginal('status') == ShipmentStatus::STATUS_ASSEMBLING_PROBLEM) {
+            !$shipment->is_problem) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->markAsNonProblem($shipment->delivery->order_id);
@@ -198,7 +198,7 @@ class ShipmentObserver
     protected function upsertDeliveryOrder(Shipment $shipment): void
     {
         if ($shipment->status != $shipment->getOriginal('status') &&
-            in_array($shipment->status, [ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE, ShipmentStatus::STATUS_ASSEMBLED])
+            in_array($shipment->status, [ShipmentStatus::ASSEMBLING, ShipmentStatus::ASSEMBLED])
         ) {
             $shipment->loadMissing('delivery.shipments');
             $delivery = $shipment->delivery;

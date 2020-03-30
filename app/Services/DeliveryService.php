@@ -200,7 +200,7 @@ class DeliveryService
         if (is_null($shipment)) {
             throw new Exception('Отправление не найдено');
         }
-        if ($shipment->status != ShipmentStatus::STATUS_ASSEMBLED) {
+        if ($shipment->status != ShipmentStatus::ASSEMBLED) {
             throw new Exception('Отправление не собрано');
         }
         if ($shipment->cargo_id) {
@@ -213,7 +213,7 @@ class DeliveryService
          */
         $deliveryService = $shipment->delivery_service_zero_mile;
         if (!$deliveryService) {
-            $shipment->load('delivery');
+            $shipment->loadMissing('delivery');
             $deliveryService = $shipment->delivery->delivery_service;
         }
 
@@ -222,7 +222,7 @@ class DeliveryService
             ->where('merchant_id', $shipment->merchant_id)
             ->where('store_id', $shipment->store_id)
             ->where('delivery_service', $deliveryService)
-            ->where('status', CargoStatus::STATUS_CREATED)
+            ->where('status', CargoStatus::CREATED)
             ->orderBy('created_at', 'desc');
         if ($shipment->getOriginal('cargo_id')) {
             $cargoQuery->where('id', '!=', $shipment->getOriginal('cargo_id'));
@@ -234,7 +234,7 @@ class DeliveryService
             $cargo->merchant_id = $shipment->merchant_id;
             $cargo->store_id = $shipment->store_id;
             $cargo->delivery_service = $deliveryService;
-            $cargo->status = CargoStatus::STATUS_CREATED;
+            $cargo->status = CargoStatus::CREATED;
             $cargo->width = 0;
             $cargo->height = 0;
             $cargo->length = 0;
@@ -253,7 +253,7 @@ class DeliveryService
      */
     public function createCourierCall(Cargo $cargo): void
     {
-        if ($cargo->status != CargoStatus::STATUS_CREATED) {
+        if ($cargo->status != CargoStatus::CREATED) {
             throw new Exception('Груз не в статусе "Создан"');
         }
         if ($cargo->xml_id) {
@@ -359,7 +359,6 @@ class DeliveryService
                 );
                 if ($courierCallOutputDto->success) {
                     $cargo->xml_id = $courierCallOutputDto->xml_id;
-                    $cargo->status = CargoStatus::STATUS_REQUEST_SEND;
 
                     $cargo->save();
                     break;
@@ -384,7 +383,8 @@ class DeliveryService
         }
 
         $result = DB::transaction(function () use ($cargo, $save) {
-            $cargo->status = CargoStatus::STATUS_CANCEL;
+            $cargo->is_canceled = true;
+            $cargo->is_canceled_at = now();
             if ($save) {
                 $cargo->save();
             }
@@ -433,8 +433,8 @@ class DeliveryService
          */
         foreach ($delivery->shipments as $shipment) {
             if (!in_array($shipment->status, [
-                ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE,
-                ShipmentStatus::STATUS_ASSEMBLED,
+                ShipmentStatus::ASSEMBLING,
+                ShipmentStatus::ASSEMBLED,
             ])) {
                 return;
             }
@@ -682,7 +682,6 @@ class DeliveryService
 
     /**
      * Получить файл со штрихкодами коробок для заказа на доставку
-     * Штрихкоды можно получить только для доставок, у которых все отправления собраны по коробкам
      * @param  int $shipmentId
      * @return DeliveryOrderBarcodesDto|null
      */
@@ -698,7 +697,7 @@ class DeliveryService
         if (!$delivery->xml_id) {
             return null;
         }
-        if ($shipment->status < ShipmentStatus::STATUS_ASSEMBLED) {
+        if ($shipment->status < ShipmentStatus::ASSEMBLED) {
             return null;
         }
 

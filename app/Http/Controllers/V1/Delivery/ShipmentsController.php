@@ -103,6 +103,11 @@ class ShipmentsController extends Controller
             'store_id' => [new RequiredOnPost(), 'integer'],
             'cargo_id' => ['nullable', 'integer'],
             'status' => ['nullable', Rule::in(ShipmentStatus::validValues())],
+            'payment_status_at' => ['nullable', 'date'],
+            'is_problem' => ['nullable', 'boolean'],
+            'is_problem_at' => ['nullable', 'date'],
+            'is_canceled' => ['nullable', 'boolean'],
+            'is_canceled_at' => ['nullable', 'date'],
             'number' => [new RequiredOnPost(), 'string'],
             'required_shipping_at' => [new RequiredOnPost(), 'date'],
         ];
@@ -215,12 +220,10 @@ class ShipmentsController extends Controller
     /**
      * Получить собранные неотгруженные отправления со схожими параметрами для текущего груза (склад, служба доставки)
      * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return JsonResponse
      */
-    public function similarUnshippedShipments(Request $request, RequestInitiator $client): JsonResponse
+    public function similarUnshippedShipments(Request $request): JsonResponse
     {
-        //todo Проверка прав
         $validatedData = $request->validate([
             'cargo_id' => 'integer|required',
         ]);
@@ -231,7 +234,7 @@ class ShipmentsController extends Controller
             ->where('id', '!=', $cargo->id)
             ->where('merchant_id', $cargo->merchant_id)
             ->where('store_id', $cargo->store_id)
-            ->whereIn('status', [CargoStatus::STATUS_CREATED, CargoStatus::STATUS_REQUEST_SEND])
+            ->whereIn('status', [CargoStatus::CREATED])
             ->where('delivery_service', $cargo->delivery_service)
             ->pluck('id')
             ->all();
@@ -243,7 +246,7 @@ class ShipmentsController extends Controller
                 $q->whereNull('cargo_id')
                     ->orWhereIn('cargo_id', $similarCargosIds);
             })
-            ->where('status', ShipmentStatus::STATUS_ASSEMBLED)
+            ->where('status', ShipmentStatus::ASSEMBLED)
             ->whereHas('delivery', function(Builder $q) use ($cargo){
                 $q->where('delivery_service', $cargo->delivery_service);
             })

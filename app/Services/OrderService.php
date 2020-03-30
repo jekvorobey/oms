@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Basket\Basket;
-use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Models\Payment\PaymentStatus;
 
@@ -161,9 +160,7 @@ class OrderService
         $isAllShipmentsOk = true;
         foreach ($order->deliveries as $delivery) {
             foreach ($delivery->shipments as $shipment) {
-                if (in_array($shipment->status, [
-                    ShipmentStatus::STATUS_ASSEMBLING_PROBLEM, ShipmentStatus::STATUS_TIMEOUT
-                ])) {
+                if ($shipment->is_problem) {
                     $isAllShipmentsOk = false;
                     break 2;
                 }
@@ -172,7 +169,7 @@ class OrderService
 
         $order->is_problem = !$isAllShipmentsOk;
 
-        return $save && !$order->is_problem ? $order->save() : true;
+        return $save ? $order->save() : true;
     }
 
     /**

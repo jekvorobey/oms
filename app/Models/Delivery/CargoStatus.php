@@ -11,16 +11,12 @@ namespace App\Models\Delivery;
  */
 class CargoStatus
 {
-    /** @var int - создан (автоматически устанавливается платформой) */
-    public const STATUS_CREATED = 1;
-    /** @var int - заявка передана в службу доставки (автоматически устанавливается платформой) */
-    public const STATUS_REQUEST_SEND = 2;
-    /** @var int - груз передан курьеру (устанавливается вручную оператором мерчанта) */
-    public const STATUS_SHIPPED = 3;
-    /** @var int - проблема при отгрузке (устанавливается вручную оператором мерчанта) */
-    public const STATUS_SHIPPING_PROBLEM = 4;
-    /** @var int - отменен  (устанавливается вручную администратором iBT) */
-    public const STATUS_CANCEL = 5;
+    /** @var int - сформирован (автоматически устанавливается платформой) */
+    public const CREATED = 1;
+    /** @var int - передан логистическому оператору (устанавливается вручную оператором мерчанта) */
+    public const SHIPPED = 2;
+    /** @var int - принят Логистическим Оператором (автоматически устанавливается платформой из статуса Отправлений) */
+    public const TAKEN = 3;
     
     /** @var int */
     public $id;
@@ -33,11 +29,18 @@ class CargoStatus
     public static function all()
     {
         return [
-            new self(self::STATUS_CREATED, 'Создан'),
-            new self(self::STATUS_REQUEST_SEND, 'Заявка передана в службу доставки'),
-            new self(self::STATUS_SHIPPED, 'Груз передан курьеру'),
-            new self(self::STATUS_SHIPPING_PROBLEM, 'Проблема при отгрузке'),
-            new self(self::STATUS_CANCEL, 'Отменен'),
+            self::CREATED => new self(
+                self::CREATED,
+                'Создан'
+            ),
+            self::SHIPPED => new self(
+                self::SHIPPED,
+                'Передан Логистическому Оператору'
+            ),
+            self::TAKEN => new self(
+                self::TAKEN,
+                'Принят Логистическим Оператором'
+            ),
         ];
     }
     
@@ -46,13 +49,7 @@ class CargoStatus
      */
     public static function validValues(): array
     {
-        return [
-            self::STATUS_CREATED,
-            self::STATUS_REQUEST_SEND,
-            self::STATUS_SHIPPED,
-            self::STATUS_SHIPPING_PROBLEM,
-            self::STATUS_CANCEL,
-        ];
+        return array_keys(static::all());
     }
     
     /**

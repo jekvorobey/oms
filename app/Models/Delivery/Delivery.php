@@ -23,6 +23,12 @@ use Illuminate\Support\Collection;
  * @property string $xml_id - идентификатор заказа на доставку в службе доставки
  * @property string $error_xml_id - текст последней ошибки при создании/обновлении заказа на доставку в службе доставки
  * @property string $status_xml_id - статус заказа на доставку в службе доставки
+ * @property int $payment_status - статус оплаты
+ * @property \Illuminate\Support\Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property int $is_problem - флаг, что доставка проблемная
+ * @property Carbon|null $is_problem_at - дата установки флага проблемной доставки
+ * @property int $is_canceled - флаг, что доставка отменена
+ * @property Carbon|null $is_canceled_at - дата установки флага отмены доставки
  * @property int $tariff_id - идентификатор тарифа на доставку из сервиса логистики
  * @property int $point_id - идентификатор пункта самовывоза из сервиса логистики
  * @property string $number - номер доставки (номер_заказа-порядковый_номер_доставки)

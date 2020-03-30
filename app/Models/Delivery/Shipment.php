@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
@@ -26,6 +27,12 @@ use Pim\Services\ProductService\ProductService;
  * @property int $delivery_service_zero_mile - сервис доставки нулевой мили
  * @property int $store_id
  * @property int $status
+ * @property int $payment_status - статус оплаты
+ * @property Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property int $is_problem - флаг, что отправление проблемное
+ * @property Carbon|null $is_problem_at - дата установки флага проблемного отправления
+ * @property int $is_canceled - флаг, что отправление отменено
+ * @property Carbon|null $is_canceled_at - дата установки флага отмены отправления
  * @property int $cargo_id
  *
  * @property string $number - номер отправления (номер_доставки/порядковый_номер_отправления)
@@ -59,6 +66,12 @@ class Shipment extends OmsModel
         'store_id',
         'cargo_id',
         'status',
+        'payment_status',
+        'payment_status_at',
+        'is_problem',
+        'is_problem_at',
+        'is_canceled',
+        'is_canceled_at',
         'number',
         'required_shipping_at',
         'assembly_problem_comment',
