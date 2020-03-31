@@ -5,7 +5,6 @@ namespace App\Observers\Order;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\Order;
-use Carbon\Carbon;
 
 /**
  * Class OrderObserver
@@ -34,6 +33,9 @@ class OrderObserver
     public function updated(Order $order)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, $order, $order);
+
+        $this->setPaymentStatusToChildren($order);
+        $this->setIsCanceledToChildren($order);
     }
 
     /**
@@ -43,17 +45,10 @@ class OrderObserver
      */
     public function saving(Order $order)
     {
-        if ($order->status != $order->getOriginal('status')) {
-            $order->status_at = Carbon::now();
-        }
-        
-        if ($order->payment_status != $order->getOriginal('payment_status')) {
-            $order->payment_status_at = Carbon::now();
-        }
-        
-        if ($order->is_problem != $order->getOriginal('is_problem')) {
-            $order->is_problem_at = Carbon::now();
-        }
+        $this->setStatusAt($order);
+        $this->setPaymentStatusAt($order);
+        $this->setProblemAt($order);
+        $this->setCanceledAt($order);
     }
 
     /**
@@ -70,6 +65,90 @@ class OrderObserver
         }
         foreach ($order->deliveries as $delivery) {
             $delivery->delete();
+        }
+    }
+
+    /**
+     * Установить дату изменения статуса заказа
+     * @param  Order $order
+     */
+    protected function setStatusAt(Order $order): void
+    {
+        if ($order->status != $order->getOriginal('status')) {
+            $order->status_at = now();
+        }
+    }
+
+    /**
+     * Установить дату изменения статуса оплаты заказа
+     * @param  Order $order
+     */
+    protected function setPaymentStatusAt(Order $order): void
+    {
+        if ($order->payment_status != $order->getOriginal('payment_status')) {
+            $order->payment_status_at = now();
+        }
+    }
+
+    /**
+     * Установить статус оплаты заказа всем доставкам и отправлениями заказа
+     * @param  Order $order
+     */
+    protected function setPaymentStatusToChildren(Order $order): void
+    {
+        if ($order->payment_status != $order->getOriginal('payment_status')) {
+            $order->loadMissing('deliveries.shipments');
+            foreach ($order->deliveries as $delivery) {
+                $delivery->payment_status = $order->payment_status;
+                $delivery->save();
+
+                foreach ($delivery->shipments as $shipment) {
+                    $shipment->payment_status = $order->payment_status;
+                    $shipment->save();
+                }
+            }
+        }
+    }
+
+    /**
+     * Установить статус оплаты заказа всем доставкам и отправлениями заказа
+     * @param  Order $order
+     */
+    protected function setIsCanceledToChildren(Order $order): void
+    {
+        if ($order->is_canceled && $order->is_canceled != $order->getOriginal('is_canceled')) {
+            $order->loadMissing('deliveries.shipments');
+            foreach ($order->deliveries as $delivery) {
+                $delivery->is_canceled = $order->is_canceled;
+                $delivery->save();
+
+                foreach ($delivery->shipments as $shipment) {
+                    $shipment->is_canceled = $order->is_canceled;
+                    $shipment->save();
+                }
+            }
+        }
+    }
+
+    /**
+     * Установить дату установки флага проблемного заказа
+     * @param  Order $order
+     */
+    protected function setProblemAt(Order $order): void
+    {
+        if ($order->is_problem != $order->getOriginal('is_problem')) {
+            $order->is_problem_at = now();
+        }
+    }
+
+    /**
+     * Установить дату отмены заказа
+     * @param  Order $order
+     */
+    protected function setCanceledAt(Order $order): void
+    {
+        if ($order->is_canceled != $order->getOriginal('is_canceled')) {
+            $order->is_canceled_at = now();
         }
     }
 }

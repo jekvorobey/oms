@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $merchant_id
  * @property int $store_id
  * @property int $status
+ * @property Carbon|null $status_at - дата установки статуса
  * @property int $is_problem - флаг, что у груза проблемы при отгрузке
  * @property Carbon|null $is_problem_at - дата установки флага проблемного груза
  * @property int $is_canceled - флаг, что груз отменен

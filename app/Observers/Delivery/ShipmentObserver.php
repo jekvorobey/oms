@@ -77,6 +77,19 @@ class ShipmentObserver
         }
         $shipment->delivery->recalc();
     }
+
+    /**
+     * Handle the order "saving" event.
+     * @param  Shipment $shipment
+     * @return void
+     */
+    public function saving(Shipment $shipment)
+    {
+        $this->setStatusAt($shipment);
+        $this->setPaymentStatusAt($shipment);
+        $this->setProblemAt($shipment);
+        $this->setCanceledAt($shipment);
+    }
     
     /**
      * Handle the shipment "saved" event.
@@ -237,6 +250,50 @@ class ShipmentObserver
             if ($shipment->cargo_id) {
                 History::saveEvent(HistoryType::TYPE_CREATE_LINK, Cargo::find($shipment->cargo_id), $shipment);
             }
+        }
+    }
+
+    /**
+     * Установить дату изменения статуса отправления
+     * @param  Shipment $shipment
+     */
+    protected function setStatusAt(Shipment $shipment): void
+    {
+        if ($shipment->status != $shipment->getOriginal('status')) {
+            $shipment->status_at = now();
+        }
+    }
+
+    /**
+     * Установить дату изменения статуса оплаты отправления
+     * @param  Shipment $shipment
+     */
+    protected function setPaymentStatusAt(Shipment $shipment): void
+    {
+        if ($shipment->payment_status != $shipment->getOriginal('payment_status')) {
+            $shipment->payment_status_at = now();
+        }
+    }
+
+    /**
+     * Установить дату установки флага проблемного отправления
+     * @param  Shipment $shipment
+     */
+    protected function setProblemAt(Shipment $shipment): void
+    {
+        if ($shipment->is_problem != $shipment->getOriginal('is_problem')) {
+            $shipment->is_problem_at = now();
+        }
+    }
+
+    /**
+     * Установить дату отмены отправления
+     * @param  Shipment $shipment
+     */
+    protected function setCanceledAt(Shipment $shipment): void
+    {
+        if ($shipment->is_canceled != $shipment->getOriginal('is_canceled')) {
+            $shipment->is_canceled_at = now();
         }
     }
 }

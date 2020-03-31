@@ -79,7 +79,6 @@ class OrderService
         }
 
         $order->is_canceled = true;
-        $order->is_canceled_at = now();
 
         return $save ? $order->save() : true;
     }
@@ -120,7 +119,7 @@ class OrderService
             return false;
         }
 
-        $order->setPaymentStatus($status);
+        $order->status = $status;
 
         return $save ? $order->save() : true;
     }
@@ -139,7 +138,6 @@ class OrderService
         }
 
         $order->is_problem = true;
-        $order->is_problem_at = now();
 
         return $save ? $order->save() : true;
     }

@@ -134,7 +134,7 @@ class OrdersSeeder extends Seeder
             $order->basket_id = $basket->id;
             $order->customer_id = $basket->customer_id;
             $order->number = Order::makeNumber();
-            $order->setStatus($faker->randomElement(OrderStatus::validValues()));
+            $order->status = $faker->randomElement(OrderStatus::validValues());
             $order->created_at = $faker->dateTimeThisYear();
             $order->manager_comment = $faker->realText();
 
