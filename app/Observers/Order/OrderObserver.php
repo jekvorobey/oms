@@ -2,9 +2,12 @@
 
 namespace App\Observers\Order;
 
+use App\Core\OrderSmsNotify;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\Order;
+use App\Models\Order\OrderStatus;
+use App\Models\Payment\PaymentStatus;
 
 /**
  * Class OrderObserver
@@ -36,6 +39,8 @@ class OrderObserver
 
         $this->setPaymentStatusToChildren($order);
         $this->setIsCanceledToChildren($order);
+        $this->notifyIfOrderPaid($order);
+        $this->commitPaymentIfOrderDelivered($order);
     }
 
     /**
@@ -149,6 +154,33 @@ class OrderObserver
     {
         if ($order->is_canceled != $order->getOriginal('is_canceled')) {
             $order->is_canceled_at = now();
+        }
+    }
+
+    /**
+     * @param Order $order
+     */
+    private function notifyIfOrderPaid(Order $order): void
+    {
+        $oldPaymentStatus = $order->getOriginal('payment_status');
+        $newPaymentStatus = $order->payment_status;
+        if ($oldPaymentStatus != $newPaymentStatus) {
+            if ($newPaymentStatus == PaymentStatus::PAID) {
+                OrderSmsNotify::payed($order);
+            }
+        }
+    }
+
+    private function commitPaymentIfOrderDelivered(Order $order): void
+    {
+        $oldStatus = $order->getOriginal('status');
+        $newStatus = $order->status;
+        if ($newStatus == OrderStatus::DONE && $newStatus != $oldStatus) {
+            foreach ($order->payments as $payment) {
+                if ($payment->status == PaymentStatus::HOLD) {
+                    $payment->commitHolded();
+                }
+            }
         }
     }
 }

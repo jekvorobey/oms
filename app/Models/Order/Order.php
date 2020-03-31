@@ -57,25 +57,6 @@ use Illuminate\Support\Collection;
  * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
  * @property Collection|Payment[] $payments - оплаты заказа
  * @property Collection|Delivery[] $deliveries - доставка заказа
- *
- * @OA\Schema(
- *     schema="OrderItem",
- *     @OA\Property(property="id", type="integer", description="id заказа"),
- *     @OA\Property(property="customer_id", type="integer", description="id покупателя"),
- *     @OA\Property(property="basket_id", type="integer", description="id корзины"),
- *     @OA\Property(property="basket", ref="#/components/schemas/BasketItem"),
- *     @OA\Property(property="delivery_type", type="string", description="тип доставки (одним отправлением, несколькими отправлениями)"),
- *     @OA\Property(property="delivery_method", type="string", description="способ доставки (самовывоз из ПВЗ, самовывоз из постомата, доставка)"),
- *     @OA\Property(property="number", type="string", description="номер"),
- *     @OA\Property(property="cost", type="number", description="стоимость (расчитывается автоматически)"),
- *     @OA\Property(property="payment_status", type="integer", description="статус оплаты"),
- *     @OA\Property(property="manager_comment", type="string", description="комментарий менеджера"),
- *     @OA\Property(property="delivery_address", type="string", description="адрес доставки"),
- *     @OA\Property(property="delivery_comment", type="string", description="комментарий к доставке"),
- *     @OA\Property(property="receiver_name", type="string", description="имя получателя"),
- *     @OA\Property(property="receiver_phone", type="string", description="телефон получателя"),
- *     @OA\Property(property="receiver_email", type="string", description="e-mail получателя"),
- * )
  */
 class Order extends OmsModel
 {
@@ -156,20 +137,5 @@ class Order extends OmsModel
     public function customerEmail(): string
     {
         return 'mail@example.com';
-    }
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        self::updated(function (Order $order) {
-            $oldPaymentStatus = $order->getOriginal('payment_status');
-            $newPaymentStatus = $order->payment_status;
-            if ($oldPaymentStatus != $newPaymentStatus) {
-                if ($newPaymentStatus == PaymentStatus::PAID) {
-                    OrderSmsNotify::payed($order);
-                }
-            }
-        });
     }
 }

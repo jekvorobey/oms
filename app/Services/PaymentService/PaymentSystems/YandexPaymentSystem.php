@@ -17,6 +17,7 @@ use YandexCheckout\Model\PaymentStatus;
  */
 class YandexPaymentSystem implements PaymentSystemInterface
 {
+    public const CURRENCY_RUB = 'RUB';
     /** @var Client */
     private $yandexService;
 
@@ -31,14 +32,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     /**
      * @param  Payment  $payment
      * @param  string  $returnLink
-     * @throws \YandexCheckout\Common\Exceptions\ApiException
-     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
-     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
-     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
-     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
-     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
-     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
-     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
+     * @throws \Exception
      */
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
@@ -48,12 +42,12 @@ class YandexPaymentSystem implements PaymentSystemInterface
         $response = $this->yandexService->createPayment([
             'amount' => [
                 'value' => number_format($order->price, 2, '.', ''),
-                'currency' => 'RUB',
+                'currency' => self::CURRENCY_RUB,
             ],
             'payment_method_data' => [
-                'type' => 'bank_card',
+                'type' => 'bank_card', // важно! при смене способа оплаты может поменяться максимальный срок холдирования
             ],
-            'capture' => true,
+            'capture' => false,
             'confirmation' => [
                 'type' => 'redirect',
                 'return_url' => $returnLink,
@@ -75,30 +69,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * @param  Basket  $basket
-     * @return array
-     */
-    protected function generateItems(Basket $basket)
-    {
-        $items = [];
-        foreach ($basket->items as $item) {
-            $items[] = [
-                'description' => $item->name,
-                'quantity' => $item->qty,
-                'amount' => [
-                    'value' => number_format($item->price, 2, '.', ''),
-                    'currency' => 'RUB',
-                ],
-                'vat_code' => 1,
-                "payment_mode" => "full_prepayment",
-                "payment_subject" => "commodity"
-            ];
-        }
-
-        return $items;
-    }
-
-    /**
      * Получить от внешней системы ссылку страницы оплаты.
      *
      * @param Payment $payment
@@ -110,18 +80,21 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
+     * Получить от id оплаты во внешней системе.
+     *
+     * @param Payment $payment
+     * @return string|null
+     */
+    public function externalPaymentId(Payment $payment): ?string
+    {
+        return $payment->data['externalPaymentId'] ?? null;
+    }
+
+    /**
      * Обработать данные от платёжной ситсемы о совершении платежа.
      * @param  array  $data
      * @return void
-     * @throws \YandexCheckout\Common\Exceptions\ApiException
-     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
-     * @throws \YandexCheckout\Common\Exceptions\ExtensionNotFoundException
-     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
-     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
-     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
-     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
-     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
-     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
+     * @throws \Exception
      */
     public function handlePushPayment(array $data): void
     {
@@ -137,59 +110,24 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
         switch ($payment->getStatus()) {
             case PaymentStatus::WAITING_FOR_CAPTURE:
-                $this->capturePayment($payment, $localPayment);
+                $localPayment->status = \App\Models\Payment\PaymentStatus::HOLD;
+                $localPayment->save();
                 break;
             case PaymentStatus::SUCCEEDED:
-                $this->succeededPayment($payment, $localPayment);
+                $localPayment->status = \App\Models\Payment\PaymentStatus::PAID;
+                $localPayment->payed_at = Carbon::now();
+                $localPayment->save();
+                break;
+            case PaymentStatus::CANCELED:
+                $localPayment->status = \App\Models\Payment\PaymentStatus::TIMEOUT;
+                $localPayment->save();
                 break;
         }
     }
 
     /**
-     * @param  \YandexCheckout\Model\PaymentInterface  $payment
-     * @param  Payment  $localPayment
-     * @throws \YandexCheckout\Common\Exceptions\ApiException
-     * @throws \YandexCheckout\Common\Exceptions\BadApiRequestException
-     * @throws \YandexCheckout\Common\Exceptions\ForbiddenException
-     * @throws \YandexCheckout\Common\Exceptions\InternalServerError
-     * @throws \YandexCheckout\Common\Exceptions\NotFoundException
-     * @throws \YandexCheckout\Common\Exceptions\ResponseProcessingException
-     * @throws \YandexCheckout\Common\Exceptions\TooManyRequestsException
-     * @throws \YandexCheckout\Common\Exceptions\UnauthorizedException
-     */
-    protected function capturePayment(\YandexCheckout\Model\PaymentInterface $payment, Payment $localPayment): void
-    {
-        $this->yandexService->capturePayment(
-            [
-                'amount' => [
-                    'value' => $payment->getAmount()->getValue(),
-                    'currency' => $payment->getAmount()->getCurrency(),
-                ],
-                'receipt' => [
-                    "tax_system_code" => "2",
-                    'email' => $localPayment->order->receiver_email,
-                    'items' => $this->generateItems($localPayment->order->basket),
-                ],
-            ],
-            $payment->getId(),
-            uniqid('', true)
-        );
-    }
-
-    /**
-     * @param  \YandexCheckout\Model\PaymentInterface  $payment
-     * @param  Payment  $localPayment
-     */
-    protected function succeededPayment(\YandexCheckout\Model\PaymentInterface $payment, Payment $localPayment)
-    {
-        $localPayment->status = \App\Models\Payment\PaymentStatus::PAID;
-        $localPayment->payed_at = Carbon::now();
-        $localPayment->save();
-    }
-
-    /**
      * Время в часах, в течение которого можно совершить платёж после его создания.
-     * Если за эт овремя платёж не совершён - заказ отменяется.
+     * Если за это время платёж не совершён - заказ отменяется.
      * Если не указано, то время бесконечно.
      *
      * @return int|null
@@ -197,5 +135,53 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function duration(): ?int
     {
         return 1;
+    }
+
+    /**
+     * @param Payment $localPayment
+     * @param $amount
+     * @throws \Exception
+     */
+    public function commitHoldedPayment(Payment $localPayment, $amount)
+    {
+        $this->yandexService->capturePayment(
+            [
+                'amount' => [
+                    'value' => $amount,
+                    'currency' => self::CURRENCY_RUB,
+                ],
+                'receipt' => [
+                    "tax_system_code" => "2",
+                    'email' => $localPayment->order->customerEmail(),
+                    'items' => $this->generateItems($localPayment->order->basket),
+                ],
+            ],
+            $this->externalPaymentId($localPayment),
+            uniqid('', true)
+        );
+    }
+
+    /**
+     * @param  Basket  $basket
+     * @return array
+     */
+    protected function generateItems(Basket $basket)
+    {
+        $items = [];
+        foreach ($basket->items as $item) {
+            $items[] = [
+                'description' => $item->name,
+                'quantity' => $item->qty,
+                'amount' => [
+                    'value' => number_format($item->price, 2, '.', ''),
+                    'currency' => self::CURRENCY_RUB,
+                ],
+                'vat_code' => 1,
+                "payment_mode" => "full_prepayment",
+                "payment_subject" => "commodity"
+            ];
+        }
+
+        return $items;
     }
 }
