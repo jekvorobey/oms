@@ -71,4 +71,9 @@ class Payment extends OmsModel
     {
         return $this->belongsTo(Order::class);
     }
+
+    public function commitHolded()
+    {
+        $this->paymentSystem()->commitHoldedPayment($this, $this->sum);
+    }
 }
