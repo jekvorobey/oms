@@ -183,6 +183,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::prefix('{id}')->group(function () {
                 Route::get('', 'CargoController@read');
                 Route::put('','CargoController@update');
+                Route::put('cancel','CargoController@cancel');
                 Route::delete('','CargoController@delete');
 
                 //todo Добавить end-point для работы с отправлениями груза

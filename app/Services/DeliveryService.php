@@ -223,6 +223,7 @@ class DeliveryService
             ->where('store_id', $shipment->store_id)
             ->where('delivery_service', $deliveryService)
             ->where('status', CargoStatus::CREATED)
+            ->where('is_canceled', false)
             ->orderBy('created_at', 'desc');
         if ($shipment->getOriginal('cargo_id')) {
             $cargoQuery->where('id', '!=', $shipment->getOriginal('cargo_id'));
