@@ -716,4 +716,62 @@ class DeliveryService
             return null;
         }
     }
+
+    /**
+     * Пометить отправление как проблемное
+     * @param int $shipmentId
+     * @param string $comment
+     * @param bool $save
+     * @return bool
+     */
+    public function markAsProblemShipment(int $shipmentId, string $comment = '', bool $save = true): bool
+    {
+        $shipment = $this->getShipment($shipmentId);
+        if (is_null($shipment)) {
+            return false;
+        }
+
+        $shipment->is_problem = true;
+        $shipment->assembly_problem_comment = $comment;
+        $shipment->is_problem_at = now();
+
+        return $save ? $shipment->save() : true;
+    }
+
+    /**
+     * Пометить отправление как непроблемное
+     * @param int $shipmentId
+     * @param bool $save
+     * @return bool
+     */
+    public function markAsNonProblemShipment(int $shipmentId, bool $save = true): bool
+    {
+        $shipment = $this->getShipment($shipmentId);
+        if (is_null($shipment)) {
+            return false;
+        }
+
+        $shipment->is_problem = false;
+
+        return $save ? $shipment->save() : true;
+    }
+
+    /**
+     * Отменить отправление
+     * @param int $shipmentId
+     * @param bool $save
+     * @return bool
+     */
+    public function cancelShipment(int $shipmentId, bool $save = true): bool
+    {
+        $shipment = $this->getShipment($shipmentId);
+        if (is_null($shipment)) {
+            return false;
+        }
+
+        $shipment->is_canceled = true;
+        $shipment->is_canceled_at = now();
+
+        return $save ? $shipment->save() : true;
+    }
 }

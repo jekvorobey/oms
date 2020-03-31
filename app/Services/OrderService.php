@@ -139,6 +139,7 @@ class OrderService
         }
 
         $order->is_problem = true;
+        $order->is_problem_at = now();
 
         return $save ? $order->save() : true;
     }
