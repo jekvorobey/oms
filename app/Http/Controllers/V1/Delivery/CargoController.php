@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Class CargoController
@@ -186,5 +187,20 @@ class CargoController extends Controller
     public function delete(int $id, RequestInitiator $client): Response
     {
         return $this->deleteTrait($id, $client);
+    }
+
+    /**
+     * Отменить груз
+     * @param  int  $id
+     * @param  \App\Services\DeliveryService  $deliveryService
+     * @return Response
+     */
+    public function cancel(int $id, \App\Services\DeliveryService $deliveryService): Response
+    {
+        if (!$deliveryService->cancelCargo($id)) {
+            throw new HttpException(500);
+        }
+
+        return response('', 204);
     }
 }

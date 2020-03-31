@@ -104,10 +104,6 @@ class ShipmentsController extends Controller
             'cargo_id' => ['nullable', 'integer'],
             'status' => ['nullable', Rule::in(ShipmentStatus::validValues())],
             'payment_status_at' => ['nullable', 'date'],
-            'is_problem' => ['nullable', 'boolean'],
-            'is_problem_at' => ['nullable', 'date'],
-            'is_canceled' => ['nullable', 'boolean'],
-            'is_canceled_at' => ['nullable', 'date'],
             'number' => [new RequiredOnPost(), 'string'],
             'required_shipping_at' => [new RequiredOnPost(), 'date'],
         ];
@@ -519,5 +515,55 @@ class ShipmentsController extends Controller
         }
 
         throw new HttpException(500);
+    }
+
+    /**
+     * Пометить как проблемное
+     * @param  int  $id
+     * @param Request $request
+     * @param  DeliveryService  $deliveryService
+     * @return Response
+     */
+    public function markAsProblem(int $id, Request $request, DeliveryService $deliveryService): Response
+    {
+        $data = $this->validate($request, [
+            'assembly_problem_comment' => ['required'],
+        ]);
+
+        if (!$deliveryService->markAsProblemShipment($id, $data['assembly_problem_comment'])) {
+            throw new HttpException(500);
+        }
+
+        return response('', 204);
+    }
+
+    /**
+     * Пометить как непроблемное
+     * @param  int  $id
+     * @param  DeliveryService  $deliveryService
+     * @return Response
+     */
+    public function markAsNonProblem(int $id, DeliveryService $deliveryService): Response
+    {
+        if (!$deliveryService->markAsNonProblemShipment($id)) {
+            throw new HttpException(500);
+        }
+
+        return response('', 204);
+    }
+
+    /**
+     * Отменить отправление
+     * @param  int  $id
+     * @param  DeliveryService  $deliveryService
+     * @return Response
+     */
+    public function cancel(int $id, DeliveryService $deliveryService): Response
+    {
+        if (!$deliveryService->cancelShipment($id)) {
+            throw new HttpException(500);
+        }
+
+        return response('', 204);
     }
 }

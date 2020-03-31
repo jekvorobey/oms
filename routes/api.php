@@ -149,6 +149,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 });
 
                 Route::put('','ShipmentsController@update');
+                Route::put('mark-as-problem','ShipmentsController@markAsProblem');
+                Route::put('mark-as-non-problem','ShipmentsController@markAsNonProblem');
+                Route::put('cancel','ShipmentsController@cancel');
                 Route::delete('','ShipmentsController@delete');
                 Route::get('barcodes', 'ShipmentsController@barcodes');
             });
@@ -183,6 +186,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::prefix('{id}')->group(function () {
                 Route::get('', 'CargoController@read');
                 Route::put('','CargoController@update');
+                Route::put('cancel','CargoController@cancel');
                 Route::delete('','CargoController@delete');
 
                 //todo Добавить end-point для работы с отправлениями груза
