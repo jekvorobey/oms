@@ -385,7 +385,6 @@ class DeliveryService
 
         $result = DB::transaction(function () use ($cargo, $save) {
             $cargo->is_canceled = true;
-            $cargo->is_canceled_at = now();
             if ($save) {
                 $cargo->save();
             }
@@ -669,8 +668,10 @@ class DeliveryService
                             $delivery = $deliveries[$deliveryOrderStatusDto->number];
                             if ($deliveryOrderStatusDto->success) {
                                 $delivery->status = $deliveryOrderStatusDto->status;
-                                $delivery->status_xml_id = $deliveryOrderStatusDto->status_xml_id;
-                                $delivery->status_xml_id_at = new Carbon($deliveryOrderStatusDto->status_date);
+                                $delivery->setStatusXmlId(
+                                    $deliveryOrderStatusDto->status_xml_id,
+                                    new Carbon($deliveryOrderStatusDto->status_date)
+                                );
                                 $delivery->save();
                             }
                         }
@@ -733,7 +734,6 @@ class DeliveryService
 
         $shipment->is_problem = true;
         $shipment->assembly_problem_comment = $comment;
-        $shipment->is_problem_at = now();
 
         return $save ? $shipment->save() : true;
     }
@@ -770,7 +770,6 @@ class DeliveryService
         }
 
         $shipment->is_canceled = true;
-        $shipment->is_canceled_at = now();
 
         return $save ? $shipment->save() : true;
     }

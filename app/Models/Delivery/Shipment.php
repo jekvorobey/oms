@@ -27,6 +27,7 @@ use Pim\Services\ProductService\ProductService;
  * @property int $delivery_service_zero_mile - сервис доставки нулевой мили
  * @property int $store_id
  * @property int $status
+ * @property Carbon|null $status_at - дата установки статуса
  * @property int $payment_status - статус оплаты
  * @property Carbon|null $payment_status_at - дата установки статуса оплаты
  * @property int $is_problem - флаг, что отправление проблемное

@@ -114,32 +114,6 @@ class Order extends OmsModel
         return $this->hasOne(OrderComment::class);
     }
 
-    /**
-     * Установить статус заказа (без сохранения!)
-     * @param  int  $status
-     * @return self
-     */
-    public function setStatus(int $status): self
-    {
-        $this->status = $status;
-        $this->status_at = now();
-
-        return $this;
-    }
-
-    /**
-     * Установить статус оплаты заказа (без сохранения!)
-     * @param  int  $status
-     * @return self
-     */
-    public function setPaymentStatus(int $status): self
-    {
-        $this->payment_status = $status;
-        $this->payment_status_at = now();
-
-        return $this;
-    }
-
     public function getUser(): UserDto
     {
         if (is_null($this->customer)) {

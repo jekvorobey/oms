@@ -176,9 +176,9 @@ class DeliverySeeder extends Seeder
                         $delivery->setStatusXmlId($faker->randomElement(array_keys(B2CplDeliveryOrderStatus::allStatuses())));
                         $b2cplStatus = B2CplDeliveryOrderStatus::statusById($delivery->status_xml_id);
                         if (isset($b2cplStatus['delivery_status_id'])) {
-                            $delivery->setStatus($b2cplStatus['delivery_status_id']);
+                            $delivery->status = $b2cplStatus['delivery_status_id'];
                         } else {
-                            $delivery->setStatus($faker->randomElement(array_keys(DeliveryOrderStatus::allStatuses())));
+                            $delivery->status = $faker->randomElement(array_keys(DeliveryOrderStatus::allStatuses()));
                         }
                         break;
                 }

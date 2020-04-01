@@ -49,6 +49,9 @@ class DeliveryObserver
     public function saving(Delivery $delivery)
     {
         $this->setStatusAt($delivery);
+        $this->setPaymentStatusAt($delivery);
+        $this->setProblemAt($delivery);
+        $this->setCanceledAt($delivery);
     }
     
     /**
@@ -59,6 +62,39 @@ class DeliveryObserver
     {
         if ($delivery->status != $delivery->getOriginal('status')) {
             $delivery->status_at = now();
+        }
+    }
+
+    /**
+     * Установить дату изменения статуса оплаты доставки
+     * @param  Delivery $delivery
+     */
+    protected function setPaymentStatusAt(Delivery $delivery): void
+    {
+        if ($delivery->payment_status != $delivery->getOriginal('payment_status')) {
+            $delivery->payment_status_at = now();
+        }
+    }
+
+    /**
+     * Установить дату установки флага проблемной доставки
+     * @param  Delivery $delivery
+     */
+    protected function setProblemAt(Delivery $delivery): void
+    {
+        if ($delivery->is_problem != $delivery->getOriginal('is_problem')) {
+            $delivery->is_problem_at = now();
+        }
+    }
+
+    /**
+     * Установить дату отмены доставки
+     * @param  Delivery $delivery
+     */
+    protected function setCanceledAt(Delivery $delivery): void
+    {
+        if ($delivery->is_canceled != $delivery->getOriginal('is_canceled')) {
+            $delivery->is_canceled_at = now();
         }
     }
 }

@@ -58,6 +58,18 @@ class CargoObserver
     }
 
     /**
+     * Handle the order "saving" event.
+     * @param  Cargo $cargo
+     * @return void
+     */
+    public function saving(Cargo $cargo)
+    {
+        $this->setStatusAt($cargo);
+        $this->setProblemAt($cargo);
+        $this->setCanceledAt($cargo);
+    }
+
+    /**
      * Проверить, что в грузе есть отправления, если статус меняется на "Груз передан курьеру"
      * @param Cargo $cargo
      * @return bool
@@ -73,5 +85,38 @@ class CargoObserver
         }
 
         return true;
+    }
+
+    /**
+     * Установить дату изменения статуса груза
+     * @param  Cargo $cargo
+     */
+    protected function setStatusAt(Cargo $cargo): void
+    {
+        if ($cargo->status != $cargo->getOriginal('status')) {
+            $cargo->status_at = now();
+        }
+    }
+
+    /**
+     * Установить дату установки флага проблемного груза
+     * @param  Cargo $cargo
+     */
+    protected function setProblemAt(Cargo $cargo): void
+    {
+        if ($cargo->is_problem != $cargo->getOriginal('is_problem')) {
+            $cargo->is_problem_at = now();
+        }
+    }
+
+    /**
+     * Установить дату отмены груза
+     * @param  Cargo $cargo
+     */
+    protected function setCanceledAt(Cargo $cargo): void
+    {
+        if ($cargo->is_canceled != $cargo->getOriginal('is_canceled')) {
+            $cargo->is_canceled_at = now();
+        }
     }
 }
