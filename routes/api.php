@@ -67,6 +67,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             });
 
             Route::put('', 'OrdersController@update');
+            Route::put('cancel','OrdersController@cancel');
             Route::delete('', 'OrdersController@delete');
         });
 
@@ -118,7 +119,13 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                     Route::post('', 'ShipmentsController@create');
                 });
 
+                Route::prefix('delivery-order')->group(function () {
+                    Route::put('', 'DeliveryController@saveDeliveryOrder');
+                    Route::put('cancel', 'DeliveryController@cancelDeliveryOrder');
+                });
+
                 Route::put('','DeliveryController@update');
+                Route::put('cancel','DeliveryController@cancel');
                 Route::delete('','DeliveryController@delete');
             });
         });
@@ -188,8 +195,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::put('','CargoController@update');
                 Route::put('cancel','CargoController@cancel');
                 Route::delete('','CargoController@delete');
-
-                //todo Добавить end-point для работы с отправлениями груза
             });
         });
     });

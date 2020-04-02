@@ -3,7 +3,6 @@
 namespace App\Models\Order;
 
 use App\Core\Notifications\OrderNotification;
-use App\Core\OrderSmsNotify;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
@@ -137,5 +136,27 @@ class Order extends OmsModel
     public function customerEmail(): string
     {
         return 'mail@example.com';
+    }
+
+    /**
+     * Заказ оплачен?
+     * @return bool
+     */
+    public function isPaid(): bool
+    {
+        return in_array($this->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD]);
+    }
+
+    /**
+     * Заказ может быть обработан?
+     * @return bool
+     */
+    public function canBeProcessed(): bool
+    {
+        /*
+         * todo В будущем, когда будут заказы с постоплатой, добавить сюда доп проверку,
+         * что заказ с постоплатой и может быть обработан без оплаты
+         */
+        return $this->isPaid();
     }
 }

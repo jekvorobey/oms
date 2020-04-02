@@ -9,6 +9,8 @@ namespace App\Models\Order;
  */
 class OrderStatus
 {
+    /** @var int - предзаказ: ожидаем поступления товара */
+    public const PRE_ORDER = 0;
     /** @var int - оформлен */
     public const CREATED = 1;
     /** @var int - ожидает проверки АОЗ */
@@ -29,8 +31,6 @@ class OrderStatus
     public const DONE = 9;
     /** @var int - возвращен */
     public const RETURNED = 10;
-    /** @var int - предзаказ: ожидаем поступления товара */
-    public const PRE_ORDER = 11;
 
     /** @var int */
     public $id;

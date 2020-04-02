@@ -490,14 +490,19 @@ class ShipmentsController extends Controller
     }
 
     /**
-     * @param  int  $shipmentId
+     * Получить штрихкоды для мест (коробок) отправления
+     * @param  int  $id
      * @param  DeliveryService  $deliveryService
      * @param  FileService  $fileService
      * @return JsonResponse
      */
-    public function barcodes(int $shipmentId, DeliveryService $deliveryService, FileService $fileService): JsonResponse
+    public function barcodes(int $id, DeliveryService $deliveryService, FileService $fileService): JsonResponse
     {
-        $deliveryOrderBarcodesDto = $deliveryService->getShipmentBarcodes($shipmentId);
+        $shipment = $deliveryService->getShipment($id);
+        if (!$shipment) {
+            throw new NotFoundHttpException('shipment not found');
+        }
+        $deliveryOrderBarcodesDto = $deliveryService->getShipmentBarcodes($shipment);
 
         if ($deliveryOrderBarcodesDto) {
             if ($deliveryOrderBarcodesDto->success && $deliveryOrderBarcodesDto->file_id) {
@@ -526,11 +531,15 @@ class ShipmentsController extends Controller
      */
     public function markAsProblem(int $id, Request $request, DeliveryService $deliveryService): Response
     {
+        $shipment = $deliveryService->getShipment($id);
+        if (!$shipment) {
+            throw new NotFoundHttpException('shipment not found');
+        }
         $data = $this->validate($request, [
             'assembly_problem_comment' => ['required'],
         ]);
 
-        if (!$deliveryService->markAsProblemShipment($id, $data['assembly_problem_comment'])) {
+        if (!$deliveryService->markAsProblemShipment($shipment, $data['assembly_problem_comment'])) {
             throw new HttpException(500);
         }
 
@@ -545,7 +554,11 @@ class ShipmentsController extends Controller
      */
     public function markAsNonProblem(int $id, DeliveryService $deliveryService): Response
     {
-        if (!$deliveryService->markAsNonProblemShipment($id)) {
+        $shipment = $deliveryService->getShipment($id);
+        if (!$shipment) {
+            throw new NotFoundHttpException('shipment not found');
+        }
+        if (!$deliveryService->markAsNonProblemShipment($shipment)) {
             throw new HttpException(500);
         }
 
@@ -560,7 +573,11 @@ class ShipmentsController extends Controller
      */
     public function cancel(int $id, DeliveryService $deliveryService): Response
     {
-        if (!$deliveryService->cancelShipment($id)) {
+        $shipment = $deliveryService->getShipment($id);
+        if (!$shipment) {
+            throw new NotFoundHttpException('shipment not found');
+        }
+        if (!$deliveryService->cancelShipment($shipment)) {
             throw new HttpException(500);
         }
 

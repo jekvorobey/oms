@@ -3,6 +3,8 @@
 namespace App\Observers\Delivery;
 
 use App\Models\Delivery\Cargo;
+use App\Models\Delivery\CargoStatus;
+use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
@@ -17,6 +19,15 @@ use Exception;
  */
 class ShipmentObserver
 {
+    /**
+     * Автоматическая установка статуса для доставки, если все её отправления получили нужный статус
+     */
+    protected const STATUS_TO_DELIVERY = [
+        ShipmentStatus::ASSEMBLING => DeliveryStatus::ASSEMBLING,
+        ShipmentStatus::ASSEMBLED => DeliveryStatus::ASSEMBLED,
+        ShipmentStatus::SHIPPED => DeliveryStatus::SHIPPED,
+    ];
+
     /**
      * Handle the shipment "created" event.
      * @param  Shipment $shipment
@@ -49,6 +60,9 @@ class ShipmentObserver
     public function updated(Shipment $shipment)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, [$shipment->delivery->order, $shipment], $shipment);
+
+        $this->setStatusToDelivery($shipment);
+        $this->setTakenStatusToCargo($shipment);
     }
     
     /**
@@ -120,7 +134,7 @@ class ShipmentObserver
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
 
-            return $deliveryService->checkAllShipmentProductsPacked($shipment->id);
+            return $deliveryService->checkAllShipmentProductsPacked($shipment);
         }
         
         return true;
@@ -184,7 +198,7 @@ class ShipmentObserver
             $shipment->is_problem) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
-            $orderService->markAsProblem($shipment->delivery->order_id);
+            $orderService->markAsProblem($shipment->delivery->order);
         }
     }
     
@@ -198,7 +212,7 @@ class ShipmentObserver
             !$shipment->is_problem) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
-            $orderService->markAsNonProblem($shipment->delivery->order_id);
+            $orderService->markAsNonProblem($shipment->delivery->order);
         }
     }
     
@@ -231,7 +245,7 @@ class ShipmentObserver
         try {
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
-            $deliveryService->addShipment2Cargo($shipment->id);
+            $deliveryService->addShipment2Cargo($shipment);
         } catch (Exception $e) {
         }
     }
@@ -294,6 +308,99 @@ class ShipmentObserver
     {
         if ($shipment->is_canceled != $shipment->getOriginal('is_canceled')) {
             $shipment->is_canceled_at = now();
+        }
+    }
+
+    /**
+     * Переводим в статус "Ожидает проверки АОЗ" из статуса "Оформлено",
+     * если статус доставки "Ожидает проверки АОЗ"
+     * @param  Shipment $shipment
+     */
+    protected function setAwaitingCheckStatus(Shipment $shipment): void
+    {
+        if ($shipment->status == ShipmentStatus::CREATED && $shipment->delivery->status == DeliveryStatus::AWAITING_CHECK) {
+            $shipment->status = ShipmentStatus::AWAITING_CHECK;
+        }
+    }
+
+    /**
+     * Переводим в статус "Ожидает подтверждения Мерчантом" из статуса "Оформлено",
+     * если статус доставки "Ожидает подтверждения Мерчантом"
+     * @param  Shipment $shipment
+     */
+    protected function setAwaitingConfirmationStatus(Shipment $shipment): void
+    {
+        if ($shipment->status == ShipmentStatus::CREATED && $shipment->delivery->status == DeliveryStatus::AWAITING_CONFIRMATION) {
+            $shipment->status = ShipmentStatus::AWAITING_CONFIRMATION;
+        }
+    }
+
+    /**
+     * Автоматическая установка статуса для доставки, если все её отправления получили нужный статус
+     * @param  Shipment  $shipment
+     */
+    protected function setStatusToDelivery(Shipment $shipment): void
+    {
+        if (isset(self::STATUS_TO_DELIVERY[$shipment->status]) && $shipment->status != $shipment->getOriginal('status')) {
+            $delivery = $shipment->delivery;
+            if ($delivery->status == self::STATUS_TO_DELIVERY[$shipment->status]) {
+                return;
+            }
+
+            $allShipmentsHasStatus = true;
+            foreach ($delivery->shipments as $deliveryShipment) {
+                if ($deliveryShipment->status < $shipment->status) {
+                    $allShipmentsHasStatus = false;
+                    break;
+                }
+            }
+
+            if ($allShipmentsHasStatus) {
+                $delivery->status = self::STATUS_TO_DELIVERY[$shipment->status];
+                $delivery->save();
+            }
+        }
+    }
+
+    /**
+     * Автоматическая установка статуса "Принят Логистическим Оператором" для груза,
+     * если все его отправления получили статус "Принято Логистическим Оператором"
+     * @param  Shipment  $shipment
+     */
+    protected function setTakenStatusToCargo(Shipment $shipment): void
+    {
+        if ($shipment->status == ShipmentStatus::ON_POINT_IN && $shipment->status != $shipment->getOriginal('status')) {
+            $cargo = $shipment->cargo;
+            if ($cargo->status == CargoStatus::TAKEN) {
+                return;
+            }
+
+            $allShipmentsHasStatus = true;
+            foreach ($cargo->shipments as $cargoShipment) {
+                if ($cargoShipment->status < $shipment->status) {
+                    $allShipmentsHasStatus = false;
+                    break;
+                }
+            }
+
+            if ($allShipmentsHasStatus) {
+                $cargo->status = CargoStatus::TAKEN;
+                $cargo->save();
+            }
+        }
+    }
+
+    /**
+     * Переводим доставку в статус "Предзаказ: ожидаем поступления товара",
+     * если статус отправления "Предзаказ: ожидаем поступления товара"
+     * @param  Shipment $shipment
+     */
+    protected function setPreOrderStatusToDelivery(Shipment $shipment): void
+    {
+        if ($shipment->status == ShipmentStatus::PRE_ORDER) {
+            $delivery = $shipment->delivery;
+            $delivery->status = DeliveryStatus::PRE_ORDER;
+            $delivery->save();
         }
     }
 }

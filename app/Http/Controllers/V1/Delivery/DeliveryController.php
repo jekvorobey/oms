@@ -3,7 +3,9 @@ namespace App\Http\Controllers\V1\Delivery;
 
 use App\Http\Controllers\Controller;
 use App\Models\Delivery\Delivery;
+use App\Models\Delivery\DeliveryStatus;
 use App\Models\Order\Order;
+use App\Services\DeliveryService as OmsDeliveryService;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
@@ -13,7 +15,6 @@ use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Rest\RestSerializable;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
-use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\DeliveryOrderStatus;
 use Greensight\Logistics\Dto\Lists\DeliveryService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -83,7 +84,7 @@ class DeliveryController extends Controller
     protected function inputValidators(): array
     {
         return [
-            'status' => ['nullable', Rule::in(array_keys(DeliveryOrderStatus::allStatuses()))],
+            'status' => ['nullable', Rule::in(DeliveryStatus::validValues())],
             'delivery_method' => [new RequiredOnPost(), Rule::in(array_keys(DeliveryMethod::allMethods()))],
             'delivery_service' => [new RequiredOnPost(), Rule::in(array_keys(DeliveryService::allServices()))],
             'xml_id' => ['nullable', 'string'],
@@ -276,5 +277,58 @@ class DeliveryController extends Controller
     public function delete(int $id, RequestInitiator $client): Response
     {
         return $this->deleteTrait($id, $client);
+    }
+
+    /**
+     * Отменить доставку
+     * @param  int  $id
+     * @param  OmsDeliveryService  $deliveryService
+     * @return Response
+     */
+    public function cancel(int $id, OmsDeliveryService $deliveryService): Response
+    {
+        $delivery = $deliveryService->getDelivery($id);
+        if (!$delivery) {
+            throw new NotFoundHttpException('delivery not found');
+        }
+        if (!$deliveryService->cancelDelivery($delivery)) {
+            throw new HttpException(500);
+        }
+
+        return response('', 204);
+    }
+
+    /**
+     * Создать/обновить заказ на доставку
+     * @param  int  $id
+     * @param  OmsDeliveryService  $deliveryService
+     * @return Response
+     */
+    public function saveDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
+    {
+        $delivery = $deliveryService->getDelivery($id);
+        if (!$delivery) {
+            throw new NotFoundHttpException('delivery not found');
+        }
+        $deliveryService->saveDeliveryOrder($delivery);
+
+        return response('', 204);
+    }
+
+    /**
+     * Отменить заказ на доставку
+     * @param  int  $id
+     * @param  OmsDeliveryService  $deliveryService
+     * @return Response
+     */
+    public function cancelDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
+    {
+        $delivery = $deliveryService->getDelivery($id);
+        if (!$delivery) {
+            throw new NotFoundHttpException('delivery not found');
+        }
+        $deliveryService->cancelDeliveryOrder($delivery);
+
+        return response('', 204);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1\Delivery;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
+use App\Services\DeliveryService as OmsDeliveryService;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\CreateAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
@@ -18,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class CargoController
@@ -192,14 +194,52 @@ class CargoController extends Controller
     /**
      * Отменить груз
      * @param  int  $id
-     * @param  \App\Services\DeliveryService  $deliveryService
+     * @param  OmsDeliveryService  $deliveryService
      * @return Response
      */
-    public function cancel(int $id, \App\Services\DeliveryService $deliveryService): Response
+    public function cancel(int $id, OmsDeliveryService $deliveryService): Response
     {
-        if (!$deliveryService->cancelCargo($id)) {
+        $cargo = $deliveryService->getCargo($id);
+        if (!$cargo) {
+            throw new NotFoundHttpException('cargo not found');
+        }
+        if (!$deliveryService->cancelCargo($cargo)) {
             throw new HttpException(500);
         }
+
+        return response('', 204);
+    }
+
+    /**
+     * Создать/обновить заказ на доставку
+     * @param  int  $id
+     * @param  OmsDeliveryService  $deliveryService
+     * @return Response
+     */
+    public function saveDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
+    {
+        $delivery = $deliveryService->getDelivery($id);
+        if (!$delivery) {
+            throw new NotFoundHttpException('delivery not found');
+        }
+        $deliveryService->saveDeliveryOrder($delivery);
+
+        return response('', 204);
+    }
+
+    /**
+     * Отменить заказ на доставку
+     * @param  int  $id
+     * @param  OmsDeliveryService  $deliveryService
+     * @return Response
+     */
+    public function cancelDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
+    {
+        $delivery = $deliveryService->getDelivery($id);
+        if (!$delivery) {
+            throw new NotFoundHttpException('delivery not found');
+        }
+        $deliveryService->cancelDeliveryOrder($delivery);
 
         return response('', 204);
     }

@@ -3,8 +3,11 @@
 namespace App\Observers\Delivery;
 
 use App\Models\Delivery\Delivery;
+use App\Models\Delivery\DeliveryStatus;
+use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
+use App\Models\Order\OrderStatus;
 
 /**
  * Class DeliveryObserver
@@ -12,6 +15,30 @@ use App\Models\History\HistoryType;
  */
 class DeliveryObserver
 {
+    /**
+     * Автоматическая установка статуса доставки для всех её отправлений
+     */
+    protected const STATUS_TO_SHIPMENTS = [
+        DeliveryStatus::ON_POINT_IN => ShipmentStatus::ON_POINT_IN,
+        DeliveryStatus::ARRIVED_AT_DESTINATION_CITY => ShipmentStatus::ARRIVED_AT_DESTINATION_CITY,
+        DeliveryStatus::ON_POINT_OUT => ShipmentStatus::ON_POINT_OUT,
+        DeliveryStatus::READY_FOR_RECIPIENT => ShipmentStatus::READY_FOR_RECIPIENT,
+        DeliveryStatus::DELIVERING => ShipmentStatus::DELIVERING,
+        DeliveryStatus::DONE => ShipmentStatus::DONE,
+    ];
+
+    /**
+     * Автоматическая установка статуса для заказа, если все его доставки получили нужный статус
+     */
+    protected const STATUS_TO_ORDER = [
+        DeliveryStatus::ASSEMBLING => OrderStatus::IN_PROCESSING,
+        DeliveryStatus::SHIPPED => OrderStatus::TRANSFERRED_TO_DELIVERY,
+        DeliveryStatus::ON_POINT_IN => OrderStatus::DELIVERING,
+        DeliveryStatus::READY_FOR_RECIPIENT => OrderStatus::READY_FOR_RECIPIENT,
+        DeliveryStatus::DONE => OrderStatus::DONE,
+        DeliveryStatus::RETURNED => OrderStatus::RETURNED,
+    ];
+
     /**
      * Handle the delivery "created" event.
      * @param  Delivery $delivery
@@ -30,6 +57,9 @@ class DeliveryObserver
     public function updated(Delivery $delivery)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, $delivery->order, $delivery);
+
+        $this->setStatusToShipments($delivery);
+        $this->setStatusToOrder($delivery);
     }
     
     /**
@@ -55,7 +85,7 @@ class DeliveryObserver
     }
     
     /**
-     * Установить дату изменения статуса доставки
+     * Установить дату изменения статуса доставки.
      * @param  Delivery  $delivery
      */
     protected function setStatusAt(Delivery $delivery): void
@@ -66,7 +96,7 @@ class DeliveryObserver
     }
 
     /**
-     * Установить дату изменения статуса оплаты доставки
+     * Установить дату изменения статуса оплаты доставки.
      * @param  Delivery $delivery
      */
     protected function setPaymentStatusAt(Delivery $delivery): void
@@ -95,6 +125,55 @@ class DeliveryObserver
     {
         if ($delivery->is_canceled != $delivery->getOriginal('is_canceled')) {
             $delivery->is_canceled_at = now();
+        }
+    }
+
+    /**
+     * Установить статус доставки всем отправлениям
+     * @param  Delivery $delivery
+     */
+    protected function setStatusToShipments(Delivery $delivery): void
+    {
+        if (isset(self::STATUS_TO_SHIPMENTS[$delivery->status]) && $delivery->status != $delivery->getOriginal('status')) {
+            $delivery->loadMissing('shipments');
+            foreach ($delivery->shipments as $shipment) {
+                $shipment->status = self::STATUS_TO_SHIPMENTS[$delivery->status];
+                $shipment->save();
+            }
+        }
+    }
+
+    /**
+     * Автоматическая установка статуса для заказа, если все его доставки получили нужный статус
+     * @param  Delivery $delivery
+     */
+    protected function setStatusToOrder(Delivery $delivery): void
+    {
+        if (isset(self::STATUS_TO_ORDER[$delivery->status]) && $delivery->status != $delivery->getOriginal('status')) {
+            $order = $delivery->order;
+            if ($order->status == self::STATUS_TO_ORDER[$delivery->status]) {
+                return;
+            }
+
+            $allDeliveriesHasStatus = true;
+            foreach ($order->deliveries as $orderDelivery) {
+                if ($delivery->status == DeliveryStatus::READY_FOR_RECIPIENT) {
+                    if ($orderDelivery->status == $delivery->status) {
+                        $allDeliveriesHasStatus = false;
+                        break;
+                    }
+                } else {
+                    if ($orderDelivery->status < $delivery->status) {
+                        $allDeliveriesHasStatus = false;
+                        break;
+                    }
+                }
+            }
+
+            if ($allDeliveriesHasStatus) {
+                $order->status = self::STATUS_TO_ORDER[$delivery->status];
+                $order->save();
+            }
         }
     }
 }

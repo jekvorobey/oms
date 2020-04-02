@@ -4,6 +4,7 @@ namespace App\Observers\Delivery;
 
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
+use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 
@@ -45,6 +46,8 @@ class CargoObserver
     public function updated(Cargo $cargo)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, $cargo, $cargo);
+
+        $this->setShippedStatusToShipments($cargo);
     }
 
     /**
@@ -117,6 +120,21 @@ class CargoObserver
     {
         if ($cargo->is_canceled != $cargo->getOriginal('is_canceled')) {
             $cargo->is_canceled_at = now();
+        }
+    }
+
+    /**
+     * Установить статус "Передан Логистическому Оператору" всем отправлениями груза
+     * @param  Cargo $cargo
+     */
+    protected function setShippedStatusToShipments(Cargo $cargo): void
+    {
+        if ($cargo->status == CargoStatus::SHIPPED && $cargo->status != $cargo->getOriginal('status')) {
+            $cargo->loadMissing('shipments');
+            foreach ($cargo->shipments as $shipment) {
+                $shipment->status = ShipmentStatus::SHIPPED;
+                $shipment->save();
+            }
         }
     }
 }

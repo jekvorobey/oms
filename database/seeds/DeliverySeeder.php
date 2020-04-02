@@ -260,7 +260,7 @@ class DeliverySeeder extends Seeder
 
                     //Добавляем собранные отправления в груз
                     try {
-                        $deliveryService->addShipment2Cargo($shipment->id);
+                        $deliveryService->addShipment2Cargo($shipment);
                     } catch (Exception $e) {
                     }
                 }
