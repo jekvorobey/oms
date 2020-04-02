@@ -21,26 +21,10 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class BasketController extends Controller
 {
     /**
-     * @OA\Get(
-     *     path="/api/v1/baskets",
-     *     tags={"basket"},
-     *     summary="Получить текущую корзину пользователя",
-     *     operationId="getCurrentBasket",
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="id",type="integer"),
-     *             @OA\Property(property="items",type="array", @OA\Items(
-     *                  ref="#/components/schemas/BasketItem"
-     *             )),
-     *         )
-     *     ),
-     * )
      * @param int $customerId
      * @param Request $request
      * @param BasketService $basketService
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getCurrentBasket(int $customerId, Request $request, BasketService $basketService): JsonResponse
     {
