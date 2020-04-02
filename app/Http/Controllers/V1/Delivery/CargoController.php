@@ -211,35 +211,36 @@ class CargoController extends Controller
     }
 
     /**
-     * Создать/обновить заказ на доставку
+     * Создать заявку на вызов курьера для забора груза
      * @param  int  $id
      * @param  OmsDeliveryService  $deliveryService
      * @return Response
+     * @throws \Exception
      */
-    public function saveDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
+    public function createCourierCall(int $id, OmsDeliveryService $deliveryService): Response
     {
-        $delivery = $deliveryService->getDelivery($id);
-        if (!$delivery) {
-            throw new NotFoundHttpException('delivery not found');
+        $cargo = $deliveryService->getCargo($id);
+        if (!$cargo) {
+            throw new NotFoundHttpException('cargo not found');
         }
-        $deliveryService->saveDeliveryOrder($delivery);
+        $deliveryService->createCourierCall($cargo);
 
         return response('', 204);
     }
 
     /**
-     * Отменить заказ на доставку
+     * Отменить заявку на вызов курьера для забора груза
      * @param  int  $id
      * @param  OmsDeliveryService  $deliveryService
      * @return Response
      */
-    public function cancelDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
+    public function cancelCourierCall(int $id, OmsDeliveryService $deliveryService): Response
     {
-        $delivery = $deliveryService->getDelivery($id);
-        if (!$delivery) {
-            throw new NotFoundHttpException('delivery not found');
+        $cargo = $deliveryService->getCargo($id);
+        if (!$cargo) {
+            throw new NotFoundHttpException('cargo not found');
         }
-        $deliveryService->cancelDeliveryOrder($delivery);
+        $deliveryService->cancelCourierCall($cargo);
 
         return response('', 204);
     }
