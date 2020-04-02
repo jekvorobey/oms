@@ -208,8 +208,7 @@ class ShipmentObserver
      */
     protected function markOrderAsNonProblem(Shipment $shipment): void
     {
-        if ($shipment->status != $shipment->getOriginal('status') &&
-            !$shipment->is_problem) {
+        if ($shipment->is_problem != $shipment->getOriginal('is_problem') && !$shipment->is_problem) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->markAsNonProblem($shipment->delivery->order);

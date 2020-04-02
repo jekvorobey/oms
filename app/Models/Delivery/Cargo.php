@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property int $delivery_service
  *
  * @property string $xml_id
+ * @property string $error_xml_id - текст последней ошибки при создании заявки на вызов курьера для забора груза в службе доставки
  * @property float $width - ширина (расчитывается автоматически)
  * @property float $height - высота (расчитывается автоматически)
  * @property float $length - длина (расчитывается автоматически)
