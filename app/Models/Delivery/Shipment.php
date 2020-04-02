@@ -180,12 +180,11 @@ class Shipment extends OmsModel
 
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {
-                $weight += $package->weight;
+                $weight += $package->wrapper_weight;
             }
-        } else {
-            foreach ($this->basketItems as $basketItem) {
-                $weight += $basketItem->product['weight'] * $basketItem->qty;
-            }
+        }
+        foreach ($this->basketItems as $basketItem) {
+            $weight += $basketItem->product['weight'] * $basketItem->qty;
         }
 
         return $weight;
