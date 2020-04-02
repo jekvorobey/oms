@@ -2,6 +2,7 @@
 
 namespace App\Observers\Delivery;
 
+use App\Core\OrderSmsNotify;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\ShipmentStatus;
@@ -48,7 +49,7 @@ class DeliveryObserver
     {
         History::saveEvent(HistoryType::TYPE_CREATE, $delivery->order, $delivery);
     }
-    
+
     /**
      * Handle the delivery "updated" event.
      * @param  Delivery $delivery
@@ -60,8 +61,10 @@ class DeliveryObserver
 
         $this->setStatusToShipments($delivery);
         $this->setStatusToOrder($delivery);
+        $this->notifyIfShipped($delivery);
+        $this->notifyIfReadyForRecipient($delivery);
     }
-    
+
     /**
      * Handle the delivery "deleting" event.
      * @param  Delivery $delivery
@@ -71,7 +74,7 @@ class DeliveryObserver
     {
         History::saveEvent(HistoryType::TYPE_DELETE, $delivery->order, $delivery);
     }
-    
+
     /**
      * Handle the delivery "saved" event.
      * @param  Delivery $delivery
@@ -83,7 +86,7 @@ class DeliveryObserver
         $this->setProblemAt($delivery);
         $this->setCanceledAt($delivery);
     }
-    
+
     /**
      * Установить дату изменения статуса доставки.
      * @param  Delivery  $delivery
@@ -173,6 +176,28 @@ class DeliveryObserver
             if ($allDeliveriesHasStatus) {
                 $order->status = self::STATUS_TO_ORDER[$delivery->status];
                 $order->save();
+            }
+        }
+    }
+
+    protected function notifyIfShipped(Delivery $delivery)
+    {
+        $oldStatus = $delivery->getOriginal('status');
+        $newStatus = $delivery->status;
+        if ($oldStatus != $newStatus) {
+            if ($newStatus == DeliveryStatus::SHIPPED) {
+                OrderSmsNotify::deliveryShipped($delivery);
+            }
+        }
+    }
+
+    protected function notifyIfReadyForRecipient(Delivery $delivery)
+    {
+        $oldStatus = $delivery->getOriginal('status');
+        $newStatus = $delivery->status;
+        if ($oldStatus != $newStatus) {
+            if ($newStatus == DeliveryStatus::READY_FOR_RECIPIENT) {
+                OrderSmsNotify::deliveryReadyForRecipient($delivery);
             }
         }
     }
