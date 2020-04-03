@@ -302,9 +302,7 @@ class DeliveryService
         $deliveryCargoDto->length = $cargo->length;
         $orderIds = [];
         foreach ($cargo->shipments as $shipment) {
-            if ($shipment->delivery->xml_id) {
-                $orderIds[] = $shipment->delivery->xml_id;
-            }
+            $orderIds[] = $shipment->delivery->xml_id ? : 0;
         }
         $deliveryCargoDto->order_ids = $orderIds;
 
@@ -341,6 +339,7 @@ class DeliveryService
             $date = $date->modify('+' . $dayPlus . 'day' . ($dayPlus > 1 ?  's': ''));
             $dayPlus++;
             if (!$storePickupTimes->has($dayOfWeek)) {
+                $cargo->error_xml_id = 'Возможно у склада не указан график отгрузки';
                 continue;
             }
 
@@ -364,6 +363,10 @@ class DeliveryService
             } catch (\Exception $e) {
                 $cargo->error_xml_id = $e->getMessage();
             }
+        }
+        if ($cargo->error_xml_id) {
+            $cargo->save();
+            throw new Exception($cargo->error_xml_id);
         }
 
         $cargo->save();
