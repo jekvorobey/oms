@@ -409,6 +409,9 @@ class DeliveryService
             /** @var CourierCallService $courierCallService */
             $courierCallService = resolve(CourierCallService::class);
             $courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
+
+            $cargo->xml_id = '';
+            $cargo->save();
         }
     }
 
@@ -771,6 +774,9 @@ class DeliveryService
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
             $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
+
+            $delivery->xml_id = '';
+            $delivery->save();
         }
     }
 }
