@@ -40,13 +40,13 @@ class OrderSmsNotify
             return;
         }
 
-//        $point->address->
+        $address = $point->getAddressString();
         $cost = $delivery->shipments->sum('cost');
-        static::send($delivery->order, join("\n", [
-            "Заказ №{$delivery->number} на сумму $cost} р. ожидает вас в пункте самовывоза по адресу: {{DELIVIRY_ADDRESS}} до {{RESERVED_DATE}}.",
-            "Режим работы {{DELIVERY_TYPE}}: {{OPER_MODE}}",
-            "Контактный номер {{DELIVERY_TYPE}}: {{CALL_TK}}",
-        ]));
+        static::send($delivery->order, join("\n", array_filter([
+            "Заказ №{$delivery->number} на сумму {$cost} р. ожидает вас в пункте самовывоза по адресу: {$address}.",
+            $point->timetable ? "Режим работы: {$point->timetable}" : null,
+            $point->phone ? "Контактный номер: {$point->phone}" : null,
+        ])));
     }
 
     protected static function send(Order $order, $text)
