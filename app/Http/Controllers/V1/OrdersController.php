@@ -166,6 +166,7 @@ class OrdersController extends Controller
      * @param  int  $id
      * @param  OrderService  $orderService
      * @return Response
+     * @throws \Exception
      */
     public function cancel(int $id, OrderService $orderService): Response
     {

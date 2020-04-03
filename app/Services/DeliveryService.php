@@ -6,6 +6,7 @@ use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\Delivery;
+use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
@@ -374,11 +375,16 @@ class DeliveryService
 
     /**
      * Отменить груз (все отправления груза отвязываются от него!)
-     * @param  Cargo $cargo
+     * @param  Cargo  $cargo
      * @return bool
+     * @throws Exception
      */
     public function cancelCargo(Cargo $cargo): bool
     {
+        if ($cargo->status >= CargoStatus::SHIPPED) {
+            throw new \Exception('Груз, начиная со статуса "Передан Логистическому Оператору", нельзя отменить');
+        }
+
         $result = DB::transaction(function () use ($cargo) {
             $cargo->is_canceled = true;
             $cargo->save();
@@ -740,11 +746,16 @@ class DeliveryService
 
     /**
      * Отменить отправление
-     * @param Shipment $shipment
+     * @param  Shipment  $shipment
      * @return bool
+     * @throws Exception
      */
     public function cancelShipment(Shipment $shipment): bool
     {
+        if ($shipment->status >= ShipmentStatus::DONE) {
+            throw new \Exception('Отправление, начиная со статуса "Доставлено получателю", нельзя отменить');
+        }
+
         $shipment->is_canceled = true;
 
         return $shipment->save();
@@ -752,11 +763,16 @@ class DeliveryService
 
     /**
      * Отменить доставку
-     * @param  Delivery $delivery
+     * @param  Delivery  $delivery
      * @return bool
+     * @throws Exception
      */
     public function cancelDelivery(Delivery $delivery): bool
     {
+        if ($delivery->status >= DeliveryStatus::DONE) {
+            throw new \Exception('Доставку, начиная со статуса "Доставлена получателю", нельзя отменить');
+        }
+
         $delivery->is_canceled = true;
         if ($delivery->save()) {
             $this->cancelDeliveryOrder($delivery);

@@ -53,6 +53,7 @@ class OrderObserver
      * Handle the order "updated" event.
      * @param  Order  $order
      * @return void
+     * @throws \Exception
      */
     public function updated(Order $order)
     {
@@ -144,7 +145,8 @@ class OrderObserver
 
     /**
      * Установить флаг отмены всем доставкам и отправлениями заказа
-     * @param  Order $order
+     * @param  Order  $order
+     * @throws \Exception
      */
     protected function setIsCanceledToChildren(Order $order): void
     {

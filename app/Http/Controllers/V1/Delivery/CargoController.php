@@ -196,6 +196,7 @@ class CargoController extends Controller
      * @param  int  $id
      * @param  OmsDeliveryService  $deliveryService
      * @return Response
+     * @throws \Exception
      */
     public function cancel(int $id, OmsDeliveryService $deliveryService): Response
     {

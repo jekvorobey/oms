@@ -151,7 +151,10 @@ class OrdersSeeder extends Seeder
             $basket->save();
 
             if ($faker->boolean()) {
-                $orderService->cancel($order);
+                try {
+                    $orderService->cancel($order);
+                } catch (Exception $e) {
+                }
             }
 
             if ($faker->boolean()) {

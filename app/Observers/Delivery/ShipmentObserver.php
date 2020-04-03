@@ -52,17 +52,19 @@ class ShipmentObserver
         
         return true;
     }
-    
+
     /**
      * Handle the shipment "updated" event.
-     * @param  Shipment $shipment
+     * @param  Shipment  $shipment
      * @return void
+     * @throws Exception
      */
     public function updated(Shipment $shipment)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, [$shipment->delivery->order, $shipment], $shipment);
 
         $this->setStatusToDelivery($shipment);
+        $this->setIsCanceledToDelivery($shipment);
         $this->setTakenStatusToCargo($shipment);
     }
     
@@ -358,6 +360,35 @@ class ShipmentObserver
             if ($allShipmentsHasStatus) {
                 $delivery->status = self::STATUS_TO_DELIVERY[$shipment->status];
                 $delivery->save();
+            }
+        }
+    }
+
+    /**
+     * Автоматическая установка флага отмены для доставки, если все её отправления отменены
+     * @param  Shipment  $shipment
+     * @throws Exception
+     */
+    protected function setIsCanceledToDelivery(Shipment $shipment): void
+    {
+        if ($shipment->is_canceled && $shipment->is_canceled != $shipment->getOriginal('is_canceled')) {
+            $delivery = $shipment->delivery;
+            if ($delivery->is_canceled) {
+                return;
+            }
+
+            $allShipmentsIsCanceled = true;
+            foreach ($delivery->shipments as $deliveryShipment) {
+                if (!$deliveryShipment->is_canceled) {
+                    $allShipmentsIsCanceled = false;
+                    break;
+                }
+            }
+
+            if ($allShipmentsIsCanceled) {
+                /** @var DeliveryService $deliveryService */
+                $deliveryService = resolve(DeliveryService::class);
+                $deliveryService->cancelDelivery($delivery);
             }
         }
     }

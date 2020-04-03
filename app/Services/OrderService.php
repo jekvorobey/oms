@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order\Order;
+use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 
 /**
@@ -40,17 +41,25 @@ class OrderService
         } elseif ($this->atLeastOne($statuses, PaymentStatus::TIMEOUT) &&
             !$this->atLeastOne($statuses, PaymentStatus::PAID)) {
             $this->setPaymentStatusTimeout($order, false);
-            $this->cancel($order);
+            try {
+                $this->cancel($order);
+            } catch (\Exception $e) {
+            }
         }
     }
 
     /**
      * Отменить заказ
-     * @param  Order $order
+     * @param  Order  $order
      * @return bool
+     * @throws \Exception
      */
     public function cancel(Order $order): bool
     {
+        if ($order->status >= OrderStatus::DONE) {
+            throw new \Exception('Заказ, начиная со статуса "Выполнен", нельзя отменить');
+        }
+
         $order->is_canceled = true;
 
         return $order->save();

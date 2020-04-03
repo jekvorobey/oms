@@ -9,6 +9,7 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\OrderStatus;
+use App\Services\OrderService;
 
 /**
  * Class DeliveryObserver
@@ -61,8 +62,9 @@ class DeliveryObserver
 
     /**
      * Handle the delivery "updated" event.
-     * @param  Delivery $delivery
+     * @param  Delivery  $delivery
      * @return void
+     * @throws \Exception
      */
     public function updated(Delivery $delivery)
     {
@@ -70,6 +72,7 @@ class DeliveryObserver
 
         $this->setStatusToShipments($delivery);
         $this->setStatusToOrder($delivery);
+        $this->setIsCanceledToOrder($delivery);
         $this->notifyIfShipped($delivery);
         $this->notifyIfReadyForRecipient($delivery);
     }
@@ -195,6 +198,38 @@ class DeliveryObserver
         }
     }
 
+    /**
+     * Автоматическая установка флага отмены для заказа, если все его доставки отменены
+     * @param  Delivery  $delivery
+     * @throws \Exception
+     */
+    protected function setIsCanceledToOrder(Delivery $delivery): void
+    {
+        if ($delivery->is_canceled && $delivery->is_canceled != $delivery->getOriginal('is_canceled')) {
+            $order = $delivery->order;
+            if ($order->is_canceled) {
+                return;
+            }
+
+            $allDeliveriesIsCanceled = true;
+            foreach ($order->deliveries as $orderDelivery) {
+                if (!$orderDelivery->is_canceled) {
+                    $allDeliveriesIsCanceled = false;
+                    break;
+                }
+            }
+
+            if ($allDeliveriesIsCanceled) {
+                /** @var OrderService $orderService */
+                $orderService = resolve(OrderService::class);
+                $orderService->cancel($order);
+            }
+        }
+    }
+
+    /**
+     * @param  Delivery  $delivery
+     */
     protected function notifyIfShipped(Delivery $delivery)
     {
         $oldStatus = $delivery->getOriginal('status');
@@ -206,6 +241,9 @@ class DeliveryObserver
         }
     }
 
+    /**
+     * @param  Delivery  $delivery
+     */
     protected function notifyIfReadyForRecipient(Delivery $delivery)
     {
         $oldStatus = $delivery->getOriginal('status');
