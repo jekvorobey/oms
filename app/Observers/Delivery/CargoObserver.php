@@ -15,6 +15,13 @@ use App\Models\History\HistoryType;
 class CargoObserver
 {
     /**
+     * Автоматическая установка статуса груза для всех его отправлений
+     */
+    protected const STATUS_TO_SHIPMENTS = [
+        CargoStatus::SHIPPED => ShipmentStatus::SHIPPED,
+        CargoStatus::TAKEN => ShipmentStatus::ON_POINT_IN,
+    ];
+    /**
      * Handle the cargo "created" event.
      * @param  Cargo $cargo
      * @return void
@@ -47,7 +54,7 @@ class CargoObserver
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, $cargo, $cargo);
 
-        $this->setShippedStatusToShipments($cargo);
+        $this->setStatusToShipments($cargo);
     }
 
     /**
@@ -124,15 +131,15 @@ class CargoObserver
     }
 
     /**
-     * Установить статус "Передан Логистическому Оператору" всем отправлениями груза
+     * Установить статус груза всем его отправлениям
      * @param  Cargo $cargo
      */
-    protected function setShippedStatusToShipments(Cargo $cargo): void
+    protected function setStatusToShipments(Cargo $cargo): void
     {
-        if ($cargo->status == CargoStatus::SHIPPED && $cargo->status != $cargo->getOriginal('status')) {
+        if (isset(self::STATUS_TO_SHIPMENTS[$cargo->status]) && $cargo->status != $cargo->getOriginal('status')) {
             $cargo->loadMissing('shipments');
             foreach ($cargo->shipments as $shipment) {
-                $shipment->status = ShipmentStatus::SHIPPED;
+                $shipment->status = self::STATUS_TO_SHIPMENTS[$cargo->status];
                 $shipment->save();
             }
         }
