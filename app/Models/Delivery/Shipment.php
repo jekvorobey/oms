@@ -92,13 +92,14 @@ class Shipment extends OmsModel
     protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems'];
 
     /**
-     * @param  int  $orderNumber - порядковый номер заказа
-     * @param  int  $i - порядковый номер отправления в заказе
+     * @param int $orderNumber - порядковый номер заказа
+     * @param int $deliveryNumber - порядковый номер доставки
+     * @param int $i - порядковый номер отправления в заказе
      * @return string
      */
-    public static function makeNumber(int $orderNumber, int $i): string
+    public static function makeNumber(int $orderNumber, int $deliveryNumber, int $i): string
     {
-        return $orderNumber . '-' . $i;
+        return $orderNumber . '-' . $deliveryNumber . '-' . sprintf("%'02d", $i);
     }
 
     /**
@@ -180,12 +181,11 @@ class Shipment extends OmsModel
 
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {
-                $weight += $package->weight;
+                $weight += $package->wrapper_weight;
             }
-        } else {
-            foreach ($this->basketItems as $basketItem) {
-                $weight += $basketItem->product['weight'] * $basketItem->qty;
-            }
+        }
+        foreach ($this->basketItems as $basketItem) {
+            $weight += $basketItem->product['weight'] * $basketItem->qty;
         }
 
         return $weight;

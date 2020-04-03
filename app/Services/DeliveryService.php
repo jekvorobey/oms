@@ -265,7 +265,8 @@ class DeliveryService
             ->include('storeContact', 'storePickupTime');
         $store = $storeService->store($cargo->store_id, $storeQuery);
         if (is_null($store)) {
-            //todo Добавить оповещение о невыгруженном грузе
+            $cargo->error_xml_id = 'Не найден склад с id="' . $cargo->store_id . '" для груза';
+            $cargo->save();
             return;
         }
 
@@ -355,13 +356,17 @@ class DeliveryService
                 );
                 if ($courierCallOutputDto->success) {
                     $cargo->xml_id = $courierCallOutputDto->xml_id;
-
-                    $cargo->save();
+                    $cargo->error_xml_id = '';
                     break;
+                } elseif($courierCallOutputDto->message) {
+                    $cargo->error_xml_id = $courierCallOutputDto->message;
                 }
             } catch (\Exception $e) {
+                $cargo->error_xml_id = $e->getMessage();
             }
         }
+
+        $cargo->save();
     }
 
     /**

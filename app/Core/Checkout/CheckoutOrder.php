@@ -198,7 +198,7 @@ class CheckoutOrder
                 $shipment->merchant_id = $checkoutShipment->merchantId;
                 $shipment->required_shipping_at = Carbon::now()->addDays(5);
                 $shipment->store_id = $checkoutShipment->storeId;
-                $shipment->number = Shipment::makeNumber($order->number, $shipmentNumber++);
+                $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
                 $shipment->save();
 
                 foreach ($checkoutShipment->items as $offerId) {

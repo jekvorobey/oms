@@ -195,6 +195,11 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::put('','CargoController@update');
                 Route::put('cancel','CargoController@cancel');
                 Route::delete('','CargoController@delete');
+
+                Route::prefix('courier-call')->group(function () {
+                    Route::post('', 'CargoController@createCourierCall');
+                    Route::put('cancel', 'CargoController@cancelCourierCall');
+                });
             });
         });
     });
