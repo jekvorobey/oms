@@ -26,6 +26,7 @@ class ShipmentObserver
         ShipmentStatus::ASSEMBLING => DeliveryStatus::ASSEMBLING,
         ShipmentStatus::ASSEMBLED => DeliveryStatus::ASSEMBLED,
         ShipmentStatus::SHIPPED => DeliveryStatus::SHIPPED,
+        ShipmentStatus::ON_POINT_IN => DeliveryStatus::ON_POINT_IN,
     ];
 
     /**

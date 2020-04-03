@@ -26,6 +26,12 @@ class DeliveryObserver
         DeliveryStatus::READY_FOR_RECIPIENT => ShipmentStatus::READY_FOR_RECIPIENT,
         DeliveryStatus::DELIVERING => ShipmentStatus::DELIVERING,
         DeliveryStatus::DONE => ShipmentStatus::DONE,
+        /**
+         * Замечание по статусам "Ожидается отмена" и "Возвращена":
+         * сейчас клиент может отказаться только от всей доставки целеком, а не от какой-то её части
+         */
+        DeliveryStatus::CANCELLATION_EXPECTED => ShipmentStatus::CANCELLATION_EXPECTED,
+        DeliveryStatus::RETURNED => ShipmentStatus::RETURNED,
     ];
 
     /**
@@ -35,7 +41,10 @@ class DeliveryObserver
         DeliveryStatus::ASSEMBLING => OrderStatus::IN_PROCESSING,
         DeliveryStatus::SHIPPED => OrderStatus::TRANSFERRED_TO_DELIVERY,
         DeliveryStatus::ON_POINT_IN => OrderStatus::DELIVERING,
+        DeliveryStatus::ARRIVED_AT_DESTINATION_CITY => OrderStatus::DELIVERING,
+        DeliveryStatus::ON_POINT_OUT => OrderStatus::DELIVERING,
         DeliveryStatus::READY_FOR_RECIPIENT => OrderStatus::READY_FOR_RECIPIENT,
+        DeliveryStatus::DELIVERING => OrderStatus::DELIVERING,
         DeliveryStatus::DONE => OrderStatus::DONE,
         DeliveryStatus::RETURNED => OrderStatus::RETURNED,
     ];
@@ -160,8 +169,14 @@ class DeliveryObserver
 
             $allDeliveriesHasStatus = true;
             foreach ($order->deliveries as $orderDelivery) {
+                /**
+                 * Для статуса доставки "Находится в Пункте Выдачи" проверяем,
+                 * что все доставки заказа находятся строго в этом статусе,
+                 * тогда устанавливаем статус заказа "Находится в Пункте Выдачи",
+                 * иначе статус заказа не меняется
+                 */
                 if ($delivery->status == DeliveryStatus::READY_FOR_RECIPIENT) {
-                    if ($orderDelivery->status == $delivery->status) {
+                    if ($orderDelivery->status != $delivery->status) {
                         $allDeliveriesHasStatus = false;
                         break;
                     }
