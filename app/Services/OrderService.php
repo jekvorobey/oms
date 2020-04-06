@@ -2,9 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Basket\Basket;
-use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
+use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 
 /**
@@ -25,31 +24,11 @@ class OrderService
     }
 
     /**
-     * Получить корзину заказа
-     * @param  int  $orderId
-     * @return Basket|null
-     */
-    public function getBasket(int $orderId): ?Basket
-    {
-        $order = $this->getOrder($orderId);
-        if (is_null($order)) {
-            return null;
-        }
-
-        return $order->basket;
-    }
-
-    /**
      * Обновить статус оплаты заказа в соотвествии со статусами оплат
-     * @param int $orderId
+     * @param Order $order
      */
-    public function refreshPaymentStatus(int $orderId): void
+    public function refreshPaymentStatus(Order $order): void
     {
-        $order = $this->getOrder($orderId);
-        if (is_null($order)) {
-            return;
-        }
-
         $order->refresh();
         $all = $order->payments->count();
         $statuses = [];
@@ -58,112 +37,95 @@ class OrderService
         }
 
         if ($this->allIs($statuses, $all, PaymentStatus::PAID)) {
-            $this->setPaymentStatusPaid($orderId);
+            $this->setPaymentStatusPaid($order);
         } elseif ($this->atLeastOne($statuses, PaymentStatus::TIMEOUT) &&
             !$this->atLeastOne($statuses, PaymentStatus::PAID)) {
-            $this->setPaymentStatusTimeout($orderId, false);
-            $this->cancel($orderId);
+            $this->setPaymentStatusTimeout($order, false);
+            try {
+                $this->cancel($order);
+            } catch (\Exception $e) {
+            }
         }
     }
 
     /**
      * Отменить заказ
-     * @param  int  $orderId
-     * @param  bool  $save
+     * @param  Order  $order
      * @return bool
+     * @throws \Exception
      */
-    public function cancel(int $orderId, bool $save = true): bool
+    public function cancel(Order $order): bool
     {
-        $order = $this->getOrder($orderId);
-        if (is_null($order)) {
-            return false;
+        if ($order->status >= OrderStatus::DONE) {
+            throw new \Exception('Заказ, начиная со статуса "Выполнен", нельзя отменить');
         }
 
         $order->is_canceled = true;
-        $order->is_canceled_at = now();
 
-        return $save ? $order->save() : true;
+        return $order->save();
     }
 
     /**
      * Установить статус оплаты заказа на "Оплачено"
-     * @param int $orderId
+     * @param Order $order
      * @param  bool  $save
      * @return bool
      */
-    public function setPaymentStatusPaid(int $orderId, bool $save = true): bool
+    public function setPaymentStatusPaid(Order $order, bool $save = true): bool
     {
-        return $this->setPaymentStatus($orderId, PaymentStatus::PAID, $save);
+        return $this->setPaymentStatus($order, PaymentStatus::PAID, $save);
     }
 
     /**
      * Установить статус оплаты заказа на "Просрочено"
-     * @param int $orderId
+     * @param Order $order
      * @param  bool  $save
      * @return bool
      */
-    public function setPaymentStatusTimeout(int $orderId, bool $save = true): bool
+    public function setPaymentStatusTimeout(Order $order, bool $save = true): bool
     {
-        return $this->setPaymentStatus($orderId, PaymentStatus::TIMEOUT, $save);
+        return $this->setPaymentStatus($order, PaymentStatus::TIMEOUT, $save);
     }
 
     /**
      * Установить статус оплаты заказа
-     * @param int $orderId
+     * @param Order $order
      * @param  int  $status
      * @param  bool  $save
      * @return bool
      */
-    protected function setPaymentStatus(int $orderId, int $status, bool $save = true): bool
+    protected function setPaymentStatus(Order $order, int $status, bool $save = true): bool
     {
-        $order = $this->getOrder($orderId);
-        if (is_null($order)) {
-            return false;
-        }
-
-        $order->setPaymentStatus($status);
+        $order->payment_status = $status;
 
         return $save ? $order->save() : true;
     }
 
     /**
      * Пометить заказ как проблемный
-     * @param int $orderId
-     * @param bool $save
+     * @param Order $order
      * @return bool
      */
-    public function markAsProblem(int $orderId, bool $save = true): bool
+    public function markAsProblem(Order $order): bool
     {
-        $order = $this->getOrder($orderId);
-        if (is_null($order)) {
-            return false;
-        }
-
         $order->is_problem = true;
 
-        return $save ? $order->save() : true;
+        return $order->save();
     }
 
     /**
      * Пометить заказ как непроблемный, если все его отправления непроблемные
-     * @param int $orderId
-     * @param bool $save
+     * @param Order $order
      * @return bool
      */
-    public function markAsNonProblem(int $orderId, bool $save = true): bool
+    public function markAsNonProblem(Order $order): bool
     {
-        $order = $this->getOrder($orderId);
-        $order->load('deliveries.shipments');
-        if (is_null($order)) {
-            return false;
-        }
+        $order->loadMissing('deliveries.shipments');
 
         $isAllShipmentsOk = true;
         foreach ($order->deliveries as $delivery) {
             foreach ($delivery->shipments as $shipment) {
-                if (in_array($shipment->status, [
-                    ShipmentStatus::STATUS_ASSEMBLING_PROBLEM, ShipmentStatus::STATUS_TIMEOUT
-                ])) {
+                if ($shipment->is_problem) {
                     $isAllShipmentsOk = false;
                     break 2;
                 }
@@ -172,7 +134,7 @@ class OrderService
 
         $order->is_problem = !$isAllShipmentsOk;
 
-        return $save && !$order->is_problem ? $order->save() : true;
+        return $order->save();
     }
 
     /**

@@ -19,12 +19,28 @@ interface PaymentSystemInterface
     public function createExternalPayment(Payment $payment, string $returnLink): void;
 
     /**
+     * Провести оплату холдированными средствами.
+     *
+     * @param Payment $localPayment
+     * @param $amount
+     */
+    public function commitHoldedPayment(Payment $localPayment, $amount);
+
+    /**
      * Получить от внешней системы ссылку страницы оплаты.
      *
      * @param Payment $payment
      * @return string|null
      */
     public function paymentLink(Payment $payment): ?string;
+
+    /**
+     * Получить от id оплаты во внешней системе.
+     *
+     * @param Payment $payment
+     * @return string|null
+     */
+    public function externalPaymentId(Payment $payment): ?string;
 
     /**
      * Обработать данные от платёжной ситсемы о совершении платежа.

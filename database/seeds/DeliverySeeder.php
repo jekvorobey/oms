@@ -176,9 +176,9 @@ class DeliverySeeder extends Seeder
                         $delivery->setStatusXmlId($faker->randomElement(array_keys(B2CplDeliveryOrderStatus::allStatuses())));
                         $b2cplStatus = B2CplDeliveryOrderStatus::statusById($delivery->status_xml_id);
                         if (isset($b2cplStatus['delivery_status_id'])) {
-                            $delivery->setStatus($b2cplStatus['delivery_status_id']);
+                            $delivery->status = $b2cplStatus['delivery_status_id'];
                         } else {
-                            $delivery->setStatus($faker->randomElement(array_keys(DeliveryOrderStatus::allStatuses())));
+                            $delivery->status = $faker->randomElement(array_keys(DeliveryOrderStatus::allStatuses()));
                         }
                         break;
                 }
@@ -240,7 +240,7 @@ class DeliverySeeder extends Seeder
                     $basketItemsByStore->forget($storeId);
 
                     //Создаем коробки для отправлений в сборке или собранных
-                    if ($shipment->status > ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE) {
+                    if ($shipment->status > ShipmentStatus::AWAITING_CONFIRMATION) {
                         $shipmentPackage = $deliveryService->createShipmentPackage(
                             $shipment->id,
                             $faker->randomElement($packages->pluck('id')->all())
@@ -260,7 +260,7 @@ class DeliverySeeder extends Seeder
 
                     //Добавляем собранные отправления в груз
                     try {
-                        $deliveryService->addShipment2Cargo($shipment->id);
+                        $deliveryService->addShipment2Cargo($shipment);
                     } catch (Exception $e) {
                     }
                 }

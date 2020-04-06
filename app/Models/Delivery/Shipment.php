@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
@@ -26,6 +27,13 @@ use Pim\Services\ProductService\ProductService;
  * @property int $delivery_service_zero_mile - сервис доставки нулевой мили
  * @property int $store_id
  * @property int $status
+ * @property Carbon|null $status_at - дата установки статуса
+ * @property int $payment_status - статус оплаты
+ * @property Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property int $is_problem - флаг, что отправление проблемное
+ * @property Carbon|null $is_problem_at - дата установки флага проблемного отправления
+ * @property int $is_canceled - флаг, что отправление отменено
+ * @property Carbon|null $is_canceled_at - дата установки флага отмены отправления
  * @property int $cargo_id
  *
  * @property string $number - номер отправления (номер_доставки/порядковый_номер_отправления)
@@ -84,13 +92,14 @@ class Shipment extends OmsModel
     protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems'];
 
     /**
-     * @param  int  $orderNumber - порядковый номер заказа
-     * @param  int  $i - порядковый номер отправления в заказе
+     * @param int $orderNumber - порядковый номер заказа
+     * @param int $deliveryNumber - порядковый номер доставки
+     * @param int $i - порядковый номер отправления в заказе
      * @return string
      */
-    public static function makeNumber(int $orderNumber, int $i): string
+    public static function makeNumber(int $orderNumber, int $deliveryNumber, int $i): string
     {
-        return $orderNumber . '-' . $i;
+        return $orderNumber . '-' . $deliveryNumber . '-' . sprintf("%'02d", $i);
     }
 
     /**
@@ -172,12 +181,11 @@ class Shipment extends OmsModel
 
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {
-                $weight += $package->weight;
+                $weight += $package->wrapper_weight;
             }
-        } else {
-            foreach ($this->basketItems as $basketItem) {
-                $weight += $basketItem->product['weight'] * $basketItem->qty;
-            }
+        }
+        foreach ($this->basketItems as $basketItem) {
+            $weight += $basketItem->product['weight'] * $basketItem->qty;
         }
 
         return $weight;

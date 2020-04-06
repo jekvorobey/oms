@@ -6,6 +6,7 @@ use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\Delivery;
+use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
@@ -166,14 +167,13 @@ class DeliveryService
     }
 
     /**
-     * Проверить, что все товары отправления упакованы по коробкам, если статус меняется на "Собрано"
+     * Проверить, что все товары отправления упакованы по коробкам
      * @param Shipment $shipment
      * @return bool
      */
-    public function checkAllShipmentProductsPacked(int $shipmentId): bool
+    public function checkAllShipmentProductsPacked(Shipment $shipment): bool
     {
-        $shipment = $this->getShipment($shipmentId);
-        $shipment->load('items.basketItem', 'packages.items');
+        $shipment->loadMissing('items.basketItem', 'packages.items');
 
         $shipmentItems = [];
         foreach ($shipment->items as $shipmentItem) {
@@ -191,16 +191,12 @@ class DeliveryService
 
     /**
      * Добавить отправление в груз
-     * @param  int  $shipmentId
+     * @param  Shipment $shipment
      * @throws Exception
      */
-    public function addShipment2Cargo(int $shipmentId): void
+    public function addShipment2Cargo(Shipment $shipment): void
     {
-        $shipment = $this->getShipment($shipmentId);
-        if (is_null($shipment)) {
-            throw new Exception('Отправление не найдено');
-        }
-        if ($shipment->status != ShipmentStatus::STATUS_ASSEMBLED) {
+        if ($shipment->status != ShipmentStatus::ASSEMBLED) {
             throw new Exception('Отправление не собрано');
         }
         if ($shipment->cargo_id) {
@@ -213,7 +209,7 @@ class DeliveryService
          */
         $deliveryService = $shipment->delivery_service_zero_mile;
         if (!$deliveryService) {
-            $shipment->load('delivery');
+            $shipment->loadMissing('delivery');
             $deliveryService = $shipment->delivery->delivery_service;
         }
 
@@ -222,7 +218,8 @@ class DeliveryService
             ->where('merchant_id', $shipment->merchant_id)
             ->where('store_id', $shipment->store_id)
             ->where('delivery_service', $deliveryService)
-            ->where('status', CargoStatus::STATUS_CREATED)
+            ->where('status', CargoStatus::CREATED)
+            ->where('is_canceled', false)
             ->orderBy('created_at', 'desc');
         if ($shipment->getOriginal('cargo_id')) {
             $cargoQuery->where('id', '!=', $shipment->getOriginal('cargo_id'));
@@ -234,7 +231,7 @@ class DeliveryService
             $cargo->merchant_id = $shipment->merchant_id;
             $cargo->store_id = $shipment->store_id;
             $cargo->delivery_service = $deliveryService;
-            $cargo->status = CargoStatus::STATUS_CREATED;
+            $cargo->status = CargoStatus::CREATED;
             $cargo->width = 0;
             $cargo->height = 0;
             $cargo->length = 0;
@@ -253,7 +250,7 @@ class DeliveryService
      */
     public function createCourierCall(Cargo $cargo): void
     {
-        if ($cargo->status != CargoStatus::STATUS_CREATED) {
+        if ($cargo->status != CargoStatus::CREATED) {
             throw new Exception('Груз не в статусе "Создан"');
         }
         if ($cargo->xml_id) {
@@ -269,7 +266,8 @@ class DeliveryService
             ->include('storeContact', 'storePickupTime');
         $store = $storeService->store($cargo->store_id, $storeQuery);
         if (is_null($store)) {
-            //todo Добавить оповещение о невыгруженном грузе
+            $cargo->error_xml_id = 'Не найден склад с id="' . $cargo->store_id . '" для груза';
+            $cargo->save();
             return;
         }
 
@@ -305,9 +303,7 @@ class DeliveryService
         $deliveryCargoDto->length = $cargo->length;
         $orderIds = [];
         foreach ($cargo->shipments as $shipment) {
-            if ($shipment->delivery->xml_id) {
-                $orderIds[] = $shipment->delivery->xml_id;
-            }
+            $orderIds[] = $shipment->delivery->xml_id ? : 0;
         }
         $deliveryCargoDto->order_ids = $orderIds;
 
@@ -344,6 +340,7 @@ class DeliveryService
             $date = $date->modify('+' . $dayPlus . 'day' . ($dayPlus > 1 ?  's': ''));
             $dayPlus++;
             if (!$storePickupTimes->has($dayOfWeek)) {
+                $cargo->error_xml_id = 'Возможно у склада не указан график отгрузки';
                 continue;
             }
 
@@ -359,35 +356,38 @@ class DeliveryService
                 );
                 if ($courierCallOutputDto->success) {
                     $cargo->xml_id = $courierCallOutputDto->xml_id;
-                    $cargo->status = CargoStatus::STATUS_REQUEST_SEND;
-
-                    $cargo->save();
+                    $cargo->error_xml_id = '';
                     break;
+                } elseif($courierCallOutputDto->message) {
+                    $cargo->error_xml_id = $courierCallOutputDto->message;
                 }
             } catch (\Exception $e) {
+                $cargo->error_xml_id = $e->getMessage();
             }
         }
+        if ($cargo->error_xml_id) {
+            $cargo->save();
+            throw new Exception($cargo->error_xml_id);
+        }
+
+        $cargo->save();
     }
 
     /**
      * Отменить груз (все отправления груза отвязываются от него!)
-     * @param  int  $cargoId
-     * @param  bool  $save
+     * @param  Cargo  $cargo
      * @return bool
+     * @throws Exception
      */
-    public function cancelCargo(int $cargoId, bool $save = true): bool
+    public function cancelCargo(Cargo $cargo): bool
     {
-        /** @var Cargo $cargo */
-        $cargo = Cargo::query()->where('id', $cargoId)->with('shipments')->first();
-        if (is_null($cargo)) {
-            return false;
+        if ($cargo->status >= CargoStatus::SHIPPED) {
+            throw new \Exception('Груз, начиная со статуса "Передан Логистическому Оператору", нельзя отменить');
         }
 
-        $result = DB::transaction(function () use ($cargo, $save) {
-            $cargo->status = CargoStatus::STATUS_CANCEL;
-            if ($save) {
-                $cargo->save();
-            }
+        $result = DB::transaction(function () use ($cargo) {
+            $cargo->is_canceled = true;
+            $cargo->save();
 
             if ($cargo->shipments->isNotEmpty()) {
                 foreach ($cargo->shipments as $shipment) {
@@ -412,12 +412,15 @@ class DeliveryService
      * Отменить заявку на вызов курьера для забора груза
      * @param  Cargo  $cargo
      */
-    protected function cancelCourierCall(Cargo $cargo): void
+    public function cancelCourierCall(Cargo $cargo): void
     {
         if ($cargo->xml_id) {
             /** @var CourierCallService $courierCallService */
             $courierCallService = resolve(CourierCallService::class);
             $courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
+
+            $cargo->xml_id = '';
+            $cargo->save();
         }
     }
 
@@ -433,8 +436,8 @@ class DeliveryService
          */
         foreach ($delivery->shipments as $shipment) {
             if (!in_array($shipment->status, [
-                ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE,
-                ShipmentStatus::STATUS_ASSEMBLED,
+                ShipmentStatus::ASSEMBLING,
+                ShipmentStatus::ASSEMBLED,
             ])) {
                 return;
             }
@@ -667,9 +670,13 @@ class DeliveryService
                         if ($deliveries->has($deliveryOrderStatusDto->number)) {
                             $delivery = $deliveries[$deliveryOrderStatusDto->number];
                             if ($deliveryOrderStatusDto->success) {
-                                $delivery->status = $deliveryOrderStatusDto->status;
-                                $delivery->status_xml_id = $deliveryOrderStatusDto->status_xml_id;
-                                $delivery->status_xml_id_at = new Carbon($deliveryOrderStatusDto->status_date);
+                                if ($deliveryOrderStatusDto->status) {
+                                    $delivery->status = $deliveryOrderStatusDto->status;
+                                }
+                                $delivery->setStatusXmlId(
+                                    $deliveryOrderStatusDto->status_xml_id,
+                                    new Carbon($deliveryOrderStatusDto->status_date)
+                                );
                                 $delivery->save();
                             }
                         }
@@ -682,23 +689,17 @@ class DeliveryService
 
     /**
      * Получить файл со штрихкодами коробок для заказа на доставку
-     * Штрихкоды можно получить только для доставок, у которых все отправления собраны по коробкам
-     * @param  int $shipmentId
+     * @param  Shipment $shipment
      * @return DeliveryOrderBarcodesDto|null
      */
-    public function getShipmentBarcodes(int $shipmentId): ?DeliveryOrderBarcodesDto
+    public function getShipmentBarcodes(Shipment $shipment): ?DeliveryOrderBarcodesDto
     {
-        /** @var Shipment $shipment */
-        $shipment = Shipment::query()
-            ->where('id', $shipmentId)
-            ->with('delivery', 'packages')
-            ->first();
         $delivery = $shipment->delivery;
 
         if (!$delivery->xml_id) {
             return null;
         }
-        if ($shipment->status < ShipmentStatus::STATUS_ASSEMBLED) {
+        if ($shipment->status < ShipmentStatus::ASSEMBLED) {
             return null;
         }
 
@@ -714,6 +715,87 @@ class DeliveryService
             return $deliveryOrderBarcodesDto;
         } catch (Exception $e) {
             return null;
+        }
+    }
+
+    /**
+     * Пометить отправление как проблемное
+     * @param Shipment $shipment
+     * @param string $comment
+     * @return bool
+     */
+    public function markAsProblemShipment(Shipment $shipment, string $comment = ''): bool
+    {
+        $shipment->is_problem = true;
+        $shipment->assembly_problem_comment = $comment;
+
+        return $shipment->save();
+    }
+
+    /**
+     * Пометить отправление как непроблемное
+     * @param Shipment $shipment
+     * @return bool
+     */
+    public function markAsNonProblemShipment(Shipment $shipment): bool
+    {
+        $shipment->is_problem = false;
+
+        return $shipment->save();
+    }
+
+    /**
+     * Отменить отправление
+     * @param  Shipment  $shipment
+     * @return bool
+     * @throws Exception
+     */
+    public function cancelShipment(Shipment $shipment): bool
+    {
+        if ($shipment->status >= ShipmentStatus::DONE) {
+            throw new \Exception('Отправление, начиная со статуса "Доставлено получателю", нельзя отменить');
+        }
+
+        $shipment->is_canceled = true;
+
+        return $shipment->save();
+    }
+
+    /**
+     * Отменить доставку
+     * @param  Delivery  $delivery
+     * @return bool
+     * @throws Exception
+     */
+    public function cancelDelivery(Delivery $delivery): bool
+    {
+        if ($delivery->status >= DeliveryStatus::DONE) {
+            throw new \Exception('Доставку, начиная со статуса "Доставлена получателю", нельзя отменить');
+        }
+
+        $delivery->is_canceled = true;
+        if ($delivery->save()) {
+            $this->cancelDeliveryOrder($delivery);
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Отменить заказ на доставку у службы доставки (ЛО)
+     * @param  Delivery  $delivery
+     */
+    public function cancelDeliveryOrder(Delivery $delivery): void
+    {
+        if ($delivery->xml_id) {
+            /** @var DeliveryOrderService $deliveryOrderService */
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
+            $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
+
+            $delivery->xml_id = '';
+            $delivery->save();
         }
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Observers\Delivery;
 
 use App\Models\Delivery\Cargo;
+use App\Models\Delivery\CargoStatus;
+use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
@@ -17,6 +19,16 @@ use Exception;
  */
 class ShipmentObserver
 {
+    /**
+     * Автоматическая установка статуса для доставки, если все её отправления получили нужный статус
+     */
+    protected const STATUS_TO_DELIVERY = [
+        ShipmentStatus::ASSEMBLING => DeliveryStatus::ASSEMBLING,
+        ShipmentStatus::ASSEMBLED => DeliveryStatus::ASSEMBLED,
+        ShipmentStatus::SHIPPED => DeliveryStatus::SHIPPED,
+        ShipmentStatus::ON_POINT_IN => DeliveryStatus::ON_POINT_IN,
+    ];
+
     /**
      * Handle the shipment "created" event.
      * @param  Shipment $shipment
@@ -40,15 +52,20 @@ class ShipmentObserver
         
         return true;
     }
-    
+
     /**
      * Handle the shipment "updated" event.
-     * @param  Shipment $shipment
+     * @param  Shipment  $shipment
      * @return void
+     * @throws Exception
      */
     public function updated(Shipment $shipment)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, [$shipment->delivery->order, $shipment], $shipment);
+
+        $this->setStatusToDelivery($shipment);
+        $this->setIsCanceledToDelivery($shipment);
+        $this->setTakenStatusToCargo($shipment);
     }
     
     /**
@@ -77,6 +94,19 @@ class ShipmentObserver
         }
         $shipment->delivery->recalc();
     }
+
+    /**
+     * Handle the order "saving" event.
+     * @param  Shipment $shipment
+     * @return void
+     */
+    public function saving(Shipment $shipment)
+    {
+        $this->setStatusAt($shipment);
+        $this->setPaymentStatusAt($shipment);
+        $this->setProblemAt($shipment);
+        $this->setCanceledAt($shipment);
+    }
     
     /**
      * Handle the shipment "saved" event.
@@ -102,12 +132,12 @@ class ShipmentObserver
     protected function checkAllProductsPacked(Shipment $shipment): bool
     {
         if ($shipment->status != $shipment->getOriginal('status') &&
-            $shipment->status == ShipmentStatus::STATUS_ASSEMBLED
+            $shipment->status == ShipmentStatus::ASSEMBLED
         ) {
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
 
-            return $deliveryService->checkAllShipmentProductsPacked($shipment->id);
+            return $deliveryService->checkAllShipmentProductsPacked($shipment);
         }
         
         return true;
@@ -167,11 +197,11 @@ class ShipmentObserver
      */
     protected function markOrderAsProblem(Shipment $shipment): void
     {
-        if ($shipment->status != $shipment->getOriginal('status') &&
-            in_array($shipment->status, [ShipmentStatus::STATUS_ASSEMBLING_PROBLEM, ShipmentStatus::STATUS_TIMEOUT])) {
+        if ($shipment->is_problem != $shipment->getOriginal('is_problem') &&
+            $shipment->is_problem) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
-            $orderService->markAsProblem($shipment->delivery->order_id);
+            $orderService->markAsProblem($shipment->delivery->order);
         }
     }
     
@@ -181,11 +211,10 @@ class ShipmentObserver
      */
     protected function markOrderAsNonProblem(Shipment $shipment): void
     {
-        if ($shipment->status != $shipment->getOriginal('status') &&
-            $shipment->getOriginal('status') == ShipmentStatus::STATUS_ASSEMBLING_PROBLEM) {
+        if ($shipment->is_problem != $shipment->getOriginal('is_problem') && !$shipment->is_problem) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
-            $orderService->markAsNonProblem($shipment->delivery->order_id);
+            $orderService->markAsNonProblem($shipment->delivery->order);
         }
     }
     
@@ -198,7 +227,7 @@ class ShipmentObserver
     protected function upsertDeliveryOrder(Shipment $shipment): void
     {
         if ($shipment->status != $shipment->getOriginal('status') &&
-            in_array($shipment->status, [ShipmentStatus::STATUS_ALL_PRODUCTS_AVAILABLE, ShipmentStatus::STATUS_ASSEMBLED])
+            in_array($shipment->status, [ShipmentStatus::ASSEMBLING, ShipmentStatus::ASSEMBLED])
         ) {
             $shipment->loadMissing('delivery.shipments');
             $delivery = $shipment->delivery;
@@ -218,7 +247,7 @@ class ShipmentObserver
         try {
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
-            $deliveryService->addShipment2Cargo($shipment->id);
+            $deliveryService->addShipment2Cargo($shipment);
         } catch (Exception $e) {
         }
     }
@@ -237,6 +266,172 @@ class ShipmentObserver
             if ($shipment->cargo_id) {
                 History::saveEvent(HistoryType::TYPE_CREATE_LINK, Cargo::find($shipment->cargo_id), $shipment);
             }
+        }
+    }
+
+    /**
+     * Установить дату изменения статуса отправления
+     * @param  Shipment $shipment
+     */
+    protected function setStatusAt(Shipment $shipment): void
+    {
+        if ($shipment->status != $shipment->getOriginal('status')) {
+            $shipment->status_at = now();
+        }
+    }
+
+    /**
+     * Установить дату изменения статуса оплаты отправления
+     * @param  Shipment $shipment
+     */
+    protected function setPaymentStatusAt(Shipment $shipment): void
+    {
+        if ($shipment->payment_status != $shipment->getOriginal('payment_status')) {
+            $shipment->payment_status_at = now();
+        }
+    }
+
+    /**
+     * Установить дату установки флага проблемного отправления
+     * @param  Shipment $shipment
+     */
+    protected function setProblemAt(Shipment $shipment): void
+    {
+        if ($shipment->is_problem != $shipment->getOriginal('is_problem')) {
+            $shipment->is_problem_at = now();
+        }
+    }
+
+    /**
+     * Установить дату отмены отправления
+     * @param  Shipment $shipment
+     */
+    protected function setCanceledAt(Shipment $shipment): void
+    {
+        if ($shipment->is_canceled != $shipment->getOriginal('is_canceled')) {
+            $shipment->is_canceled_at = now();
+        }
+    }
+
+    /**
+     * Переводим в статус "Ожидает проверки АОЗ" из статуса "Оформлено",
+     * если статус доставки "Ожидает проверки АОЗ"
+     * @param  Shipment $shipment
+     */
+    protected function setAwaitingCheckStatus(Shipment $shipment): void
+    {
+        if ($shipment->status == ShipmentStatus::CREATED && $shipment->delivery->status == DeliveryStatus::AWAITING_CHECK) {
+            $shipment->status = ShipmentStatus::AWAITING_CHECK;
+        }
+    }
+
+    /**
+     * Переводим в статус "Ожидает подтверждения Мерчантом" из статуса "Оформлено",
+     * если статус доставки "Ожидает подтверждения Мерчантом"
+     * @param  Shipment $shipment
+     */
+    protected function setAwaitingConfirmationStatus(Shipment $shipment): void
+    {
+        if ($shipment->status == ShipmentStatus::CREATED && $shipment->delivery->status == DeliveryStatus::AWAITING_CONFIRMATION) {
+            $shipment->status = ShipmentStatus::AWAITING_CONFIRMATION;
+        }
+    }
+
+    /**
+     * Автоматическая установка статуса для доставки, если все её отправления получили нужный статус
+     * @param  Shipment  $shipment
+     */
+    protected function setStatusToDelivery(Shipment $shipment): void
+    {
+        if (isset(self::STATUS_TO_DELIVERY[$shipment->status]) && $shipment->status != $shipment->getOriginal('status')) {
+            $delivery = $shipment->delivery;
+            if ($delivery->status == self::STATUS_TO_DELIVERY[$shipment->status]) {
+                return;
+            }
+
+            $allShipmentsHasStatus = true;
+            foreach ($delivery->shipments as $deliveryShipment) {
+                if ($deliveryShipment->status < $shipment->status) {
+                    $allShipmentsHasStatus = false;
+                    break;
+                }
+            }
+
+            if ($allShipmentsHasStatus) {
+                $delivery->status = self::STATUS_TO_DELIVERY[$shipment->status];
+                $delivery->save();
+            }
+        }
+    }
+
+    /**
+     * Автоматическая установка флага отмены для доставки, если все её отправления отменены
+     * @param  Shipment  $shipment
+     * @throws Exception
+     */
+    protected function setIsCanceledToDelivery(Shipment $shipment): void
+    {
+        if ($shipment->is_canceled && $shipment->is_canceled != $shipment->getOriginal('is_canceled')) {
+            $delivery = $shipment->delivery;
+            if ($delivery->is_canceled) {
+                return;
+            }
+
+            $allShipmentsIsCanceled = true;
+            foreach ($delivery->shipments as $deliveryShipment) {
+                if (!$deliveryShipment->is_canceled) {
+                    $allShipmentsIsCanceled = false;
+                    break;
+                }
+            }
+
+            if ($allShipmentsIsCanceled) {
+                /** @var DeliveryService $deliveryService */
+                $deliveryService = resolve(DeliveryService::class);
+                $deliveryService->cancelDelivery($delivery);
+            }
+        }
+    }
+
+    /**
+     * Автоматическая установка статуса "Принят Логистическим Оператором" для груза,
+     * если все его отправления получили статус "Принято Логистическим Оператором"
+     * @param  Shipment  $shipment
+     */
+    protected function setTakenStatusToCargo(Shipment $shipment): void
+    {
+        if ($shipment->status == ShipmentStatus::ON_POINT_IN && $shipment->status != $shipment->getOriginal('status')) {
+            $cargo = $shipment->cargo;
+            if ($cargo->status == CargoStatus::TAKEN) {
+                return;
+            }
+
+            $allShipmentsHasStatus = true;
+            foreach ($cargo->shipments as $cargoShipment) {
+                if ($cargoShipment->status < $shipment->status) {
+                    $allShipmentsHasStatus = false;
+                    break;
+                }
+            }
+
+            if ($allShipmentsHasStatus) {
+                $cargo->status = CargoStatus::TAKEN;
+                $cargo->save();
+            }
+        }
+    }
+
+    /**
+     * Переводим доставку в статус "Предзаказ: ожидаем поступления товара",
+     * если статус отправления "Предзаказ: ожидаем поступления товара"
+     * @param  Shipment $shipment
+     */
+    protected function setPreOrderStatusToDelivery(Shipment $shipment): void
+    {
+        if ($shipment->status == ShipmentStatus::PRE_ORDER) {
+            $delivery = $shipment->delivery;
+            $delivery->status = DeliveryStatus::PRE_ORDER;
+            $delivery->save();
         }
     }
 }

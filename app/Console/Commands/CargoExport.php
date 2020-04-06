@@ -35,7 +35,7 @@ class CargoExport extends Command
     {
         /** @var Cargo $cargo */
         $cargo = Cargo::query()
-            ->where('status', CargoStatus::STATUS_CREATED)
+            ->where('status', CargoStatus::CREATED)
             ->where('store_id', $this->argument('storeId'))
             ->where('delivery_service', $this->argument('deliveryService'))
             ->whereHas('shipments')

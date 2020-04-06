@@ -11,6 +11,7 @@ use App\Models\Order\OrderComment;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use App\Services\OrderService;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
@@ -30,23 +31,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class OrdersController extends Controller
 {
     /**
-     * @OA\Get(
-     *     path="/api/v1/orders",
-     *     tags={"order"},
-     *     summary="Получить список заказов",
-     *     operationId="listOrders",
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="items",type="array", @OA\Items(
-     *                  ref="#/components/schemas/OrderItem"
-     *             )),
-     *         )
-     *     ),
-     * )
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Получить список заказов
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function read(Request $request): JsonResponse
     {
@@ -58,20 +45,9 @@ class OrdersController extends Controller
     }
 
     /**
-     * @OA\Get(
-     *     path="/api/v1/orders/count",
-     *     tags={"order"},
-     *     summary="Получить количество заказов по заданому фильтру",
-     *     operationId="countOrders",
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\JsonContent(ref="#/components/schemas/CountResult")
-     *     ),
-     * )
-     * @todo уточнить типы в swagger
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Получить количество заказов по заданому фильтру
+     * @param  Request  $request
+     * @return JsonResponse
      */
     public function count(Request $request): JsonResponse
     {
@@ -81,23 +57,11 @@ class OrdersController extends Controller
     }
 
     /**
-     * @OA\Put(
-     *     path="/api/v1/orders/{id}/payments",
-     *     tags={"payment"},
-     *     summary="Задать список оплат заказа",
-     *     operationId="setPayments",
-     *     @OA\Parameter(description="ID заказа",in="path",name="id",required=true,@OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *     ),
-     * )
-     *
-     * @param int $id
-     * @param Request $request
+     * Задать список оплат заказа
+     * @param  int  $id
+     * @param  Request  $request
      * @return Response
      * @throws \Exception
-     * @todo уточнить типы в swagger
      */
     public function setPayments(int $id, Request $request): Response
     {
@@ -133,29 +97,15 @@ class OrdersController extends Controller
     }
 
     /**
-     * @OA\Put(
-     *     path="/api/v1/orders/{id}",
-     *     tags={"order"},
-     *     summary="Обновить заказ",
-     *     operationId="updateOrder",
-     *     @OA\Parameter(description="ID заказа",in="path",name="id",required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=204,
-     *         description="OK"
-     *     ),
-     * )
-     *
-     * @param int $id
-     * @param Request $request
+     * Обновить заказ
+     * @param  int  $id
+     * @param  Request  $request
+     * @param  OrderService  $orderService
      * @return Response
-     * @throws \Exception
-     * @todo уточнить типы в swagger
      */
-    public function update(int $id, Request $request): Response
+    public function update(int $id, Request $request, OrderService $orderService): Response
     {
-        // todo Добавить провеку прав
-        /** @var Order $order */
-        $order = Order::find($id);
+        $order = $orderService->getOrder($id);
         if (!$order) {
             throw new NotFoundHttpException('order not found');
         }
@@ -191,27 +141,15 @@ class OrdersController extends Controller
     }
 
     /**
-     * @OA\Delete(
-     *     path="/api/v1/orders/{id}",
-     *     tags={"order"},
-     *     summary="Удалить заказ",
-     *     operationId="deleteOrder",
-     *     @OA\Parameter(description="ID заказа",in="path",name="id",required=true,@OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=204,
-     *         description="OK"
-     *     ),
-     * )
-     *
-     * @param int $id
+     * Удалить заказ
+     * @param  int  $id
+     * @param  OrderService  $orderService
      * @return Response
      * @throws \Exception
-     * @todo уточнить типы в swagger
      */
-    public function delete(int $id): Response
+    public function delete(int $id, OrderService $orderService): Response
     {
-        /** @var Order $order */
-        $order = Order::find($id);
+        $order = $orderService->getOrder($id);
         if (!$order) {
             throw new NotFoundHttpException('order not found');
         }
@@ -223,8 +161,29 @@ class OrdersController extends Controller
         return response('', 204);
     }
 
+    /**
+     * Отменить заказ
+     * @param  int  $id
+     * @param  OrderService  $orderService
+     * @return Response
+     * @throws \Exception
+     */
+    public function cancel(int $id, OrderService $orderService): Response
+    {
+        $order = $orderService->getOrder($id);
+        if (!$order) {
+            throw new NotFoundHttpException('order not found');
+        }
+        if (!$orderService->cancel($order)) {
+            throw new HttpException(500);
+        }
+
+        return response('', 204);
+    }
+
 
     /**
+     * Добавить комментарий к заказу
      * @param int $id
      * @param Request $request
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
@@ -257,7 +216,10 @@ class OrdersController extends Controller
         return response('', 204);
     }
 
-    public function doneReferral()
+    /**
+     * @return JsonResponse
+     */
+    public function doneReferral(): JsonResponse
     {
         $data = $this->validate(request(), [
             'date_from' => 'nullable|integer',

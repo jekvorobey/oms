@@ -23,6 +23,12 @@ use Illuminate\Support\Collection;
  * @property string $xml_id - идентификатор заказа на доставку в службе доставки
  * @property string $error_xml_id - текст последней ошибки при создании/обновлении заказа на доставку в службе доставки
  * @property string $status_xml_id - статус заказа на доставку в службе доставки
+ * @property int $payment_status - статус оплаты
+ * @property \Illuminate\Support\Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property int $is_problem - флаг, что доставка проблемная
+ * @property Carbon|null $is_problem_at - дата установки флага проблемной доставки
+ * @property int $is_canceled - флаг, что доставка отменена
+ * @property Carbon|null $is_canceled_at - дата установки флага отмены доставки
  * @property int $tariff_id - идентификатор тарифа на доставку из сервиса логистики
  * @property int $point_id - идентификатор пункта самовывоза из сервиса логистики
  * @property string $number - номер доставки (номер_заказа-порядковый_номер_доставки)
@@ -128,29 +134,15 @@ class Delivery extends OmsModel
     }
 
     /**
-     * Установить статус доставки (без сохранения!)
-     * @param  int  $status
-     * @param  bool  $save
-     * @return self
-     */
-    public function setStatus(int $status): self
-    {
-        $this->status = $status;
-        $this->status_at = now();
-
-        return $this;
-    }
-
-    /**
      * Установить статус доставки у службы доставки (без сохранения!)
      * @param  string  $status
-     * @param  bool  $save
+     * @param  Carbon|null $statusAt
      * @return self
      */
-    public function setStatusXmlId(string $status, bool $save = true): self
+    public function setStatusXmlId(string $status, Carbon $statusAt = null): self
     {
         $this->status_xml_id = $status;
-        $this->status_xml_id_at = now();
+        $this->status_xml_id_at = $statusAt ? : now();
 
         return $this;
     }

@@ -43,7 +43,7 @@ class PaymentObserver
         if ($payment->getOriginal('status') != $payment->status) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
-            $orderService->refreshPaymentStatus($payment->order->id);
+            $orderService->refreshPaymentStatus($payment->order);
         }
     }
     

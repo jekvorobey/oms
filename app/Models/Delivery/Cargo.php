@@ -7,6 +7,7 @@ use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Груз - совокупность отправлений для доставки на нулевой миле (доставка от мерчанта до распределительного центра)
@@ -16,9 +17,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $merchant_id
  * @property int $store_id
  * @property int $status
+ * @property Carbon|null $status_at - дата установки статуса
+ * @property int $is_problem - флаг, что у груза проблемы при отгрузке
+ * @property Carbon|null $is_problem_at - дата установки флага проблемного груза
+ * @property int $is_canceled - флаг, что груз отменен
+ * @property Carbon|null $is_canceled_at - дата установки флага отмены груза
  * @property int $delivery_service
  *
  * @property string $xml_id
+ * @property string $error_xml_id - текст последней ошибки при создании заявки на вызов курьера для забора груза в службе доставки
  * @property float $width - ширина (расчитывается автоматически)
  * @property float $height - высота (расчитывается автоматически)
  * @property float $length - длина (расчитывается автоматически)

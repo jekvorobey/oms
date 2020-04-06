@@ -14,12 +14,14 @@ class PaymentStatus
     public const PAID = 2;
     /** @var int - просрочена */
     public const TIMEOUT = 3;
-    
+    /** @var int - средства захолдированы */
+    public const HOLD = 4;
+
     /** @var int */
     public $id;
     /** @var string */
     public $name;
-    
+
     /**
      * @return array
      */
@@ -29,9 +31,10 @@ class PaymentStatus
             new self(self::NOT_PAID, 'Не оплачено'),
             new self(self::PAID, 'Оплачено'),
             new self(self::TIMEOUT, 'Просрочено'),
+            new self(self::HOLD, 'Средства захолдированы'),
         ];
     }
-    
+
     /**
      * @return array
      */
@@ -41,9 +44,10 @@ class PaymentStatus
             self::NOT_PAID,
             self::PAID,
             self::TIMEOUT,
+            self::HOLD,
         ];
     }
-    
+
     /**
      * PaymentStatus constructor.
      * @param  int  $id

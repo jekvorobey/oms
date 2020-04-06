@@ -3,7 +3,6 @@
 namespace App\Core\Notifications;
 
 use App\Models\Delivery\Shipment;
-use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\HistoryType;
 use App\Models\OmsModel;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -43,7 +42,7 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
                 $notification->setPayloadField('body', "Создан заказ {$shipment->number}");
                 break;
             case HistoryType::TYPE_UPDATE:
-                if($shipment->status == ShipmentStatus::STATUS_CANCEL) {
+                if($shipment->is_canceled && $shipment->getOriginal('is_canceled') != $shipment->is_canceled) {
                     $notification->type = NotificationDto::TYPE_SHIPMENT_CANCEL;
                     $notification->setPayloadField('title', "Отмена заказа");
                     $notification->setPayloadField('body', "Заказ {$shipment->number} был отменён");
@@ -84,7 +83,7 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
     
         switch ($type) {
             case HistoryType::TYPE_UPDATE:
-                if($shipment->status == ShipmentStatus::STATUS_ASSEMBLING_PROBLEM) {
+                if($shipment->is_problem && $shipment->getOriginal('is_problem') != $shipment->is_problem) {
                     $notification->type = NotificationDto::TYPE_SHIPMENT_PROBLEM;
                     $notification->setPayloadField('title', "Проблема при сборке отправления");
                     $notification->setPayloadField('body', "Возникла проблема при сборке отправления {$shipment->number} из заказа {$shipment->delivery->order->number}: {$shipment->assembly_problem_comment}");
