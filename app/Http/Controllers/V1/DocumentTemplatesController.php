@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 class DocumentTemplatesController extends Controller
 {
     /**
-     * Получить шаблон "Акт-претензия по отправлению"
+     * Получить шаблон "Акт-претензия по отправлению/грузу"
      * @return JsonResponse
      */
     public function claimAct(): JsonResponse
@@ -32,7 +32,7 @@ class DocumentTemplatesController extends Controller
     }
 
     /**
-     * Получить шаблон "Опись отправления заказа "
+     * Получить шаблон "Опись отправления заказа"
      * @return JsonResponse
      */
     public function inventory(): JsonResponse

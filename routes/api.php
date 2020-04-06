@@ -162,17 +162,18 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                     Route::post('', 'ShipmentPackagesController@create');
                 });
 
+                Route::prefix('documents')->group(function () {
+                    Route::get('acceptance-act', 'ShipmentDocumentsController@acceptanceAct');
+                    Route::get('inventory', 'ShipmentDocumentsController@inventory');
+                    Route::get('assembling-card', 'ShipmentDocumentsController@assemblingCard');
+                });
+
                 Route::put('','ShipmentsController@update');
                 Route::put('mark-as-problem','ShipmentsController@markAsProblem');
                 Route::put('mark-as-non-problem','ShipmentsController@markAsNonProblem');
                 Route::put('cancel','ShipmentsController@cancel');
                 Route::delete('','ShipmentsController@delete');
                 Route::get('barcodes', 'ShipmentsController@barcodes');
-                Route::prefix('documents')->group(function () {
-                    Route::get('acceptance-act', 'ShipmentDocumentsController@acceptanceAct');
-                    Route::get('inventory', 'ShipmentDocumentsController@inventory');
-                    Route::get('assembling-card', 'ShipmentDocumentsController@assemblingCard');
-                });
             });
         });
 
