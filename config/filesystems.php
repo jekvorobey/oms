@@ -64,6 +64,13 @@ return [
             'url' => env('AWS_URL'),
         ],
 
+        'document-templates' => [
+            'driver' => 'local',
+            'root' => storage_path('app/document-templates'),
+            'url' => env('APP_URL').'/document-templates',
+            'visibility' => 'public',
+        ],
+
     ],
 
 ];
