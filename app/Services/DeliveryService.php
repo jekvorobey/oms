@@ -565,7 +565,7 @@ class DeliveryService
                 $recipientDto->area = $pointDto->address['area'] ?? '';
                 $recipientDto->city = $pointDto->address['city'] ?? '';
                 $recipientDto->city_guid = $pointDto->city_guid;
-                $recipientDto->street = $pointDto->address['street'] ?? 'улица'; //у cdek улица обязательна
+                $recipientDto->street = $pointDto->address['street'] ? : 'нет'; //у cdek и b2cpl улица обязательна
                 $recipientDto->house = $pointDto->address['house'] ?? '';
                 $recipientDto->block = $pointDto->address['block'] ?? '';
                 $recipientDto->flat = $pointDto->address['flat'] ?? '';
