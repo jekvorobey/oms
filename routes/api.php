@@ -105,6 +105,13 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         });
     });
 
+    Route::prefix('document-templates')->group(function () {
+        Route::get('claim-act', 'DocumentTemplatesController@claimAct');
+        Route::get('acceptance-act', 'DocumentTemplatesController@acceptanceAct');
+        Route::get('inventory', 'DocumentTemplatesController@inventory');
+        Route::get('assembling-card', 'DocumentTemplatesController@assemblingCard');
+    });
+
     Route::namespace('Delivery')->group(function () {
         Route::prefix('deliveries')->group(function () {
             Route::get('count', 'DeliveryController@count');
@@ -153,6 +160,12 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                     Route::get('count', 'ShipmentPackagesController@countByShipment');
                     Route::get('', 'ShipmentPackagesController@readByShipment');
                     Route::post('', 'ShipmentPackagesController@create');
+                });
+
+                Route::prefix('documents')->group(function () {
+                    Route::get('acceptance-act', 'ShipmentDocumentsController@acceptanceAct');
+                    Route::get('inventory', 'ShipmentDocumentsController@inventory');
+                    Route::get('assembling-card', 'ShipmentDocumentsController@assemblingCard');
                 });
 
                 Route::put('','ShipmentsController@update');
