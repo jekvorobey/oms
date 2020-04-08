@@ -34,9 +34,9 @@ if (! function_exists('price_format')) {
     /**
      * Вывести число в виде цены
      * @param  float  $value
-     * @return float
+     * @return string
      */
-    function price_format(float $value): float
+    function price_format(float $value): string
     {
         return number_format($value, 2, '.', ' ');
     }
@@ -47,9 +47,9 @@ if (! function_exists('qty_format')) {
     /**
      * Вывести число в виде кол-ва
      * @param  float  $value
-     * @return float
+     * @return string
      */
-    function qty_format(float $value): float
+    function qty_format(float $value): string
     {
         return number_format($value, 0, '.', ' ');
     }
