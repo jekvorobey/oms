@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
+use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use Carbon\Carbon;
 
 /**
  * Класс-бизнес логики по работе с заказами (без чекаута и доставки)
@@ -21,6 +23,26 @@ class OrderService
     public function getOrder(int $orderId): ?Order
     {
         return Order::find($orderId);
+    }
+
+    /**
+     * Вручную оплатить заказ.
+     * Примечание: оплата по заказам автоматически должна поступать от платежной системы!
+     * @param  Order  $order
+     * @return bool
+     * @throws \Exception
+     */
+    public function pay(Order $order): bool
+    {
+        /** @var Payment $payment */
+        $payment = $order->payments->first();
+        if (!$payment) {
+            throw new \Exception("Оплата для заказа не найдена");
+        }
+        $payment->status = PaymentStatus::PAID;
+        $payment->payed_at = Carbon::now();
+
+        return $payment->save();
     }
 
     /**

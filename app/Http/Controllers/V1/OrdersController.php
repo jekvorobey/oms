@@ -162,6 +162,27 @@ class OrdersController extends Controller
     }
 
     /**
+     * Вручную оплатить заказ
+     * Примечание: оплата по заказам автоматически должна поступать от платежной системы!
+     * @param  int  $id
+     * @param  OrderService  $orderService
+     * @return Response
+     * @throws \Exception
+     */
+    public function pay(int $id, OrderService $orderService): Response
+    {
+        $order = $orderService->getOrder($id);
+        if (!$order) {
+            throw new NotFoundHttpException('order not found');
+        }
+        if (!$orderService->pay($order)) {
+            throw new HttpException(500);
+        }
+
+        return response('', 204);
+    }
+
+    /**
      * Отменить заказ
      * @param  int  $id
      * @param  OrderService  $orderService
