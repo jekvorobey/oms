@@ -2,102 +2,56 @@
 
 namespace App\Models\Order;
 
+use App\Models\OmsModel;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 /**
+ * Информация о скидках, примененные к заказу
  * Class OrderDiscount
  * @package App\Models\Order
+ *
+ * @property int        $order_id
+ * @property int        $discount_id
+ * @property string     $name
+ * @property int        $type
+ * @property int        $change
+ * @property int|null   $merchant_id
+ * @property bool       $promo_code_only
+ * @property bool       $visible_in_catalog
+ * @property array|null $items
+ *
+ * @property Order      $order
  */
-class OrderDiscount
+class OrderDiscount extends OmsModel
 {
     /**
-     * ID скидки
-     * @var int
+     * Заполняемые поля модели
      */
-    public $id;
+    const FILLABLE = [
+        'order_id',
+        'discount_id',
+        'name',
+        'type',
+        'change',
+        'merchant_id',
+        'promo_code_only',
+        'visible_in_catalog',
+        'items',
+    ];
 
     /**
-     * Название скидки
-     * @var string
+     * @var array
      */
-    public $name;
+    protected $fillable = self::FILLABLE;
+
+    /** @var array */
+    protected $casts = ['items' => 'array'];
 
     /**
-     * Тип скидки (на что скидка)
-     * @var int
+     * @return BelongsTo
      */
-    public $type;
-
-    /**
-     * Размер скидки (всегда в рублях), которую она внесла в данный заказ
-     * @var int
-     */
-    public $change;
-
-    /**
-     * Спонсор скидки (ID Мерчаната или null – если Маркетплейс)
-     * @var int|null
-     */
-    public $merchant_id;
-
-    /**
-     * Видна ли была скидка в каталоге
-     * @var bool
-     */
-    public $visible_in_catalog;
-
-    /**
-     * Скидка доступна только по промокоду
-     * @var bool
-     */
-    public $promo_code_only;
-
-    /**
-     * Влияние скидки на офферы
-     * Формат:
-     * { offer_id: int, product_id: int, change: int }
-     * @var array|null
-     */
-    public $items;
-
-    /**
-     * OrderDiscount constructor.
-     * @param array $params
-     */
-    public function __construct($params)
+    public function order(): BelongsTo
     {
-        $this->id = intval($params['id']);
-        $this->name = $params['name'];
-        $this->type = intval($params['type']);
-        $this->change = intval($params['change']);
-        $this->merchant_id = isset($params['merchant_id']) ? intval($params['merchant_id']) : null;
-        $this->visible_in_catalog = isset($params['visible_in_catalog']) && $params['visible_in_catalog'];
-        $this->promo_code_only = isset($params['promo_code_only']) && $params['promo_code_only'];
-        $this->items = null;
-        if (isset($params['items']) && !empty($params['items'])) {
-            $this->items = [];
-            foreach ($params['items'] as $item) {
-                $this->items[] = [
-                    'product_id' => intval($item['product_id']),
-                    'offer_id' => intval($item['offer_id']),
-                    'change' => intval($item['change']),
-                ];
-            }
-        }
-    }
-
-    /**
-     * @return array
-     */
-    public function toArray()
-    {
-        return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'type' => $this->type,
-            'change' => $this->change,
-            'merchant_id' => $this->merchant_id,
-            'visible_in_catalog' => $this->visible_in_catalog,
-            'promo_code_only' => $this->promo_code_only,
-            'items' => $this->items,
-        ];
+        return $this->belongsTo(Order::class);
     }
 }
