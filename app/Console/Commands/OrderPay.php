@@ -3,9 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Order\Order;
-use App\Models\Payment\Payment;
-use App\Models\Payment\PaymentStatus;
-use Carbon\Carbon;
+use App\Services\OrderService;
 use Illuminate\Console\Command;
 
 /**
@@ -31,7 +29,7 @@ class OrderPay extends Command
      * Execute the console command.
      * @throws \Exception
      */
-    public function handle()
+    public function handle(OrderService $orderService)
     {
         $orderId = $this->argument('orderId');
         /** @var Order $order */
@@ -40,13 +38,6 @@ class OrderPay extends Command
             throw new \Exception("Заказ с id=$orderId не найден");
         }
 
-        /** @var Payment $payment */
-        $payment = $order->payments->first();
-        if (!$payment) {
-            throw new \Exception("Оплата для заказа с id=$orderId не найдена");
-        }
-        $payment->status = PaymentStatus::PAID;
-        $payment->payed_at = Carbon::now();
-        $payment->save();
+        $orderService->pay($order);
     }
 }
