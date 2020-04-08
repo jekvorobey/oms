@@ -8,6 +8,9 @@ use App\Models\Delivery\ShipmentPackageItem;
 use App\Services\Dto\Out\DocumentDto;
 use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
+use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
+use Greensight\Logistics\Services\ListsService\ListsService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpWord\TemplateProcessor;
 use Pim\Dto\Product\ProductDto;
@@ -45,26 +48,24 @@ class DocumentService
             $shipment->loadMissing('basketItems', 'packages.items.basketItem');
 
             $offersIds = $shipment->basketItems->pluck('offer_id')->all();
-            /** @var ProductService $productService */
-            $productService = resolve(ProductService::class);
-            $productQuery = $productService->newQuery()
-                ->addFields(ProductDto::entity(), 'vendor_code');
-            $productsByOffers = $productService->productsByOffers($productQuery, $offersIds);
+            $productsByOffers = $this->getProductsByOffers($offersIds);
 
             $tableRows = [];
             foreach ($shipment->packages as $packageNum => $package) {
                 foreach ($package->items as $itemNum => $item) {
+                    /** @var ProductDto $product */
                     $product = isset($productsByOffers[$item->basketItem->offer_id]) ?
                         $productsByOffers[$item->basketItem->offer_id]['product'] : [];
+
                     $tableRows[] = [
-                        'table.row_number' => $itemNum == 0 ? count($tableRows) + 1 : '',
+                        'table.row' => $itemNum == 0 ? count($tableRows) + 1 : '',
                         'table.shipment_number' => $itemNum == 0 ? $shipment->number : '',
                         'table.package_barcode' => $itemNum == 0 ? $package->xml_id : '',
                         'table.shipment_cost' => $itemNum == 0 ? price_format($package->items->sum(function (ShipmentPackageItem $shipmentPackageItem) {
                             return $shipmentPackageItem->basketItem->price;
                         })) : '',
                         'table.shipment_packages' => ($packageNum + 1) . '/' .$shipment->packages->count(),
-                        'table.product_article' => $product ? $product['vendor_code'] : '',
+                        'table.product_article' => $product ? $product->vendor_code : '',
                         'table.product_name' => $item->basketItem->name,
                         'table.product_qty' => qty_format($item->basketItem->qty),
                         'table.product_weight' => isset($item->basketItem->product['weight']) ?
@@ -73,7 +74,7 @@ class DocumentService
                     ];
                 }
             }
-            $templateProcessor->cloneRowAndSetValues('table.row_number', $tableRows);
+            $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
             $tableTotalRow = [
                 'table.total_shipment_cost' => price_format($shipment->cost),
@@ -88,6 +89,71 @@ class DocumentService
             $templateProcessor->setValues($tableTotalRow);
 
             $documentName = $this->getFileWithSuffix(self::ACCEPTANCE_ACT, '-' . $shipment->number);
+            $documentPath = Storage::disk('document-templates')->path('') . $documentName;
+            $templateProcessor->saveAs($documentPath);
+            $this->saveDocument($documentDto, $documentPath, $documentName);
+            Storage::disk('document-templates')->delete($documentName);
+        } catch (Exception $e) {
+            $documentDto->success = false;
+            $documentDto->message = $e->getMessage();
+        }
+
+        return $documentDto;
+    }
+
+    /**
+     * Сформировать "Карточка сборки отправления"
+     * @param  Shipment $shipment
+     * @return DocumentDto
+     */
+    public function getShipmentAssemblingCard(Shipment $shipment): DocumentDto
+    {
+        $documentDto = new DocumentDto();
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = resolve(DeliveryService::class);
+
+        try {
+            $templateProcessor = $this->getTemplateProcessor(self::ASSEMBLING_CARD);
+            $shipment->loadMissing('basketItems');
+
+            $offersIds = $shipment->basketItems->pluck('offer_id')->all();
+            $productsByOffers = $this->getProductsByOffers($offersIds);
+
+            $tableRows = [];
+            foreach ($shipment->basketItems as $basketItem) {
+                /** @var ProductDto $product */
+                $product = isset($productsByOffers[$basketItem->offer_id]) ?
+                    $productsByOffers[$basketItem->offer_id]['product'] : [];
+
+
+                $tableRows[] = [
+                    'table.row' => count($tableRows) + 1,
+                    'table.product_article' => $product ? $product->vendor_code : '',
+                    'table.product_name' => $basketItem->name,
+                    'table.product_code_ibt' => $product ? $product->id : '',
+                    'table.product_qty' => qty_format($basketItem->qty),
+                    'table.product_price_per_unit' => price_format($basketItem->price / $basketItem->qty),
+                    'table.product_price' => price_format($basketItem->price),
+                ];
+            }
+            $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
+
+            $deliveryServiceId = $deliveryService->getZeroMileShipmentDeliveryServiceId($shipment);
+            /** @var ListsService $listsService */
+            $listsService = resolve(ListsService::class);
+            $deliveryServiceQuery = $listsService->newQuery()
+                ->addFields(LogisticsDeliveryService::entity(), 'id', 'name');
+            $deliveryService = $listsService->deliveryService($deliveryServiceId, $deliveryServiceQuery);
+
+            $customerComment = $shipment->delivery->order->comment;
+            $fieldValues = [
+                'shipment_number' => $shipment->number,
+                'delivery_service_name' => $deliveryService->name,
+                'customer_comment' => $customerComment ? $customerComment->text : 'нет',
+            ];
+            $templateProcessor->setValues($fieldValues);
+
+            $documentName = $this->getFileWithSuffix(self::ASSEMBLING_CARD, '-' . $shipment->number);
             $documentPath = Storage::disk('document-templates')->path('') . $documentName;
             $templateProcessor->saveAs($documentPath);
             $this->saveDocument($documentDto, $documentPath, $documentName);
@@ -124,6 +190,21 @@ class DocumentService
         $programTemplate = $this->getFileWithSuffix($template, self::TEMPLATE_SUFFIX);
 
         return new TemplateProcessor(Storage::disk('document-templates')->path($programTemplate));
+    }
+
+    /**
+     * Получить товары по офферам
+     * @param  array  $offersIds
+     * @return Collection
+     */
+    protected function getProductsByOffers(array $offersIds): Collection
+    {
+        /** @var ProductService $productService */
+        $productService = resolve(ProductService::class);
+        $productQuery = $productService->newQuery()
+            ->addFields(ProductDto::entity(), 'id', 'vendor_code');
+
+        return $productService->productsByOffers($productQuery, $offersIds);
     }
 
     /**

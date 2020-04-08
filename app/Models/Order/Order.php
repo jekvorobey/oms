@@ -56,6 +56,7 @@ use Illuminate\Support\Collection;
  * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
  * @property Collection|Payment[] $payments - оплаты заказа
  * @property Collection|Delivery[] $deliveries - доставка заказа
+ * @property OrderComment $comment - коментарий покупателя к заказу
  */
 class Order extends OmsModel
 {
