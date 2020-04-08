@@ -21,6 +21,7 @@ class PaymentObserver
     public function created(Payment $payment)
     {
         History::saveEvent(HistoryType::TYPE_CREATE, $payment->order, $payment);
+        logger()->info('Payment created', ['payment' => $payment]);
     }
 
     /**
@@ -31,6 +32,7 @@ class PaymentObserver
     public function updated(Payment $payment)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, $payment->order, $payment);
+        logger()->info('Payment updated', ['payment' => $payment]);
     }
 
     /**
@@ -40,13 +42,16 @@ class PaymentObserver
      */
     public function saved(Payment $payment)
     {
+        logger()->info('Payment saved', ['payment' => $payment]);
         if ($payment->getOriginal('status') != $payment->status) {
+            logger()->info('Order refresh status start');
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->refreshPaymentStatus($payment->order);
+            logger()->info('Order refresh status stop');
         }
     }
-    
+
     /**
      * Handle the order "deleting" event.
      * @param  Payment $payment

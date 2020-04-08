@@ -52,22 +52,14 @@ class OrderService
     public function refreshPaymentStatus(Order $order): void
     {
         $order->refresh();
-        $all = $order->payments->count();
-        $statuses = [];
-        foreach ($order->payments as $payment) {
-            $statuses[$payment->status] = isset($statuses[$payment->status]) ? $statuses[$payment->status] + 1 : 1;
+        /** @var Payment $payment */
+        $payment = $order->payments->last();
+        if (!$payment) {
+            logger('refreshPaymentStatus without payment', ['orderId' => $order->id]);
+            return;
         }
 
-        if ($this->allIs($statuses, $all, PaymentStatus::PAID)) {
-            $this->setPaymentStatusPaid($order);
-        } elseif ($this->atLeastOne($statuses, PaymentStatus::TIMEOUT) &&
-            !$this->atLeastOne($statuses, PaymentStatus::PAID)) {
-            $this->setPaymentStatusTimeout($order, false);
-            try {
-                $this->cancel($order);
-            } catch (\Exception $e) {
-            }
-        }
+        $this->setPaymentStatus($order, $payment->status, true);
     }
 
     /**
@@ -85,28 +77,6 @@ class OrderService
         $order->is_canceled = true;
 
         return $order->save();
-    }
-
-    /**
-     * Установить статус оплаты заказа на "Оплачено"
-     * @param Order $order
-     * @param  bool  $save
-     * @return bool
-     */
-    public function setPaymentStatusPaid(Order $order, bool $save = true): bool
-    {
-        return $this->setPaymentStatus($order, PaymentStatus::PAID, $save);
-    }
-
-    /**
-     * Установить статус оплаты заказа на "Просрочено"
-     * @param Order $order
-     * @param  bool  $save
-     * @return bool
-     */
-    public function setPaymentStatusTimeout(Order $order, bool $save = true): bool
-    {
-        return $this->setPaymentStatus($order, PaymentStatus::TIMEOUT, $save);
     }
 
     /**
@@ -157,26 +127,5 @@ class OrderService
         $order->is_problem = !$isAllShipmentsOk;
 
         return $order->save();
-    }
-
-    /**
-     * @param  array  $statuses
-     * @param  int  $count
-     * @param  int  $status
-     * @return bool
-     */
-    protected function allIs(array $statuses, int $count, int $status): bool
-    {
-        return ($statuses[$status] ?? 0) == $count;
-    }
-
-    /**
-     * @param  array  $statuses
-     * @param  int  $status
-     * @return bool
-     */
-    protected function atLeastOne(array $statuses, int $status): bool
-    {
-        return ($statuses[$status] ?? 0) > 0;
     }
 }

@@ -9,7 +9,6 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderDiscount;
-use App\Models\Order\OrderDiscounts;
 use App\Models\Order\OrderPromoCode;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
@@ -161,11 +160,10 @@ class CheckoutOrder
      */
     private function createOrderDiscounts(Order $order)
     {
-        if (!empty($this->discounts)) {
-            $orderDiscounts = new OrderDiscounts();
-            $orderDiscounts->order_id = $order->id;
-            $orderDiscounts->discounts = $this->discounts;
-            $orderDiscounts->save();
+        /** @var OrderDiscount $discount */
+        foreach ($this->discounts as $discount) {
+            $discount->order_id = $order->id;
+            $discount->save();
         }
     }
 

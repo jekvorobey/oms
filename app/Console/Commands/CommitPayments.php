@@ -21,6 +21,7 @@ class CommitPayments extends Command
         $threeDaysAgo = now()->subDays(3);
         foreach ($payments as $payment) {
             if ($threeDaysAgo->greaterThan($payment->created_at)) {
+                logger()->info('Commit holded payment', ['paymentId' => $payment->id]);
                 $payment->commitHolded();
             }
         }
