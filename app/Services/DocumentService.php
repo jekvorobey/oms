@@ -167,6 +167,65 @@ class DocumentService
     }
 
     /**
+     * Сформировать "Опись отправления заказа"
+     * @param  Shipment $shipment
+     * @return DocumentDto
+     */
+    public function getShipmentInventory(Shipment $shipment): DocumentDto
+    {
+        $documentDto = new DocumentDto();
+        /** @var DeliveryService $deliveryService */
+        $deliveryService = resolve(DeliveryService::class);
+
+        try {
+            $templateProcessor = $this->getTemplateProcessor(self::INVENTORY);
+            $shipment->loadMissing('basketItems');
+
+            $offersIds = $shipment->basketItems->pluck('offer_id')->all();
+            $productsByOffers = $this->getProductsByOffers($offersIds);
+
+            $tableRows = [];
+            foreach ($shipment->basketItems as $basketItem) {
+                /** @var ProductDto $product */
+                $product = isset($productsByOffers[$basketItem->offer_id]) ?
+                    $productsByOffers[$basketItem->offer_id]['product'] : [];
+
+
+                $tableRows[] = [
+                    'table.row' => count($tableRows) + 1,
+                    'table.product_article' => $product ? $product->vendor_code : '',
+                    'table.product_name' => $basketItem->name,
+                    'table.product_qty' => qty_format($basketItem->qty),
+                    'table.product_price_per_unit' => price_format($basketItem->price / $basketItem->qty),
+                    'table.product_price' => price_format($basketItem->price),
+                ];
+            }
+            $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
+
+            $fieldValues = [
+                'shipment_number' => $shipment->number,
+                'table.total_product_qty' => qty_format($shipment->basketItems->sum('qty')),
+                'table.total_product_price_per_unit' => $shipment->basketItems->sum(function (BasketItem $basketItem) {
+                    return $basketItem->price / $basketItem->qty;
+                }),
+                'table.total_product_price' => price_format($shipment->basketItems->sum('price')),
+            ];
+            $templateProcessor->setValues($fieldValues);
+
+            $documentName = $this->getFileWithSuffix(self::INVENTORY, '-' . $shipment->number);
+            $documentPath = Storage::disk('document-templates')->path('') . $documentName;
+            $templateProcessor->saveAs($documentPath);
+            $this->saveDocument($documentDto, $documentPath, $documentName);
+            Storage::disk('document-templates')->delete($documentName);
+        } catch (Exception $e) {
+            $documentDto->success = false;
+            $documentDto->message = $e->getMessage();
+        }
+
+        return $documentDto;
+    }
+
+    /**
      * Получить название файла с шаблоном для программного заполнения данными.
      * Например, для claim-act.docx будет claim-act-template.docx
      * @param  string  $template

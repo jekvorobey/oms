@@ -63,6 +63,28 @@ class ShipmentDocumentsController extends Controller
     }
 
     /**
+     * Сформировать "Опись отправления заказа"
+     * @param  int  $shipmentId
+     * @param DeliveryService $deliveryService
+     * @param DocumentService $documentService
+     * @return JsonResponse
+     */
+    public function inventory(
+        int $shipmentId,
+        DeliveryService $deliveryService,
+        DocumentService $documentService
+    ): JsonResponse {
+        $shipment = $deliveryService->getShipment($shipmentId);
+        if (!$shipment) {
+            throw new NotFoundHttpException('shipment not found');
+        }
+
+        $documentDto = $documentService->getShipmentInventory($shipment);
+
+        return $this->getResponse($documentDto);
+    }
+
+    /**
      * @param  DocumentDto  $documentDto
      * @return JsonResponse
      */
