@@ -10,6 +10,7 @@ use App\Models\Delivery\ShipmentItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderDiscounts;
+use App\Models\Order\OrderPromoCode;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
@@ -35,12 +36,12 @@ class CheckoutOrder
     public $spentBonus;
     /** @var int */
     public $addedBonus;
-    /** @var string */
-    public $promocode;
     /** @var string[] */
     public $certificates;
     /** @var CheckoutItemPrice[] */
     public $prices;
+    /** @var OrderPromoCode[] */
+    public $promoCodes;
     /** @var OrderDiscount[] */
     public $discounts;
 
@@ -67,7 +68,7 @@ class CheckoutOrder
             'paymentMethodId' => $order->paymentMethodId,
             'spentBonus' => $order->spentBonus,
             'addedBonus' => $order->addedBonus,
-            'promocode' => $order->promocode,
+            'promoCodes' => $promoCodes,
             'certificates' => $order->certificates,
             'prices' => $prices,
             'discounts' => $discounts,
@@ -85,6 +86,11 @@ class CheckoutOrder
 
         foreach ($deliveries as $deliveryData) {
             $order->deliveries[] = CheckoutDelivery::fromArray($deliveryData);
+        }
+
+        $order->promoCodes = [];
+        foreach ($promoCodes as $promoCode) {
+            $order->promoCodes[] = new OrderPromoCode($promoCode);
         }
 
         $order->discounts = [];
@@ -106,9 +112,8 @@ class CheckoutOrder
             $order = $this->createOrder();
             $this->createShipments($order);
             $this->createPayment($order);
-            if (!empty($this->discounts)) {
-                $this->createOrderDiscounts($order);
-            }
+            $this->createOrderDiscounts($order);
+            $this->createOrderPromoCodes($order);
 
             return $order->id;
         });
@@ -141,7 +146,6 @@ class CheckoutOrder
         $order->price = $this->price;
         $order->spent_bonus = $this->spentBonus;
         $order->added_bonus = $this->addedBonus;
-        $order->promocode = $this->promocode;
         $order->certificates = $this->certificates;
 
         $order->delivery_type = $this->deliveryTypeId;
@@ -157,10 +161,24 @@ class CheckoutOrder
      */
     private function createOrderDiscounts(Order $order)
     {
-        $orderDiscounts = new OrderDiscounts();
-        $orderDiscounts->order_id = $order->id;
-        $orderDiscounts->discounts = $this->discounts;
-        $orderDiscounts->save();
+        if (!empty($this->discounts)) {
+            $orderDiscounts = new OrderDiscounts();
+            $orderDiscounts->order_id = $order->id;
+            $orderDiscounts->discounts = $this->discounts;
+            $orderDiscounts->save();
+        }
+    }
+
+    /**
+     * @param Order $order
+     */
+    private function createOrderPromoCodes(Order $order)
+    {
+        /** @var OrderPromoCode $promoCode */
+        foreach ($this->promoCodes as $promoCode) {
+            $promoCode->order_id = $order->id;
+            $promoCode->save();
+        }
     }
 
     /**
