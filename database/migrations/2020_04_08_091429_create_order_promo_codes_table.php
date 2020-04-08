@@ -18,7 +18,7 @@ class CreateOrderPromoCodesTable extends Migration
             $table->bigInteger('order_id')->unsigned();
             $table->bigInteger('promo_code_id')->unsigned();
             $table->string('name', 255);
-            $table->string('code', 255)->unique();
+            $table->string('code', 255);
             $table->tinyInteger('type')->unsigned();
             $table->bigInteger('discount_id')->unsigned()->nullable();
             $table->bigInteger('gift_id')->unsigned()->nullable();
