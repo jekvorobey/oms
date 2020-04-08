@@ -21,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $bonus_id
  * @property boolean $is_personal
  */
-class OrderPromoCodes extends OmsModel
+class OrderPromoCode extends OmsModel
 {
     /** @var string */
     protected $table = 'order_promo_codes';
