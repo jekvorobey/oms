@@ -203,15 +203,7 @@ class DeliveryService
             throw new Exception('Отправление уже добавлено в груз');
         }
 
-        /**
-         * Если у отправления указана служба доставки на нулевой миле, то используем её для груза.
-         * Иначе для груза используем службы доставки для доставки, к которой принадлежит отправление
-         */
-        $deliveryService = $shipment->delivery_service_zero_mile;
-        if (!$deliveryService) {
-            $shipment->loadMissing('delivery');
-            $deliveryService = $shipment->delivery->delivery_service;
-        }
+        $deliveryService = $this->getZeroMileShipmentDeliveryServiceId($shipment);
 
         $cargoQuery = Cargo::query()
             ->select('id')
@@ -582,6 +574,7 @@ class DeliveryService
             $recipientDto->block,
             $recipientDto->flat,
         ]));
+        $recipientDto->street = $recipientDto->street ? : 'нет'; //у cdek и b2cpl улица обязательна
         $recipientDto->contact_name = $delivery->receiver_name;
         $recipientDto->email = $delivery->receiver_email;
         $recipientDto->phone = $delivery->receiver_phone;
@@ -685,6 +678,18 @@ class DeliveryService
                 }
             }
         }
+    }
+
+    /**
+     * Получить id службы доставки на нулевой миле для отправления.
+     * Сначала проверяется, не указана ли служба доставки у самого отправления:
+     * если указана, то возвращается она, иначе берется служба доставки у доставки, в которую входит отправление
+     * @param  Shipment  $shipment
+     * @return int
+     */
+    public function getZeroMileShipmentDeliveryServiceId(Shipment $shipment): int
+    {
+        return $shipment->delivery_service_zero_mile ? : $shipment->delivery->delivery_service;
     }
 
     /**
