@@ -3,6 +3,7 @@
 namespace App\Services\PaymentService\PaymentSystems;
 
 use App\Models\Basket\Basket;
+use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use Carbon\Carbon;
 use YandexCheckout\Client;
@@ -56,7 +57,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
             'receipt' => [
                 "tax_system_code" => "2",
                 'email' => $order->customerEmail(),
-                'items' => $this->generateItems($order->basket),
+                'items' => $this->generateItems($order),
             ],
         ], $idempotenceKey);
 
@@ -153,7 +154,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'receipt' => [
                     "tax_system_code" => "2",
                     'email' => $localPayment->order->customerEmail(),
-                    'items' => $this->generateItems($localPayment->order->basket),
+                    'items' => $this->generateItems($localPayment->order),
                 ],
             ],
             $this->externalPaymentId($localPayment),
@@ -162,13 +163,13 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * @param  Basket  $basket
+     * @param Order $order
      * @return array
      */
-    protected function generateItems(Basket $basket)
+    protected function generateItems(Order $order)
     {
         $items = [];
-        foreach ($basket->items as $item) {
+        foreach ($order->basket->items as $item) {
             $items[] = [
                 'description' => $item->name,
                 'quantity' => $item->qty,
@@ -179,6 +180,19 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'vat_code' => 1,
                 "payment_mode" => "full_prepayment",
                 "payment_subject" => "commodity"
+            ];
+        }
+        if ($order->delivery_price) {
+            $items[] = [
+                'description' => 'Доставка',
+                'quantity' => 1,
+                'amount' => [
+                    'value' => number_format($order->delivery_price, 2, '.', ''),
+                    'currency' => self::CURRENCY_RUB,
+                ],
+                'vat_code' => 1,
+                "payment_mode" => "full_prepayment",
+                "payment_subject" => "service"
             ];
         }
 
