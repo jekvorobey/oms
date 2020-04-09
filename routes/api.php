@@ -218,6 +218,10 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                     Route::post('', 'CargoController@createCourierCall');
                     Route::put('cancel', 'CargoController@cancelCourierCall');
                 });
+
+                Route::prefix('documents')->group(function () {
+                    Route::get('acceptance-act', 'CargoDocumentsController@acceptanceAct');
+                });
             });
         });
     });
