@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Basket\BasketItem;
+use App\Models\Delivery\Cargo;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Services\Dto\Out\DocumentDto;
@@ -58,19 +59,23 @@ class DocumentService
                         $productsByOffers[$item->basketItem->offer_id]['product'] : [];
 
                     $tableRows[] = [
-                        'table.row' => $itemNum == 0 ? count($tableRows) + 1 : '',
-                        'table.shipment_number' => $itemNum == 0 ? $shipment->number : '',
+                        'table.row' => $packageNum == 0 ? 1 : '',
+                        'table.shipment_number' => $packageNum == 0 ? $shipment->number : '',
                         'table.package_barcode' => $itemNum == 0 ? $package->xml_id : '',
-                        'table.shipment_cost' => $itemNum == 0 ? price_format($package->items->sum(function (ShipmentPackageItem $shipmentPackageItem) {
-                            return $shipmentPackageItem->basketItem->price;
-                        })) : '',
-                        'table.shipment_packages' => ($packageNum + 1) . '/' .$shipment->packages->count(),
+                        'table.shipment_cost' => $itemNum == 0 ? price_format(
+                            $package->items->sum(function (ShipmentPackageItem $item) {
+                                return $item->qty * ($item->basketItem->price / $item->basketItem->qty);
+                            })
+                        ) : '',
+                        'table.shipment_packages' => ($packageNum + 1) . '/' . $shipment->packages->count(),
                         'table.product_article' => $product ? $product->vendor_code : '',
                         'table.product_name' => $item->basketItem->name,
-                        'table.product_qty' => qty_format($item->basketItem->qty),
+                        'table.product_qty' => qty_format($item->qty),
                         'table.product_weight' => isset($item->basketItem->product['weight']) ?
-                            g2kg($item->basketItem->product['weight']) : '',
-                        'table.product_price' => price_format($item->basketItem->price),
+                            g2kg($item->qty * $item->basketItem->product['weight']) : '',
+                        'table.product_price' => price_format(
+                            $item->qty * ($item->basketItem->price / $item->basketItem->qty)
+                        ),
                     ];
                 }
             }
@@ -82,13 +87,100 @@ class DocumentService
                 'table.total_product_qty' => qty_format($shipment->basketItems->sum('qty')),
                 'table.total_product_weight' => $shipment->basketItems->sum(function (BasketItem $basketItem) {
                     return isset($basketItem->product['weight']) ?
-                        g2kg($basketItem->product['weight']) : 0;
+                        g2kg($basketItem->qty * $basketItem->product['weight']) : 0;
                 }),
                 'table.total_product_price' => price_format($shipment->basketItems->sum('price')),
             ];
             $templateProcessor->setValues($tableTotalRow);
 
             $documentName = $this->getFileWithSuffix(self::ACCEPTANCE_ACT, '-' . $shipment->number);
+            $documentPath = Storage::disk('document-templates')->path('') . $documentName;
+            $templateProcessor->saveAs($documentPath);
+            $this->saveDocument($documentDto, $documentPath, $documentName);
+            Storage::disk('document-templates')->delete($documentName);
+        } catch (Exception $e) {
+            $documentDto->success = false;
+            $documentDto->message = $e->getMessage();
+        }
+
+        return $documentDto;
+    }
+
+    /**
+     * Сформировать "Акт приема-передачи по грузу"
+     * @param  Cargo $cargo
+     * @return DocumentDto
+     */
+    public function getCargoAcceptanceAct(Cargo $cargo): DocumentDto
+    {
+        $documentDto = new DocumentDto();
+
+        try {
+            $templateProcessor = $this->getTemplateProcessor(self::ACCEPTANCE_ACT);
+            $cargo->loadMissing('shipments.basketItems', 'shipments.packages.items.basketItem');
+
+            $offersIds = [];
+            $totalShipmentCost = $totalShipmentPackages = $totalProductQty = $totalProductWeight = $totalProductPrice = 0;
+            foreach ($cargo->shipments as $shipment) {
+                $offersIds = array_merge(
+                    $offersIds,
+                    $shipment->basketItems->pluck('offer_id')->all()
+                );
+
+                $totalShipmentCost += $shipment->cost;
+                $totalShipmentPackages += $shipment->packages->count();
+                $totalProductQty += $shipment->basketItems->sum('qty');
+                $totalProductWeight += $shipment->basketItems->sum(function (BasketItem $basketItem) {
+                    return isset($basketItem->product['weight']) ?
+                        g2kg($basketItem->qty * $basketItem->product['weight']) : 0;
+                });
+                $totalProductPrice += $shipment->basketItems->sum('price');
+            }
+            $offersIds = array_values(array_unique($offersIds));
+            $productsByOffers = $this->getProductsByOffers($offersIds);
+
+            $tableRows = [];
+            foreach ($cargo->shipments as $shipmentNum => $shipment) {
+                foreach ($shipment->packages as $packageNum => $package) {
+                    foreach ($package->items as $itemNum => $item) {
+                        /** @var ProductDto $product */
+                        $product = isset($productsByOffers[$item->basketItem->offer_id]) ?
+                            $productsByOffers[$item->basketItem->offer_id]['product'] : [];
+
+                        $tableRows[] = [
+                            'table.row' => $packageNum == 0 ? $shipmentNum + 1 : '',
+                            'table.shipment_number' => $packageNum == 0 ? $shipment->number : '',
+                            'table.package_barcode' => $itemNum == 0 ? $package->xml_id : '',
+                            'table.shipment_cost' => $itemNum == 0 ? price_format(
+                                $package->items->sum(function (ShipmentPackageItem $item) {
+                                    return $item->qty * ($item->basketItem->price / $item->basketItem->qty);
+                                })
+                            ) : '',
+                            'table.shipment_packages' => ($packageNum + 1) . '/' . $shipment->packages->count(),
+                            'table.product_article' => $product ? $product->vendor_code : '',
+                            'table.product_name' => $item->basketItem->name,
+                            'table.product_qty' => qty_format($item->qty),
+                            'table.product_weight' => isset($item->basketItem->product['weight']) ?
+                                g2kg($item->qty * $item->basketItem->product['weight']) : '',
+                            'table.product_price' => price_format(
+                                $item->qty * ($item->basketItem->price / $item->basketItem->qty)
+                            ),
+                        ];
+                    }
+                }
+            }
+            $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
+
+            $tableTotalRow = [
+                'table.total_shipment_cost' => price_format($totalShipmentCost),
+                'table.total_shipment_packages' => $totalShipmentPackages,
+                'table.total_product_qty' => qty_format($totalProductQty),
+                'table.total_product_weight' => $totalProductWeight,
+                'table.total_product_price' => price_format($totalProductPrice),
+            ];
+            $templateProcessor->setValues($tableTotalRow);
+
+            $documentName = $this->getFileWithSuffix(self::ACCEPTANCE_ACT, '-' . $cargo->id);
             $documentPath = Storage::disk('document-templates')->path('') . $documentName;
             $templateProcessor->saveAs($documentPath);
             $this->saveDocument($documentDto, $documentPath, $documentName);

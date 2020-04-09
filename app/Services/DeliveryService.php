@@ -196,6 +196,9 @@ class DeliveryService
      */
     public function addShipment2Cargo(Shipment $shipment): void
     {
+        if ($shipment->is_canceled) {
+            throw new Exception('Отправление отменено');
+        }
         if ($shipment->status != ShipmentStatus::ASSEMBLED) {
             throw new Exception('Отправление не собрано');
         }
@@ -762,6 +765,7 @@ class DeliveryService
         }
 
         $shipment->is_canceled = true;
+        $shipment->cargo_id = null;
 
         return $shipment->save();
     }
