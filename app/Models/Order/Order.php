@@ -57,6 +57,7 @@ use Illuminate\Support\Collection;
  * @property Collection|Payment[] $payments - оплаты заказа
  * @property Collection|Delivery[] $deliveries - доставка заказа
  * @property OrderComment $comment - коментарий покупателя к заказу
+ * @property Collection|OrderDiscount[] $discounts - скидки к заказу
  */
 class Order extends OmsModel
 {
@@ -112,6 +113,14 @@ class Order extends OmsModel
     public function comment(): HasOne
     {
         return $this->hasOne(OrderComment::class);
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(OrderDiscount::class, 'order_id');
     }
 
     public function getUser(): UserDto
