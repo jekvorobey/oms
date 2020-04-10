@@ -330,9 +330,9 @@ class DeliveryService
         $dayPlus = 0;
         $date = new \DateTime();
         while ($dayPlus <= 6) {
+            $date = $date->modify('+' . $dayPlus . 'day' . ($dayPlus > 1 ?  's': ''));
             //Получаем номер дня недели (1 - понедельник, ..., 7 - воскресенье)
             $dayOfWeek = $date->format('N');
-            $date = $date->modify('+' . $dayPlus . 'day' . ($dayPlus > 1 ?  's': ''));
             $dayPlus++;
             if (!$storePickupTimes->has($dayOfWeek)) {
                 $cargo->error_xml_id = 'Возможно у склада не указан график отгрузки';
