@@ -6,6 +6,8 @@ use App\Core\Order\OrderReader;
 use App\Core\Order\OrderWriter;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery\DeliveryType;
+use App\Models\Delivery\Shipment;
+use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
 use App\Models\Order\OrderStatus;
@@ -15,6 +17,7 @@ use App\Services\OrderService;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -277,6 +280,81 @@ class OrdersController extends Controller
                     'created_at' => $order->created_at->format('Y-m-d H:i:s'),
                     'number' => $order->number,
                     'items' => $items,
+                ];
+            }),
+        ]);
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function doneMerchant(): JsonResponse
+    {
+        $data = $this->validate(request(), [
+            'date_from' => 'nullable|integer',
+            'date_to' => 'nullable|integer',
+        ]);
+
+        $builderDone = Shipment::query()->where('status', ShipmentStatus::DONE);
+        if (isset($data['date_from'])) {
+            $builderDone->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+        }
+        if (isset($data['date_to'])) {
+            $builderDone->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
+        }
+        $doneShipments = $builderDone->get();
+
+        $builderCancel = Shipment::query()->where('is_canceled', 1);
+        if (isset($data['date_from'])) {
+            $builderCancel->where('is_canceled_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+        }
+        if (isset($data['date_to'])) {
+            $builderCancel->where('is_canceled_at', '<', Carbon::createFromTimestamp($data['date_to']));
+        }
+        $cancelShipments = $builderCancel->get();
+
+        $shipments = (new Collection())
+            ->merge($doneShipments)
+            ->merge($cancelShipments);
+
+        $shipments->load(['basketItems', 'delivery.order.discounts']);
+
+        return response()->json([
+            'items' => $shipments->map(function (Shipment $shipment) {
+                $items = [];
+                foreach ($shipment->basketItems as $item) {
+                    $price = $item->cost;
+                    foreach ($shipment->delivery->order->discounts as $discount) {
+                        if (!$discount->merchant_id || $discount->merchant_id != $shipment->merchant_id) {
+                            continue;
+                        }
+
+                        if (!$discount->items) {
+                            continue;
+                        }
+
+                        foreach ($discount->items as $discountItem) {
+                            if ($discountItem['offer_id'] == $item->offer_id) {
+                                $price -= $discountItem['change'];
+                            }
+                        }
+                    }
+                    $items[] = [
+                        'offer_id' => $item->offer_id,
+                        'name' => $item->name,
+                        'qty' => $item->qty,
+                        'price' => $price,
+                    ];
+                }
+
+                return [
+                    'created_at' => $shipment->delivery->order->created_at->format('Y-m-d H:i:s'),
+                    'items' => $items,
+                    'order_id' => $shipment->delivery->order->id,
+                    'shipment_id' => $shipment->id,
+                    'merchant_id' => $shipment->merchant_id,
+                    'status' => $shipment->status,
+                    'is_canceled' => $shipment->is_canceled,
                 ];
             }),
         ]);

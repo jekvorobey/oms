@@ -40,6 +40,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         });
         Route::prefix('done')->group(function () {
             Route::get('referral', 'OrdersController@doneReferral');
+            Route::get('merchant', 'OrdersController@doneMerchant');
         });
 
         Route::get('count', 'OrdersController@count');
