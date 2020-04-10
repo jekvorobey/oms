@@ -59,6 +59,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'email' => $order->customerEmail(),
                 'items' => $this->generateItems($order),
             ],
+            'metadata' => [
+                'source' => config('app.url')
+            ]
         ], $idempotenceKey);
 
         $data = $payment->data;
@@ -104,25 +107,33 @@ class YandexPaymentSystem implements PaymentSystemInterface
             : new NotificationWaitingForCapture($data);
 
         $payment = $this->yandexService->getPaymentInfo($notification->getObject()->getId());
-        /** @var Payment $localPayment */
-        $localPayment = Payment::query()
-            ->where('data->externalPaymentId', $payment->id)
-            ->firstOrFail();
+        $metadata = $payment->metadata->toArray();
+        if ($metadata['source'] && $metadata['source'] !== config('app.url')) {
+            $client = new \GuzzleHttp\Client();
+            $client->request('POST', $metadata['source'] . route('handler.yandexPayment', [], false), [
+                'form_params' => $data
+            ]);
+        } else {
+            /** @var Payment $localPayment */
+            $localPayment = Payment::query()
+                ->where('data->externalPaymentId', $payment->id)
+                ->firstOrFail();
 
-        switch ($payment->getStatus()) {
-            case PaymentStatus::WAITING_FOR_CAPTURE:
-                $localPayment->status = \App\Models\Payment\PaymentStatus::HOLD;
-                $localPayment->save();
-                break;
-            case PaymentStatus::SUCCEEDED:
-                $localPayment->status = \App\Models\Payment\PaymentStatus::PAID;
-                $localPayment->payed_at = Carbon::now();
-                $localPayment->save();
-                break;
-            case PaymentStatus::CANCELED:
-                $localPayment->status = \App\Models\Payment\PaymentStatus::TIMEOUT;
-                $localPayment->save();
-                break;
+            switch ($payment->getStatus()) {
+                case PaymentStatus::WAITING_FOR_CAPTURE:
+                    $localPayment->status = \App\Models\Payment\PaymentStatus::HOLD;
+                    $localPayment->save();
+                    break;
+                case PaymentStatus::SUCCEEDED:
+                    $localPayment->status = \App\Models\Payment\PaymentStatus::PAID;
+                    $localPayment->payed_at = Carbon::now();
+                    $localPayment->save();
+                    break;
+                case PaymentStatus::CANCELED:
+                    $localPayment->status = \App\Models\Payment\PaymentStatus::TIMEOUT;
+                    $localPayment->save();
+                    break;
+            }
         }
     }
 
