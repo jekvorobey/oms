@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $discount_id
  * @property int|null $gift_id
  * @property int|null $bonus_id
- * @property boolean $is_personal
+ * @property int|null $owner_id
  */
 class OrderPromoCode extends OmsModel
 {
@@ -38,12 +38,7 @@ class OrderPromoCode extends OmsModel
         'discount_id',
         'gift_id',
         'bonus_id',
-        'is_personal',
-    ];
-
-    /** @var array */
-    protected $casts = [
-        'is_personal' => 'bool',
+        'owner_id',
     ];
 
     /**
