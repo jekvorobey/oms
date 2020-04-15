@@ -14,6 +14,7 @@ use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
@@ -31,7 +32,6 @@ use Illuminate\Support\Collection;
  * @property float $price
  * @property int $spent_bonus
  * @property int $added_bonus
- * @property string $promocode
  * @property array $certificates
  *
  * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
@@ -121,6 +121,35 @@ class Order extends OmsModel
     public function discounts(): HasMany
     {
         return $this->hasMany(OrderDiscount::class, 'order_id');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function promoCodes(): HasMany
+    {
+        return $this->hasMany(OrderPromoCode::class, 'order_id');
+    }
+
+    /**
+     * Учитывать те заказы, в которых использовалась скидка $discountId,
+     * данная скидка должна быть либо активирована без промокода,
+     * либо активирована промокодом, но со статусом ACTIVE
+     *
+     * @param Builder $query
+     * @param int     $discountId
+     */
+    public function scopeForDiscountReport(Builder $query, int $discountId)
+    {
+        $query
+            ->whereHas('discounts', function (Builder $query) use ($discountId) {
+                $query->where('discount_id', $discountId);
+            })
+            ->whereDoesntHave('promoCodes', function (Builder $query) use ($discountId) {
+                $query
+                    ->where('discount_id', $discountId)
+                    ->where('status', '!=', OrderPromoCode::STATUS_ACTIVE);
+            });
     }
 
     public function getUser(): UserDto

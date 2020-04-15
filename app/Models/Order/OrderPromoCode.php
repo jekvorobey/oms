@@ -43,6 +43,14 @@ class OrderPromoCode extends OmsModel
     ];
 
     /**
+     * Статус промокода
+     */
+    /** Активна */
+    const STATUS_ACTIVE = 4;
+    /** Тестовый */
+    const STATUS_TEST = 8;
+
+    /**
      * @var array
      */
     protected $fillable = self::FILLABLE;

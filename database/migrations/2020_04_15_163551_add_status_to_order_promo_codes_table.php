@@ -3,11 +3,10 @@
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use App\Models\Order\OrderPromoCode;
 
 class AddStatusToOrderPromoCodesTable extends Migration
 {
-    const PROMO_CODE_STATUS_ACTIVE = 4;
-
     /**
      * Run the migrations.
      *
@@ -18,7 +17,7 @@ class AddStatusToOrderPromoCodesTable extends Migration
         Schema::table('order_promo_codes', function (Blueprint $table) {
             $table->tinyInteger('status')
                 ->unsigned()
-                ->default(self::PROMO_CODE_STATUS_ACTIVE)
+                ->default(OrderPromoCode::STATUS_ACTIVE)
                 ->after('type');
         });
     }
