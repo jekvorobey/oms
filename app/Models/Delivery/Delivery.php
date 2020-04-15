@@ -5,7 +5,6 @@ namespace App\Models\Delivery;
 use App\Models\OmsModel;
 use App\Models\Order\Order;
 use Carbon\Carbon;
-use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\DeliveryOrderStatus;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
@@ -218,16 +217,14 @@ class Delivery extends OmsModel
     }
 
     /**
-     * Получить статусы доставок "в работе"
+     * Получить финальные статусы доставок
      * @return array
      */
-    public static function getStatusAtWork(): array
+    public static function getFinalStatus(): array
     {
         return [
-            DeliveryOrderStatus::STATUS_DONE,
-            DeliveryOrderStatus::STATUS_RETURNED,
-            DeliveryOrderStatus::STATUS_LOST,
-            DeliveryOrderStatus::STATUS_CANCEL,
+            DeliveryStatus::DONE,
+            DeliveryStatus::RETURNED,
         ];
     }
     
@@ -239,7 +236,7 @@ class Delivery extends OmsModel
     public static function deliveriesAtWork(bool $withShipments = false): Collection
     {
         $query = self::query()
-            ->whereNotIn('status', static::getStatusAtWork());
+            ->whereNotIn('status', static::getFinalStatus());
         if ($withShipments) {
             $query->with('shipments');
         }
@@ -257,7 +254,7 @@ class Delivery extends OmsModel
         $query = self::query()
             ->whereNotNull('xml_id')
             ->where('xml_id', '!=', '')
-            ->whereNotIn('status', static::getStatusAtWork());
+            ->whereNotIn('status', static::getFinalStatus());
         if ($withShipments) {
             $query->with('shipments');
         }

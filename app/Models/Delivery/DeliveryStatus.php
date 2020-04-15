@@ -145,7 +145,7 @@ class DeliveryStatus
     }
 
     /**
-     * DeliveryOrderStatus constructor.
+     * DeliveryStatus constructor.
      * @param  int  $id
      * @param  string  $name
      */
