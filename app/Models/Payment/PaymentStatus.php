@@ -34,7 +34,7 @@ class PaymentStatus
             new self(self::PAID, 'Оплачено'),
             new self(self::TIMEOUT, 'Просрочено'),
             new self(self::HOLD, 'Средства захолдированы'),
-            new self(self::ERROR, 'Ошибка провдеения платежа'),
+            new self(self::ERROR, 'Ошибка проведения платежа'),
         ];
     }
 
