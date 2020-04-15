@@ -35,6 +35,7 @@ class OrderPromoCode extends OmsModel
         'name',
         'code',
         'type',
+        'status',
         'discount_id',
         'gift_id',
         'bonus_id',
