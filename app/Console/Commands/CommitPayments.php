@@ -22,7 +22,13 @@ class CommitPayments extends Command
         foreach ($payments as $payment) {
             if ($threeDaysAgo->greaterThan($payment->created_at)) {
                 logger()->info('Commit holded payment', ['paymentId' => $payment->id]);
-                $payment->commitHolded();
+                try {
+                    $payment->commitHolded();
+                } catch (\Exception $e) {
+                    $payment->status = PaymentStatus::ERROR;
+                    $payment->save();
+                    logger()->error('unable to commit payment', ['exception' => $e]);
+                }
             }
         }
     }
