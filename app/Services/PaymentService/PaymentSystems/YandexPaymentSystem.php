@@ -107,8 +107,8 @@ class YandexPaymentSystem implements PaymentSystemInterface
             : new NotificationWaitingForCapture($data);
 
         $payment = $this->yandexService->getPaymentInfo($notification->getObject()->getId());
-        $metadata = $payment->metadata->toArray();
-        if ($metadata['source'] && $metadata['source'] !== config('app.url')) {
+        $metadata = $payment->metadata ? $payment->metadata->toArray() : null;
+        if ($metadata && $metadata['source'] && $metadata['source'] !== config('app.url')) {
             $client = new \GuzzleHttp\Client();
             $client->request('POST', $metadata['source'] . route('handler.yandexPayment', [], false), [
                 'form_params' => $data

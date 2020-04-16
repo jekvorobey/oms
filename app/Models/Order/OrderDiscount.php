@@ -3,7 +3,9 @@
 namespace App\Models\Order;
 
 use App\Models\OmsModel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Query\JoinClause;
 
 /**
  * Информация о скидках, примененные к заказу
@@ -46,6 +48,32 @@ class OrderDiscount extends OmsModel
 
     /** @var array */
     protected $casts = ['items' => 'array'];
+
+    /**
+     * Учитывать только те скидки на заказы, в которых использовалась скидка $discountId,
+     * данная скидка должна быть либо активирована без промокода,
+     * либо активирована промокодом, но со статусом ACTIVE
+     *
+     * @param Builder $query
+     * @param int     $discountId
+     */
+    public function scopeForDiscountReport(Builder $query, int $discountId)
+    {
+        $d = with(new OrderDiscount)->getTable();
+        $p = with(new OrderPromoCode)->getTable();
+
+        $query
+            ->where("{$d}.discount_id", $discountId)
+            ->leftJoin($p, function(JoinClause $join) use ($p, $d) {
+                $join->on("{$d}.discount_id", '=', "{$p}.discount_id");
+                $join->on("{$d}.order_id", '=', "{$p}.order_id");
+            })
+            ->where(function (Builder $query) use ($p) {
+                $query
+                    ->where("{$p}.status", OrderPromoCode::STATUS_ACTIVE)
+                    ->orWhereNull("{$p}.id");
+            });
+    }
 
     /**
      * @return BelongsTo

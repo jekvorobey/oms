@@ -35,11 +35,20 @@ class OrderPromoCode extends OmsModel
         'name',
         'code',
         'type',
+        'status',
         'discount_id',
         'gift_id',
         'bonus_id',
         'owner_id',
     ];
+
+    /**
+     * Статус промокода
+     */
+    /** Активна */
+    const STATUS_ACTIVE = 4;
+    /** Тестовый */
+    const STATUS_TEST = 8;
 
     /**
      * @var array

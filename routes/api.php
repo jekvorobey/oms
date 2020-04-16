@@ -34,6 +34,10 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('{promoCodeId}/count', 'OrdersPromoCodesController@count');
         });
 
+        Route::prefix('discounts')->group((function () {
+            Route::get('{discountId}/kpi', 'OrderDiscountController@KPIForDiscount');
+        }));
+
         Route::prefix('exports')->group(function () {
             Route::get('count', 'OrdersExportController@count');
             Route::get('', 'OrdersExportController@read');
