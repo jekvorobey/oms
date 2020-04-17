@@ -116,6 +116,7 @@ class OrdersSeeder extends Seeder
                 $basketItem->cost = $faker->numberBetween(100, 1000);
                 $basketItem->price = $faker->numberBetween(0, intval($basketItem->cost / 2));
                 $basketItem->product = [
+                    'merchant_id' => $basketOffer->merchant_id,
                     'store_id' => $offerStock->store_id,
                     'weight' => $product->weight,
                     'width' => $product->width,
