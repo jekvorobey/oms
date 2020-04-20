@@ -15,11 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $promo_code_id
  * @property string $name
  * @property string $code
- * @property int $type
+ * @property int $type - PromoCodeOutDto::TYPE_DISCOUNT, etc...
  * @property int|null $discount_id
  * @property int|null $gift_id
  * @property int|null $bonus_id
- * @property int|null $owner_id
+ * @property int|null $owner_id - id реферального партнёра
  */
 class OrderPromoCode extends OmsModel
 {

@@ -58,6 +58,7 @@ use Illuminate\Support\Collection;
  * @property Collection|Delivery[] $deliveries - доставка заказа
  * @property OrderComment $comment - коментарий покупателя к заказу
  * @property Collection|OrderDiscount[] $discounts - скидки к заказу
+ * @property Collection|OrderPromoCode[] $promoCodes - промокоды применённые к заказу
  */
 class Order extends OmsModel
 {
