@@ -260,7 +260,7 @@ class OrdersController extends Controller
             $builder->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
         }
 
-        $orders = $builder->with(['basket.items'])->get();
+        $orders = $builder->with(['basket.items', 'discounts', 'promoCodes'])->get();
 
         return response()->json([
             'items' => $orders->map(function (Order $order) {
@@ -274,11 +274,33 @@ class OrdersController extends Controller
                         'referrer_id' => $item->referrer_id,
                     ];
                 }
+                $promoCodes = [];
+                foreach ($order->promoCodes as $promoCode) {
+                    $promoCodes[] = [
+                        'type' => $promoCode->type,
+                        'discount_id' => $promoCode->discount_id,
+                        'owner_id' => $promoCode->owner_id,
+                        'code' => $promoCode->code,
+                    ];
+                }
+
+                $discounts = [];
+                foreach($order->discounts as $discount) {
+                    $discounts[] = [
+                        'discount_id' => $discount->discount_id,
+                        'type' => $discount->type,
+                        'promo_code_only' => $discount->promo_code_only,
+                        'visible_in_catalog' => $discount->visible_in_catalog,
+                        'items' => $discount->items,
+                    ];
+                }
 
                 return [
                     'customer_id' => $order->customer_id,
                     'created_at' => $order->created_at->format('Y-m-d H:i:s'),
                     'number' => $order->number,
+                    'promo_codes' => $promoCodes,
+                    'discounts' => $discounts,
                     'items' => $items,
                 ];
             }),
