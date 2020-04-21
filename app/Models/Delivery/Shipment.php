@@ -3,8 +3,10 @@
 namespace App\Models\Delivery;
 
 use App\Core\Notifications\ShipmentNotification;
+use App\Core\Order\OrderReader;
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
+use App\Models\Order\Order;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -396,6 +398,24 @@ class Shipment extends OmsModel
                 $query->where('delivery_service', $value);
             });
             $modifiedRestQuery->removeFilter('delivery_service');
+        }
+
+        //Фильтр по номеру заказа
+        $orderNumberFilter = $restQuery->getFilter('order_number');
+        if($orderNumberFilter) {
+            [$op, $value] = $orderNumberFilter[0];
+
+            $orderIds = Order::query()
+                ->select('id')
+                ->where('number', $value)
+                ->get()
+                ->pluck('id')
+                ->all();
+
+            $query->whereHas('delivery', function (Builder $query) use ($orderIds) {
+                $query->whereIn('order_id', $orderIds);
+            });
+            $modifiedRestQuery->removeFilter('order_number');
         }
 
         return parent::modifyQuery($query, $modifiedRestQuery);
