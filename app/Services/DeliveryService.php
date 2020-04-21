@@ -330,7 +330,7 @@ class DeliveryService
         $dayPlus = 0;
         $date = new \DateTime();
         while ($dayPlus <= 6) {
-            $date = $date->modify('+' . $dayPlus . 'day' . ($dayPlus > 1 ?  's': ''));
+            $date = $date->modify('+' . $dayPlus . ' day' . ($dayPlus > 1 ?  's': ''));
             //Получаем номер дня недели (1 - понедельник, ..., 7 - воскресенье)
             $dayOfWeek = $date->format('N');
             $dayPlus++;
