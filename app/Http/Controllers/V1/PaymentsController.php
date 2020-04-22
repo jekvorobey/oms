@@ -27,7 +27,7 @@ class PaymentsController extends Controller
      * @param  PaymentService  $paymentService
      * @return JsonResponse
      */
-    public function start(int $id, Request $request, PaymentService $paymentService)
+    public function start(int $id, Request $request, PaymentService $paymentService): JsonResponse
     {
         $returnUrl = $request->get('returnUrl');
         if (!$returnUrl) {

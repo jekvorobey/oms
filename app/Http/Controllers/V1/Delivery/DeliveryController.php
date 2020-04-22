@@ -13,13 +13,13 @@ use Greensight\CommonMsa\Rest\Controller\UpdateAction;
 use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Rest\RestSerializable;
-use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\DeliveryService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -33,45 +33,21 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class DeliveryController extends Controller
 {
-    use CountAction {
-        count as countTrait;
-    }
-    use ReadAction {
-        read as readTrait;
-    }
-    use UpdateAction {
-        update as updateTrait;
-    }
-    use DeleteAction {
-        delete as deleteTrait;
-    }
+    use CountAction;
+    use ReadAction;
+    use UpdateAction;
+    use DeleteAction;
     
     /**
-     * Получить класс модели в виде строки
-     * Пример: return MyModel::class;
-     * @return string
+     * @inheritDoc
      */
     public function modelClass(): string
     {
         return Delivery::class;
     }
-    
+
     /**
-     * Задать права для выполнения стандартных rest действий.
-     * Пример: return [ RestAction::$DELETE => 'permission' ];
-     * @return array
-     */
-    public function permissionMap(): array
-    {
-        return [
-            //todo Права доступа
-        ];
-    }
-    
-    /**
-     * Получить список полей, которые можно редактировать через стандартные rest действия.
-     * Пример return ['name', 'status'];
-     * @return array
+     * @inheritDoc
      */
     protected function writableFieldList(): array
     {
@@ -96,24 +72,12 @@ class DeliveryController extends Controller
     }
     
     /**
-     * Подсчитать кол-во доставок
-     * @param  Request  $request
-     * @param  RequestInitiator  $client
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function count(Request $request, RequestInitiator $client): JsonResponse
-    {
-        return $this->countTrait($request, $client);
-    }
-    
-    /**
      * Подсчитать кол-во доставок заказа
      * @param int $orderId
      * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return \Illuminate\Http\JsonResponse
      */
-    public function countByDelivery(int $orderId, Request $request, RequestInitiator $client): JsonResponse
+    public function countByOrder(int $orderId, Request $request): JsonResponse
     {
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelClass();
@@ -141,24 +105,6 @@ class DeliveryController extends Controller
      * @param  int  $orderId
      * @param  Request  $request
      * @return JsonResponse
-     * //todo swagger
-     * @OA\Post(
-     *     path="/api/v1/orders/{id}/delivery",
-     *     tags={"delivery"},
-     *     summary="Создать доставку",
-     *     operationId="createDelivery",
-     *     @OA\Parameter(description="ID заказа", in="path", name="id", required=true, @OA\Schema(type="integer")),
-     *      @OA\RequestBody(
-     *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="OK",
-     *     ),
-     * )
      */
     public function create(int $orderId, Request $request): JsonResponse
     {
@@ -187,24 +133,12 @@ class DeliveryController extends Controller
     }
     
     /**
-     * Список доставок / информация о доставке
-     * @param  Request  $request
-     * @param  RequestInitiator  $client
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function read(Request $request, RequestInitiator $client): JsonResponse
-    {
-        return $this->readTrait($request, $client);
-    }
-    
-    /**
      * Список доставок заказа
      * @param  int  $orderId
      * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return JsonResponse
      */
-    public function readByOrder(int $orderId, Request $request, RequestInitiator $client): JsonResponse
+    public function readByOrder(int $orderId, Request $request): JsonResponse
     {
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelClass();
@@ -225,58 +159,6 @@ class DeliveryController extends Controller
         return response()->json([
             'items' => $items
         ]);
-    }
-    
-    /**
-     * Изменить доставку
-     * @param  int  $id
-     * @param  Request  $request
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
-     * //todo swagger
-     * @OA\Put(
-     *     path="/api/v1/delivery/{id}",
-     *     tags={"delivery"},
-     *     summary="Изменить доставку",
-     *     operationId="updateDelivery",
-     *     @OA\Parameter(description="ID доставки", in="path", name="id", required=true, @OA\Schema(type="integer")),
-     *      @OA\RequestBody(
-     *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=204,
-     *         description="OK",
-     *     ),
-     * )
-     */
-    public function update(int $id, Request $request, RequestInitiator $client): Response
-    {
-        return $this->updateTrait($id, $request, $client);
-    }
-    
-    /**
-     * Удалить доставку
-     * @param  int  $id
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
-     * @throws \Exception
-     *
-     * @OA\Delete(
-     *     path="/api/v1/delivery/{id}",
-     *     tags={"delivery"},
-     *     summary="Удалить доставку",
-     *     operationId="deleteDelivery",
-     *     @OA\Parameter(description="ID доставки", in="path", name="id", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=204,
-     *         description="OK",
-     *     ),
-     * )
-     */
-    public function delete(int $id, RequestInitiator $client): Response
-    {
-        return $this->deleteTrait($id, $client);
     }
 
     /**
@@ -300,7 +182,7 @@ class DeliveryController extends Controller
     }
 
     /**
-     * Создать/обновить заказ на доставку
+     * Создать/обновить заказ на доставку у службы доставки
      * @param  int  $id
      * @param  OmsDeliveryService  $deliveryService
      * @return Response
@@ -317,7 +199,7 @@ class DeliveryController extends Controller
     }
 
     /**
-     * Отменить заказ на доставку
+     * Отменить заказ на доставку у службы доставки
      * @param  int  $id
      * @param  OmsDeliveryService  $deliveryService
      * @return Response
@@ -331,5 +213,25 @@ class DeliveryController extends Controller
         $deliveryService->cancelDeliveryOrder($delivery);
 
         return response('', 204);
+    }
+
+    /**
+     * Получить кол-во доставок по каждой службе доставки за сегодня
+     * @return JsonResponse
+     */
+    public function countTodayByDeliveryServices(): JsonResponse
+    {
+        $deliveries = Delivery::query()
+            ->select('delivery_service', DB::raw('count(*) as total'))
+            ->whereDate('created_at', now()->setTime(0, 0))
+            ->groupBy(['delivery_service', 'created_at'])
+            ->get();
+
+        return response()->json($deliveries->map(function (Delivery $delivery) {
+            return [
+                'delivery_service_id' => $delivery->delivery_service,
+                'qty_today' => $delivery['total'],
+            ];
+        }));
     }
 }
