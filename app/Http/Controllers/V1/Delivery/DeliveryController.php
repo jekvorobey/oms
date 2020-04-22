@@ -227,11 +227,13 @@ class DeliveryController extends Controller
             ->groupBy(['delivery_service', 'created_at'])
             ->get();
 
-        return response()->json($deliveries->map(function (Delivery $delivery) {
-            return [
-                'delivery_service_id' => $delivery->delivery_service,
-                'qty_today' => $delivery['total'],
-            ];
-        }));
+        return response()->json([
+            'items' => $deliveries->map(function (Delivery $delivery) {
+                return [
+                    'delivery_service_id' => $delivery->delivery_service,
+                    'qty_today' => $delivery['total'],
+                ];
+            })
+        ]);
     }
 }
