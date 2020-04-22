@@ -125,6 +125,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     Route::namespace('Delivery')->group(function () {
         Route::prefix('deliveries')->group(function () {
             Route::get('count', 'DeliveryController@count');
+            Route::get('count-today-by-delivery-services', 'DeliveryController@countTodayByDeliveryServices');
             Route::get('', 'DeliveryController@read');
 
             Route::prefix('{id}')->group(function () {

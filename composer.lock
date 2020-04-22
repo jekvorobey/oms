@@ -620,12 +620,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-common-ms-code.git",
-                "reference": "082b24d8e57d13149350de01cb2727aaf63d16d9"
+                "reference": "bebaa7598ee4b9471f8a648e8869092613fff7d9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-common-ms-code/repository/archive.zip?sha=082b24d8e57d13149350de01cb2727aaf63d16d9",
-                "reference": "082b24d8e57d13149350de01cb2727aaf63d16d9",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-common-ms-code/repository/archive.zip?sha=bebaa7598ee4b9471f8a648e8869092613fff7d9",
+                "reference": "bebaa7598ee4b9471f8a648e8869092613fff7d9",
                 "shasum": ""
             },
             "require": {
@@ -672,7 +672,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/12723731/issues"
             },
-            "time": "2020-04-20T20:46:30+00:00"
+            "time": "2020-04-21T18:00:32+00:00"
         },
         {
             "name": "greensight/ibt-logistics-lib",
@@ -680,12 +680,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-logistics-lib.git",
-                "reference": "15da71a712f23f1ffa0a8e9958450bcd55b2c44a"
+                "reference": "8994b504e747a7a9392d18188e73d08cda898b56"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=15da71a712f23f1ffa0a8e9958450bcd55b2c44a",
-                "reference": "15da71a712f23f1ffa0a8e9958450bcd55b2c44a",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=8994b504e747a7a9392d18188e73d08cda898b56",
+                "reference": "8994b504e747a7a9392d18188e73d08cda898b56",
                 "shasum": ""
             },
             "require": {
@@ -723,7 +723,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/15546031/issues"
             },
-            "time": "2020-04-17T15:15:06+00:00"
+            "time": "2020-04-21T13:52:43+00:00"
         },
         {
             "name": "greensight/ibt-merchant-management-lib",

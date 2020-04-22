@@ -12,7 +12,6 @@ use Greensight\CommonMsa\Rest\Controller\UpdateAction;
 use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Rest\RestSerializable;
-use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,17 +27,11 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class ShipmentPackagesController extends Controller
 {
-    use ReadAction {
-        read as readTrait;
-    }
-    use UpdateAction {
-        update as updateTrait;
-    }
+    use ReadAction;
+    use UpdateAction;
     
     /**
-     * Получить класс модели в виде строки
-     * Пример: return MyModel::class;
-     * @return string
+     * @inheritDoc
      */
     public function modelClass(): string
     {
@@ -46,9 +39,7 @@ class ShipmentPackagesController extends Controller
     }
     
     /**
-     * Получить класс модели элементов в виде строки
-     * Пример: return MyModel::class;
-     * @return string
+     * @inheritDoc
      */
     public function modelItemsClass(): string
     {
@@ -56,21 +47,7 @@ class ShipmentPackagesController extends Controller
     }
     
     /**
-     * Задать права для выполнения стандартных rest действий.
-     * Пример: return [ RestAction::$DELETE => 'permission' ];
-     * @return array
-     */
-    public function permissionMap(): array
-    {
-        return [
-            //todo Права доступа
-        ];
-    }
-    
-    /**
-     * Получить список полей, которые можно редактировать через стандартные rest действия.
-     * Пример return ['name', 'status'];
-     * @return array
+     * @inheritDoc
      */
     protected function writableFieldList(): array
     {
@@ -125,24 +102,6 @@ class ShipmentPackagesController extends Controller
      * @param  int  $shipmentId
      * @param  Request  $request
      * @return JsonResponse
-     * //todo swagger
-     * @OA\Post(
-     *     path="/api/v1/shipments/{id}/shipment-packages",
-     *     tags={"shipment-package"},
-     *     summary="Создать коробку отправления",
-     *     operationId="createShipment",
-     *     @OA\Parameter(description="ID доставки", in="path", name="id", required=true, @OA\Schema(type="integer")),
-     *      @OA\RequestBody(
-     *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=201,
-     *         description="OK",
-     *     ),
-     * )
      */
     public function create(int $shipmentId, Request $request): JsonResponse
     {
@@ -168,17 +127,6 @@ class ShipmentPackagesController extends Controller
         return response()->json([
             'id' => $shipmentPackage->id
         ], 201);
-    }
-    
-    /**
-     * Информация о коробке отправления
-     * @param  Request  $request
-     * @param  RequestInitiator  $client
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function read(Request $request, RequestInitiator $client): JsonResponse
-    {
-        return $this->readTrait($request, $client);
     }
     
     /**
@@ -211,51 +159,10 @@ class ShipmentPackagesController extends Controller
     }
     
     /**
-     * Изменить коробку отправления
-     * @param  int  $id
-     * @param  Request  $request
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
-     * //todo swagger
-     * @OA\Put(
-     *     path="/api/v1/shipment-packages/{id}",
-     *     tags={"shipment-package"},
-     *     summary="Изменить коробку отправления",
-     *     operationId="updateShipmentPackage",
-     *     @OA\Parameter(description="ID коробки отправления", in="path", name="id", required=true, @OA\Schema(type="integer")),
-     *      @OA\RequestBody(
-     *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="application/json",
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=204,
-     *         description="OK",
-     *     ),
-     * )
-     */
-    public function update(int $id, Request $request, RequestInitiator $client): Response
-    {
-        return $this->updateTrait($id, $request, $client);
-    }
-    
-    /**
      * Удалить коробку отправления со всем её содержимым
      * @param  int  $id
      * @param DeliveryService $deliveryService
      * @return Response
-     *
-     * @OA\Delete(
-     *     path="/api/v1/shipment-packages/{id}",
-     *     tags={"shipment-package"},
-     *     summary="Удалить коробку отправления",
-     *     operationId="deleteShipmentPackage",
-     *     @OA\Parameter(description="ID коробки отправления", in="path", name="id", required=true, @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response=204,
-     *         description="OK",
-     *     ),
-     * )
      */
     public function delete(int $id, DeliveryService $deliveryService): Response
     {

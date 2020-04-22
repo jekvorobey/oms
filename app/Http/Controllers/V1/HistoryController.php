@@ -21,24 +21,7 @@ use Illuminate\Http\Request;
 class HistoryController extends Controller
 {
     /**
-     * @OA\Get(
-     *     path="/api/v1/orders/{$id}/history",
-     *     tags={"order-history"},
-     *     summary="Получить список событий изменения заказов",
-     *     operationId="listOrderHistory",
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="items",type="array",
-     *                @OA\Items(
-     *                     @OA\Property(property="id",type="integer")
-     *                )
-     *             )
-     *         )
-     *     ),
-     * )
-     *
+     * Получить список событий изменения заказов
      * @param int $orderId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -49,24 +32,7 @@ class HistoryController extends Controller
     }
     
     /**
-     * @OA\Get(
-     *     path="/api/v1/shipments/{$id}/history",
-     *     tags={"shipment-history"},
-     *     summary="Получить список событий изменения отправлений",
-     *     operationId="listShipmentHistory",
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="items",type="array",
-     *                @OA\Items(
-     *                     @OA\Property(property="id",type="integer")
-     *                )
-     *             )
-     *         )
-     *     ),
-     * )
-     *
+     * Получить список событий изменения отправлений
      * @param int $shipmentId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -77,24 +43,7 @@ class HistoryController extends Controller
     }
     
     /**
-     * @OA\Get(
-     *     path="/api/v1/cargo/{$id}/history",
-     *     tags={"cargo-history"},
-     *     summary="Получить список событий изменения груза",
-     *     operationId="listCargoHistory",
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="items",type="array",
-     *                @OA\Items(
-     *                     @OA\Property(property="id",type="integer")
-     *                )
-     *             )
-     *         )
-     *     ),
-     * )
-     *
+     * Получить список событий изменения груза
      * @param int $cargoId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -139,18 +88,7 @@ class HistoryController extends Controller
     }
     
     /**
-     * @OA\Get(
-     *     path="/api/v1/orders/{id}/history/count",
-     *     tags={"order-history"},
-     *     summary="Получить количество событий изменения заказов",
-     *     operationId="countOrderHistory",
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\JsonContent(ref="#/components/schemas/CountResult")
-     *     ),
-     * )
-     *
+     * Получить количество событий изменения заказов
      * @param int $orderId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -161,18 +99,7 @@ class HistoryController extends Controller
     }
     
     /**
-     * @OA\Get(
-     *     path="/api/v1/shipments/{id}/history/count",
-     *     tags={"shipment-history"},
-     *     summary="Получить количество событий изменения отправления",
-     *     operationId="countShipmentHistory",
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\JsonContent(ref="#/components/schemas/CountResult")
-     *     ),
-     * )
-     *
+     * Получить количество событий изменения отправления
      * @param int $shipmentId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -183,17 +110,7 @@ class HistoryController extends Controller
     }
     
     /**
-     * @OA\Get(
-     *     path="/api/v1/cargos/{id}/history/count",
-     *     tags={"cargo-history"},
-     *     summary="Получить количество событий изменения груза",
-     *     operationId="countCargoHistory",
-     *     @OA\Response(
-     *         response=200,
-     *         description="OK",
-     *         @OA\JsonContent(ref="#/components/schemas/CountResult")
-     *     ),
-     * )
+     * Получить количество событий изменения груза
      * @param int $cargoId
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
