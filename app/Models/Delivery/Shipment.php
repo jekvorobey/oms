@@ -532,6 +532,22 @@ class Shipment extends OmsModel
         //Фильтр по времени доставки отправления
         $filterByDeliveryField('delivery_at', 'delivery_at');
 
+        //Фильтр по службе доставки на нулевой миле
+        $deliveryServiceZeroMileFilter = $restQuery->getFilter('delivery_service_zero_mile');
+        if ($deliveryServiceZeroMileFilter) {
+            [$op, $value] = $deliveryServiceZeroMileFilter[0];
+
+            $query->whereIn('delivery_service_zero_mile', $value)
+                ->orWhere(function (Builder $query) use ($op, $value) {
+                    $query->whereNull('delivery_service_zero_mile')
+                        ->whereHas('delivery', function (Builder $query) use ($value) {
+                            $query->whereIn('delivery_service', $value);
+                        });
+                });
+
+            $modifiedRestQuery->removeFilter('delivery_service_zero_mile');
+        }
+
         //Функция-фильтр по полям адреса доставки
         $filterByDeliveryAddressFields = function (String $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
             $deliveryAddressFieldFilter = $restQuery->getFilter('delivery_address_' . $fieldName);
