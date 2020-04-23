@@ -6,6 +6,10 @@ use App\Core\Notifications\ShipmentNotification;
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
 use Greensight\CommonMsa\Rest\RestQuery;
+use Greensight\CommonMsa\Services\AuthService\UserService;
+use Greensight\CommonMsa\Dto\UserDto;
+use Greensight\Customer\Services\CustomerService\CustomerService;
+use Greensight\Customer\Dto\CustomerDto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -388,15 +392,184 @@ class Shipment extends OmsModel
         //Фильтр по бренду товара
         $filterByProductField('brands', 'brand_id');
 
-        //Фильтр по службе доставки на последней миле
-        $deliveryServiceFilter = $restQuery->getFilter('delivery_service');
-        if($deliveryServiceFilter) {
-            [$op, $value] = $deliveryServiceFilter[0];
+        //Фильтр по существованию пользователя
+        $userExistFilter = $restQuery->getFilter('user_exist');
+        if ($userExistFilter) {
+            [$op, $value] = $userExistFilter[0];
+
             $query->whereHas('delivery', function (Builder $query) use ($value) {
-                $query->where('delivery_service', $value);
+                $query->whereHas('order', function (Builder $query) use ($value) {
+                    /** @var CustomerService $customerService */
+                    $customerService = resolve(CustomerService::class);
+
+                    /** @var UserService $userService */
+                    $userService = resolve(UserService::class);
+
+                    $customersDirty = $customerService->customers(
+                        (new RestQuery())->addFields(CustomerDto::class, 'id', 'user_id')
+                    );
+                    $userIdsByCustomers = $customersDirty->pluck('user_id')->all();
+
+                    $userIds = $userService->users(
+                        (new RestQuery())
+                            ->addFields(UserDto::class, 'id')
+                            ->setFilter('id', $userIdsByCustomers)
+                    )
+                        ->pluck('id')
+                        ->all();
+
+                    if ($value) {
+                        $customers = $customersDirty->filter(function ($value, $key) use ($userIds) {
+                            return in_array($value->user_id, $userIds);
+                        });
+                    } else {
+                        $customers = $customersDirty->filter(function ($value, $key) use ($userIds) {
+                            return !in_array($value->user_id, $userIds);
+                        });
+                    }
+                    $customersIds = $customers
+                        ->pluck('id')
+                        ->all();
+
+                    $query->whereIn('customer_id', $customersIds);
+                });
             });
-            $modifiedRestQuery->removeFilter('delivery_service');
+            $modifiedRestQuery->removeFilter('user_exist');
         }
+
+        //Функция-фильтр по полям заказа связанного с отправлением
+        $filterByOrderField = function (String $filterName, String $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
+            $orderFieldFilter = $restQuery->getFilter($filterName);
+            if ($orderFieldFilter) {
+                [$op, $value] = $orderFieldFilter[0];
+
+                $query->whereHas('delivery', function (Builder $query) use ($fieldName, $op, $value) {
+                    $query->whereHas('order', function (Builder $query) use ($fieldName, $op, $value) {
+                        if (is_array($value)) {
+                            $query->whereIn($fieldName, $value);
+                        } else {
+                            $query->where($fieldName, $op, $value);
+                        }
+                    });
+                });
+                $modifiedRestQuery->removeFilter($filterName);
+            }
+        };
+        //Фильтр по номеру заказа
+        $filterByOrderField('order_number', 'number');
+        //Фильтр по ID клиента
+        $filterByOrderField('customer_id', 'customer_id');
+        //Фильтр по типу доставки
+        $filterByOrderField('delivery_type', 'delivery_type');
+
+        //Фильтр по имени клиента
+        $customerFullNameFilter = $restQuery->getFilter('customer_full_name');
+        if ($customerFullNameFilter) {
+            [$op, $value] = $customerFullNameFilter[0];
+
+            /** @var CustomerService $customerService */
+            $customerService = resolve(CustomerService::class);
+
+            /** @var UserService $userService */
+            $userService = resolve(UserService::class);
+
+            $userIds = $userService->users(
+                (new RestQuery())
+                    ->addFields(UserDto::class, 'id')
+                    ->setFilter('full_name', $value)
+            )
+                ->pluck('id')
+                ->all();
+
+            $customerIds = $customerService->customers(
+                (new RestQuery())
+                    ->addFields(CustomerDto::class, 'id')
+                    ->setFilter('user_id', $userIds)
+            )
+                ->pluck('id')
+                ->all();
+
+            $query->whereHas('delivery', function (Builder $query) use ($customerIds) {
+                $query->whereHas('order', function (Builder $query) use ($customerIds) {
+                    $query->whereIn('customer_id', $customerIds);
+                });
+            });
+            $modifiedRestQuery->removeFilter('customer_full_name');
+        }
+
+        //Фильтр по количеству коробок
+        $packageQtyFilter = $restQuery->getFilter('package_qty');
+        if ($packageQtyFilter) {
+            [$op, $value] = $packageQtyFilter[0];
+
+            $query->with('packages')
+                ->withCount('packages')
+                ->has('packages', $op, $value);
+
+            $modifiedRestQuery->removeFilter('package_qty');
+        }
+
+        //Функция-фильтр по полям доставки связанной с отправлением
+        $filterByDeliveryField = function (String $filterName, String $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
+            $deliveryFieldFilter = $restQuery->getFilter($filterName);
+            if ($deliveryFieldFilter) {
+                [$op, $value] = $deliveryFieldFilter[0];
+
+                $query->whereHas('delivery', function (Builder $query) use ($fieldName, $op, $value) {
+                    if (is_array($value)) {
+                        $query->whereIn($fieldName, $value);
+                    } else {
+                        $query->where($fieldName, $op, $value);
+                    }
+                });
+                $modifiedRestQuery->removeFilter($filterName);
+            }
+        };
+        //Фильтр по способу доставки
+        $filterByDeliveryField('delivery_method', 'delivery_method');
+        //Фильтр по службе доставки на последней миле
+        $filterByDeliveryField('delivery_service', 'delivery_service');
+        //Фильтр по времени доставки отправления
+        $filterByDeliveryField('delivery_at', 'delivery_at');
+
+        //Фильтр по службе доставки на нулевой миле
+        $deliveryServiceZeroMileFilter = $restQuery->getFilter('delivery_service_zero_mile');
+        if ($deliveryServiceZeroMileFilter) {
+            [$op, $value] = $deliveryServiceZeroMileFilter[0];
+
+            $query->whereIn('delivery_service_zero_mile', $value)
+                ->orWhere(function (Builder $query) use ($op, $value) {
+                    $query->whereNull('delivery_service_zero_mile')
+                        ->whereHas('delivery', function (Builder $query) use ($value) {
+                            $query->whereIn('delivery_service', $value);
+                        });
+                });
+
+            $modifiedRestQuery->removeFilter('delivery_service_zero_mile');
+        }
+
+        //Функция-фильтр по полям адреса доставки
+        $filterByDeliveryAddressFields = function (String $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
+            $deliveryAddressFieldFilter = $restQuery->getFilter('delivery_address_' . $fieldName);
+            if ($deliveryAddressFieldFilter) {
+                [$op, $value] = $deliveryAddressFieldFilter[0];
+
+                $query->whereHas('delivery', function (Builder $query) use ($fieldName, $value) {
+                    $query->whereJsonContains('delivery_address->' . $fieldName, $value);
+                });
+
+                $modifiedRestQuery->removeFilter('delivery_address_' . $fieldName);
+            }
+        };
+        //Фильтр по полям адресу
+        $filterByDeliveryAddressFields('post_index');
+        $filterByDeliveryAddressFields('region');
+        $filterByDeliveryAddressFields('city');
+        $filterByDeliveryAddressFields('street');
+        $filterByDeliveryAddressFields('porch');
+        $filterByDeliveryAddressFields('house');
+        $filterByDeliveryAddressFields('floor');
+        $filterByDeliveryAddressFields('flat');
 
         return parent::modifyQuery($query, $modifiedRestQuery);
     }
