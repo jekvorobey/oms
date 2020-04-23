@@ -271,6 +271,7 @@ class OrdersController extends Controller
                         'name' => $item->name,
                         'qty' => $item->qty,
                         'price' => $item->price,
+                        'cost' => $item->cost,
                         'referrer_id' => $item->referrer_id,
                     ];
                 }
