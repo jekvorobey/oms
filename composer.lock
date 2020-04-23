@@ -617,12 +617,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-common-ms-code.git",
-                "reference": "cd91a8d45853a8c679b8dca485a3ec3718d1d3f8"
+                "reference": "9014630734ff7b154c880ef0b520ae1b23311e2b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-common-ms-code/repository/archive.zip?sha=cd91a8d45853a8c679b8dca485a3ec3718d1d3f8",
-                "reference": "cd91a8d45853a8c679b8dca485a3ec3718d1d3f8",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-common-ms-code/repository/archive.zip?sha=9014630734ff7b154c880ef0b520ae1b23311e2b",
+                "reference": "9014630734ff7b154c880ef0b520ae1b23311e2b",
                 "shasum": ""
             },
             "require": {
@@ -666,7 +666,7 @@
                 }
             ],
             "description": "iBT common code for all microservices",
-            "time": "2020-04-23T09:22:05+00:00"
+            "time": "2020-04-23T15:56:32+00:00"
         },
         {
             "name": "greensight/ibt-logistics-lib",
@@ -807,12 +807,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-pim-lib.git",
-                "reference": "b86c11215cc744fe7759fcc2fcc4f0abab304fe6"
+                "reference": "4628f403c60a25e27819a317571de08b513fdf50"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=b86c11215cc744fe7759fcc2fcc4f0abab304fe6",
-                "reference": "b86c11215cc744fe7759fcc2fcc4f0abab304fe6",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=4628f403c60a25e27819a317571de08b513fdf50",
+                "reference": "4628f403c60a25e27819a317571de08b513fdf50",
                 "shasum": ""
             },
             "require": {
@@ -836,10 +836,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "support": {
-                "issues": "https://gitlab.com/api/v4/projects/12911877/issues"
-            },
-            "time": "2020-04-21T13:10:39+00:00"
+            "time": "2020-04-23T14:23:33+00:00"
         },
         {
             "name": "greensight/ibt-store-lib",
