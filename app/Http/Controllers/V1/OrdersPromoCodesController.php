@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order\OrderPromoCode;
+use Illuminate\Http\JsonResponse;
 
 
 /**
@@ -17,9 +18,9 @@ class OrdersPromoCodesController extends Controller
      *
      * @param int $promoCodeId
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function count(int $promoCodeId)
+    public function count(int $promoCodeId): JsonResponse
     {
         return response()->json([
             'promo_code_id' => $promoCodeId,

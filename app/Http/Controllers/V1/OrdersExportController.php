@@ -3,14 +3,10 @@
 namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Integration\IntegrationType;
-use App\Models\Integration\MerchantExtSystem;
-use App\Models\Integration\MerchantIntegration;
 use App\Models\Order\OrderExport;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
-use Greensight\CommonMsa\Rest\Controller\RestAction;
 use Greensight\CommonMsa\Rest\Controller\UpdateAction;
 use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -19,7 +15,6 @@ use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -36,17 +31,11 @@ class OrdersExportController extends Controller
     use ReadAction {
         read as readTrait;
     }
-    use DeleteAction {
-        delete as deleteTrait;
-    }
-    use UpdateAction {
-        update as updateTrait;
-    }
+    use DeleteAction;
+    use UpdateAction;
 
     /**
-     * Получить класс модели в виде строки
-     * Пример: return MyModel::class;
-     * @return string
+     * @inheritDoc
      */
     public function modelClass(): string
     {
@@ -54,21 +43,7 @@ class OrdersExportController extends Controller
     }
 
     /**
-     * Задать права для выполнения стандартных rest действий.
-     * Пример: return [ RestAction::$DELETE => 'permission' ];
-     * @return array
-     */
-    public function permissionMap(): array
-    {
-        return [
-            //todo Права доступа
-        ];
-    }
-
-    /**
-     * Получить список полей, которые можно редактировать через стандартные rest действия.
-     * Пример return ['name', 'status'];
-     * @return array
+     * @inheritDoc
      */
     protected function writableFieldList(): array
     {
@@ -76,7 +51,7 @@ class OrdersExportController extends Controller
     }
 
     /**
-     * @return array
+     * @inheritDoc
      */
     protected function inputValidators(): array
     {
@@ -113,7 +88,6 @@ class OrdersExportController extends Controller
                 if (!$model) {
                     throw new NotFoundHttpException();
                 }
-                $this->checkRestPermission($client, RestAction::$READ, $model);
                 
                 $items = [
                     $model->toRest($restQuery),
@@ -144,7 +118,6 @@ class OrdersExportController extends Controller
      * @param Request $request
      * @param RequestInitiator $client
      * @return \Illuminate\Http\JsonResponse
-     * @todo добавить проверку прав
      */
     public function count(Request $request, RequestInitiator $client)
     {
@@ -170,18 +143,15 @@ class OrdersExportController extends Controller
         } else {
             return $this->countTrait($request, $client);
         }
-        
     }
     
     /**
      * @param  int  $orderId
      * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return \Illuminate\Http\JsonResponse
      */
-    public function create(int $orderId, Request $request, RequestInitiator $client): JsonResponse
+    public function create(int $orderId, Request $request): JsonResponse
     {
-        $this->checkRestPermission($client, RestAction::$CREATE);
         /** @var Model $modelClass */
         $modelClass = $this->modelClass();
         $data = $request->only($this->writableFieldList());
@@ -197,32 +167,8 @@ class OrdersExportController extends Controller
             throw new HttpException(500);
         }
         
-        /** @noinspection PhpUndefinedFieldInspection */
         return response()->json([
             'id' => $model->id
         ], 201);
-    }
-    
-    /**
-     * @param  int  $orderId
-     * @param  int  $exportId
-     * @param  RequestInitiator  $client
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
-     */
-    public function delete(int $orderId, int $exportId, RequestInitiator $client): Response
-    {
-        return $this->deleteTrait($exportId, $client);
-    }
-    
-    /**
-     * @param  int  $orderId
-     * @param  int  $exportId
-     * @param  Request  $request
-     * @param  RequestInitiator  $client
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
-     */
-    public function update(int $orderId, int $exportId, Request $request, RequestInitiator $client)
-    {
-        return $this->updateTrait($exportId, $request, $client);
     }
 }
