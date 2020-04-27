@@ -518,6 +518,8 @@ class DeliveryService
         $deliveryOrderCostDto = new DeliveryOrderCostDto();
         $deliveryOrderInputDto->cost = $deliveryOrderCostDto;
         $deliveryOrderCostDto->delivery_cost = $delivery->cost;
+        //todo Когда будет постоплата, передавать реальную стоимость к оплате за доставку в поле ниже
+        $deliveryOrderCostDto->delivery_cost_pay = 0;
         $deliveryOrderCostDto->assessed_cost = $delivery->shipments->sum('cost');
 
         //Информация об отправителе заказа
@@ -611,7 +613,9 @@ class DeliveryService
                         $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
                         $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
                         $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
-                        $deliveryOrderItemDto->cost = round($item->qty > 0 ? $basketItem->price / $item->qty : 0, 2);
+                        $deliveryOrderItemDto->cost = round($item->qty > 0 ? $basketItem->cost / $item->qty : 0, 2);
+                        //todo Когда будет постоплата, передавать реальную стоимость к оплате за товары доставки в поле ниже
+                        $deliveryOrderItemDto->price = 0;
                     }
                 }
             } else {
@@ -637,7 +641,9 @@ class DeliveryService
                     $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
                     $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
                     $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
-                    $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->price / $basketItem->qty : 0, 2);
+                    $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->cost / $basketItem->qty : 0, 2);
+                    //todo Когда будет постоплата, передавать реальную стоимость к оплате за товары доставки в поле ниже
+                    $deliveryOrderItemDto->price = 0;
                 }
             }
         }
