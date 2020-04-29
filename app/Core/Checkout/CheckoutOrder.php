@@ -8,12 +8,15 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Order\Order;
+use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderPromoCode;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
 use Exception;
+use Greensight\Customer\Dto\CustomerBonusDto;
+use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Support\Facades\DB;
 
 class CheckoutOrder
@@ -43,6 +46,8 @@ class CheckoutOrder
     public $promoCodes;
     /** @var OrderDiscount[] */
     public $discounts;
+    /** @var OrderBonus[] */
+    public $bonuses;
 
     // delivery data
     /** @var int */
@@ -71,6 +76,7 @@ class CheckoutOrder
             'certificates' => $order->certificates,
             'prices' => $prices,
             'discounts' => $discounts,
+            'bonuses' => $bonuses,
 
             'deliveryTypeId' => $order->deliveryTypeId,
             'deliveryPrice' => $order->deliveryPrice,
@@ -97,6 +103,11 @@ class CheckoutOrder
             $order->discounts[] = new OrderDiscount($discount);
         }
 
+        $order->bonuses = [];
+        foreach ($bonuses as $bonus) {
+            $order->bonuses[] = new OrderBonus($bonus);
+        }
+
         return $order;
     }
 
@@ -113,6 +124,7 @@ class CheckoutOrder
             $this->createPayment($order);
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
+            $this->createOrderBonuses($order);
 
             return $order->id;
         });
@@ -176,6 +188,32 @@ class CheckoutOrder
         foreach ($this->promoCodes as $promoCode) {
             $promoCode->order_id = $order->id;
             $promoCode->save();
+        }
+    }
+
+    /**
+     * @param Order $order
+     */
+    private function createOrderBonuses(Order $order)
+    {
+        /** @var CustomerService $customerService */
+        $customerService = resolve(CustomerService::class);
+
+        /** @var OrderBonus $bonus */
+        foreach ($this->bonuses as $bonus) {
+            $bonus->order_id = $order->id;
+            $bonus->save();
+
+            $customerBonus = new CustomerBonusDto();
+            $customerBonus->customer_id = $this->customerId;
+            $customerBonus->name = $bonus->name;
+            $customerBonus->value = $bonus->bonus;
+            $customerBonus->status = CustomerBonusDto::STATUS_ON_HOLD;
+            $customerBonus->type = CustomerBonusDto::TYPE_ORDER;
+            $customerBonus->expiration_date = $bonus->valid_period
+                ? Carbon::now()->addDays($bonus->valid_period)->toDateString()
+                : null;
+            $customerService->createBonus($customerBonus);
         }
     }
 
