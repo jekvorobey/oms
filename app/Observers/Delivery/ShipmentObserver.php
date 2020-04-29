@@ -106,6 +106,7 @@ class ShipmentObserver
         $this->setPaymentStatusAt($shipment);
         $this->setProblemAt($shipment);
         $this->setCanceledAt($shipment);
+        $this->setFsd($shipment);
     }
     
     /**
@@ -310,6 +311,17 @@ class ShipmentObserver
     {
         if ($shipment->is_canceled != $shipment->getOriginal('is_canceled')) {
             $shipment->is_canceled_at = now();
+        }
+    }
+
+    /**
+     * Установить фактическую дату и время, когда отправление собрано (получило статус "Готово к отгрузке")
+     * @param  Shipment $shipment
+     */
+    protected function setFsd(Shipment $shipment): void
+    {
+        if ($shipment->status != $shipment->getOriginal('status') && $shipment->status == ShipmentStatus::ASSEMBLED) {
+            $shipment->fsd = now();
         }
     }
 

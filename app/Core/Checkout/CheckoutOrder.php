@@ -243,6 +243,8 @@ class CheckoutOrder
 
             $delivery->point_id = $checkoutDelivery->pointId;
             $delivery->delivery_at = $checkoutDelivery->selectedDate;
+            $delivery->dt = $checkoutDelivery->dt;
+            $delivery->pdd = $checkoutDelivery->pdd;
 
             $delivery->save();
 
@@ -250,7 +252,8 @@ class CheckoutOrder
                 $shipment = new Shipment();
                 $shipment->delivery_id = $delivery->id;
                 $shipment->merchant_id = $checkoutShipment->merchantId;
-                $shipment->required_shipping_at = Carbon::now()->addDays(5);
+                $shipment->psd = $checkoutShipment->psd;
+                $shipment->required_shipping_at = $checkoutShipment->psd;
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
                 $shipment->save();

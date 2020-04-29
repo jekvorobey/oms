@@ -12,6 +12,8 @@ class CheckoutShipment
     public $cost;
     /** @var string */
     public $date;
+    /** @var string */
+    public $psd;
     /** @var int[] */
     public $items;
     
@@ -23,6 +25,7 @@ class CheckoutShipment
             'storeId' => $shipment->storeId,
             'cost' => $shipment->cost,
             'date' => $shipment->date,
+            'psd' => $shipment->psd,
             'items' => $shipment->items
         ] = $data);
         

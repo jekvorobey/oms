@@ -5,11 +5,11 @@ namespace App\Models\Delivery;
 use App\Core\Notifications\ShipmentNotification;
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
+use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\AuthService\UserService;
-use Greensight\CommonMsa\Dto\UserDto;
-use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Customer\Dto\CustomerDto;
+use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,6 +30,12 @@ use Pim\Services\ProductService\ProductService;
  * @property int $merchant_id
  * @property int $delivery_service_zero_mile - сервис доставки нулевой мили
  * @property int $store_id
+ * @property int $cargo_id
+ *
+ * @property Carbon $psd - planned shipment date - плановая дата и время, когда отправление должно быть собрано
+ * (получить статус "Готово к отгрузке")
+ * @property Carbon $fsd - fact shipment date - фактическая дата и время, когда отправление собрано
+ * (получило статус "Готово к отгрузке")
  * @property int $status
  * @property Carbon|null $status_at - дата установки статуса
  * @property int $payment_status - статус оплаты
@@ -38,7 +44,6 @@ use Pim\Services\ProductService\ProductService;
  * @property Carbon|null $is_problem_at - дата установки флага проблемного отправления
  * @property int $is_canceled - флаг, что отправление отменено
  * @property Carbon|null $is_canceled_at - дата установки флага отмены отправления
- * @property int $cargo_id
  *
  * @property string $number - номер отправления (номер_доставки/порядковый_номер_отправления)
  * @property float $cost - сумма товаров отправления (расчитывается автоматически)
@@ -46,7 +51,7 @@ use Pim\Services\ProductService\ProductService;
  * @property float $height - высота (расчитывается автоматически)
  * @property float $length - длина (расчитывается автоматически)
  * @property float $weight - вес (расчитывается автоматически)
- * @property string $required_shipping_at - требуемая дата отгрузки
+ * @property string $required_shipping_at - требуемая дата отгрузки (устарело, использовать psd!)
  * @property string $assembly_problem_comment - последнее сообщение мерчанта о проблеме со сборкой
  *
  * //dynamic attributes
@@ -68,6 +73,8 @@ class Shipment extends OmsModel
     const FILLABLE = [
         'delivery_id',
         'merchant_id',
+        'psd',
+        'fsd',
         'store_id',
         'cargo_id',
         'status',
