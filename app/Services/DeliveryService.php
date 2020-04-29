@@ -500,6 +500,10 @@ class DeliveryService
         $delivery->loadMissing(['order', 'shipments.packages.items.basketItem']);
         $deliveryOrderInputDto = new DeliveryOrderInputDto();
 
+        //Информация об получателе заказа
+        $recipientDto = new RecipientDto((array)$delivery->delivery_address);
+        $deliveryOrderInputDto->recipient = $recipientDto;
+
         //Информация о заказе
         $deliveryOrderDto = new DeliveryOrderDto();
         $deliveryOrderInputDto->order = $deliveryOrderDto;
@@ -513,6 +517,7 @@ class DeliveryService
         $deliveryOrderDto->tariff_id = $delivery->tariff_id;
         $deliveryOrderDto->delivery_date = $delivery->delivery_at->format(AbstractDto::DATE_FORMAT);
         $deliveryOrderDto->point_out_id = $delivery->point_id;
+        $deliveryOrderDto->description = $recipientDto->comment;
 
         //Информация о стоимосте заказа
         $deliveryOrderCostDto = new DeliveryOrderCostDto();
@@ -542,10 +547,6 @@ class DeliveryService
         $senderDto->contact_name = $ibtService->getCentralStoreContactName();
         $senderDto->email = $ibtService->getCentralStoreEmail();
         $senderDto->phone = $ibtService->getCentralStorePhone();
-
-        //Информация об получателе заказа
-        $recipientDto = new RecipientDto((array)$delivery->delivery_address);
-        $deliveryOrderInputDto->recipient = $recipientDto;
 
         //Для самовывоза указываем адрес ПВЗ
         if (!$delivery->delivery_address && $delivery->point_id) {
