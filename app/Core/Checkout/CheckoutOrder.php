@@ -206,7 +206,7 @@ class CheckoutOrder
 
             $customerBonus = new CustomerBonusDto();
             $customerBonus->customer_id = $this->customerId;
-            $customerBonus->name = $bonus->name;
+            $customerBonus->name = (string) $order->id;
             $customerBonus->value = $bonus->bonus;
             $customerBonus->status = CustomerBonusDto::STATUS_ON_HOLD;
             $customerBonus->type = CustomerBonusDto::TYPE_ORDER;
