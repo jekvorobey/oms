@@ -210,6 +210,7 @@ class CheckoutOrder
             $customerBonus->expiration_date = null; // Без ограничений для статуса STATUS_ON_HOLD
             $customerBonusId = $customerService->createBonus($customerBonus);
 
+            $bonus->status = OrderBonus::STATUS_ON_HOLD;
             $bonus->customer_bonus_id = $customerBonusId;
             $bonus->order_id = $order->id;
             $bonus->save();

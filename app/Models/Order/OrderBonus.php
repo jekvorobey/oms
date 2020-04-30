@@ -15,12 +15,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int        $customer_bonus_id
  * @property string     $name
  * @property int        $type
+ * @property int        $status
  * @property int        $bonus
  * @property int        $valid_period (период действия бонуса в днях)
  * @property array|null $items
  */
 class OrderBonus extends OmsModel
 {
+    const STATUS_ON_HOLD = 1; // На удержании
+    const STATUS_ACTIVE = 2; // Активные
+    const STATUS_CANCEL = 3; // Отменены
+
     /**
      * Заполняемые поля модели
      */
@@ -30,6 +35,7 @@ class OrderBonus extends OmsModel
         'customer_bonus_id',
         'name',
         'type',
+        'status',
         'bonus',
         'valid_period',
         'items',
