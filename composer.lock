@@ -569,12 +569,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-cm-lib.git",
-                "reference": "22f3b2b504be2524fe6723c5224ece6eafafab8c"
+                "reference": "93f3c11b17f4f46e4a56a30034bdda49a9a25210"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cm-lib/repository/archive.zip?sha=22f3b2b504be2524fe6723c5224ece6eafafab8c",
-                "reference": "22f3b2b504be2524fe6723c5224ece6eafafab8c",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cm-lib/repository/archive.zip?sha=93f3c11b17f4f46e4a56a30034bdda49a9a25210",
+                "reference": "93f3c11b17f4f46e4a56a30034bdda49a9a25210",
                 "shasum": ""
             },
             "require": {
@@ -612,7 +612,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/14329212/issues"
             },
-            "time": "2020-04-29T14:23:59+00:00"
+            "time": "2020-04-30T10:47:57+00:00"
         },
         {
             "name": "greensight/ibt-common-lib",

@@ -3,6 +3,9 @@
 namespace App\Models\Order;
 
 use App\Models\OmsModel;
+use Carbon\Carbon;
+use Greensight\Customer\Dto\CustomerBonusDto;
+use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -48,6 +51,36 @@ class OrderBonus extends OmsModel
 
     /** @var array */
     protected $casts = ['items' => 'array'];
+
+    /**
+     * Подтверждение удержанных бонусов
+     * @return bool
+     */
+    public function approveBonus()
+    {
+        try {
+            /** @var CustomerService $customerService */
+            $customerService = resolve(CustomerService::class);
+            $customerId = $this->order->customer_id;
+            $customerBonusId = $this->customer_bonus_id;
+            $expirationDate = $this->getExpirationDate()->toDateString();
+            $customerService->approveBonus($customerId, $customerBonusId, $expirationDate);
+
+            $this->status = self::STATUS_ACTIVE;
+            $this->save();
+            return true;
+        } catch (\Exception $exception) {
+            return false;
+        }
+    }
+
+    /**
+     * @return Carbon|null
+     */
+    public function getExpirationDate()
+    {
+        return $this->valid_period ? Carbon::now()->addDays($this->valid_period) : null;
+    }
 
     /**
      * @return BelongsTo
