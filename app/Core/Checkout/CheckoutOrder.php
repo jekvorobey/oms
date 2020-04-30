@@ -201,19 +201,18 @@ class CheckoutOrder
 
         /** @var OrderBonus $bonus */
         foreach ($this->bonuses as $bonus) {
-            $bonus->order_id = $order->id;
-            $bonus->save();
-
             $customerBonus = new CustomerBonusDto();
             $customerBonus->customer_id = $this->customerId;
             $customerBonus->name = (string) $order->id;
             $customerBonus->value = $bonus->bonus;
             $customerBonus->status = CustomerBonusDto::STATUS_ON_HOLD;
             $customerBonus->type = CustomerBonusDto::TYPE_ORDER;
-            $customerBonus->expiration_date = $bonus->valid_period
-                ? Carbon::now()->addDays($bonus->valid_period)->toDateString()
-                : null;
-            $customerService->createBonus($customerBonus);
+            $customerBonus->expiration_date = null; // Без ограничений для статуса STATUS_ON_HOLD
+            $customerBonusId = $customerService->createBonus($customerBonus);
+
+            $bonus->customer_bonus_id = $customerBonusId;
+            $bonus->order_id = $order->id;
+            $bonus->save();
         }
     }
 

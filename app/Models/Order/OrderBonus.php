@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property int        $order_id
  * @property int        $bonus_id
+ * @property int        $customer_bonus_id
  * @property string     $name
  * @property int        $type
  * @property int        $bonus
@@ -26,6 +27,7 @@ class OrderBonus extends OmsModel
     const FILLABLE = [
         'order_id',
         'bonus_id',
+        'customer_bonus_id',
         'name',
         'type',
         'bonus',
