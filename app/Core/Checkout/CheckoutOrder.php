@@ -8,12 +8,15 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Order\Order;
+use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderPromoCode;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
 use Exception;
+use Greensight\Customer\Dto\CustomerBonusDto;
+use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Support\Facades\DB;
 
 class CheckoutOrder
@@ -43,6 +46,8 @@ class CheckoutOrder
     public $promoCodes;
     /** @var OrderDiscount[] */
     public $discounts;
+    /** @var OrderBonus[] */
+    public $bonuses;
 
     // delivery data
     /** @var int */
@@ -71,6 +76,7 @@ class CheckoutOrder
             'certificates' => $order->certificates,
             'prices' => $prices,
             'discounts' => $discounts,
+            'bonuses' => $bonuses,
 
             'deliveryTypeId' => $order->deliveryTypeId,
             'deliveryPrice' => $order->deliveryPrice,
@@ -97,6 +103,11 @@ class CheckoutOrder
             $order->discounts[] = new OrderDiscount($discount);
         }
 
+        $order->bonuses = [];
+        foreach ($bonuses as $bonus) {
+            $order->bonuses[] = new OrderBonus($bonus);
+        }
+
         return $order;
     }
 
@@ -113,6 +124,7 @@ class CheckoutOrder
             $this->createPayment($order);
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
+            $this->createOrderBonuses($order);
 
             return $order->id;
         });
@@ -181,6 +193,32 @@ class CheckoutOrder
 
     /**
      * @param Order $order
+     */
+    private function createOrderBonuses(Order $order)
+    {
+        /** @var CustomerService $customerService */
+        $customerService = resolve(CustomerService::class);
+
+        /** @var OrderBonus $bonus */
+        foreach ($this->bonuses as $bonus) {
+            $customerBonus = new CustomerBonusDto();
+            $customerBonus->customer_id = $this->customerId;
+            $customerBonus->name = (string) $order->id;
+            $customerBonus->value = $bonus->bonus;
+            $customerBonus->status = CustomerBonusDto::STATUS_ON_HOLD;
+            $customerBonus->type = CustomerBonusDto::TYPE_ORDER;
+            $customerBonus->expiration_date = null; // Без ограничений для статуса STATUS_ON_HOLD
+            $customerBonusId = $customerService->createBonus($customerBonus);
+
+            $bonus->status = OrderBonus::STATUS_ON_HOLD;
+            $bonus->customer_bonus_id = $customerBonusId;
+            $bonus->order_id = $order->id;
+            $bonus->save();
+        }
+    }
+
+    /**
+     * @param Order $order
      * @throws Exception
      */
     private function createShipments(Order $order): void
@@ -205,6 +243,8 @@ class CheckoutOrder
 
             $delivery->point_id = $checkoutDelivery->pointId;
             $delivery->delivery_at = $checkoutDelivery->selectedDate;
+            $delivery->dt = $checkoutDelivery->dt;
+            $delivery->pdd = $checkoutDelivery->pdd;
 
             $delivery->save();
 
@@ -212,7 +252,8 @@ class CheckoutOrder
                 $shipment = new Shipment();
                 $shipment->delivery_id = $delivery->id;
                 $shipment->merchant_id = $checkoutShipment->merchantId;
-                $shipment->required_shipping_at = Carbon::now()->addDays(5);
+                $shipment->psd = $checkoutShipment->psd;
+                $shipment->required_shipping_at = $checkoutShipment->psd;
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
                 $shipment->save();

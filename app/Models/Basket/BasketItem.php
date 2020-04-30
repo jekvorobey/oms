@@ -103,6 +103,7 @@ class BasketItem extends OmsModel
                 'length' => $offerInfo->length,
                 'merchant_id' => $offerInfo->merchant_id,
                 'is_explosive' => $offerInfo->is_explosive,
+                'sale_at' => $offerInfo->sale_at,
             ]);
             if (!isset($this->product['store_id'])) {
                 $product = $this->product;

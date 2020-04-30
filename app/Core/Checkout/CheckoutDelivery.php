@@ -24,6 +24,10 @@ class CheckoutDelivery
     
     /** @var string */
     public $selectedDate;
+    /** @var int */
+    public $dt;
+    /** @var string */
+    public $pdd;
     /** @var float */
     public $cost;
     /** @var CheckoutShipment[] */
@@ -42,6 +46,8 @@ class CheckoutDelivery
             'receiverPhone' => $delivery->receiverPhone,
             'receiverEmail' => $delivery->receiverEmail,
             'selectedDate' => $delivery->selectedDate,
+            'dt' => $delivery->dt,
+            'pdd' => $delivery->pdd,
             'cost' => $delivery->cost,
             'shipments' => $shipments,
         ] = $data);

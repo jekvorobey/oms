@@ -4,9 +4,9 @@ namespace App\Models\Delivery;
 
 use App\Models\OmsModel;
 use App\Models\Order\Order;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -42,7 +42,10 @@ use Illuminate\Support\Collection;
  * @property string $receiver_email - e-mail получателя
  * @property array $delivery_address - адрес доставки
  *
- * @property Carbon $delivery_at
+ * @property Carbon $delivery_at - желаемая клиентом дата доставки
+ * @property int $dt - delivery time - время доставки в днях, которое отдаёт ЛО
+ * @property Carbon $pdd - planned delivery date - плановая дата,
+ * начиная с которой доставка может быть доставлена клиенту
  * @property Carbon $status_at
  * @property Carbon $status_xml_id_at
  *
@@ -66,6 +69,8 @@ class Delivery extends OmsModel
         'point_id',
         'number',
         'delivery_at',
+        'dt',
+        'pdd',
     ];
     
     /**

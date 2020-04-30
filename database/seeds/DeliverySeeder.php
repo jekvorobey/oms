@@ -2,6 +2,7 @@
 
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
+use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
@@ -10,7 +11,6 @@ use App\Models\Order\Order;
 use App\Services\DeliveryService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\B2CplDeliveryOrderStatus;
-use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\DeliveryOrderStatus;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Store\Dto\Package\PackageType;
@@ -178,7 +178,7 @@ class DeliverySeeder extends Seeder
                         if (isset($b2cplStatus['delivery_status_id'])) {
                             $delivery->status = $b2cplStatus['delivery_status_id'];
                         } else {
-                            $delivery->status = $faker->randomElement(array_keys(DeliveryOrderStatus::allStatuses()));
+                            $delivery->status = $faker->randomElement(array_keys(DeliveryStatus::all()));
                         }
                         break;
                 }
@@ -187,7 +187,9 @@ class DeliverySeeder extends Seeder
 
                 $delivery->number = Delivery::makeNumber($order->number, $deliveryNum);
                 $delivery->cost = $faker->randomFloat(2, 0, 500);
-                $delivery->delivery_at = $order->created_at->modify('+' . rand(1, 7) . ' days');
+                $delivery->dt = $faker->randomFloat(0, 1, 7);
+                $delivery->delivery_at = $order->created_at->modify('+' . $delivery->dt . ' days')->setTime(0, 0);
+                $delivery->pdd = $delivery->delivery_at;
                 $delivery->created_at = $order->created_at;
 
                 $delivery->receiver_name = $faker->name;
@@ -220,8 +222,9 @@ class DeliverySeeder extends Seeder
                     $shipment->status = $faker->randomElement(ShipmentStatus::validValues());
                     $shipment->delivery_id = $delivery->id;
                     $shipment->merchant_id = $store->merchant_id;
+                    $shipment->psd = $order->created_at->modify('+' . $faker->randomFloat(0, 120, 300) . ' minutes');
                     $shipment->store_id = $storeId;
-                    $shipment->number = Shipment::makeNumber($order->number, $shipmentNumber);
+                    $shipment->number = Shipment::makeNumber($order->number, $delivery->number, $shipmentNumber);
                     $shipment->created_at = $order->created_at->modify('+' . rand(1, 7) . ' minutes');
                     $shipment->required_shipping_at = $order->created_at->modify('+3 hours');
                     $shipment->save();
@@ -256,6 +259,9 @@ class DeliverySeeder extends Seeder
                                 );
                             }
                         }
+                    }
+                    if ($shipment->status >= ShipmentStatus::ASSEMBLED) {
+                        $shipment->fsd = $shipment->psd->modify('-' . $faker->randomFloat(0, 0, 30) . ' minutes');
                     }
 
                     //Добавляем собранные отправления в груз
