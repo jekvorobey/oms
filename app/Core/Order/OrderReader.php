@@ -39,6 +39,9 @@ class OrderReader
 
     public function addInclude(Builder $query, RestQuery $restQuery): void
     {
+        if ($restQuery->isIncluded('deliveries')) {
+            $query->with('deliveries');
+        }
         if ($restQuery->isIncluded('deliveries.shipments.basketItems')) {
             $query->with('deliveries.shipments.basketItems');
         }
