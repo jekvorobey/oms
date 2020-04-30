@@ -158,24 +158,36 @@ class Order extends OmsModel
         if (is_null($this->customer)) {
             /** @var CustomerService $customerService */
             $customerService = resolve(CustomerService::class);
-            $this->customer = $customerService->customers((new RestQuery())->setFilter('id', $this->customer_id))->first();
+            $query = (new RestQuery())
+                ->setFilter('id', $this->customer_id);
+            $this->customer = $customerService->customers($query)->first();
         }
         if (is_null($this->user)) {
             /** @var UserService $userService */
             $userService = resolve(UserService::class);
-            $this->user = $userService->users((new RestQuery())->setFilter('id', $this->customer->user_id))->first();
+            $query = (new RestQuery())
+                ->include('profile')
+                ->setFilter('id', $this->customer->user_id);
+            $this->user = $userService->users($query)->first();
         }
 
         return $this->user;
     }
 
     /**
-     * @todo брать почту пользователя оформившего заказ
+     * Получить телефон из профиля пользователя.
      * @return string
      */
-    public function customerEmail(): string
+    public function customerPhone(): string
     {
-        return 'mail@example.com';
+        $user = $this->getUser();
+        return $user->phone;
+    }
+
+    public function customerEmail(): ?string
+    {
+        $user = $this->getUser();
+        return $user->email;
     }
 
     /**

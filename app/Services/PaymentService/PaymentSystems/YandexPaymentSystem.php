@@ -2,10 +2,11 @@
 
 namespace App\Services\PaymentService\PaymentSystems;
 
-use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Monolog\Logger;
 use YandexCheckout\Client;
 use YandexCheckout\Model\Notification\NotificationSucceeded;
 use YandexCheckout\Model\Notification\NotificationWaitingForCapture;
@@ -21,6 +22,8 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public const CURRENCY_RUB = 'RUB';
     /** @var Client */
     private $yandexService;
+    /** @var Logger */
+    private $logger;
 
     /**
      * YandexPaymentSystem constructor.
@@ -28,6 +31,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function __construct()
     {
         $this->yandexService = resolve(Client::class);
+        $this->logger = Log::channel('payments');
     }
 
     /**
@@ -40,13 +44,14 @@ class YandexPaymentSystem implements PaymentSystemInterface
         $order = $payment->order;
         $idempotenceKey = uniqid('', true);
 
-        $response = $this->yandexService->createPayment([
+        $paymentData = [
             'amount' => [
                 'value' => number_format($order->price, 2, '.', ''),
                 'currency' => self::CURRENCY_RUB,
             ],
             'payment_method_data' => [
-                'type' => 'bank_card', // важно! при смене способа оплаты может поменяться максимальный срок холдирования
+                'type' => 'bank_card',
+                // важно! при смене способа оплаты может поменяться максимальный срок холдирования
             ],
             'capture' => false,
             'confirmation' => [
@@ -56,20 +61,32 @@ class YandexPaymentSystem implements PaymentSystemInterface
             'description' => "Заказ №{$order->id}",
             'receipt' => [
                 "tax_system_code" => "2",
-                'email' => $order->customerEmail(),
+                'phone' => $order->customerPhone(),
                 'items' => $this->generateItems($order),
             ],
             'metadata' => [
                 'source' => config('app.url')
             ]
-        ], $idempotenceKey);
+        ];
+        /*$email = $order->customerEmail();
+        if ($email) {
+            $paymentData['receipt']['email'] = $email;
+        }*/
+        $this->logger->info('Create payment data', $paymentData);
+        $response = $this->yandexService->createPayment($paymentData, $idempotenceKey);
+        $this->logger->info('Create payment result', $response->jsonSerialize());
 
         $data = $payment->data;
         $data['externalPaymentId'] = $response['id'];
         $data['paymentUrl'] = $response['confirmation']['confirmation_url'];
         $payment->data = $data;
 
-        $payment->save();
+        $ok = $payment->save();
+        if (!$ok) {
+            $this->logger->error('Payment not saved after create', [
+                'payment_id' => $payment->id,
+            ]);
+        }
     }
 
     /**
@@ -102,18 +119,31 @@ class YandexPaymentSystem implements PaymentSystemInterface
      */
     public function handlePushPayment(array $data): void
     {
+        $this->logger->info('Handle external payment');
         $notification = ($data['event'] === NotificationEventType::PAYMENT_SUCCEEDED)
             ? new NotificationSucceeded($data)
             : new NotificationWaitingForCapture($data);
 
+        $this->logger->info('External event data', $notification->jsonSerialize());
+
         $payment = $this->yandexService->getPaymentInfo($notification->getObject()->getId());
         $metadata = $payment->metadata ? $payment->metadata->toArray() : null;
+
+        $this->logger->info('Metadata', $metadata);
+
         if ($metadata && $metadata['source'] && $metadata['source'] !== config('app.url')) {
+            $this->logger->info('Redirect payment', [
+                'proxy' => $metadata['source']
+            ]);
             $client = new \GuzzleHttp\Client();
             $client->request('POST', $metadata['source'] . route('handler.yandexPayment', [], false), [
                 'form_params' => $data
             ]);
         } else {
+            $this->logger->info('Process payment', [
+                'external_payment_id' => $payment->id,
+                'status' => $payment->getStatus()
+            ]);
             /** @var Payment $localPayment */
             $localPayment = Payment::query()
                 ->where('data->externalPaymentId', $payment->id)
@@ -121,15 +151,18 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
             switch ($payment->getStatus()) {
                 case PaymentStatus::WAITING_FOR_CAPTURE:
+                    $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
                     $localPayment->status = \App\Models\Payment\PaymentStatus::HOLD;
                     $localPayment->save();
                     break;
                 case PaymentStatus::SUCCEEDED:
+                    $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
                     $localPayment->status = \App\Models\Payment\PaymentStatus::PAID;
                     $localPayment->payed_at = Carbon::now();
                     $localPayment->save();
                     break;
                 case PaymentStatus::CANCELED:
+                    $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
                     $localPayment->status = \App\Models\Payment\PaymentStatus::TIMEOUT;
                     $localPayment->save();
                     break;
@@ -156,21 +189,29 @@ class YandexPaymentSystem implements PaymentSystemInterface
      */
     public function commitHoldedPayment(Payment $localPayment, $amount)
     {
-        $this->yandexService->capturePayment(
-            [
-                'amount' => [
-                    'value' => $amount,
-                    'currency' => self::CURRENCY_RUB,
-                ],
-                'receipt' => [
-                    "tax_system_code" => "2",
-                    'email' => $localPayment->order->customerEmail(),
-                    'items' => $this->generateItems($localPayment->order),
-                ],
+        $captureData = [
+            'amount' => [
+                'value' => $amount,
+                'currency' => self::CURRENCY_RUB,
             ],
+            'receipt' => [
+                "tax_system_code" => "2",
+                'phone' => $localPayment->order->customerPhone(),
+                'items' => $this->generateItems($localPayment->order),
+            ],
+        ];
+        /*$email = $localPayment->order->customerEmail();
+        if ($email) {
+            $captureData['receipt']['email'] = $email;
+        }*/
+        $this->logger->info('Start commit holded payment', $captureData);
+        $response = $this->yandexService->capturePayment(
+            $captureData,
             $this->externalPaymentId($localPayment),
             uniqid('', true)
         );
+
+        $this->logger->info('Commit result', $response->jsonSerialize());
     }
 
     /**
