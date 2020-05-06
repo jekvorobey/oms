@@ -7,6 +7,8 @@ use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 use Carbon\Carbon;
+use Greensight\Marketing\Dto\Option\OptionDto;
+use Greensight\Marketing\Services\OptionService\OptionService;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -34,7 +36,12 @@ class ApproveBonus extends Command
      */
     public function handle()
     {
-        $offset = self::DEFAULT_OFFSET;
+        /** @var OptionService $marketingOptionService */
+        $marketingOptionService = resolve(OptionService::class);
+        $offset = $marketingOptionService->get(
+            OptionDto::KEY_ORDER_ACTIVATION_BONUS_DELAY,
+            self::DEFAULT_OFFSET
+        );
 
         $statusAt = Carbon::now()->addDays(-$offset)->endOfDay();
         $orders = Order::query()

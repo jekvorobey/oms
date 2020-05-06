@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a0b5c148271b49e5ab9d110685b1c855",
+    "content-hash": "11474f993ccf728bd86470dd6a11439e",
     "packages": [
         {
             "name": "darkaonline/l5-swagger",
@@ -724,6 +724,57 @@
                 "issues": "https://gitlab.com/api/v4/projects/15546031/issues"
             },
             "time": "2020-04-27T09:51:18+00:00"
+        },
+        {
+            "name": "greensight/ibt-marketing-lib",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "git@gitlab.com:greensight/ibt-marketing-lib.git",
+                "reference": "cfe53079357e478ff18e65409acce5dd58127c0b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-marketing-lib/repository/archive.zip?sha=cfe53079357e478ff18e65409acce5dd58127c0b",
+                "reference": "cfe53079357e478ff18e65409acce5dd58127c0b",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "greensight/ibt-common-lib": "dev-master",
+                "php": "^7.1.3"
+            },
+            "require-dev": {
+                "laravel/framework": "^5.8",
+                "phpunit/phpunit": "^7.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Greensight\\Marketing\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Greensight\\Marketing\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ]
+            },
+            "authors": [
+                {
+                    "name": "Yury Kudryavtsev",
+                    "email": "kudryavtsev@greensight.ru"
+                }
+            ],
+            "description": "iBT marketing client",
+            "support": {
+                "issues": "https://gitlab.com/api/v4/projects/13354105/issues"
+            },
+            "time": "2020-05-06T06:26:54+00:00"
         },
         {
             "name": "greensight/ibt-merchant-management-lib",
@@ -6640,6 +6691,7 @@
         "greensight/ibt-cm-lib": 20,
         "greensight/ibt-common-lib": 20,
         "greensight/ibt-logistics-lib": 20,
+        "greensight/ibt-marketing-lib": 20,
         "greensight/ibt-merchant-management-lib": 20,
         "greensight/ibt-message-lib": 20,
         "greensight/ibt-pim-lib": 20,

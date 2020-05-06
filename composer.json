@@ -22,6 +22,10 @@
         },
         {
             "type": "vcs",
+            "url": "https://gitlab.com/greensight/ibt-marketing-lib"
+        },
+        {
+            "type": "vcs",
             "url": "https://gitlab.com/greensight/ibt-merchant-management-lib"
         },
         {
@@ -45,6 +49,7 @@
         "greensight/ibt-cm-lib": "dev-master",
         "greensight/ibt-common-lib": "dev-master",
         "greensight/ibt-logistics-lib": "dev-master",
+        "greensight/ibt-marketing-lib": "dev-master",
         "greensight/ibt-merchant-management-lib": "dev-master",
         "greensight/ibt-message-lib": "dev-master",
         "greensight/ibt-pim-lib": "dev-master",
