@@ -10,13 +10,13 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
+use App\Models\Order\OrderConfirmationType;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\OrderService;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Rest\RestQuery;
-use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -121,15 +121,14 @@ class OrdersController extends Controller
             'status' => ['nullable', Rule::in(OrderStatus::validValues())],
             'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
 
-            'delivery_method' => ['nullable', Rule::in(array_keys(DeliveryMethod::allMethods()))],
             'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
-            'delivery_comment' => ['nullable', 'string'],
             'delivery_address' => ['nullable', 'array'],
             'receiver_name' => ['nullable', 'string'],
             'receiver_phone' => ['nullable', 'string'],
             'receiver_email' => ['nullable', 'string', 'email'],
 
             'manager_comment' => ['nullable', 'string'],
+            'confirmation_type' => ['nullable', Rule::in(OrderConfirmationType::validValues())],
         ]);
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());

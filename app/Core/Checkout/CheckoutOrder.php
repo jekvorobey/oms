@@ -13,7 +13,6 @@ use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderPromoCode;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
-use Carbon\Carbon;
 use Exception;
 use Greensight\Customer\Dto\CustomerBonusDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
@@ -34,6 +33,8 @@ class CheckoutOrder
     public $price;
     /** @var int */
     public $paymentMethodId;
+    /** @var int */
+    public $confirmationTypeId;
     /** @var int */
     public $spentBonus;
     /** @var int */
@@ -70,6 +71,7 @@ class CheckoutOrder
             'cost' => $order->cost,
             'price' => $order->price,
             'paymentMethodId' => $order->paymentMethodId,
+            'confirmationTypeId' => $order->confirmationTypeId,
             'spentBonus' => $order->spentBonus,
             'addedBonus' => $order->addedBonus,
             'promoCodes' => $promoCodes,
@@ -153,6 +155,7 @@ class CheckoutOrder
         $order->customer_id = $this->customerId;
         $order->number = Order::makeNumber();
         $order->basket_id = $this->basketId;
+        $order->confirmation_type = $this->confirmationTypeId;
         $order->cost = $this->cost;
         $order->price = $this->price;
         $order->spent_bonus = $this->spentBonus;

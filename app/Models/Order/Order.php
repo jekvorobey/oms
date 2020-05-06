@@ -34,14 +34,13 @@ use Illuminate\Support\Collection;
  * @property int $added_bonus
  * @property array $certificates
  *
- * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
+ * @property int $delivery_type - тип доставки (см. \App\Models\Delivery\DeliveryType)
  * @property float $delivery_price - стоимость доставки iBT (с учетом скидки)
  * @property float $delivery_cost - стоимость доставки iBT (без учета скидки)
- * @property string $delivery_comment - комментарий к доставке
  *
- * @property int $status - статус
+ * @property int $status - статус (см. \App\Models\Order\OrderStatus)
  * @property Carbon|null $status_at - дата установки статуса заказа
- * @property int $payment_status - статус оплаты
+ * @property int $payment_status - статус оплаты (см. \App\Models\Payment\PaymentStatus)
  * @property Carbon|null $payment_status_at - дата установки статуса оплаты
  * @property int $is_problem - флаг, что заказ проблемный
  * @property Carbon|null $is_problem_at - дата установки флага проблемного заказа
@@ -49,6 +48,7 @@ use Illuminate\Support\Collection;
  * @property Carbon|null $is_canceled_at - дата установки флага отмены заказа
  * @property int $is_require_check - флаг, что заказ требует проверки
  * @property string $manager_comment - комментарий менеджера
+ * @property int $confirmation_type - тип подтверждения заказа (см. \App\Models\Order\OrderConfirmationType)
  *
  * @property string $number - номер
  *
