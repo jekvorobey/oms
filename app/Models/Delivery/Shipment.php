@@ -7,8 +7,6 @@ use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
-use Greensight\CommonMsa\Services\AuthService\UserService;
-use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -399,51 +397,6 @@ class Shipment extends OmsModel
         //Фильтр по бренду товара
         $filterByProductField('brands', 'brand_id');
 
-        //Фильтр по существованию пользователя
-        $userExistFilter = $restQuery->getFilter('user_exist');
-        if ($userExistFilter) {
-            [$op, $value] = $userExistFilter[0];
-
-            $query->whereHas('delivery', function (Builder $query) use ($value) {
-                $query->whereHas('order', function (Builder $query) use ($value) {
-                    /** @var CustomerService $customerService */
-                    $customerService = resolve(CustomerService::class);
-
-                    /** @var UserService $userService */
-                    $userService = resolve(UserService::class);
-
-                    $customersDirty = $customerService->customers(
-                        (new RestQuery())->addFields(CustomerDto::class, 'id', 'user_id')
-                    );
-                    $userIdsByCustomers = $customersDirty->pluck('user_id')->all();
-
-                    $userIds = $userService->users(
-                        (new RestQuery())
-                            ->addFields(UserDto::class, 'id')
-                            ->setFilter('id', $userIdsByCustomers)
-                    )
-                        ->pluck('id')
-                        ->all();
-
-                    if ($value) {
-                        $customers = $customersDirty->filter(function ($value, $key) use ($userIds) {
-                            return in_array($value->user_id, $userIds);
-                        });
-                    } else {
-                        $customers = $customersDirty->filter(function ($value, $key) use ($userIds) {
-                            return !in_array($value->user_id, $userIds);
-                        });
-                    }
-                    $customersIds = $customers
-                        ->pluck('id')
-                        ->all();
-
-                    $query->whereIn('customer_id', $customersIds);
-                });
-            });
-            $modifiedRestQuery->removeFilter('user_exist');
-        }
-
         //Функция-фильтр по полям заказа связанного с отправлением
         $filterByOrderField = function (String $filterName, String $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
             $orderFieldFilter = $restQuery->getFilter($filterName);
@@ -468,41 +421,6 @@ class Shipment extends OmsModel
         $filterByOrderField('customer_id', 'customer_id');
         //Фильтр по типу доставки
         $filterByOrderField('delivery_type', 'delivery_type');
-
-        //Фильтр по имени клиента
-        $customerFullNameFilter = $restQuery->getFilter('customer_full_name');
-        if ($customerFullNameFilter) {
-            [$op, $value] = $customerFullNameFilter[0];
-
-            /** @var CustomerService $customerService */
-            $customerService = resolve(CustomerService::class);
-
-            /** @var UserService $userService */
-            $userService = resolve(UserService::class);
-
-            $userIds = $userService->users(
-                (new RestQuery())
-                    ->addFields(UserDto::class, 'id')
-                    ->setFilter('full_name', $value)
-            )
-                ->pluck('id')
-                ->all();
-
-            $customerIds = $customerService->customers(
-                (new RestQuery())
-                    ->addFields(CustomerDto::class, 'id')
-                    ->setFilter('user_id', $userIds)
-            )
-                ->pluck('id')
-                ->all();
-
-            $query->whereHas('delivery', function (Builder $query) use ($customerIds) {
-                $query->whereHas('order', function (Builder $query) use ($customerIds) {
-                    $query->whereIn('customer_id', $customerIds);
-                });
-            });
-            $modifiedRestQuery->removeFilter('customer_full_name');
-        }
 
         //Фильтр по количеству коробок
         $packageQtyFilter = $restQuery->getFilter('package_qty');
