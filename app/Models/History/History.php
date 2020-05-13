@@ -15,7 +15,7 @@ use Illuminate\Support\Collection;
  * @property int $user_id - id пользователя
  * @property int $type - тип события
  * @property string $data - информация
- * @property string $entity - название изменяемой сущности (например, BasketItem или ShipmentItem)
+ * @property string $entity_type - название изменяемой сущности (например, BasketItem или ShipmentItem)
  * @property int $entity_id - id изменяемой сущности (например, Позиция корзины или Позиция отправления)
  *
  * @property Collection|HistoryMainEntity[] $historyMainEntities
@@ -53,7 +53,7 @@ class History extends OmsModel
         $event->user_id = $user->userId();
         
         $event->entity_id = $model->id;
-        $event->entity = end($modelClass);
+        $event->entity_type = end($modelClass);
         $event->data = $type != HistoryType::TYPE_DELETE ? $model->getDirty() : $model->toArray();
         $event->save();
     
@@ -65,7 +65,7 @@ class History extends OmsModel
             $historyMainEntity = new HistoryMainEntity();
             $historyMainEntity->history_id = $event->id;
             $mainModelClass = explode('\\', get_class($mainModel));
-            $historyMainEntity->main_entity = end($mainModelClass);
+            $historyMainEntity->main_entity_type = end($mainModelClass);
             $historyMainEntity->main_entity_id = $mainModel->id;
             $historyMainEntity->save();
             
