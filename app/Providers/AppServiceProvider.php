@@ -28,6 +28,7 @@ use App\Services\BasketService;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use L5Swagger\L5SwaggerServiceProvider;
 use YandexCheckout\Client;
@@ -75,6 +76,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->addObservers();
+        $this->addMorphForHistory();
     }
 
     protected function addObservers(): void
@@ -93,5 +95,27 @@ class AppServiceProvider extends ServiceProvider
         Cargo::observe(CargoObserver::class);
 
         Payment::observe(PaymentObserver::class);
+    }
+
+    protected function addMorphForHistory(): void
+    {
+        $entitiesWithHistory = [
+            BasketItem::class,
+            Cargo::class,
+            Delivery::class,
+            Order::class,
+            OrderComment::class,
+            Payment::class,
+            Shipment::class,
+            ShipmentItem::class,
+            ShipmentPackage::class,
+            ShipmentPackageItem::class,
+        ];
+        $morphMap = [];
+        foreach ($entitiesWithHistory as $entity) {
+            $entityClass = explode('\\', $entity);
+            $morphMap[end($entityClass)] = $entity;
+        }
+        Relation::morphMap($morphMap);
     }
 }

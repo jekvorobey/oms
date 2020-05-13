@@ -39,8 +39,20 @@ class OrderReader
 
     public function addInclude(Builder $query, RestQuery $restQuery): void
     {
+        if ($restQuery->isIncluded('history')) {
+            $query->with('history');
+        }
+        if ($restQuery->isIncluded('promoCodes')) {
+            $query->with('promoCodes');
+        }
         if ($restQuery->isIncluded('deliveries')) {
             $query->with('deliveries');
+        }
+        if ($restQuery->isIncluded('payments')) {
+            $query->with('payments');
+        }
+        if ($restQuery->isIncluded('deliveries.shipments')) {
+            $query->with('deliveries.shipments');
         }
         if ($restQuery->isIncluded('deliveries.shipments.basketItems')) {
             $query->with('deliveries.shipments.basketItems');
@@ -74,6 +86,16 @@ class OrderReader
     protected function addSelect(Builder $query, RestQuery $restQuery): void
     {
         if ($fields = $restQuery->getFields('order')) {
+            /*if (in_array('latest_history', $fields)) {
+                $query->with('history')->whereHas('history', function (Builder $query) {
+                    $query->orderByDesc((new History())->getTable() . '.updated_at')
+                        ->limit(1);
+                });
+                if (($key = array_search('latest_history', $fields)) !== false) {
+                    unset($fields[$key]);
+                }
+            }*/
+
             $query->select($fields);
         }
 

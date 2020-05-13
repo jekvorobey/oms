@@ -6,6 +6,8 @@ use App\Core\Notifications\OrderNotification;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
+use App\Models\History\History;
+use App\Models\History\HistoryMainEntity;
 use App\Models\OmsModel;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -17,6 +19,7 @@ use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -60,6 +63,7 @@ use Illuminate\Support\Collection;
  * @property Collection|OrderDiscount[] $discounts - скидки к заказу
  * @property Collection|OrderPromoCode[] $promoCodes - промокоды применённые к заказу
  * @property Collection|OrderBonus[] $bonuses - бонусы применённые к заказу
+ * @property Collection|History[] $history - история изменений
  */
 class Order extends OmsModel
 {
@@ -139,6 +143,14 @@ class Order extends OmsModel
     public function bonuses(): HasMany
     {
         return $this->hasMany(OrderBonus::class, 'order_id');
+    }
+
+    /**
+     * @return MorphToMany
+     */
+    public function history(): MorphToMany
+    {
+        return $this->morphToMany(History::class, 'main_entity', (new HistoryMainEntity())->getTable());
     }
 
     /**
