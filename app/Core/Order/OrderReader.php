@@ -4,6 +4,8 @@ namespace App\Core\Order;
 
 use App\Models\Order\Order;
 use Greensight\CommonMsa\Rest\RestQuery;
+use Greensight\Customer\Dto\CustomerDto;
+use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
@@ -86,16 +88,6 @@ class OrderReader
     protected function addSelect(Builder $query, RestQuery $restQuery): void
     {
         if ($fields = $restQuery->getFields('order')) {
-            /*if (in_array('latest_history', $fields)) {
-                $query->with('history')->whereHas('history', function (Builder $query) {
-                    $query->orderByDesc((new History())->getTable() . '.updated_at')
-                        ->limit(1);
-                });
-                if (($key = array_search('latest_history', $fields)) !== false) {
-                    unset($fields[$key]);
-                }
-            }*/
-
             $query->select($fields);
         }
 
@@ -132,8 +124,8 @@ class OrderReader
     {
         //Фильтр заказов по мерчанту
         $merchantFilter = $restQuery->getFilter('merchant_id');
-        if($merchantFilter) {
-            [$op, $value] = $merchantFilter[0];
+        if ($merchantFilter) {
+            [$op, $value] = current($merchantFilter);
             /** @var OfferService $offerService */
             $offerService = resolve(OfferService::class);
             $offerQuery = $offerService->newQuery();
@@ -148,6 +140,27 @@ class OrderReader
             });
 
             $restQuery->removeFilter('merchant_id');
+        }
+
+        //Фильтр по покупателю (ФИО, e-mail или телефон)
+        $customerFilter = $restQuery->getFilter('customer');
+        if ($customerFilter) {
+            [$op, $value] = current($customerFilter);
+            /** @var CustomerService $customerService */
+            $customerService = resolve(CustomerService::class);
+            $customerQuery = $customerService->newQuery()
+                ->addFields(CustomerDto::entity(), 'id')
+                ->setFilter('email_phone_full_name', $op, $value);
+            $customerIds = $customerService->customers($customerQuery)->pluck('id')->toArray();
+
+            $existCustomerIds = $restQuery->getFilter('customer_id') ?
+                $restQuery->getFilter('customer_id')[0][1] : [];
+            if ($existCustomerIds) {
+                $customerIds = array_values(array_intersect($existCustomerIds, $customerIds));
+                $restQuery->removeFilter('customer_id');
+            }
+            $query->whereIn('customer_id', $customerIds);
+            $restQuery->removeFilter('customer');
         }
 
         foreach ($restQuery->filterIterator() as [$field, $op, $value]) {
