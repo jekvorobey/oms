@@ -10,7 +10,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use Pim\Dto\Offer\OfferDto;
+use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
+use Pim\Services\ProductService\ProductService;
 
 class OrderReader
 {
@@ -122,7 +124,9 @@ class OrderReader
      */
     protected function addFilter(Builder $query, RestQuery $restQuery): void
     {
-        //Фильтр заказов по мерчанту
+        $modifiedRestQuery = clone $restQuery;
+
+        //Фильтр по мерчантам
         $merchantFilter = $restQuery->getFilter('merchant_id');
         if ($merchantFilter) {
             [$op, $value] = current($merchantFilter);
@@ -138,8 +142,7 @@ class OrderReader
                     $query->whereIn('offer_id', $offersIds);
                 });
             });
-
-            $restQuery->removeFilter('merchant_id');
+            $modifiedRestQuery->removeFilter('merchant_id');
         }
 
         //Фильтр по покупателю (ФИО, e-mail или телефон)
@@ -159,11 +162,158 @@ class OrderReader
                 $customerIds = array_values(array_intersect($existCustomerIds, $customerIds));
                 $restQuery->removeFilter('customer_id');
             }
-            $query->whereIn('customer_id', $customerIds);
-            $restQuery->removeFilter('customer');
+            $modifiedRestQuery->setFilter('customer_id', $customerIds);
+            $modifiedRestQuery->removeFilter('customer');
         }
 
-        foreach ($restQuery->filterIterator() as [$field, $op, $value]) {
+        //Функция-фильтр id отправлений по id офферов
+        $filterByOfferIds = function ($offerIds) {
+            $orderIds = [];
+            if ($offerIds) {
+                $orderIds = Order::query()
+                    ->select('id')
+                    ->whereHas('basket', function (Builder $query) use ($offerIds) {
+                        $query->whereHas('items', function (Builder $query) use ($offerIds) {
+                            $query->whereIn('offer_id', $offerIds);
+                        });
+                    })
+                    ->get()
+                    ->pluck('id')
+                    ->toArray();
+                if (!$orderIds) {
+                    $orderIds = [-1];
+                }
+            }
+
+            return $orderIds;
+        };
+        //Фильтр по коду оффера мерчанта из ERP мерчанта
+        $offerXmlIdFilter = $restQuery->getFilter('offer_xml_id');
+        if($offerXmlIdFilter) {
+            [$op, $value] = current($offerXmlIdFilter);
+            /** @var OfferService $offerService */
+            $offerService = resolve(OfferService::class);
+            $offerQuery = $offerService->newQuery()
+                ->addFields(OfferDto::entity(), 'id')
+                ->setFilter('xml_id', $op, $value);
+            $offerIds = $offerService->offers($offerQuery)->pluck('id')->toArray();
+
+            $orderIds = $filterByOfferIds($offerIds);
+            $existOrderIds = $modifiedRestQuery->getFilter('id') ? $modifiedRestQuery->getFilter('id')[0][1] : [];
+            if ($existOrderIds) {
+                $orderIds = array_values(array_intersect($existOrderIds, $orderIds));
+            }
+            $modifiedRestQuery->setFilter('id', $orderIds);
+            $modifiedRestQuery->removeFilter('offer_xml_id');
+        }
+
+        //Функция-фильтр по свойству товара
+        $filterByProductField = function ($filterField, $productField) use (
+            $restQuery,
+            $modifiedRestQuery,
+            $filterByOfferIds
+        ) {
+            $productVendorCodeFilter = $restQuery->getFilter($filterField);
+            if($productVendorCodeFilter) {
+                [$op, $value] = current($productVendorCodeFilter);
+
+                /** @var ProductService $productService */
+                $productService = resolve(ProductService::class);
+                $productQuery = $productService->newQuery()
+                    ->addFields(ProductDto::entity(), 'id')
+                    ->setFilter($productField, $op, $value);
+                $productIds = $productService->products($productQuery)->pluck('id')->toArray();
+
+                $offerIds = [];
+                if ($productIds) {
+                    /** @var OfferService $offerService */
+                    $offerService = resolve(OfferService::class);
+                    $offerQuery = $offerService->newQuery()
+                        ->addFields(OfferDto::entity(), 'id')
+                        ->setFilter('product_id', $productIds);
+                    $offerIds = $offerService->offers($offerQuery)->pluck('id')->toArray();
+                }
+
+                $orderIds = $filterByOfferIds($offerIds);
+                $existOrderIds = $modifiedRestQuery->getFilter('id') ? $modifiedRestQuery->getFilter('id')[0][1] : [];
+                if ($existOrderIds) {
+                    $orderIds = array_values(array_intersect($existOrderIds, $orderIds));
+                }
+                $modifiedRestQuery->setFilter('id', $orderIds);
+                $modifiedRestQuery->removeFilter($filterField);
+            }
+        };
+        //Фильтр по артикулу товара
+        $filterByProductField('product_vendor_code', 'vendor_code');
+        //Фильтр по бренду товара
+        $filterByProductField('brands', 'brand_id');
+
+        //Фильтр по способу оплаты
+        $paymentMethodFilter = $restQuery->getFilter('payment_method');
+        if ($paymentMethodFilter) {
+            [$op, $value] = current($paymentMethodFilter);
+            $query->whereHas('payments', function (Builder $query) use ($value) {
+                $query->whereIn('payment_method', (array)$value);
+            });
+            $modifiedRestQuery->removeFilter('payment_method');
+        }
+
+        //Фильтр по складу
+        $storeFilter = $restQuery->getFilter('stores');
+        if ($storeFilter) {
+            [$op, $value] = current($storeFilter);
+            $query->whereHas('deliveries', function (Builder $query) use ($value) {
+                $query->whereHas('shipments', function (Builder $query) use ($value) {
+                    $query->whereIn('store_id', (array)$value);
+                });
+            });
+            $modifiedRestQuery->removeFilter('stores');
+        }
+
+        //Фильтр по службе доставки
+        $deliveryServiceFilter = $restQuery->getFilter('delivery_service');
+        if ($deliveryServiceFilter) {
+            [$op, $value] = current($deliveryServiceFilter);
+            $query->whereHas('deliveries', function (Builder $query) use ($value) {
+                $query->whereIn('delivery_service', (array)$value);
+            });
+            $modifiedRestQuery->removeFilter('delivery_service');
+        }
+
+        //Фильтр по службе городу доставки
+        $deliveryCityFilter = $restQuery->getFilter('delivery_city');
+        if ($deliveryCityFilter) {
+            [$op, $value] = current($deliveryCityFilter);
+            $query->whereHas('deliveries', function (Builder $query) use ($value) {
+                $query->where('delivery_address->city_guid', $value);
+            });
+            $modifiedRestQuery->removeFilter('delivery_city');
+        }
+
+        //Фильтр по PSD
+        $psdFilter = $restQuery->getFilter('psd');
+        if ($psdFilter) {
+            [$op, $value] = current($psdFilter);
+            $query->whereHas('deliveries', function (Builder $query) use ($value) {
+                $query->whereHas('shipments', function (Builder $query) use ($value) {
+                    $query->where('psd', '>=', $value[0]);
+                    $query->where('psd', '<=', $value[1]);
+                });
+            });
+            $modifiedRestQuery->removeFilter('psd');
+        }
+        //Фильтр по PDD
+        $pddFilter = $restQuery->getFilter('pdd');
+        if ($pddFilter) {
+            [$op, $value] = current($pddFilter);
+            $query->whereHas('deliveries', function (Builder $query) use ($value) {
+                $query->where('pdd', '>=', $value[0]);
+                $query->where('pdd', '<=', $value[1]);
+            });
+            $modifiedRestQuery->removeFilter('pdd');
+        }
+
+        foreach ($modifiedRestQuery->filterIterator() as [$field, $op, $value]) {
             if ($op == '=' && is_array($value)) {
                 $query->whereIn($field, $value);
             } else {

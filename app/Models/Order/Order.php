@@ -4,7 +4,6 @@ namespace App\Models\Order;
 
 use App\Core\Notifications\OrderNotification;
 use App\Models\Basket\Basket;
-use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
 use App\Models\History\History;
 use App\Models\History\HistoryMainEntity;
@@ -56,7 +55,6 @@ use Illuminate\Support\Collection;
  * @property string $number - номер
  *
  * @property Basket $basket - корзина
- * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
  * @property Collection|Payment[] $payments - оплаты заказа
  * @property Collection|Delivery[] $deliveries - доставка заказа
  * @property OrderComment $comment - коментарий покупателя к заказу

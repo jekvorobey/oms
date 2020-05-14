@@ -5,9 +5,7 @@ namespace App\Models\Delivery;
 use App\Core\Notifications\ShipmentNotification;
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
-use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
-use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -316,7 +314,7 @@ class Shipment extends OmsModel
                     ->select('id')
                     ->whereHas('items', function (Builder $query) use ($offerIds) {
                         $query->whereHas('basketItem', function (Builder $query) use ($offerIds) {
-                            $query->where('offer_id', $offerIds);
+                            $query->whereIn('offer_id', $offerIds);
                         });
                     })
                     ->get()
