@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1;
 use App\Core\Order\OrderReader;
 use App\Core\Order\OrderWriter;
 use App\Http\Controllers\Controller;
+use App\Models\Basket\BasketItem;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
@@ -57,6 +58,19 @@ class OrdersController extends Controller
         $reader = new OrderReader();
 
         return response()->json($reader->count(new RestQuery($request)));
+    }
+
+    public function getByOffers(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'offersIds' => 'array|required',
+        ]);
+
+        $offersIds = $data['offersIds'];
+        $basketIds = BasketItem::whereIn('offer_id', $offersIds)->select('basket_id');
+        $orders = Order::whereIn('basket_id', $basketIds)->get();
+
+        return response()->json($orders, 200);
     }
 
     /**

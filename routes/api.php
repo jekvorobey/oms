@@ -30,6 +30,8 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('orders')->group(function () {
+        Route::post('by-offers', 'OrdersController@getByOffers');
+
         Route::prefix('promo-codes')->group(function () {
             Route::get('{promoCodeId}/count', 'OrdersPromoCodesController@count');
         });
