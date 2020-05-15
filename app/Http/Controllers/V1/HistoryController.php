@@ -71,7 +71,7 @@ class HistoryController extends Controller
         $mainEntityClass = explode('\\', $mainEntity);
         $query = History::modifyQuery(
             $baseQuery->whereHas('historyMainEntities', function (Builder $query) use ($mainEntityClass, $mainEntityId) {
-                $query->where('main_entity', end($mainEntityClass))
+                $query->where('main_entity_type', end($mainEntityClass))
                     ->where('main_entity_id', $mainEntityId);
             }),
             $restQuery
@@ -137,7 +137,7 @@ class HistoryController extends Controller
         $mainEntityClass = explode('\\', $mainEntity);
         $query = History::modifyQuery(
             $baseQuery->whereHas('historyMainEntities', function (Builder $query) use ($mainEntityClass, $mainEntityId) {
-                $query->where('main_entity', end($mainEntityClass))
+                $query->where('main_entity_type', end($mainEntityClass))
                     ->where('main_entity_id', $mainEntityId);
             }),
             $restQuery

@@ -6,10 +6,6 @@ use App\Core\Notifications\ShipmentNotification;
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
 use Greensight\CommonMsa\Rest\RestQuery;
-use Greensight\CommonMsa\Services\AuthService\UserService;
-use Greensight\CommonMsa\Dto\UserDto;
-use Greensight\Customer\Services\CustomerService\CustomerService;
-use Greensight\Customer\Dto\CustomerDto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,6 +26,12 @@ use Pim\Services\ProductService\ProductService;
  * @property int $merchant_id
  * @property int $delivery_service_zero_mile - сервис доставки нулевой мили
  * @property int $store_id
+ * @property int $cargo_id
+ *
+ * @property Carbon $psd - planned shipment date - плановая дата и время, когда отправление должно быть собрано
+ * (получить статус "Готово к отгрузке")
+ * @property Carbon $fsd - fact shipment date - фактическая дата и время, когда отправление собрано
+ * (получило статус "Готово к отгрузке")
  * @property int $status
  * @property Carbon|null $status_at - дата установки статуса
  * @property int $payment_status - статус оплаты
@@ -38,7 +40,6 @@ use Pim\Services\ProductService\ProductService;
  * @property Carbon|null $is_problem_at - дата установки флага проблемного отправления
  * @property int $is_canceled - флаг, что отправление отменено
  * @property Carbon|null $is_canceled_at - дата установки флага отмены отправления
- * @property int $cargo_id
  *
  * @property string $number - номер отправления (номер_доставки/порядковый_номер_отправления)
  * @property float $cost - сумма товаров отправления (расчитывается автоматически)
@@ -46,7 +47,7 @@ use Pim\Services\ProductService\ProductService;
  * @property float $height - высота (расчитывается автоматически)
  * @property float $length - длина (расчитывается автоматически)
  * @property float $weight - вес (расчитывается автоматически)
- * @property string $required_shipping_at - требуемая дата отгрузки
+ * @property string $required_shipping_at - требуемая дата отгрузки (устарело, использовать psd!)
  * @property string $assembly_problem_comment - последнее сообщение мерчанта о проблеме со сборкой
  *
  * //dynamic attributes
@@ -68,6 +69,8 @@ class Shipment extends OmsModel
     const FILLABLE = [
         'delivery_id',
         'merchant_id',
+        'psd',
+        'fsd',
         'store_id',
         'cargo_id',
         'status',
@@ -311,7 +314,7 @@ class Shipment extends OmsModel
                     ->select('id')
                     ->whereHas('items', function (Builder $query) use ($offerIds) {
                         $query->whereHas('basketItem', function (Builder $query) use ($offerIds) {
-                            $query->where('offer_id', $offerIds);
+                            $query->whereIn('offer_id', $offerIds);
                         });
                     })
                     ->get()
@@ -392,51 +395,6 @@ class Shipment extends OmsModel
         //Фильтр по бренду товара
         $filterByProductField('brands', 'brand_id');
 
-        //Фильтр по существованию пользователя
-        $userExistFilter = $restQuery->getFilter('user_exist');
-        if ($userExistFilter) {
-            [$op, $value] = $userExistFilter[0];
-
-            $query->whereHas('delivery', function (Builder $query) use ($value) {
-                $query->whereHas('order', function (Builder $query) use ($value) {
-                    /** @var CustomerService $customerService */
-                    $customerService = resolve(CustomerService::class);
-
-                    /** @var UserService $userService */
-                    $userService = resolve(UserService::class);
-
-                    $customersDirty = $customerService->customers(
-                        (new RestQuery())->addFields(CustomerDto::class, 'id', 'user_id')
-                    );
-                    $userIdsByCustomers = $customersDirty->pluck('user_id')->all();
-
-                    $userIds = $userService->users(
-                        (new RestQuery())
-                            ->addFields(UserDto::class, 'id')
-                            ->setFilter('id', $userIdsByCustomers)
-                    )
-                        ->pluck('id')
-                        ->all();
-
-                    if ($value) {
-                        $customers = $customersDirty->filter(function ($value, $key) use ($userIds) {
-                            return in_array($value->user_id, $userIds);
-                        });
-                    } else {
-                        $customers = $customersDirty->filter(function ($value, $key) use ($userIds) {
-                            return !in_array($value->user_id, $userIds);
-                        });
-                    }
-                    $customersIds = $customers
-                        ->pluck('id')
-                        ->all();
-
-                    $query->whereIn('customer_id', $customersIds);
-                });
-            });
-            $modifiedRestQuery->removeFilter('user_exist');
-        }
-
         //Функция-фильтр по полям заказа связанного с отправлением
         $filterByOrderField = function (String $filterName, String $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
             $orderFieldFilter = $restQuery->getFilter($filterName);
@@ -461,41 +419,6 @@ class Shipment extends OmsModel
         $filterByOrderField('customer_id', 'customer_id');
         //Фильтр по типу доставки
         $filterByOrderField('delivery_type', 'delivery_type');
-
-        //Фильтр по имени клиента
-        $customerFullNameFilter = $restQuery->getFilter('customer_full_name');
-        if ($customerFullNameFilter) {
-            [$op, $value] = $customerFullNameFilter[0];
-
-            /** @var CustomerService $customerService */
-            $customerService = resolve(CustomerService::class);
-
-            /** @var UserService $userService */
-            $userService = resolve(UserService::class);
-
-            $userIds = $userService->users(
-                (new RestQuery())
-                    ->addFields(UserDto::class, 'id')
-                    ->setFilter('full_name', $value)
-            )
-                ->pluck('id')
-                ->all();
-
-            $customerIds = $customerService->customers(
-                (new RestQuery())
-                    ->addFields(CustomerDto::class, 'id')
-                    ->setFilter('user_id', $userIds)
-            )
-                ->pluck('id')
-                ->all();
-
-            $query->whereHas('delivery', function (Builder $query) use ($customerIds) {
-                $query->whereHas('order', function (Builder $query) use ($customerIds) {
-                    $query->whereIn('customer_id', $customerIds);
-                });
-            });
-            $modifiedRestQuery->removeFilter('customer_full_name');
-        }
 
         //Фильтр по количеству коробок
         $packageQtyFilter = $restQuery->getFilter('package_qty');

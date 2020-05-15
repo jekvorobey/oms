@@ -4,8 +4,9 @@ namespace App\Models\Order;
 
 use App\Core\Notifications\OrderNotification;
 use App\Models\Basket\Basket;
-use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
+use App\Models\History\History;
+use App\Models\History\HistoryMainEntity;
 use App\Models\OmsModel;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -17,6 +18,7 @@ use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -34,14 +36,13 @@ use Illuminate\Support\Collection;
  * @property int $added_bonus
  * @property array $certificates
  *
- * @property int $delivery_type - тип доставки (одним отправлением, несколькими отправлениями)
+ * @property int $delivery_type - тип доставки (см. \App\Models\Delivery\DeliveryType)
  * @property float $delivery_price - стоимость доставки iBT (с учетом скидки)
  * @property float $delivery_cost - стоимость доставки iBT (без учета скидки)
- * @property string $delivery_comment - комментарий к доставке
  *
- * @property int $status - статус
+ * @property int $status - статус (см. \App\Models\Order\OrderStatus)
  * @property Carbon|null $status_at - дата установки статуса заказа
- * @property int $payment_status - статус оплаты
+ * @property int $payment_status - статус оплаты (см. \App\Models\Payment\PaymentStatus)
  * @property Carbon|null $payment_status_at - дата установки статуса оплаты
  * @property int $is_problem - флаг, что заказ проблемный
  * @property Carbon|null $is_problem_at - дата установки флага проблемного заказа
@@ -49,16 +50,18 @@ use Illuminate\Support\Collection;
  * @property Carbon|null $is_canceled_at - дата установки флага отмены заказа
  * @property int $is_require_check - флаг, что заказ требует проверки
  * @property string $manager_comment - комментарий менеджера
+ * @property int $confirmation_type - тип подтверждения заказа (см. \App\Models\Order\OrderConfirmationType)
  *
  * @property string $number - номер
  *
  * @property Basket $basket - корзина
- * @property Collection|BasketItem[] $basketItems - элементы в корзине для заказа
  * @property Collection|Payment[] $payments - оплаты заказа
  * @property Collection|Delivery[] $deliveries - доставка заказа
  * @property OrderComment $comment - коментарий покупателя к заказу
  * @property Collection|OrderDiscount[] $discounts - скидки к заказу
  * @property Collection|OrderPromoCode[] $promoCodes - промокоды применённые к заказу
+ * @property Collection|OrderBonus[] $bonuses - бонусы применённые к заказу
+ * @property Collection|History[] $history - история изменений
  */
 class Order extends OmsModel
 {
@@ -133,6 +136,22 @@ class Order extends OmsModel
     }
 
     /**
+     * @return HasMany
+     */
+    public function bonuses(): HasMany
+    {
+        return $this->hasMany(OrderBonus::class, 'order_id');
+    }
+
+    /**
+     * @return MorphToMany
+     */
+    public function history(): MorphToMany
+    {
+        return $this->morphToMany(History::class, 'main_entity', (new HistoryMainEntity())->getTable());
+    }
+
+    /**
      * Учитывать те заказы, в которых использовалась скидка $discountId,
      * данная скидка должна быть либо активирована без промокода,
      * либо активирована промокодом, но со статусом ACTIVE
@@ -158,24 +177,36 @@ class Order extends OmsModel
         if (is_null($this->customer)) {
             /** @var CustomerService $customerService */
             $customerService = resolve(CustomerService::class);
-            $this->customer = $customerService->customers((new RestQuery())->setFilter('id', $this->customer_id))->first();
+            $query = (new RestQuery())
+                ->setFilter('id', $this->customer_id);
+            $this->customer = $customerService->customers($query)->first();
         }
         if (is_null($this->user)) {
             /** @var UserService $userService */
             $userService = resolve(UserService::class);
-            $this->user = $userService->users((new RestQuery())->setFilter('id', $this->customer->user_id))->first();
+            $query = (new RestQuery())
+                ->include('profile')
+                ->setFilter('id', $this->customer->user_id);
+            $this->user = $userService->users($query)->first();
         }
 
         return $this->user;
     }
 
     /**
-     * @todo брать почту пользователя оформившего заказ
+     * Получить телефон из профиля пользователя.
      * @return string
      */
-    public function customerEmail(): string
+    public function customerPhone(): string
     {
-        return 'mail@example.com';
+        $user = $this->getUser();
+        return $user->phone;
+    }
+
+    public function customerEmail(): ?string
+    {
+        $user = $this->getUser();
+        return $user->email;
     }
 
     /**

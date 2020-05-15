@@ -5,7 +5,7 @@ namespace App\Models\Order;
 /**
  * Статус заказа
  * Class OrderStatus
- * @package App\Models
+ * @package App\Models\Order
  */
 class OrderStatus
 {

@@ -23,6 +23,8 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @property float $qty - кол-во товара
  * @property float|null $price - цена элемента корзины со скидкой
  * @property float|null $cost - стоимость элемента корзины без скидок (offerCost * qty)
+ * @property int $bonus_spent - потраченные бонусы на элемент корзины ( * qty)
+ * @property int $bonus_discount - оплачено бонусами ( * qty)
  * @property int|null $referrer_id - ID РП, по чьей ссылке товар был добавлен в корзину
  * @property array $product - данные зависящие от типа товара
  *

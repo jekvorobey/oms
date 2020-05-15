@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\ApproveBonus;
 use App\Console\Commands\CancelExpiredOrders;
 use App\Console\Commands\CargoExport;
 use App\Console\Commands\CommitPayments;
@@ -35,6 +36,7 @@ class Kernel extends ConsoleKernel
         $schedule->command(CancelExpiredOrders::class)->everyMinute();
         $schedule->command(UpdateDeliveriesStatus::class)->everyTenMinutes();
         $schedule->command(CommitPayments::class)->hourly();
+        $schedule->command(ApproveBonus::class)->dailyAt('00:00');
         $this->cargoExportByStores($schedule);
     }
 
