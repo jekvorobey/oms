@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Delivery\Shipment;
+use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
@@ -68,7 +69,7 @@ class OrdersController extends Controller
 
         $offersIds = $data['offersIds'];
         $basketIds = BasketItem::whereIn('offer_id', $offersIds)->select('basket_id');
-        $orders = Order::whereIn('basket_id', $basketIds)->get();
+        $orders = Order::whereIn('basket_id', $basketIds)->with('deliveries')->get();
 
         return response()->json($orders, 200);
     }
