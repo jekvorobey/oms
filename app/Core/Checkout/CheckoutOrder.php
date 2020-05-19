@@ -122,6 +122,7 @@ class CheckoutOrder
         return DB::transaction(function () {
             $this->commitPrices();
             $order = $this->createOrder();
+            $this->debitingBonus($order);
             $this->createShipments($order);
             $this->createPayment($order);
             $this->createOrderDiscounts($order);
@@ -170,6 +171,23 @@ class CheckoutOrder
 
         $order->save();
         return $order;
+    }
+
+    /**
+     * @param Order $order
+     */
+    private function debitingBonus(Order $order)
+    {
+        $totalBonusSpent = 0;
+        $basket = $this->basket();
+        foreach ($basket->items as $item) {
+            $totalBonusSpent += $item->bonus_spent;
+        }
+
+        if ($totalBonusSpent > 0) {
+            $customerService = resolve(CustomerService::class);
+            $customerService->debitingBonus($this->customerId, (string)$order->id, $totalBonusSpent);
+        }
     }
 
     /**
