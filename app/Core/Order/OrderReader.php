@@ -7,7 +7,6 @@ use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
@@ -43,6 +42,12 @@ class OrderReader
 
     public function addInclude(Builder $query, RestQuery $restQuery): void
     {
+        if ($restQuery->isIncluded('basket')) {
+            $query->with('basket');
+        }
+        if ($restQuery->isIncluded('basketitem') || $restQuery->isIncluded('basket.items')) {
+            $query->with('basket.items');
+        }
         if ($restQuery->isIncluded('history')) {
             $query->with('history');
         }
@@ -63,6 +68,15 @@ class OrderReader
         }
         if ($restQuery->isIncluded('deliveries.shipments.packages')) {
             $query->with('deliveries.shipments.packages');
+        }
+        if ($restQuery->isIncluded('all')) {
+            $query->with('history')
+                ->with('basket.items')
+                ->with('promoCodes')
+                ->with('payments')
+                ->with('deliveries.shipments.basketItems')
+                ->with('deliveries.shipments.packages')
+                ->with('deliveries.shipments.cargo');
         }
     }
 
@@ -91,29 +105,6 @@ class OrderReader
     {
         if ($fields = $restQuery->getFields('order')) {
             $query->select($fields);
-        }
-
-        if ($restQuery->isIncluded('basket') || $restQuery->isIncluded('basketitem')) {
-            $query->with([
-                'basket' => function (Relation $query) use ($restQuery) {
-                    if ($basketFields = $restQuery->getFields('basket')) {
-                        $query->select(array_merge($basketFields, ['order_id']));
-                    } else {
-                        $query->select(['*']);
-                    }
-                    if ($restQuery->isIncluded('basketitem')) {
-                        $query->with([
-                            'items' => function (Relation $query) use ($restQuery) {
-                                if ($basketItemsFields = $restQuery->getFields('basketitem')) {
-                                    $query->select(array_merge($basketItemsFields, ['basket_id']));
-                                } else {
-                                    $query->select(['*']);
-                                }
-                            }
-                        ]);
-                    }
-                }
-            ]);
         }
     }
 
