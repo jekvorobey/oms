@@ -71,6 +71,10 @@ class Delivery extends OmsModel
         'delivery_at',
         'dt',
         'pdd',
+        'receiver_name',
+        'receiver_phone',
+        'receiver_email',
+        'delivery_address',
     ];
     
     /**
