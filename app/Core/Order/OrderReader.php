@@ -75,7 +75,7 @@ class OrderReader
                 ->with('promoCodes')
                 ->with('payments')
                 ->with('deliveries.shipments.basketItems')
-                ->with('deliveries.shipments.packages')
+                ->with('deliveries.shipments.packages.items.basketItem')
                 ->with('deliveries.shipments.cargo');
         }
     }
