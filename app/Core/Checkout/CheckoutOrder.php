@@ -186,7 +186,7 @@ class CheckoutOrder
 
         if ($totalBonusSpent > 0) {
             $customerService = resolve(CustomerService::class);
-            $customerService->debitingBonus($this->customerId, (string)$order->id, $totalBonusSpent);
+            $customerService->debitingBonus($this->customerId, $order->id, (string)$order->id, $totalBonusSpent);
         }
     }
 
