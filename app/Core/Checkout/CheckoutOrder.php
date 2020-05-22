@@ -231,6 +231,7 @@ class CheckoutOrder
             $customerBonus->status = CustomerBonusDto::STATUS_ON_HOLD;
             $customerBonus->type = CustomerBonusDto::TYPE_ORDER;
             $customerBonus->expiration_date = null; // Без ограничений для статуса STATUS_ON_HOLD
+            $customerBonus->order_id = $order->id;
             $customerBonusId = $customerService->createBonus($customerBonus);
 
             $bonus->status = OrderBonus::STATUS_ON_HOLD;
