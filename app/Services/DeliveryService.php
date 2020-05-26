@@ -19,6 +19,7 @@ use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
+use Greensight\Logistics\Dto\Order\CdekDeliveryOrderReceiptDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderBarcodesDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderCostDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderDto;
@@ -728,6 +729,36 @@ class DeliveryService
             );
 
             return $deliveryOrderBarcodesDto;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Получить квитанцию cdek для заказа на доставку
+     * @param  Shipment $shipment
+     * @return DeliveryOrderBarcodesDto|null
+     */
+    public function getShipmentCdekReceipt(Shipment $shipment): ?CdekDeliveryOrderReceiptDto
+    {
+        $delivery = $shipment->delivery;
+
+        if (!$delivery->xml_id) {
+            return null;
+        }
+        if ($shipment->status < ShipmentStatus::ASSEMBLED) {
+            return null;
+        }
+
+        try {
+            /** @var DeliveryOrderService $deliveryOrderService */
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
+            $cdekDeliveryOrderReceiptDto = $deliveryOrderService->cdekReceiptOrder(
+                $delivery->delivery_service,
+                $delivery->xml_id
+            );
+
+            return $cdekDeliveryOrderReceiptDto;
         } catch (Exception $e) {
             return null;
         }

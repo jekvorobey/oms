@@ -68,6 +68,24 @@ class DeliveryController extends Controller
             'point_id' => ['nullable', 'integer'],
             'number' => [new RequiredOnPost(), 'string'],
             'delivery_at' => [new RequiredOnPost(), 'date'],
+            'receiver_name' => ['nullable', 'string'],
+            'receiver_phone' => ['nullable', 'regex:/\+\d\(\d\d\d\)\s\d\d\d-\d\d-\d\d/'],
+            'receiver_email' => ['nullable', 'email'],
+            'delivery_address' => ['nullable', 'array'],
+            'delivery_address.country_code' => ['string', 'nullable'],
+            'delivery_address.post_index' => ['string', 'nullable'],
+            'delivery_address.region' => ['string', 'nullable'],
+            'delivery_address.region_guid' => ['string', 'nullable'],
+            'delivery_address.city' => ['string', 'nullable'],
+            'delivery_address.city_guid' => ['string', 'nullable'],
+            'delivery_address.street' => ['sometimes', 'string', 'nullable'],
+            'delivery_address.house' => ['sometimes', 'string', 'nullable'],
+            'delivery_address.block' => ['sometimes', 'string', 'nullable'],
+            'delivery_address.flat' => ['sometimes', 'string', 'nullable'],
+            'delivery_address.porch' => ['sometimes', 'string', 'nullable'],
+            'delivery_address.floor' => ['sometimes', 'string', 'nullable'],
+            'delivery_address.intercom' => ['sometimes', 'string', 'nullable'],
+            'delivery_address.comment' => ['sometimes', 'string', 'nullable'],
         ];
     }
     
@@ -222,9 +240,9 @@ class DeliveryController extends Controller
     public function countTodayByDeliveryServices(): JsonResponse
     {
         $deliveries = Delivery::query()
-            ->select('delivery_service', DB::raw('count(*) as total'))
+            ->select('delivery_service', DB::raw('DATE(created_at) day'), DB::raw('count(*) as total'))
             ->whereDate('created_at', now()->setTime(0, 0))
-            ->groupBy(['delivery_service', 'created_at'])
+            ->groupBy(['delivery_service', 'day'])
             ->get();
 
         return response()->json([

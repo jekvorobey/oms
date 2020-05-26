@@ -9,7 +9,6 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
-use App\Models\Order\Order;
 use App\Services\DeliveryService;
 use Greensight\CommonMsa\Dto\FileDto;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
@@ -445,6 +444,39 @@ class ShipmentsController extends Controller
                 ]);
             } else {
                 throw new HttpException(500, $deliveryOrderBarcodesDto->message);
+            }
+        }
+
+        throw new HttpException(500);
+    }
+
+    /**
+     * Получить квитанцию cdek для заказа на доставку
+     * @param  int  $id
+     * @param  DeliveryService  $deliveryService
+     * @param  FileService  $fileService
+     * @return JsonResponse
+     */
+    public function cdekReceipt(int $id, DeliveryService $deliveryService, FileService $fileService): JsonResponse
+    {
+        $shipment = $deliveryService->getShipment($id);
+        if (!$shipment) {
+            throw new NotFoundHttpException('shipment not found');
+        }
+        $cdekDeliveryOrderReceiptDto = $deliveryService->getShipmentCdekReceipt($shipment);
+
+        if ($cdekDeliveryOrderReceiptDto) {
+            if ($cdekDeliveryOrderReceiptDto->success && $cdekDeliveryOrderReceiptDto->file_id) {
+                /** @var FileDto $fileDto */
+                $fileDto = $fileService->getFiles([$cdekDeliveryOrderReceiptDto->file_id])->first();
+
+                return response()->json([
+                    'absolute_url' => $fileDto->absoluteUrl(),
+                    'original_name' => $fileDto->original_name,
+                    'size' => $fileDto->size,
+                ]);
+            } else {
+                throw new HttpException(500, $cdekDeliveryOrderReceiptDto->message);
             }
         }
 

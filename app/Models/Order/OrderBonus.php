@@ -79,7 +79,7 @@ class OrderBonus extends OmsModel
      */
     public function getExpirationDate()
     {
-        return $this->valid_period ? Carbon::now()->addDays($this->valid_period) : null;
+        return $this->valid_period ? Carbon::now()->addDays($this->valid_period + 1) : null;
     }
 
     /**

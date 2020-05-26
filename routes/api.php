@@ -189,6 +189,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::put('cancel','ShipmentsController@cancel');
                 Route::delete('','ShipmentsController@delete');
                 Route::get('barcodes', 'ShipmentsController@barcodes');
+                Route::get('cdek-receipt', 'ShipmentsController@cdekReceipt');
             });
         });
 
