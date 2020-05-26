@@ -240,9 +240,9 @@ class DeliveryController extends Controller
     public function countTodayByDeliveryServices(): JsonResponse
     {
         $deliveries = Delivery::query()
-            ->select('delivery_service', DB::raw('count(*) as total'))
+            ->select('delivery_service', DB::raw('DATE(created_at) day'), DB::raw('count(*) as total'))
             ->whereDate('created_at', now()->setTime(0, 0))
-            ->groupBy(['delivery_service', 'created_at'])
+            ->groupBy(['delivery_service', 'day'])
             ->get();
 
         return response()->json([
