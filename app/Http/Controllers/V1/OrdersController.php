@@ -392,6 +392,8 @@ class OrdersController extends Controller
                     'merchant_id' => $shipment->merchant_id,
                     'status' => $shipment->status,
                     'is_canceled' => $shipment->is_canceled,
+                    'is_canceled_at' => $shipment->is_canceled_at,
+                    'status_at' => $shipment->status_at,
                 ];
             }),
         ]);
