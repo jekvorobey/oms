@@ -866,12 +866,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-pim-lib.git",
-                "reference": "9a0b959bfe1e2f1673f84d4e80fa8a62422d8adf"
+                "reference": "c0067f0ab0098da89464a33c1c4301689d27cf88"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=9a0b959bfe1e2f1673f84d4e80fa8a62422d8adf",
-                "reference": "9a0b959bfe1e2f1673f84d4e80fa8a62422d8adf",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=c0067f0ab0098da89464a33c1c4301689d27cf88",
+                "reference": "c0067f0ab0098da89464a33c1c4301689d27cf88",
                 "shasum": ""
             },
             "require": {
@@ -895,7 +895,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2020-05-28T05:55:32+00:00"
+            "time": "2020-05-28T18:15:51+00:00"
         },
         {
             "name": "greensight/ibt-store-lib",
@@ -1725,16 +1725,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "2.34.2",
+            "version": "2.35.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/briannesbitt/Carbon.git",
-                "reference": "3e87404329b8072295ea11d548b47a1eefe5a162"
+                "reference": "4b9bd835261ef23d36397a46a76b496a458305e5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/3e87404329b8072295ea11d548b47a1eefe5a162",
-                "reference": "3e87404329b8072295ea11d548b47a1eefe5a162",
+                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/4b9bd835261ef23d36397a46a76b496a458305e5",
+                "reference": "4b9bd835261ef23d36397a46a76b496a458305e5",
                 "shasum": ""
             },
             "require": {
@@ -1794,7 +1794,7 @@
                 "datetime",
                 "time"
             ],
-            "time": "2020-05-19T22:14:16+00:00"
+            "time": "2020-05-24T18:27:52+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -2607,16 +2607,16 @@
         },
         {
             "name": "swagger-api/swagger-ui",
-            "version": "v3.25.4",
+            "version": "v3.25.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/swagger-api/swagger-ui.git",
-                "reference": "c845498f28bb8b2043e2c74114cb3c2887f8889e"
+                "reference": "28b7d7c54866f3581f0f703f3971422a09ebd649"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/c845498f28bb8b2043e2c74114cb3c2887f8889e",
-                "reference": "c845498f28bb8b2043e2c74114cb3c2887f8889e",
+                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/28b7d7c54866f3581f0f703f3971422a09ebd649",
+                "reference": "28b7d7c54866f3581f0f703f3971422a09ebd649",
                 "shasum": ""
             },
             "type": "library",
@@ -2660,7 +2660,7 @@
                 "swagger",
                 "ui"
             ],
-            "time": "2020-05-21T19:00:57+00:00"
+            "time": "2020-05-28T17:37:47+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",
@@ -3827,20 +3827,20 @@
         },
         {
             "name": "symfony/service-contracts",
-            "version": "v2.0.1",
+            "version": "v2.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/service-contracts.git",
-                "reference": "144c5e51266b281231e947b51223ba14acf1a749"
+                "reference": "66a8f0957a3ca54e4f724e49028ab19d75a8918b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/service-contracts/zipball/144c5e51266b281231e947b51223ba14acf1a749",
-                "reference": "144c5e51266b281231e947b51223ba14acf1a749",
+                "url": "https://api.github.com/repos/symfony/service-contracts/zipball/66a8f0957a3ca54e4f724e49028ab19d75a8918b",
+                "reference": "66a8f0957a3ca54e4f724e49028ab19d75a8918b",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.2.5",
+                "php": ">=7.2.5",
                 "psr/container": "^1.0"
             },
             "suggest": {
@@ -3849,7 +3849,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.0-dev"
+                    "dev-master": "2.1-dev"
                 }
             },
             "autoload": {
@@ -3881,7 +3881,7 @@
                 "interoperability",
                 "standards"
             ],
-            "time": "2019-11-18T17:27:11+00:00"
+            "time": "2020-05-20T17:43:50+00:00"
         },
         {
             "name": "symfony/translation",
@@ -3961,20 +3961,20 @@
         },
         {
             "name": "symfony/translation-contracts",
-            "version": "v2.0.1",
+            "version": "v2.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/translation-contracts.git",
-                "reference": "8cc682ac458d75557203b2f2f14b0b92e1c744ed"
+                "reference": "e5ca07c8f817f865f618aa072c2fe8e0e637340e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/translation-contracts/zipball/8cc682ac458d75557203b2f2f14b0b92e1c744ed",
-                "reference": "8cc682ac458d75557203b2f2f14b0b92e1c744ed",
+                "url": "https://api.github.com/repos/symfony/translation-contracts/zipball/e5ca07c8f817f865f618aa072c2fe8e0e637340e",
+                "reference": "e5ca07c8f817f865f618aa072c2fe8e0e637340e",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.2.5"
+                "php": ">=7.2.5"
             },
             "suggest": {
                 "symfony/translation-implementation": ""
@@ -3982,7 +3982,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.0-dev"
+                    "dev-master": "2.1-dev"
                 }
             },
             "autoload": {
@@ -4014,7 +4014,7 @@
                 "interoperability",
                 "standards"
             ],
-            "time": "2019-11-18T17:27:11+00:00"
+            "time": "2020-05-20T17:43:50+00:00"
         },
         {
             "name": "symfony/var-dumper",
