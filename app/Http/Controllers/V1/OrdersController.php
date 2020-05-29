@@ -65,11 +65,16 @@ class OrdersController extends Controller
     {
         $data = $request->validate([
             'offersIds' => 'array|required',
+            'perPage' => 'integer',
+            'page' => 'integer',
         ]);
 
         $offersIds = $data['offersIds'];
+        $perPage = $data['perPage'] ?? 5;
+        $page = $data['page'] ?? 1;
+        $offset = ($page-1) * $perPage;
         $basketIds = BasketItem::whereIn('offer_id', $offersIds)->select('basket_id');
-        $orders = Order::whereIn('basket_id', $basketIds)->with('deliveries')->get();
+        $orders = Order::whereIn('basket_id', $basketIds)->offset($offset)->limit($perPage)->with('deliveries')->get();
 
         return response()->json($orders, 200);
     }
