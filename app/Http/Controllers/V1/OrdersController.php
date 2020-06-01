@@ -74,7 +74,20 @@ class OrdersController extends Controller
         $page = $data['page'] ?? 1;
         $offset = ($page-1) * $perPage;
         $basketIds = BasketItem::whereIn('offer_id', $offersIds)->select('basket_id');
-        $orders = Order::whereIn('basket_id', $basketIds)->offset($offset)->limit($perPage)->with('deliveries')->get();
+        $basketItemsIds = BasketItem::whereIn('offer_id', $offersIds)->select('id');
+        $shipmentIds = ShipmentItem::whereIn('basket_item_id', $basketItemsIds)->select('shipment_id');
+        $deliveryIds = Shipment::whereIn('id', $shipmentIds)->select('delivery_id');
+        $orders = Order::whereIn('basket_id', $basketIds)
+            ->offset($offset)
+            ->limit($perPage)
+            ->with(
+            ['deliveries' => function($q) use ($deliveryIds)
+            {
+                $q->whereIn('id', $deliveryIds);
+            }
+            ])
+            ->has('deliveries')
+            ->get();
 
         return response()->json($orders, 200);
     }
