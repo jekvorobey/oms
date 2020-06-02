@@ -65,11 +65,29 @@ class OrdersController extends Controller
     {
         $data = $request->validate([
             'offersIds' => 'array|required',
+            'perPage' => 'integer',
+            'page' => 'integer',
         ]);
 
         $offersIds = $data['offersIds'];
+        $perPage = $data['perPage'] ?? 5;
+        $page = $data['page'] ?? 1;
+        $offset = ($page-1) * $perPage;
         $basketIds = BasketItem::whereIn('offer_id', $offersIds)->select('basket_id');
-        $orders = Order::whereIn('basket_id', $basketIds)->with('deliveries')->get();
+        $basketItemsIds = BasketItem::whereIn('offer_id', $offersIds)->select('id');
+        $shipmentIds = ShipmentItem::whereIn('basket_item_id', $basketItemsIds)->select('shipment_id');
+        $deliveryIds = Shipment::whereIn('id', $shipmentIds)->select('delivery_id');
+        $orders = Order::whereIn('basket_id', $basketIds)
+            ->offset($offset)
+            ->limit($perPage)
+            ->with(
+            ['deliveries' => function($q) use ($deliveryIds)
+            {
+                $q->whereIn('id', $deliveryIds);
+            }
+            ])
+            ->has('deliveries')
+            ->get();
 
         return response()->json($orders, 200);
     }
@@ -392,6 +410,8 @@ class OrdersController extends Controller
                     'merchant_id' => $shipment->merchant_id,
                     'status' => $shipment->status,
                     'is_canceled' => $shipment->is_canceled,
+                    'is_canceled_at' => $shipment->is_canceled_at,
+                    'status_at' => $shipment->status_at,
                 ];
             }),
         ]);

@@ -77,6 +77,7 @@ class Shipment extends OmsModel
         'number',
         'required_shipping_at',
         'assembly_problem_comment',
+        'delivery_service_zero_mile',
     ];
 
     /** @var string */

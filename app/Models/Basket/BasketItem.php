@@ -27,6 +27,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @property int $bonus_discount - оплачено бонусами ( * qty)
  * @property int|null $referrer_id - ID РП, по чьей ссылке товар был добавлен в корзину
  * @property array $product - данные зависящие от типа товара
+ * @property int|null $bundle_id - id бандла, в который входит этот товар
  *
  * @property-read Basket $basket
  * @property-read ShipmentItem $shipmentItem
