@@ -68,7 +68,6 @@ class OrdersController extends Controller
             'perPage' => 'integer',
             'page' => 'integer',
         ]);
-
         $offersIds = $data['offersIds'];
         $perPage = $data['perPage'] ?? 5;
         $page = $data['page'] ?? 1;
@@ -82,10 +81,9 @@ class OrdersController extends Controller
             ->whereIn('delivery.id', $deliveryIds)
             ->select('orders.*', 'delivery.delivery_at', 'delivery.number as delivery_number', 'delivery.receiver_name as receiver_name', 'delivery.delivery_address as delivery_address', 'delivery.status_xml_id as status_xml_id')
             ->offset($offset)
-            ->limit($perPage)
-            ->get();
+            ->limit($perPage);
 
-        return response()->json($orders, 200);
+        return response()->json($orders->get(), 200);
     }
 
     /**
