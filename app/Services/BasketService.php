@@ -62,18 +62,20 @@ class BasketService
 
     /**
      * Получить объект товар корзины, даже если его нет в БД
+     * @param  int  $basketId
      * @param  int  $offerId
+     * @param  int|null  $bundleId
      * @return BasketItem|null
      */
-    public function itemByOffer(int $basketId, int $offerId): ?BasketItem
+    public function itemByOffer(int $basketId, int $offerId, ?int $bundleId = null): ?BasketItem
     {
         $basket = $this->getBasket($basketId);
         if (is_null($basket)) {
             return null;
         }
 
-        $item = $basket->items->first(function (BasketItem $item) use ($offerId) {
-            return $item->offer_id == $offerId;
+        $item = $basket->items->first(function (BasketItem $item) use ($offerId, $bundleId) {
+            return $item->offer_id == $offerId && $bundleId && $item->bundle_id == $bundleId;
         });
 
         if (!$item) {
@@ -101,7 +103,7 @@ class BasketService
             return false;
         }
 
-        $item = $this->itemByOffer($basketId, $offerId);
+        $item = $this->itemByOffer($basketId, $offerId, $data['bundle_id'] ?? null);
         if (!$item) {
             return false;
         }
