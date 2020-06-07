@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
@@ -148,6 +149,14 @@ class Shipment extends OmsModel
     public function cargo(): BelongsTo
     {
         return $this->belongsTo(Cargo::class);
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function export(): HasOne
+    {
+        return $this->hasOne(ShipmentExport::class);
     }
 
     /**

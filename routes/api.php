@@ -157,6 +157,11 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('', 'ShipmentsController@read');
             Route::get('similar-unshipped-shipments', 'ShipmentsController@similarUnshippedShipments');
 
+            Route::prefix('exports')->group(function() {
+                Route::get('new', 'ShipmentsController@readNew');
+                Route::post('', 'ShipmentsController@createShipmentExport');
+            });
+
             Route::prefix('{id}')->group(function () {
                 Route::get('', 'ShipmentsController@read');
 

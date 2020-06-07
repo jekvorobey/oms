@@ -7,8 +7,10 @@ use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
+use App\Models\Delivery\ShipmentExport;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
+use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
 use Greensight\CommonMsa\Dto\FileDto;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
@@ -29,6 +31,7 @@ use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class ShipmentsController
@@ -544,5 +547,64 @@ class ShipmentsController extends Controller
         }
 
         return response('', 204);
+    }
+
+    public function readNew(Request $request): JsonResponse
+    {
+        $data = $this->validate($request, [
+            'merchantId' => 'required|int',
+        ]);
+        
+        $merchantId = $data['merchantId'];
+
+        $query = $this->modelClass()::with('basketItems')
+            ->where('merchant_id', $merchantId)
+            ->where('status', '>=', ShipmentStatus::ASSEMBLING)
+            ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
+            ->where(function($query) {
+                return $query->doesntHave('export')
+                    ->orWhereHas('export', function ($subquery) {
+                        return $subquery->whereNull('shipment_xml_id')->where('err_code', '!=', 500);
+                    });
+            });
+        
+        Log::info($query->toSql());
+
+        $items = $query->get();
+
+        return response()->json([
+            'items' => $items
+        ]);
+    }
+
+    public function createShipmentExport(Request $request): JsonResponse
+    {
+        $data = $this->validate($request, [
+            'shipment_id' => 'required|int',
+            'merchant_integration_id' => 'required|int',
+            'shipment_xml_id' => 'nullable|string',
+            'err_code' => 'nullable|int',
+            'err_message' => 'nullable|string'
+        ]);
+
+        /** @var ShipmentExport $shipmentExport */
+        $shipmentExport = ShipmentExport::whereNull('shipment_xml_id')
+            ->where('shipment_id', $data['shipment_id'])
+            ->where('merchant_integration_id', $data['merchant_integration_id'])
+            ->first();
+
+        if (!is_null($shipmentExport)) {
+            $shipmentExport->shipment_xml_id = $data['shipment_xml_id'];
+            $shipmentExport->err_code = $data['err_code'];
+            $shipmentExport->err_message = $data['err_message'];
+
+            $shipmentExport->save();
+        } else {
+            $shipmentExport = ShipmentExport::create($data);
+        }
+
+        return response()->json([
+            'id' => $shipmentExport->id
+        ], 201);
     }
 }
