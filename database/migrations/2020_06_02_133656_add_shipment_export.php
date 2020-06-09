@@ -23,7 +23,7 @@ class AddShipmentExport extends Migration
             $table->timestamps();
 
             $table->foreign('shipment_id')->references('id')->on('shipments');
-            $table->unique(['shipment_id', 'merchant_integration_id', 'shipment_xml_id'], 'shipment_merchant_xml_unique');
+            $table->unique(['shipment_id', 'merchant_integration_id']);
         });
 
     }

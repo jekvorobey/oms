@@ -31,7 +31,6 @@ use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Class ShipmentsController
@@ -557,7 +556,7 @@ class ShipmentsController extends Controller
         
         $merchantId = $data['merchantId'];
 
-        $query = $this->modelClass()::with('basketItems')
+        $items = $this->modelClass()::with('basketItems')
             ->where('merchant_id', $merchantId)
             ->where('status', '>=', ShipmentStatus::ASSEMBLING)
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
@@ -566,11 +565,8 @@ class ShipmentsController extends Controller
                     ->orWhereHas('export', function ($subquery) {
                         return $subquery->whereNull('shipment_xml_id')->where('err_code', '!=', 500);
                     });
-            });
-        
-        Log::info($query->toSql());
-
-        $items = $query->get();
+            })
+            ->get();
 
         return response()->json([
             'items' => $items
