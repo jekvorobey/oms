@@ -9,6 +9,7 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\OrderStatus;
+use App\Services\DeliveryService;
 use App\Services\OrderService;
 
 /**
@@ -71,6 +72,7 @@ class DeliveryObserver
         History::saveEvent(HistoryType::TYPE_UPDATE, $delivery->order, $delivery);
 
         $this->setStatusToShipments($delivery);
+        $this->setIsCanceledToShipments($delivery);
         $this->setStatusToOrder($delivery);
         $this->setIsCanceledToOrder($delivery);
         $this->notifyIfShipped($delivery);
@@ -154,6 +156,23 @@ class DeliveryObserver
             foreach ($delivery->shipments as $shipment) {
                 $shipment->status = self::STATUS_TO_SHIPMENTS[$delivery->status];
                 $shipment->save();
+            }
+        }
+    }
+
+    /**
+     * Установить флаг отмены всем отправлениям
+     * @param  Delivery $delivery
+     * @throws \Exception
+     */
+    protected function setIsCanceledToShipments(Delivery $delivery): void
+    {
+        if ($delivery->is_canceled && $delivery->is_canceled != $delivery->getOriginal('is_canceled')) {
+            $delivery->loadMissing('shipments');
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+            foreach ($delivery->shipments as $shipment) {
+                $deliveryService->cancelShipment($shipment);
             }
         }
     }
