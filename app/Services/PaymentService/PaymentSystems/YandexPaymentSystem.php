@@ -226,7 +226,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'description' => $item->name,
                 'quantity' => $item->qty,
                 'amount' => [
-                    'value' => number_format($item->price, 2, '.', ''),
+                    'value' => number_format($item->price / $item->qty, 2, '.', ''),
                     'currency' => self::CURRENCY_RUB,
                 ],
                 'vat_code' => 1,
