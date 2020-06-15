@@ -11,6 +11,8 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
+use Cms\Dto\OptionDto;
+use Cms\Services\OptionService\OptionService;
 use Exception;
 use Greensight\CommonMsa\Dto\AbstractDto;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
@@ -21,6 +23,7 @@ use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
 use Greensight\Logistics\Dto\Order\CdekDeliveryOrderReceiptDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderBarcodesDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderInput;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderCostDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderInputDto;
@@ -529,25 +532,58 @@ class DeliveryService
         $deliveryOrderCostDto->assessed_cost = $delivery->shipments->sum('cost');
 
         //Информация об отправителе заказа
-        /** @var IbtService $ibtService */
-        $ibtService = resolve(IbtService::class);
-        $centralStoreAddress = $ibtService->getCentralStoreAddress();
-        $senderDto = new SenderDto($centralStoreAddress);
-        $deliveryOrderInputDto->sender = $senderDto;
-        $senderDto->address_string = implode(', ', array_filter([
-            $senderDto->post_index,
-            $senderDto->region != $senderDto->city ? $senderDto->region : '',
-            $senderDto->area,
-            $senderDto->city,
-            $senderDto->street,
-            $senderDto->house,
-            $senderDto->block,
-            $senderDto->flat,
-        ]));
-        $senderDto->company_name = $ibtService->getCompanyName();
-        $senderDto->contact_name = $ibtService->getCentralStoreContactName();
-        $senderDto->email = $ibtService->getCentralStoreEmail();
-        $senderDto->phone = $ibtService->getCentralStorePhone();
+        if ($delivery->shipments->count() == 1) {
+            /**
+             * Если в доставке одно отправление, то в качестве данных отправителя указываем данные мерчанта
+             */
+            /** @var StoreService $storeService */
+            $storeService = resolve(StoreService::class);
+            /** @var MerchantService $merchantService */
+            $merchantService = resolve(MerchantService::class);
+            $shipment = $delivery->shipments[0];
+            $store = $storeService->store($shipment->store_id, $storeService->newQuery()->include('storeContact'));
+            $merchant = $merchantService->merchant($shipment->merchant_id);
+
+            $senderDto = new DeliveryOrderInput\SenderDto($store->address);
+            $deliveryOrderInputDto->sender = $senderDto;
+            $senderDto->is_seller = true;
+            $senderDto->company_name = $merchant->legal_name;
+            $senderDto->inn = $merchant->inn;
+            $storeContact = $store->storeContact[0];
+            $senderDto->contact_name = $storeContact->name;
+            $senderDto->email = $storeContact->email;
+            $senderDto->phone = $storeContact->phone;
+        } else {
+            /**
+             * Иначе указываем данные маркетплейса
+             */
+            /** @var OptionService $optionService */
+            $optionService = resolve(OptionService::class);
+            /** @var IbtService $ibtService */
+            $ibtService = resolve(IbtService::class);
+            //todo Переделать получение адреса склада iBT из OptionService
+            $centralStoreAddress = $ibtService->getCentralStoreAddress();
+            $senderDto = new DeliveryOrderInput\SenderDto($centralStoreAddress);
+            $deliveryOrderInputDto->sender = $senderDto;
+            $marketplaceData = $optionService->get([
+                OptionDto::KEY_ORGANIZATION_CARD_FULL_NAME,
+                OptionDto::KEY_ORGANIZATION_CARD_CEO_LAST_NAME,
+                OptionDto::KEY_ORGANIZATION_CARD_CEO_FIRST_NAME,
+                OptionDto::KEY_ORGANIZATION_CARD_CEO_MIDDLE_NAME,
+                OptionDto::KEY_ORGANIZATION_CARD_EMAIL_FOR_CLAIM,
+                OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE,
+                OptionDto::KEY_ORGANIZATION_CARD_FACT_ADDRESS,
+            ]);
+            $senderDto->address_string = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_FACT_ADDRESS];
+            $senderDto->company_name = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_FULL_NAME];
+            $senderDto->contact_name = join(' ', [
+                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_CEO_LAST_NAME],
+                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_CEO_FIRST_NAME],
+                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_CEO_MIDDLE_NAME]
+            ]);
+            $senderDto->email = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_EMAIL_FOR_CLAIM];
+            $senderDto->phone = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE];
+        }
 
         //Для самовывоза указываем адрес ПВЗ
         if (!$delivery->delivery_address && $delivery->point_id) {
