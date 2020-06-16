@@ -710,7 +710,7 @@ class DeliveryService
                         if ($deliveries->has($deliveryOrderStatusDto->number)) {
                             $delivery = $deliveries[$deliveryOrderStatusDto->number];
                             if ($deliveryOrderStatusDto->success) {
-                                if ($deliveryOrderStatusDto->status) {
+                                if ($deliveryOrderStatusDto->status && $delivery->status != $deliveryOrderStatusDto->status) {
                                     $delivery->status = $deliveryOrderStatusDto->status;
                                 }
                                 $delivery->setStatusXmlId(

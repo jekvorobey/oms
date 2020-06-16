@@ -149,8 +149,10 @@ class Delivery extends OmsModel
      */
     public function setStatusXmlId(string $status, Carbon $statusAt = null): self
     {
-        $this->status_xml_id = $status;
-        $this->status_xml_id_at = $statusAt ? : now();
+        if ($this->status_xml_id != $status || $this->status_xml_id_at != $statusAt) {
+            $this->status_xml_id = $status;
+            $this->status_xml_id_at = $statusAt ?: now();
+        }
 
         return $this;
     }
