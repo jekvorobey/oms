@@ -548,6 +548,7 @@ class DeliveryService
             $deliveryOrderInputDto->sender = $senderDto;
             $senderDto->is_seller = true;
             $senderDto->company_name = $merchant->legal_name;
+            $senderDto->store_id = $shipment->store_id;
             $senderDto->inn = $merchant->inn;
             $storeContact = $store->storeContact[0];
             $senderDto->contact_name = $storeContact->name;
