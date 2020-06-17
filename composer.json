@@ -39,6 +39,10 @@
         {
             "type": "vcs",
             "url": "https://gitlab.com/greensight/ibt-cm-lib"
+        },
+        {
+            "type": "vcs",
+            "url": "https://gitlab.com/greensight/ibt-cms-lib"
         }
     ],
     "require": {
@@ -47,6 +51,7 @@
         "darkaonline/l5-swagger": "5.8.*",
         "fideloper/proxy": "^4.0",
         "greensight/ibt-cm-lib": "dev-master",
+        "greensight/ibt-cms-lib": "dev-master",
         "greensight/ibt-common-lib": "dev-master",
         "greensight/ibt-logistics-lib": "dev-master",
         "greensight/ibt-marketing-lib": "dev-master",

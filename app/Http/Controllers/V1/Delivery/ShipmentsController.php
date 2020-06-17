@@ -97,7 +97,7 @@ class ShipmentsController extends Controller
         $orders = Shipment::query()
             ->select(['merchant_id', 'cost'])
             ->where([
-                ['updated_at', '>', $data['period']],
+                ['created_at', '>', $data['period']],
                 ['merchant_id', '=', $data['merchant_id']],
                 ['status', '>=', ShipmentStatus::AWAITING_CONFIRMATION],
                 ['status', '<=', ShipmentStatus::DONE],
@@ -131,7 +131,7 @@ class ShipmentsController extends Controller
         $orders = Shipment::query()
             ->select(['merchant_id', 'cost'])
             ->where([
-                ['updated_at', '>', $data['period']],
+                ['created_at', '>', $data['period']],
                 ['merchant_id', '=', $data['merchant_id']],
                 ['status', '=', ShipmentStatus::DONE],
             ]);
@@ -553,7 +553,7 @@ class ShipmentsController extends Controller
         $data = $this->validate($request, [
             'merchantId' => 'required|int',
         ]);
-        
+
         $merchantId = $data['merchantId'];
 
         $items = $this->modelClass()::with('basketItems')
