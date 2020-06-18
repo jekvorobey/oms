@@ -520,6 +520,9 @@ class DeliveryService
         $deliveryOrderDto->delivery_method = $delivery->delivery_method;
         $deliveryOrderDto->tariff_id = $delivery->tariff_id;
         $deliveryOrderDto->delivery_date = $delivery->delivery_at->format(AbstractDto::DATE_FORMAT);
+        $deliveryOrderDto->delivery_time_start = $delivery->delivery_time_start;
+        $deliveryOrderDto->delivery_time_end = $delivery->delivery_time_end;
+        $deliveryOrderDto->delivery_time_code = $delivery->delivery_time_code;
         $deliveryOrderDto->point_out_id = $delivery->point_id;
         $deliveryOrderDto->description = $recipientDto->comment;
 
