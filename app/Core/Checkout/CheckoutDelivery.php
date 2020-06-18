@@ -12,7 +12,7 @@ class CheckoutDelivery
     public $deliveryService;
     /** @var int */
     public $pointId;
-    
+
     /** @var array */
     public $deliveryAddress;
     /** @var string */
@@ -21,9 +21,18 @@ class CheckoutDelivery
     public $receiverPhone;
     /** @var string */
     public $receiverEmail;
-    
+
     /** @var string */
     public $selectedDate;
+
+    /** @var string */
+    public $deliveryTimeStart;
+
+    /** @var string */
+    public $deliveryTimeEnd;
+
+    /** @var string */
+    public $deliveryTimeCode;
     /** @var int */
     public $dt;
     /** @var string */
@@ -32,7 +41,7 @@ class CheckoutDelivery
     public $cost;
     /** @var CheckoutShipment[] */
     public $shipments;
-    
+
     public static function fromArray(array $data): self
     {
         $delivery = new self();
@@ -51,11 +60,11 @@ class CheckoutDelivery
             'cost' => $delivery->cost,
             'shipments' => $shipments,
         ] = $data);
-        
+
         foreach ($shipments as $shipmentData) {
             $delivery->shipments[] = CheckoutShipment::fromArray($shipmentData);
         }
-        
+
         return $delivery;
     }
 }
