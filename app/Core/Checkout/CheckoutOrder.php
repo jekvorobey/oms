@@ -267,6 +267,9 @@ class CheckoutOrder
 
             $delivery->point_id = $checkoutDelivery->pointId;
             $delivery->delivery_at = $checkoutDelivery->selectedDate;
+            $delivery->delivery_time_start = $checkoutDelivery->deliveryTimeStart;
+            $delivery->delivery_time_end = $checkoutDelivery->deliveryTimeEnd;
+            $delivery->delivery_time_code = $checkoutDelivery->deliveryTimeCode;
             $delivery->dt = $checkoutDelivery->dt;
             $delivery->pdd = $checkoutDelivery->pdd;
 
