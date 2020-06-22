@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Cargo;
+use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Services\Dto\Out\DocumentDto;
@@ -294,8 +295,14 @@ class DocumentService
             }
             $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
+            $deliveryId = Shipment::where('number', '=', $shipment->number)->first()->delivery_id;
+            $delivery = Delivery::find($deliveryId);
+            $deliveryAddress = $delivery->delivery_address;
+
             $fieldValues = [
                 'shipment_number' => $shipment->number,
+                'receiver_name' => $delivery->receiver_name,
+                'receiver_address' => $deliveryAddress['city'].' ,'.$deliveryAddress['street'].' ,'.$deliveryAddress['house'].' ,'.$deliveryAddress['flat'],
                 'table.total_product_qty' => qty_format($shipment->basketItems->sum('qty')),
                 'table.total_product_price_per_unit' => $shipment->basketItems->sum(function (BasketItem $basketItem) {
                     return $basketItem->price / $basketItem->qty;
