@@ -556,7 +556,7 @@ class ShipmentsController extends Controller
 
         $merchantId = $data['merchantId'];
 
-        $items = $this->modelClass()::with('basketItems')
+        $items = $this->modelClass()::with(['basketItems', 'delivery.order'])
             ->where('merchant_id', $merchantId)
             ->where('status', '>=', ShipmentStatus::ASSEMBLING)
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])

@@ -49,10 +49,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'value' => number_format($order->price, 2, '.', ''),
                 'currency' => self::CURRENCY_RUB,
             ],
-            'payment_method_data' => [
-                'type' => 'bank_card',
-                // важно! при смене способа оплаты может поменяться максимальный срок холдирования
-            ],
             'capture' => false,
             'confirmation' => [
                 'type' => 'redirect',
