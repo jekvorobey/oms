@@ -134,6 +134,11 @@ class DocumentService
     {
         $documentDto = new DocumentDto();
 
+        /** @var MerchantService $merchantService */
+        $merchantService = resolve(MerchantService::class);
+        /** @var ListsService $listsService */
+        $listsService = resolve(ListsService::class);
+
         try {
             $templateProcessor = $this->getTemplateProcessor(self::ACCEPTANCE_ACT);
             $cargo->loadMissing('shipments.basketItems', 'shipments.packages.items.basketItem');
@@ -190,12 +195,22 @@ class DocumentService
             }
             $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
+            $logisticOperator = $listsService->deliveryService($cargo->delivery_service);
+            $merchant = $merchantService->merchant($cargo->merchant_id);
+            setlocale(LC_TIME, "ru_RU.UTF-8");
+
             $tableTotalRow = [
                 'table.total_shipment_cost' => price_format($totalShipmentCost),
                 'table.total_shipment_packages' => $totalShipmentPackages,
                 'table.total_product_qty' => qty_format($totalProductQty),
                 'table.total_product_weight' => $totalProductWeight,
                 'table.total_product_price' => price_format($totalProductPrice),
+                'act_date' => strftime('%d %B %Y'),
+                'act_id' => $cargo->id,
+                'merchant_name' => $merchant->legal_name,
+                'merchant_id' => $merchant->id,
+                'merchant_register_date' => strftime('%d %B %Y', strtotime($merchant->created_at)),
+                'logistic_operator_name' => $logisticOperator->legal_info_company_name ?? $logisticOperator->name,
             ];
             $templateProcessor->setValues($tableTotalRow);
 
