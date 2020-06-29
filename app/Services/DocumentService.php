@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpWord\TemplateProcessor;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\ProductService\ProductService;
+use MerchantManagement\Services\MerchantService\MerchantService;
 
 /**
  * Сервис для формирования документов
@@ -45,6 +46,10 @@ class DocumentService
     {
         $documentDto = new DocumentDto();
 
+        /** @var MerchantService $merchantService */
+        $merchantService = resolve(MerchantService::class);
+        /** @var ListsService $listsService */
+        $listsService = resolve(ListsService::class);
         try {
             $templateProcessor = $this->getTemplateProcessor(self::ACCEPTANCE_ACT);
             $shipment->loadMissing('basketItems', 'packages.items.basketItem');
@@ -82,6 +87,13 @@ class DocumentService
             }
             $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
+            $deliveryId = Shipment::where('number', '=', $shipment->number)->first()->delivery_id;
+            $deliveryServiceId = Delivery::find($deliveryId)->delivery_service;
+            $logisticOperator = $listsService->deliveryService($deliveryServiceId);
+
+            $merchant = $merchantService->merchant($shipment->merchant_id);
+            setlocale(LC_TIME, "ru_RU.UTF-8");
+
             $tableTotalRow = [
                 'table.total_shipment_cost' => price_format($shipment->cost),
                 'table.total_shipment_packages' => $shipment->packages->count(),
@@ -91,6 +103,12 @@ class DocumentService
                         g2kg($basketItem->qty * $basketItem->product['weight']) : 0;
                 }),
                 'table.total_product_price' => price_format($shipment->basketItems->sum('price')),
+                'act_date' => strftime('%d %B %Y'),
+                'act_id' => $shipment->id,
+                'merchant_name' => $merchant->legal_name,
+                'merchant_id' => $merchant->id,
+                'merchant_register_date' => strftime('%d %B %Y', strtotime($merchant->created_at)),
+                'logistic_operator_name' => $logisticOperator->legal_info_company_name ?? $logisticOperator->name,
             ];
             $templateProcessor->setValues($tableTotalRow);
 
@@ -115,6 +133,11 @@ class DocumentService
     public function getCargoAcceptanceAct(Cargo $cargo): DocumentDto
     {
         $documentDto = new DocumentDto();
+
+        /** @var MerchantService $merchantService */
+        $merchantService = resolve(MerchantService::class);
+        /** @var ListsService $listsService */
+        $listsService = resolve(ListsService::class);
 
         try {
             $templateProcessor = $this->getTemplateProcessor(self::ACCEPTANCE_ACT);
@@ -172,12 +195,22 @@ class DocumentService
             }
             $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
+            $logisticOperator = $listsService->deliveryService($cargo->delivery_service);
+            $merchant = $merchantService->merchant($cargo->merchant_id);
+            setlocale(LC_TIME, "ru_RU.UTF-8");
+
             $tableTotalRow = [
                 'table.total_shipment_cost' => price_format($totalShipmentCost),
                 'table.total_shipment_packages' => $totalShipmentPackages,
                 'table.total_product_qty' => qty_format($totalProductQty),
                 'table.total_product_weight' => $totalProductWeight,
                 'table.total_product_price' => price_format($totalProductPrice),
+                'act_date' => strftime('%d %B %Y'),
+                'act_id' => $cargo->id,
+                'merchant_name' => $merchant->legal_name,
+                'merchant_id' => $merchant->id,
+                'merchant_register_date' => strftime('%d %B %Y', strtotime($merchant->created_at)),
+                'logistic_operator_name' => $logisticOperator->legal_info_company_name ?? $logisticOperator->name,
             ];
             $templateProcessor->setValues($tableTotalRow);
 
