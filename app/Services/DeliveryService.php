@@ -426,6 +426,7 @@ class DeliveryService
     /**
      * Сохранить (создать или обновить) заказ на доставку с службе доставке
      * @param  Delivery  $delivery
+     * @throws Exception
      */
     public function saveDeliveryOrder(Delivery $delivery): void
     {
@@ -438,7 +439,7 @@ class DeliveryService
                 ShipmentStatus::ASSEMBLING,
                 ShipmentStatus::ASSEMBLED,
             ])) {
-                return;
+                throw new Exception('Не все отправления доставки подтверждены мерчантами');
             }
         }
 
