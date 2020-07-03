@@ -179,6 +179,7 @@ return [
         \Greensight\Logistics\LogisticsLibServiceProvider::class,
         \Greensight\Marketing\MarketingLibServiceProvider::class,
         \Greensight\Customer\CustomerLibServiceProvider::class,
+        \Cms\CmsLibServiceProvider::class,
         L5Swagger\L5SwaggerServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
         // App\Providers\BroadcastServiceProvider::class,
