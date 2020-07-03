@@ -5,6 +5,8 @@ namespace App\Models\Basket;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\OmsModel;
+use App\Services\PublicEventService\Cart\PublicEventCartRepository;
+use App\Services\PublicEventService\Cart\PublicEventCartStruct;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -113,8 +115,23 @@ class BasketItem extends OmsModel
                 $product['store_id'] = $offerInfo->stocks->sortBy('qty')[0]->store_id;
                 $this->product = $product;
             }
+        } elseif ($this->type == Basket::TYPE_MASTER) {
+            [$totalCount, $cardStructs] = (new PublicEventCartRepository())->query()
+                ->whereOfferIds([$this->offer_id])
+                ->get();
+            if (!$totalCount) {
+                throw new BadRequestHttpException('PublicEvent not found');
+            }
+
+            /** @var PublicEventCartStruct $publicEventCartStruct */
+            $publicEventCartStruct = $cardStructs[0];
+            $this->name = $publicEventCartStruct->name;
+            $this->product = array_merge($this->product, [
+                'sprint_id' => $publicEventCartStruct->sprintId,
+                'ticket_type_name' => $publicEventCartStruct->getNameByOfferId($this->offer_id),
+            ]);
         } else {
-            throw new Exception('Masterclass type is not supported yet...');
+            throw new Exception('Undefined basket type');
         }
     }
 }

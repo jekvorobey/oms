@@ -304,6 +304,24 @@ class OrderReader
             $modifiedRestQuery->removeFilter('pdd');
         }
 
+        // Фильтр по id оффера
+        $offerIdFilter = $restQuery->getFilter('offer_id');
+        if ($offerIdFilter) {
+            [$op, $value] = $offerIdFilter[0];
+
+            $query->whereHas('basket', function (Builder $query) use ($op, $value) {
+                $query->whereHas('items', function (Builder $query) use ($op, $value) {
+                    if (is_array($value)) {
+                        $query->whereIn('offer_id', $value);
+                    } else {
+                        $query->where('offer_id', $op, $value);
+                    }
+                });
+            });
+
+            $modifiedRestQuery->removeFilter('offer_id');
+        }
+
         foreach ($modifiedRestQuery->filterIterator() as [$field, $op, $value]) {
             if ($op == '=' && is_array($value)) {
                 $query->whereIn($field, $value);

@@ -230,12 +230,15 @@ class ShipmentObserver
         if ($shipment->status != $shipment->getOriginal('status') &&
             in_array($shipment->status, [ShipmentStatus::ASSEMBLING, ShipmentStatus::ASSEMBLED])
         ) {
-            $shipment->loadMissing('delivery.shipments');
-            $delivery = $shipment->delivery;
+            try {
+                $shipment->loadMissing('delivery.shipments');
+                $delivery = $shipment->delivery;
 
-            /** @var DeliveryService $deliveryService */
-            $deliveryService = resolve(DeliveryService::class);
-            $deliveryService->saveDeliveryOrder($delivery);
+                /** @var DeliveryService $deliveryService */
+                $deliveryService = resolve(DeliveryService::class);
+                $deliveryService->saveDeliveryOrder($delivery);
+            } catch (Exception $e) {
+            }
         }
     }
     
