@@ -184,6 +184,7 @@ class CheckoutOrder
         $order->customer_id = $this->customerId;
         $order->number = Order::makeNumber();
         $order->basket_id = $this->basketId;
+        $order->type = $this->basket()->type;
         $order->receiver_name = $this->receiverName;
         $order->receiver_email = $this->receiverEmail;
         $order->receiver_phone = $this->receiverPhone;

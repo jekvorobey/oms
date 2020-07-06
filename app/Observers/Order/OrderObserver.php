@@ -46,7 +46,6 @@ class OrderObserver
         History::saveEvent(HistoryType::TYPE_CREATE, $order, $order);
 
         $order->basket->is_belongs_to_order = true;
-        $order->type = $order->basket->type;
         $order->basket->save();
     }
 
