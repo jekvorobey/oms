@@ -140,9 +140,9 @@ class CheckoutOrder
 
     /**
      * @throws Exception
-     * @return int
+     * @return array
      */
-    public function save(): int
+    public function save(): array
     {
         return DB::transaction(function () {
             $this->commitPrices();
@@ -155,7 +155,7 @@ class CheckoutOrder
             $this->createOrderPromoCodes($order);
             $this->createOrderBonuses($order);
 
-            return $order->id;
+            return [$order->id, $order->number];
         });
     }
 
