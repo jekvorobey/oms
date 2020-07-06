@@ -4,6 +4,7 @@ namespace App\Core\Checkout;
 
 use App\Core\Order\OrderWriter;
 use App\Models\Basket\Basket;
+use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
@@ -16,7 +17,11 @@ use App\Models\Payment\PaymentSystem;
 use Exception;
 use Greensight\Customer\Dto\CustomerBonusDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Pim\Dto\PublicEvent\TicketDto;
+use Pim\Dto\PublicEvent\TicketStatus;
+use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 
 class CheckoutOrder
 {
@@ -25,6 +30,13 @@ class CheckoutOrder
     public $customerId;
     /** @var int */
     public $basketId;
+
+    /** @var string */
+    public $receiverName;
+    /** @var string */
+    public $receiverPhone;
+    /** @var string */
+    public $receiverEmail;
 
     // marketing data
     /** @var float */
@@ -62,12 +74,18 @@ class CheckoutOrder
     /** @var CheckoutDelivery[] */
     public $deliveries;
 
+    /** @var Collection|CheckoutPublicEvent[] */
+    public $publicEvents;
+
     public static function fromArray(array $data): self
     {
         $order = new self();
         @([
             'customerId' => $order->customerId,
             'basketId' => $order->basketId,
+            'receiverName' => $order->receiverName,
+            'receiverPhone' => $order->receiverPhone,
+            'receiverEmail' => $order->receiverEmail,
             'cost' => $order->cost,
             'price' => $order->price,
             'paymentMethodId' => $order->paymentMethodId,
@@ -83,7 +101,9 @@ class CheckoutOrder
             'deliveryTypeId' => $order->deliveryTypeId,
             'deliveryPrice' => $order->deliveryPrice,
             'deliveryCost' => $order->deliveryCost,
-            'deliveries' => $deliveries
+            'deliveries' => $deliveries,
+
+            'publicEvents' => $publicEvents,
         ] = $data);
 
         foreach ($prices as $priceData) {
@@ -93,6 +113,11 @@ class CheckoutOrder
 
         foreach ($deliveries as $deliveryData) {
             $order->deliveries[] = CheckoutDelivery::fromArray($deliveryData);
+        }
+
+        $order->publicEvents = collect();
+        foreach ($publicEvents as $publicEvent) {
+            $order->publicEvents->push(CheckoutPublicEvent::fromArray($publicEvent));
         }
 
         $order->promoCodes = [];
@@ -124,6 +149,7 @@ class CheckoutOrder
             $order = $this->createOrder();
             $this->debitingBonus($order);
             $this->createShipments($order);
+            $this->createTickets();
             $this->createPayment($order);
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
@@ -158,6 +184,9 @@ class CheckoutOrder
         $order->customer_id = $this->customerId;
         $order->number = Order::makeNumber();
         $order->basket_id = $this->basketId;
+        $order->receiver_name = $this->receiverName;
+        $order->receiver_email = $this->receiverEmail;
+        $order->receiver_phone = $this->receiverPhone;
         $order->confirmation_type = $this->confirmationTypeId;
         $order->cost = $this->cost;
         $order->price = $this->price;
@@ -247,6 +276,10 @@ class CheckoutOrder
      */
     private function createShipments(Order $order): void
     {
+        if (!$this->deliveries) {
+            return;
+        }
+
         $offerToBasketMap = $this->offerToBasketMap();
 
         $shipmentNumber = 1;
@@ -297,6 +330,65 @@ class CheckoutOrder
                     $shipmentItem->save();
                 }
             }
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function createTickets(): void
+    {
+        if (!$this->publicEvents) {
+            return;
+        }
+
+        /** @var PublicEventTicketService $ticketService */
+        $ticketService = resolve(PublicEventTicketService::class);
+
+        /** @var BasketItem[] $basketItems */
+        $basketItems = BasketItem::query()->where('basket_id', $this->basketId)->get();
+        /** @var Collection|CheckoutPublicEvent[] $publicEvents */
+        $publicEvents = $this->publicEvents->keyBy('offerId');
+        foreach ($basketItems as $basketItem) {
+            $product = $basketItem->product;
+
+            if (!$publicEvents->has($basketItem->offer_id)) {
+                throw new Exception("Не найдено билетов для offer_id={$basketItem->offer_id}");
+            }
+
+            $tickets = $publicEvents[$basketItem->offer_id]->tickets;
+            if ($basketItem->qty != $tickets->count()) {
+                throw new Exception("Кол-во билетов для offer_id={$basketItem->offer_id} из корзины не совпадает с чекаутом");
+            }
+
+            $ticketIds = [];
+            foreach ($tickets as $ticket) {
+                $ticketDto = new TicketDto();
+                $ticketDto->sprint_id = $product['sprint_id'];
+                $ticketDto->status_id = TicketStatus::STATUS_ACTIVE;
+                $ticketDto->type_id = $product['ticket_type_id'];
+                $ticketDto->first_name = $ticket->firstName;
+                $ticketDto->middle_name = $ticket->middleName;
+                $ticketDto->last_name = $ticket->lastName;
+                $ticketDto->phone = $ticket->phone;
+                $ticketDto->email = $ticket->email;
+                $ticketDto->profession_id = $ticket->professionId;
+
+                try {
+                    $ticketIds[] = $ticketService->createTicket($ticketDto);
+                } catch (Exception $e) {
+                    foreach ($ticketIds as $ticketId) {
+                        $ticketService->deleteTicket($ticketId);
+                    }
+
+                    throw new Exception("Ошибка при сохранении билета: {$e->getMessage()}");
+                }
+            }
+
+
+            $product['ticket_ids'][] = $ticketIds;
+            $basketItem->product = $product;
+            $basketItem->save();
         }
     }
 
