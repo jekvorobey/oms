@@ -5,8 +5,7 @@ namespace App\Services;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
-use App\Models\Payment\PaymentStatus;
-use Carbon\Carbon;
+use App\Services\PaymentService\PaymentService;
 
 /**
  * Класс-бизнес логики по работе с заказами (без чекаута и доставки)
@@ -39,10 +38,10 @@ class OrderService
         if (!$payment) {
             throw new \Exception("Оплата для заказа не найдена");
         }
-        $payment->status = PaymentStatus::PAID;
-        $payment->payed_at = Carbon::now();
+        /** @var PaymentService $paymentService */
+        $paymentService = resolve(PaymentService::class);
 
-        return $payment->save();
+        return $paymentService->pay($payment);
     }
 
     /**

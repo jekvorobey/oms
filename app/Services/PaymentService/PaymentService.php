@@ -38,6 +38,14 @@ class PaymentService
             return null;
         }
 
+        if ($payment->sum == 0) {
+            if (!$this->pay($payment)) {
+                throw new \Exception('Ошибка при автоматической оплате');
+            }
+
+            return null;
+        }
+
         $paymentSystem = $payment->paymentSystem();
         $hours = $paymentSystem->duration();
         if ($hours) {
@@ -47,6 +55,19 @@ class PaymentService
         $paymentSystem->createExternalPayment($payment, $returnUrl);
 
         return $paymentSystem->paymentLink($payment);
+    }
+
+    /**
+     * Установить статус оплаты "Оплачена"
+     * @param  Payment  $payment
+     * @return bool
+     */
+    public function pay(Payment $payment): bool
+    {
+        $payment->status = PaymentStatus::PAID;
+        $payment->payed_at = Carbon::now();
+
+        return $payment->save();
     }
 
     /**
