@@ -128,6 +128,7 @@ class BasketItem extends OmsModel
             $this->name = $publicEventCartStruct->name;
             $this->product = array_merge($this->product, [
                 'sprint_id' => $publicEventCartStruct->sprintId,
+                'ticket_type_id' => $publicEventCartStruct->getIdByOfferId($this->offer_id),
                 'ticket_type_name' => $publicEventCartStruct->getNameByOfferId($this->offer_id),
             ]);
         } else {
