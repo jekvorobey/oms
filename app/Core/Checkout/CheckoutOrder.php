@@ -339,7 +339,7 @@ class CheckoutOrder
      */
     private function createTickets(): void
     {
-        if (!$this->publicEvents) {
+        if ($this->publicEvents->isEmpty()) {
             return;
         }
 
