@@ -2,10 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Services\PaymentService\PaymentService;
+use Illuminate\Support\Collection;
+use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 
 /**
  * Класс-бизнес логики по работе с заказами (без чекаута и доставки)
@@ -126,5 +129,30 @@ class OrderService
         $order->is_problem = !$isAllShipmentsOk;
 
         return $order->save();
+    }
+
+    /**
+     * @param  Collection|Order[]  $orders
+     */
+    public function returnTickets(Collection $orders): void
+    {
+        if ($orders->isNotEmpty()) {
+            $ticketIds = [];
+
+            foreach ($orders as $order) {
+                if ($order->type == Basket::TYPE_MASTER) {
+                    $order->loadMissing('basket.items');
+                    foreach ($order->basket->items as $basketItem) {
+                        $ticketIds = array_merge($ticketIds, (array)$basketItem->getTicketIds());
+                    }
+                }
+            }
+
+            if ($ticketIds) {
+                /** @var PublicEventTicketService $ticketService */
+                $ticketService = resolve(PublicEventTicketService::class);
+                $ticketService->returnTickets($ticketIds);
+            }
+        }
     }
 }
