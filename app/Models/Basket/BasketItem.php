@@ -135,4 +135,36 @@ class BasketItem extends OmsModel
             throw new Exception('Undefined basket type');
         }
     }
+
+    /**
+     * Получить id билетов на мастер-классы
+     * @return array|null
+     */
+    public function getTicketIds(): ?array
+    {
+        if ($this->type == Basket::TYPE_MASTER) {
+            return isset($this->product['ticket_ids']) ? (array)$this->product['ticket_ids'] : null;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @param  array  $ticketIds
+     */
+    public function setTicketIds(array $ticketIds): void
+    {
+        $this->setProductField('ticket_ids', $ticketIds);
+    }
+
+    /**
+     * @param  string  $field
+     * @param $value
+     */
+    protected function setProductField(string $field, $value): void
+    {
+        $product = $this->product;
+        $product[$field] = $value;
+        $this->product = $product;
+    }
 }

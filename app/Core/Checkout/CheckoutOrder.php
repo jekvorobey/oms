@@ -363,33 +363,32 @@ class CheckoutOrder
             }
 
             $ticketIds = [];
-            foreach ($tickets as $ticket) {
-                $ticketDto = new TicketDto();
-                $ticketDto->sprint_id = $product['sprint_id'];
-                $ticketDto->status_id = TicketStatus::STATUS_ACTIVE;
-                $ticketDto->type_id = $product['ticket_type_id'];
-                $ticketDto->first_name = $ticket->firstName;
-                $ticketDto->middle_name = $ticket->middleName;
-                $ticketDto->last_name = $ticket->lastName;
-                $ticketDto->phone = $ticket->phone;
-                $ticketDto->email = $ticket->email;
-                $ticketDto->profession_id = $ticket->professionId;
+            try {
+                foreach ($tickets as $ticket) {
+                    $ticketDto = new TicketDto();
+                    $ticketDto->sprint_id = $product['sprint_id'];
+                    $ticketDto->status_id = TicketStatus::STATUS_ACTIVE;
+                    $ticketDto->type_id = $product['ticket_type_id'];
+                    $ticketDto->first_name = $ticket->firstName;
+                    $ticketDto->middle_name = $ticket->middleName;
+                    $ticketDto->last_name = $ticket->lastName;
+                    $ticketDto->phone = $ticket->phone;
+                    $ticketDto->email = $ticket->email;
+                    $ticketDto->profession_id = $ticket->professionId;
 
-                try {
                     $ticketIds[] = $ticketService->createTicket($ticketDto);
-                } catch (Exception $e) {
-                    foreach ($ticketIds as $ticketId) {
-                        $ticketService->deleteTicket($ticketId);
-                    }
-
-                    throw new Exception("Ошибка при сохранении билета: {$e->getMessage()}");
                 }
+
+
+                $basketItem->setTicketIds($ticketIds);
+                $basketItem->save();
+            } catch (Exception $e) {
+                foreach ($ticketIds as $ticketId) {
+                    $ticketService->deleteTicket($ticketId);
+                }
+
+                throw new Exception("Ошибка при сохранении билета: {$e->getMessage()}");
             }
-
-
-            $product['ticket_ids'][] = $ticketIds;
-            $basketItem->product = $product;
-            $basketItem->save();
         }
     }
 
