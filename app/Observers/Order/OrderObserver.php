@@ -11,6 +11,7 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
+use App\Services\OrderService;
 
 /**
  * Class OrderObserver
@@ -64,6 +65,7 @@ class OrderObserver
         $this->notifyIfOrderPaid($order);
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
+        $this->returnTickets($order);
     }
 
     /**
@@ -259,6 +261,19 @@ class OrderObserver
                     $shipment->save();
                 }
             }
+        }
+    }
+
+    /**
+     * Установить статус заказа всем доставкам и отправлениями.
+     * @param  Order $order
+     */
+    protected function returnTickets(Order $order): void
+    {
+        if ($order->payment_status != $order->getOriginal('payment_status') && $order->payment_status == PaymentStatus::TIMEOUT) {
+            /** @var OrderService $orderService */
+            $orderService = resolve(OrderService::class);
+            $orderService->returnTickets(collect($order));
         }
     }
 }

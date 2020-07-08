@@ -29,6 +29,11 @@ use Illuminate\Support\Collection;
  *
  * @property int $customer_id - id покупателя
  * @property int $basket_id - id корзины
+ * @property int $type - тип заказа (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)
+ *
+ * @property string $receiver_name - имя получателя (используемся только при покупке мастер-классов)
+ * @property string $receiver_phone - телефон получателя (используемся только при покупке мастер-классов)
+ * @property string $receiver_email - e-mail получателя (используемся только при покупке мастер-классов)
  *
  * @property float $cost - стоимость (расчитывается автоматически)
  * @property float $price

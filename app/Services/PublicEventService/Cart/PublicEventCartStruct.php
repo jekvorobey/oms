@@ -38,4 +38,14 @@ class PublicEventCartStruct
     {
         return (string)$this->getFieldByOfferId($offerId, 'name');
     }
+
+    /**
+     * Получить id типа билета
+     * @param  int  $offerId
+     * @return int
+     */
+    public function getIdByOfferId(int $offerId): int
+    {
+        return (int)$this->getFieldByOfferId($offerId, 'id');
+    }
 }

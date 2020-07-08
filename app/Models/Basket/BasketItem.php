@@ -128,10 +128,43 @@ class BasketItem extends OmsModel
             $this->name = $publicEventCartStruct->name;
             $this->product = array_merge($this->product, [
                 'sprint_id' => $publicEventCartStruct->sprintId,
+                'ticket_type_id' => $publicEventCartStruct->getIdByOfferId($this->offer_id),
                 'ticket_type_name' => $publicEventCartStruct->getNameByOfferId($this->offer_id),
             ]);
         } else {
             throw new Exception('Undefined basket type');
         }
+    }
+
+    /**
+     * Получить id билетов на мастер-классы
+     * @return array|null
+     */
+    public function getTicketIds(): ?array
+    {
+        if ($this->type == Basket::TYPE_MASTER) {
+            return isset($this->product['ticket_ids']) ? (array)$this->product['ticket_ids'] : null;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * @param  array  $ticketIds
+     */
+    public function setTicketIds(array $ticketIds): void
+    {
+        $this->setProductField('ticket_ids', $ticketIds);
+    }
+
+    /**
+     * @param  string  $field
+     * @param $value
+     */
+    protected function setProductField(string $field, $value): void
+    {
+        $product = $this->product;
+        $product[$field] = $value;
+        $this->product = $product;
     }
 }

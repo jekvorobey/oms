@@ -11,10 +11,13 @@ class CheckoutController extends Controller
     public function commit(Request $request)
     {
         $checkoutOrder = CheckoutOrder::fromArray($request->all());
-        $orderId = $checkoutOrder->save();
-        
+        [$orderId, $orderNumber] = $checkoutOrder->save();
+
         return response()->json([
-            'orderId' => $orderId,
+            'item' => [
+                'order_id' => $orderId,
+                'order_number' => $orderNumber,
+            ],
         ]);
     }
 }

@@ -135,6 +135,7 @@ class OrdersSeeder extends Seeder
             $order = new Order();
             $order->basket_id = $basket->id;
             $order->customer_id = $basket->customer_id;
+            $order->type = $basket->type;
             $order->number = Order::makeNumber();
             $order->status = $faker->randomElement(OrderStatus::validValues());
             $order->created_at = $faker->dateTimeThisYear();

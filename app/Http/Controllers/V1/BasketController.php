@@ -126,6 +126,8 @@ class BasketController extends Controller
         $basket = $basketService->getBasket($basketId);
         $response = [
             'id' => $basket->id,
+            'type' => $basket->type,
+            'customer_id' => $basket->customer_id,
         ];
         if ($request->get('items')) {
             $response['items'] = $this->getItems($basket);
