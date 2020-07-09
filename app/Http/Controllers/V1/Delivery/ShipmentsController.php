@@ -550,14 +550,18 @@ class ShipmentsController extends Controller
 
     public function readNew(Request $request): JsonResponse
     {
-        $data = $this->validate($request, [
-            'merchantId' => 'required|int',
+        $restQuery = new RestQuery($request);
+
+        $this->validate($request, [
+            'filter.merchant_id' => 'required|int',
         ]);
 
-        $merchantId = $data['merchantId'];
+        /** @var Model|RestSerializable $modelClass */
+        $modelClass = $this->modelClass();
+        $query = $modelClass::modifyQuery($modelClass::query(), $restQuery);
 
-        $items = $this->modelClass()::with(['basketItems', 'delivery.order'])
-            ->where('merchant_id', $merchantId)
+        $items = $query
+            ->with(['basketItems', 'delivery.order'])
             ->where('status', '>=', ShipmentStatus::ASSEMBLING)
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
             ->where(function($query) {
