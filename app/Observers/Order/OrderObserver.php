@@ -4,6 +4,7 @@ namespace App\Observers\Order;
 
 use App\Core\OrderSmsNotify;
 use App\Models\Delivery\DeliveryStatus;
+use App\Models\Delivery\DeliveryType;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
@@ -12,6 +13,10 @@ use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
+use Greensight\Customer\Services\CustomerService\CustomerService;
+use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use MerchantManagement\Services\MerchantService\MerchantService;
 
 /**
  * Class OrderObserver
@@ -48,6 +53,8 @@ class OrderObserver
 
         $order->basket->is_belongs_to_order = true;
         $order->basket->save();
+
+        $this->sendCreatedNotification($order);
     }
 
     /**
@@ -66,6 +73,80 @@ class OrderObserver
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
         $this->returnTickets($order);
+        $this->sendNotification($order);
+    }
+
+    protected function sendCreatedNotification(Order $order)
+    {
+        $notificationService = app(ServiceNotificationService::class);
+        $customerService = app(CustomerService::class);
+
+        $user_id = $customerService
+            ->customers(
+                $customerService
+                    ->newQuery()
+                    ->setFilter('id', '=', $order->customer_id)
+            )
+            ->first()
+            ->user_id;
+
+        $notificationService->send(
+            $user_id,
+            'klient_oformlen_novyy_zakaz'
+        );
+    }
+
+    protected function sendNotification(Order $order)
+    {
+        $notificationService = app(ServiceNotificationService::class);
+        $customerService = app(CustomerService::class);
+
+        $user_id = $customerService
+            ->customers(
+                $customerService
+                    ->newQuery()
+                    ->setFilter('id', '=', $order->customer_id)
+            )
+            ->first()
+            ->user_id;
+
+        if($order->payment_status != $order->getOriginal('payment_status')) {
+            foreach($order->deliveries as $delivery) {
+                $notificationService->send(
+                    $user_id,
+                    $this->createPaymentNotificationType(
+                        $order->payment_status,
+                        $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                        $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
+                    )
+                );
+            }
+        }
+
+        if($order->status != $order->getOriginal('status')) {
+            foreach($order->deliveries as $delivery) {
+                $notificationService->send(
+                    $user_id,
+                    $this->createNotificationType(
+                        $order->status,
+                        $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                        $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
+                    )
+                );
+            }
+        }
+
+        if(($order->is_canceled != $order->getOriginal('is_canceled')) && $order->is_canceled) {
+            foreach($order->deliveries as $delivery) {
+                $notificationService->send(
+                    $user_id,
+                    $this->createCancelledNotificationType(
+                        $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                        $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
+                    )
+                );
+            }
+        }
     }
 
     /**
@@ -275,5 +356,63 @@ class OrderObserver
             $orderService = resolve(OrderService::class);
             $orderService->returnTickets(collect($order));
         }
+    }
+
+    protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat)
+    {
+        switch ($payment_status) {
+            case PaymentStatus::HOLD:
+                return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
+            case PaymentStatus::PAID:
+                return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
+        }
+    }
+
+    protected function createNotificationType(int $orderStatus, bool $consolidation, bool $postomat)
+    {
+        $slug = $this->intoStringStatus($orderStatus);
+        $slug = $this->appendTypeModifiers($slug, $consolidation, $postomat);
+
+        return $slug;
+    }
+
+    protected function intoStringStatus(int $orderStatus)
+    {
+        switch ($orderStatus) {
+            case OrderStatus::PRE_ORDER: 
+                return 'status_zakazapredzakaz_ozhidaem_postupleniya_tovara';
+            case OrderStatus::CREATED:
+                return 'status_zakazaoformlen';
+            case OrderStatus::DELIVERING:
+                return 'status_zakazav_protsesse_dostavki';
+            case OrderStatus::READY_FOR_RECIPIENT:
+                return 'status_zakazanakhoditsya_v_punkte_vydachi';
+            case OrderStatus::DONE:
+                return 'status_zakazadostavlen';
+            case OrderStatus::RETURNED:
+                return 'status_zakazavozvrashchen';
+        }
+    }
+
+    protected function appendTypeModifiers(string $slug, bool $consolidation, bool $postomat)
+    {
+        if($consolidation) {
+            $slug .= '_pri_konsolidatsii';
+        } else {
+            $slug .= '_bez_konsolidatsii';
+        }
+
+        if($postomat) {
+            $slug .= '_pvzpostamat';
+        } else {
+            $slug .= '_kurer';
+        }
+
+        return $slug;
+    }
+
+    protected function createCancelledNotificationType(bool $consolidation, bool $postomat)
+    {
+        return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
     }
 }
