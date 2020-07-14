@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
+use App\Services\Dto\Internal\OrderTicket;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
 use App\Services\PublicEventService\Email\PublicEventCartStruct;
@@ -167,17 +168,13 @@ class OrderService
     }
 
     /**
-     * Отправить билеты на мастер-классы на почту покупателю заказа
      * @param  Order  $order
+     * @return OrderTicket\OrderInfoDto|null
      */
-    public function sendTicketsEmail(Order $order): void
+    public function getTicketsInfo(Order $order): ?OrderTicket\OrderInfoDto
     {
         if (!$order->isPublicEventOrder()) {
-            return;
-        }
-
-        if (!$order->receiver_email) {
-            throw new \Exception('Не указан email-адрес получателя');
+            return null;
         }
 
         $order->loadMissing('basket.items');
@@ -190,16 +187,16 @@ class OrderService
             ->get();
 
         //Формируем данные для отправки e-mail
-        $orderInfoDto = new OrderInfoDto();
-        $orderInfoDto->setId($order->id);
-        $orderInfoDto->setNumber($order->number);
-        $orderInfoDto->setPrice($order->price);
+        $orderInfoDto = new OrderTicket\OrderInfoDto();
+        $orderInfoDto->id = $order->id;
+        $orderInfoDto->number = $order->number;
+        $orderInfoDto->price = $order->price;
         foreach ($cardStructs as $cardStruct) {
-            $publicEventInfoDto = new PublicEventInfoDto();
-            $orderInfoDto->addPublicEvent($publicEventInfoDto);
+            $publicEventInfoDto = new OrderTicket\PublicEventInfoDto();
+            $orderInfoDto->publicEvents->push($publicEventInfoDto);
 
-            $organizerInfoDto = new OrganizerInfoDto();
-            $publicEventInfoDto->setOrganizer($organizerInfoDto);
+            $organizerInfoDto = new OrderTicket\OrganizerInfoDto();
+            $publicEventInfoDto->organizer = $organizerInfoDto;
             $organizerInfoDto->name = $cardStruct->organizer['name'];
             $organizerInfoDto->description = $cardStruct->organizer['description'];
             $organizerInfoDto->phone = $cardStruct->organizer['phone'];
@@ -208,8 +205,8 @@ class OrderService
             $organizerInfoDto->messengerPhone = $cardStruct->organizer['messenger_phone'];
             foreach ($order->basket->items as $item) {
                 if ($cardStruct->sprintId == $item->getSprintId()) {
-                    $ticketsInfoDto = new TicketsInfoDto();
-                    $publicEventInfoDto->addTicket($ticketsInfoDto);
+                    $ticketsInfoDto = new OrderTicket\TicketsInfoDto();
+                    $publicEventInfoDto->tickets->push($ticketsInfoDto);
                     $ticketsInfoDto->name = $item->name;
                     $ticketsInfoDto->ticketTypeName = $item->getTicketTypeName();
                     $ticketsInfoDto->photoId = $cardStruct->image;
@@ -220,8 +217,8 @@ class OrderService
                     $ticketsInfoDto->ticketsQty = count($item->getTicketIds());
 
                     foreach ($cardStruct->speakers as $speaker) {
-                        $speakerInfoDto = new SpeakerInfoDto();
-                        $ticketsInfoDto->addSpeaker($speakerInfoDto);
+                        $speakerInfoDto = new OrderTicket\SpeakerInfoDto();
+                        $ticketsInfoDto->speakers->push($speakerInfoDto);
                         $speakerInfoDto->firstName = $speaker['first_name'];
                         $speakerInfoDto->middleName = $speaker['middle_name'];
                         $speakerInfoDto->lastName = $speaker['last_name'];
@@ -233,11 +230,71 @@ class OrderService
             }
         }
 
+        return $orderInfoDto;
+    }
+
+    /**
+     * Отправить билеты на мастер-классы на почту покупателю заказа
+     * @param  Order  $order
+     * @throws \Exception
+     */
+    public function sendTicketsEmail(Order $order): void
+    {
+        if (!$order->isPublicEventOrder()) {
+            return;
+        }
+
+        if (!$order->receiver_email) {
+            throw new \Exception('Не указан email-адрес получателя');
+        }
+
+        $internalOrderInfoDto = $this->getTicketsInfo($order);
+        //Формируем данные для отправки e-mail
+        $orderInfoDto = new OrderInfoDto();
+        $orderInfoDto->setId($internalOrderInfoDto->id);
+        $orderInfoDto->setNumber($internalOrderInfoDto->number);
+        $orderInfoDto->setPrice($internalOrderInfoDto->price);
+        foreach ($internalOrderInfoDto->publicEvents as $publicEvent) {
+            $publicEventInfoDto = new PublicEventInfoDto();
+            $orderInfoDto->addPublicEvent($publicEventInfoDto);
+
+            $organizerInfoDto = new OrganizerInfoDto();
+            $publicEventInfoDto->setOrganizer($organizerInfoDto);
+            $organizer = $publicEvent->organizer;
+            $organizerInfoDto->setName($organizer->name);
+            $organizerInfoDto->setDescription($organizer->description);
+            $organizerInfoDto->setPhone($organizer->phone);
+            $organizerInfoDto->setEmail($organizer->email);
+            $organizerInfoDto->setSite($organizer->site);
+            $organizerInfoDto->setMessengerPhone($organizer->messengerPhone);
+            foreach ($publicEvent->tickets as $ticket) {
+                $ticketsInfoDto = new TicketsInfoDto();
+                $publicEventInfoDto->addTicket($ticketsInfoDto);
+                $ticketsInfoDto->setName($ticket->name);
+                $ticketsInfoDto->setTicketTypeName($ticket->ticketTypeName);
+                $ticketsInfoDto->setPhotoId($ticket->photoId);
+                $ticketsInfoDto->setNearestDate($ticket->nearestDate);
+                $ticketsInfoDto->setNearestTimeFrom($ticket->nearestTimeFrom);
+                $ticketsInfoDto->setNearestPlaceName($ticket->nearestPlaceName);
+                $ticketsInfoDto->setPrice($ticket->price);
+                $ticketsInfoDto->setTicketsQty($ticket->ticketsQty);
+
+                foreach ($ticket->speakers as $speaker) {
+                    $speakerInfoDto = new SpeakerInfoDto();
+                    $ticketsInfoDto->addSpeaker($speakerInfoDto);
+                    $speakerInfoDto->setFirstName($speaker->firstName);
+                    $speakerInfoDto->setMiddleName($speaker->middleName);
+                    $speakerInfoDto->setLastName($speaker->lastName);
+                    $speakerInfoDto->setProfession($speaker->profession);
+                }
+            }
+        }
+
         $ticketEmailDto = new TicketEmailDto();
         $customerInfoDto = new CustomerInfoDto();
-        $customerInfoDto->name = $order->receiver_name;
-        $customerInfoDto->phone = $order->receiver_phone;
-        $customerInfoDto->email = $order->receiver_email;
+        $customerInfoDto->setName($order->receiver_name);
+        $customerInfoDto->setPhone($order->receiver_phone);
+        $customerInfoDto->setEmail($order->receiver_email);
         $ticketEmailDto->setCustomer($customerInfoDto);
         $ticketEmailDto->setOrder($orderInfoDto);
         $ticketEmailDto->addTo($order->receiver_email, $order->receiver_name);
