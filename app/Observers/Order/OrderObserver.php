@@ -66,7 +66,7 @@ class OrderObserver
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
         $this->returnTickets($order);
-        $this->endTicketsEmail($order);
+        $this->sendTicketsEmail($order);
     }
 
     /**
