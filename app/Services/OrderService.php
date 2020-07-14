@@ -176,15 +176,12 @@ class OrderService
             return;
         }
 
-        $customerInfoDto = new CustomerInfoDto();
-        $customerInfoDto->name = $order->receiver_name;
-        $customerInfoDto->phone = $order->receiver_phone;
         if (!$order->receiver_email) {
             throw new \Exception('Не указан email-адрес получателя');
         }
-        $customerInfoDto->email = $order->receiver_email;
 
         $order->loadMissing('basket.items');
+        //Получаем информацию по мастер-классам
         $offerIds = $order->basket->items->pluck('offer_id');
         /** @var PublicEventCartStruct[] $cardStructs */
         [$totalCount, $cardStructs] = (new PublicEventCartRepository())->query()
@@ -192,7 +189,9 @@ class OrderService
             ->pageNumber(1, $offerIds->count())
             ->get();
 
+        //Формируем данные для отправки e-mail
         $orderInfoDto = new OrderInfoDto();
+        $orderInfoDto->setId($order->id);
         $orderInfoDto->setNumber($order->number);
         $orderInfoDto->setPrice($order->price);
         foreach ($cardStructs as $cardStruct) {
@@ -210,13 +209,14 @@ class OrderService
             foreach ($order->basket->items as $item) {
                 if ($cardStruct->sprintId == $item->getSprintId()) {
                     $ticketsInfoDto = new TicketsInfoDto();
+                    $publicEventInfoDto->addTicket($ticketsInfoDto);
                     $ticketsInfoDto->name = $item->name;
                     $ticketsInfoDto->ticketTypeName = $item->getTicketTypeName();
                     $ticketsInfoDto->photoId = $cardStruct->image;
                     $ticketsInfoDto->nearestDate = $cardStruct->nearestDate;
                     $ticketsInfoDto->nearestTimeFrom = $cardStruct->nearestTimeFrom;
                     $ticketsInfoDto->nearestPlaceName = $cardStruct->nearestPlaceName;
-                    $ticketsInfoDto->price = $item->price;
+                    $ticketsInfoDto->price = (float)$item->price;
                     $ticketsInfoDto->ticketsQty = count($item->getTicketIds());
 
                     foreach ($cardStruct->speakers as $speaker) {
@@ -234,6 +234,10 @@ class OrderService
         }
 
         $ticketEmailDto = new TicketEmailDto();
+        $customerInfoDto = new CustomerInfoDto();
+        $customerInfoDto->name = $order->receiver_name;
+        $customerInfoDto->phone = $order->receiver_phone;
+        $customerInfoDto->email = $order->receiver_email;
         $ticketEmailDto->setCustomer($customerInfoDto);
         $ticketEmailDto->setOrder($orderInfoDto);
         $ticketEmailDto->addTo($order->receiver_email, $order->receiver_name);
