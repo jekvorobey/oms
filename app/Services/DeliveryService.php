@@ -355,7 +355,7 @@ class DeliveryService
                 );
                 if ($courierCallOutputDto->success) {
                     $cargo->xml_id = $courierCallOutputDto->xml_id;
-                    $cargo->error_xml_id = '';
+                    $cargo->shipping_problem_comment = $courierCallOutputDto->message;
                     break;
                 } elseif($courierCallOutputDto->message) {
                     $cargo->error_xml_id = $courierCallOutputDto->message;
@@ -416,9 +416,11 @@ class DeliveryService
         if ($cargo->xml_id) {
             /** @var CourierCallService $courierCallService */
             $courierCallService = resolve(CourierCallService::class);
-            $courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
+            $courierCallService
+                ->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
 
             $cargo->xml_id = '';
+            $cargo->shipping_problem_comment = 'Вызов курьера отменен';
             $cargo->save();
         }
     }
