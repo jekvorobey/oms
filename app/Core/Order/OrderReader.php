@@ -54,6 +54,9 @@ class OrderReader
         if ($restQuery->isIncluded('promoCodes')) {
             $query->with('promoCodes');
         }
+        if ($restQuery->isIncluded('discounts')) {
+            $query->with('discounts');
+        }
         if ($restQuery->isIncluded('deliveries')) {
             $query->with('deliveries');
         }
@@ -73,6 +76,7 @@ class OrderReader
             $query->with('history')
                 ->with('basket.items')
                 ->with('promoCodes')
+                ->with('discounts')
                 ->with('payments')
                 ->with('deliveries.shipments.basketItems')
                 ->with('deliveries.shipments.packages.items.basketItem')
@@ -320,6 +324,17 @@ class OrderReader
             });
 
             $modifiedRestQuery->removeFilter('offer_id');
+        }
+
+        // Фильтр по id скидки
+        $discountIdFilter = $restQuery->getFilter('discount_id');
+        if ($discountIdFilter) {
+            [$op, $value] = current($discountIdFilter);
+
+            $query->whereHas('discounts', function (Builder $query) use ($value, $op) {
+                $query->where('discount_id', $op, $value);
+            });
+            $modifiedRestQuery->removeFilter('discount_id');
         }
 
         foreach ($modifiedRestQuery->filterIterator() as [$field, $op, $value]) {
