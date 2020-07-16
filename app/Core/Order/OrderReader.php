@@ -326,16 +326,30 @@ class OrderReader
             $modifiedRestQuery->removeFilter('offer_id');
         }
 
-        // Фильтр по id скидки
+        // Фильтр по id скидки и суммы заказа с учетом данной скидки
         $discountIdFilter = $restQuery->getFilter('discount_id');
         if ($discountIdFilter) {
             [$op, $value] = current($discountIdFilter);
 
-            $query->whereHas('discounts', function (Builder $query) use ($value, $op) {
+            $query->whereHas('discounts', function (Builder $query) use ($value, $op, $restQuery) {
                 $query->where('discount_id', $op, $value);
+
+                $minPriceFilter = $restQuery->getFilter('min_price_for_current_discount');
+                if ($minPriceFilter) {
+                    [$op, $minPrice] = current($minPriceFilter);
+                    $query->whereRaw("`cost` - `change` >= ?", [$minPrice]);
+                }
+
+                $maxPriceFilter = $restQuery->getFilter('max_price_for_current_discount');
+                if ($maxPriceFilter) {
+                    [$op, $maxPrice] = current($maxPriceFilter);
+                    $query->whereRaw("`cost` - `change` <= ?", [$maxPrice]);
+                }
             });
             $modifiedRestQuery->removeFilter('discount_id');
         }
+        $modifiedRestQuery->removeFilter('min_price_for_current_discount');
+        $modifiedRestQuery->removeFilter('max_price_for_current_discount');
 
         foreach ($modifiedRestQuery->filterIterator() as [$field, $op, $value]) {
             if ($op == '=' && is_array($value)) {
