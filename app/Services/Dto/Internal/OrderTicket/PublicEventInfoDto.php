@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 class PublicEventInfoDto
 {
     /** @var Collection|TicketsInfoDto[] */
-    public $tickets;
+    public $ticketsInfo;
     /** @var OrganizerInfoDto */
     public $organizer;
 
@@ -20,6 +20,14 @@ class PublicEventInfoDto
      */
     public function __construct()
     {
-        $this->tickets = collect();
+        $this->ticketsInfo = collect();
+    }
+
+    /**
+     * @param  TicketsInfoDto  $ticketsInfoDto
+     */
+    public function addTicketInfo(TicketsInfoDto $ticketsInfoDto): void
+    {
+        $this->ticketsInfo->push($ticketsInfoDto);
     }
 }

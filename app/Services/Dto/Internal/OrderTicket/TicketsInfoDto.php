@@ -27,6 +27,35 @@ class TicketsInfoDto
     public $speakers;
     /** @var float */
     public $price;
+    /** @var float */
+    public $pricePerOne;
     /** @var int */
     public $ticketsQty;
+    /** @var Collection|TicketDto[] */
+    public $tickets;
+
+    /**
+     * TicketsInfoDto constructor.
+     */
+    public function __construct()
+    {
+        $this->speakers = collect();
+        $this->tickets = collect();
+    }
+
+    /**
+     * @param  SpeakerInfoDto  $speakerInfoDto
+     */
+    public function addSpeaker(SpeakerInfoDto $speakerInfoDto): void
+    {
+        $this->speakers->push($speakerInfoDto);
+    }
+
+    /**
+     * @param  TicketDto  $ticketDto
+     */
+    public function addTicket(TicketDto $ticketDto): void
+    {
+        $this->tickets->push($ticketDto);
+    }
 }

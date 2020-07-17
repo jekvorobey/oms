@@ -8,7 +8,6 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Order\Order;
-use App\Services\Dto\Internal\OrderTicket\OrderInfoDto;
 use App\Services\Dto\Out\DocumentDto;
 use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
@@ -377,8 +376,9 @@ class DocumentService
         try {
             $pdf = new Pdf();
 
-            $orderInfoDto = new OrderInfoDto();
-            $orderInfoDto->number = $order->number;
+            /** @var OrderService $orderService */
+            $orderService = resolve(OrderService::class);
+            $orderInfoDto = $orderService->getTicketsInfo($order, true);
 
             $html = view('pdf::ticket', [
                 'order' => $orderInfoDto,
@@ -392,6 +392,7 @@ class DocumentService
                 //Storage::disk(static::DISK)->delete($documentName);
             }
         } catch (Exception $e) {
+            dump($e);
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
         }

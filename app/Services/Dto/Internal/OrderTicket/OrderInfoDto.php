@@ -26,4 +26,12 @@ class OrderInfoDto
     {
         $this->publicEvents = collect();
     }
+
+    /**
+     * @param  PublicEventInfoDto  $publicEventInfoDto
+     */
+    public function addPublicEvent(PublicEventInfoDto $publicEventInfoDto): void
+    {
+        $this->publicEvents->push($publicEventInfoDto);
+    }
 }
