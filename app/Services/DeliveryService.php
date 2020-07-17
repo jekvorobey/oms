@@ -355,7 +355,7 @@ class DeliveryService
                 );
                 if ($courierCallOutputDto->success) {
                     $cargo->xml_id = $courierCallOutputDto->xml_id;
-                    $cargo->shipping_problem_comment = $courierCallOutputDto->message;
+                    $cargo->error_xml_id = $courierCallOutputDto->special_courier_call_status;
                     break;
                 } elseif($courierCallOutputDto->message) {
                     $cargo->error_xml_id = $courierCallOutputDto->message;
@@ -420,7 +420,25 @@ class DeliveryService
                 ->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
 
             $cargo->xml_id = '';
-            $cargo->shipping_problem_comment = 'Вызов курьера отменен';
+            $cargo->error_xml_id = '';
+            $cargo->save();
+        }
+    }
+
+    /**
+     * Проверить ошибки в заявке на вызов курьера во внешнем сервисе
+     * @param Cargo $cargo
+     */
+    public function checkExternalStatus(Cargo $cargo): void
+    {
+        if ($cargo->xml_id) {
+            /** @var CourierCallService $courierCallService */
+            $courierCallService = resolve(CourierCallService::class);
+            $status = $courierCallService
+                ->checkExternalStatus($cargo->delivery_service, $cargo->xml_id);
+
+            $cargo->error_xml_id = $status;
+            $cargo->updated_at = Carbon::now();
             $cargo->save();
         }
     }
