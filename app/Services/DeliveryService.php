@@ -355,7 +355,7 @@ class DeliveryService
                 );
                 if ($courierCallOutputDto->success) {
                     $cargo->xml_id = $courierCallOutputDto->xml_id;
-                    $cargo->error_xml_id = '';
+                    $cargo->shipping_problem_comment = $courierCallOutputDto->message;
                     break;
                 } elseif($courierCallOutputDto->message) {
                     $cargo->error_xml_id = $courierCallOutputDto->message;
@@ -416,9 +416,11 @@ class DeliveryService
         if ($cargo->xml_id) {
             /** @var CourierCallService $courierCallService */
             $courierCallService = resolve(CourierCallService::class);
-            $courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
+            $courierCallService
+                ->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
 
             $cargo->xml_id = '';
+            $cargo->shipping_problem_comment = 'Вызов курьера отменен';
             $cargo->save();
         }
     }
@@ -572,22 +574,22 @@ class DeliveryService
             $deliveryOrderInputDto->sender = $senderDto;
             $marketplaceData = $optionService->get([
                 OptionDto::KEY_ORGANIZATION_CARD_FULL_NAME,
-                OptionDto::KEY_ORGANIZATION_CARD_CEO_LAST_NAME,
-                OptionDto::KEY_ORGANIZATION_CARD_CEO_FIRST_NAME,
-                OptionDto::KEY_ORGANIZATION_CARD_CEO_MIDDLE_NAME,
-                OptionDto::KEY_ORGANIZATION_CARD_EMAIL_FOR_CLAIM,
-                OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE,
+                OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_LAST_NAME,
+                OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_FIRST_NAME,
+                OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_MIDDLE_NAME,
+                OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_EMAIL,
+                OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_PHONE,
                 OptionDto::KEY_ORGANIZATION_CARD_FACT_ADDRESS,
             ]);
             $senderDto->address_string = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_FACT_ADDRESS];
             $senderDto->company_name = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_FULL_NAME];
             $senderDto->contact_name = join(' ', [
-                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_CEO_LAST_NAME],
-                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_CEO_FIRST_NAME],
-                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_CEO_MIDDLE_NAME]
+                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_LAST_NAME],
+                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_FIRST_NAME],
+                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_MIDDLE_NAME]
             ]);
-            $senderDto->email = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_EMAIL_FOR_CLAIM];
-            $senderDto->phone = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE];
+            $senderDto->email = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_EMAIL];
+            $senderDto->phone = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_PHONE];
         }
 
         //Для самовывоза указываем адрес ПВЗ
