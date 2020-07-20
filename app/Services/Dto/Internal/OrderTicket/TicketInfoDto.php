@@ -3,10 +3,10 @@
 namespace App\Services\Dto\Internal\OrderTicket;
 
 /**
- * Class TicketDto
+ * Class TicketInfoDto
  * @package App\Services\Dto\Internal\OrderTicket
  */
-class TicketDto
+class TicketInfoDto
 {
     /** @var string */
     public $firstName;

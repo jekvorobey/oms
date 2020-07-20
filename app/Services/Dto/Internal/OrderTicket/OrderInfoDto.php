@@ -2,6 +2,7 @@
 
 namespace App\Services\Dto\Internal\OrderTicket;
 
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -14,6 +15,8 @@ class OrderInfoDto
     public $id;
     /** @var string */
     public $number;
+    /** @var Carbon */
+    public $createdAt;
     /** @var double */
     public $price;
     /** @var Collection|PublicEventInfoDto[] */

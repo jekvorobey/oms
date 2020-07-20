@@ -388,11 +388,10 @@ class DocumentService
             $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
             if (Storage::disk(static::DISK)->put($documentName, '')) {
                 $pdf->saveAs($documentPath);
-                //$this->saveDocument($documentDto, $documentPath, $documentName);
-                //Storage::disk(static::DISK)->delete($documentName);
+                $this->saveDocument($documentDto, $documentPath, $documentName);
+                Storage::disk(static::DISK)->delete($documentName);
             }
         } catch (Exception $e) {
-            dump($e);
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
         }

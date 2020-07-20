@@ -42,6 +42,6 @@ class OrderTicket2Pdf extends Command
         }
 
         $documentDto = $documentService->getOrderPdfTickets($order);
-        //$this->output->writeln($documentDto->success ? $documentDto->file_id : $documentDto->message);
+        $this->output->writeln($documentDto->success ? $documentDto->file_id : $documentDto->message);
     }
 }

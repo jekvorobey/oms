@@ -23,15 +23,13 @@ class TicketsInfoDto
     public $nearestTimeFrom;
     /** @var string */
     public $nearestPlaceName;
-    /** @var Collection|SpeakerInfoDto[] */
-    public $speakers;
     /** @var float */
     public $price;
     /** @var float */
     public $pricePerOne;
     /** @var int */
     public $ticketsQty;
-    /** @var Collection|TicketDto[] */
+    /** @var Collection|TicketInfoDto[] */
     public $tickets;
 
     /**
@@ -39,22 +37,13 @@ class TicketsInfoDto
      */
     public function __construct()
     {
-        $this->speakers = collect();
         $this->tickets = collect();
     }
 
     /**
-     * @param  SpeakerInfoDto  $speakerInfoDto
+     * @param  TicketInfoDto  $ticketDto
      */
-    public function addSpeaker(SpeakerInfoDto $speakerInfoDto): void
-    {
-        $this->speakers->push($speakerInfoDto);
-    }
-
-    /**
-     * @param  TicketDto  $ticketDto
-     */
-    public function addTicket(TicketDto $ticketDto): void
+    public function addTicket(TicketInfoDto $ticketDto): void
     {
         $this->tickets->push($ticketDto);
     }

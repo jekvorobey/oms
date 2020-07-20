@@ -59,6 +59,7 @@
         "greensight/ibt-message-lib": "dev-master",
         "greensight/ibt-pim-lib": "dev-master",
         "greensight/ibt-store-lib": "dev-master",
+        "jenssegers/date": "^4.0",
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",
         "mikehaertl/php-pdftk": "^0.8.1",
