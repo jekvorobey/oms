@@ -3,6 +3,7 @@
 namespace App\Observers\Order;
 
 use App\Core\OrderSmsNotify;
+use App\Models\Basket\BasketItem;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Delivery\ShipmentStatus;
@@ -13,6 +14,9 @@ use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
+use Cms\Dto\OptionDto;
+use Cms\Services\OptionService\OptionService;
+use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
@@ -92,7 +96,8 @@ class OrderObserver
 
         $notificationService->send(
             $user_id,
-            'klient_oformlen_novyy_zakaz'
+            'klientoformlen_novyy_zakaz',
+            $this->generateNotificationVariables($order)
         );
     }
 
@@ -118,7 +123,8 @@ class OrderObserver
                         $order->payment_status,
                         $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                         $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
-                    )
+                    ),
+                    $this->generateNotificationVariables($order)
                 );
             }
         }
@@ -131,7 +137,8 @@ class OrderObserver
                         $order->status,
                         $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                         $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
-                    )
+                    ),
+                    $this->generateNotificationVariables($order)
                 );
             }
         }
@@ -143,7 +150,8 @@ class OrderObserver
                     $this->createCancelledNotificationType(
                         $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                         $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
-                    )
+                    ),
+                    $this->generateNotificationVariables($order)
                 );
             }
         }
@@ -414,5 +422,46 @@ class OrderObserver
     protected function createCancelledNotificationType(bool $consolidation, bool $postomat)
     {
         return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
+    }
+
+    protected function generateNotificationVariables(Order $order)
+    {
+        $customerService = app(CustomerService::class);
+        $userService = app(UserService::class);
+        $optionService = app(OptionService::class);
+
+        $customer = $customerService->customers($customerService->newQuery()->setFilter('id', '=', $order->customer_id))->first();
+        $user = $userService->users($userService->newQuery()->setFilter('id', '=', $customer->user_id))->first();
+
+        $payment = $order->payments->first();
+
+        $link = $payment->paymentSystem()->paymentLink($payment);
+
+        $goods = $order->basket->items->map(function (BasketItem $item) {
+            return [
+                'name' => $item->name,
+                'price' => $item->price,
+                'count' => $item->qty,
+                'delivery' => DeliveryMethod::methodById($item->shipmentItem->shipment->delivery->delivery_method),
+            ];
+        });
+
+        return [
+            'ORDER_ID' => $order->id,
+            'FULL_NAME' => sprintf("%s %s %s", $user->last_name, $user->first_name, $user->middle_name),
+            'LINK_ACCOUNT' => sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
+            'LINK_PAY' => $link,
+            'ORDER_DATE' => $order->created_at->toDateString(),
+            'ORDER_TIME' => $order->created_at->toTimeString(),
+            'DELIVERY_TYPE' => DeliveryType::all()[$order->delivery_type]->name,
+            'DELIVERY_ADDRESS' => "",
+            'DELIVERY_DATE' => "",
+            'DELIVERY_TIME' => "",
+            'CALL_TK' => $optionService->get(OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE),
+            'CUSTOMER_NAME' => $user->first_name,
+            'ORDER_CONTACT_NUMBER' => $order->number,
+            'ORDER_TEXT' => $order->comment->text,
+            'goods' => $goods
+        ];
     }
 }
