@@ -12,6 +12,7 @@ use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
+use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Observers\Basket\BasketItemObserver;
 use App\Observers\Basket\BasketObserver;
@@ -23,6 +24,7 @@ use App\Observers\Delivery\ShipmentPackageItemObserver;
 use App\Observers\Delivery\ShipmentPackageObserver;
 use App\Observers\Order\OrderCommentObserver;
 use App\Observers\Order\OrderObserver;
+use App\Observers\Order\OrderReturnObserver;
 use App\Observers\Payment\PaymentObserver;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
@@ -72,6 +74,8 @@ class AppServiceProvider extends ServiceProvider
         Order::observe(OrderObserver::class);
         OrderComment::observe(OrderCommentObserver::class);
 
+        OrderReturn::observe(OrderReturnObserver::class);
+
         Delivery::observe(DeliveryObserver::class);
         Shipment::observe(ShipmentObserver::class);
         ShipmentItem::observe(ShipmentItemObserver::class);
@@ -90,6 +94,7 @@ class AppServiceProvider extends ServiceProvider
             Delivery::class,
             Order::class,
             OrderComment::class,
+            OrderReturn::class,
             Payment::class,
             Shipment::class,
             ShipmentItem::class,

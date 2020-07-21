@@ -5,10 +5,12 @@ namespace App\Models\Basket;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\OmsModel;
+use App\Models\Order\OrderReturnItem;
 use App\Services\PublicEventService\Cart\PublicEventCartRepository;
 use App\Services\PublicEventService\Cart\PublicEventCartStruct;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Pim\Services\OfferService\OfferService;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -34,17 +36,6 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @property-read Basket $basket
  * @property-read ShipmentItem $shipmentItem
  * @property-read ShipmentPackageItem $shipmentPackageItem
- *
- * @OA\Schema(
- *     schema="BasketItem",
- *     @OA\Property(property="id", type="integer", description="id оффера в корзине"),
- *     @OA\Property(property="basket_id", type="integer", description="id корзины"),
- *     @OA\Property(property="offer_id", type="integer", description="id предложения мерчанта"),
- *     @OA\Property(property="name", type="string", description="название товара"),
- *     @OA\Property(property="qty", type="integer", description="кол-во"),
- *     @OA\Property(property="price", type="number", description="цена за единицу товара с учетом скидки"),
- *     @OA\Property(property="cost", type="number", description="сумма за все кол-во товара без учета скидки"),
- * )
  */
 class BasketItem extends OmsModel
 {
@@ -84,6 +75,14 @@ class BasketItem extends OmsModel
     public function shipmentPackageItem(): HasOne
     {
         return $this->hasOne(ShipmentPackageItem::class);
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function orderReturnItems(): HasMany
+    {
+        return $this->hasMany(OrderReturnItem::class);
     }
 
     /**

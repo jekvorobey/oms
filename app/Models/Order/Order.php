@@ -66,6 +66,7 @@ use Illuminate\Support\Collection;
  * @property Collection|OrderDiscount[] $discounts - скидки к заказу
  * @property Collection|OrderPromoCode[] $promoCodes - промокоды применённые к заказу
  * @property Collection|OrderBonus[] $bonuses - бонусы применённые к заказу
+ * @property Collection|OrderReturn[] $orderReturns - возвраты по заказу
  * @property Collection|History[] $history - история изменений
  */
 class Order extends OmsModel
@@ -146,6 +147,14 @@ class Order extends OmsModel
     public function bonuses(): HasMany
     {
         return $this->hasMany(OrderBonus::class, 'order_id');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function orderReturns(): HasMany
+    {
+        return $this->hasMany(OrderReturn::class);
     }
 
     /**
