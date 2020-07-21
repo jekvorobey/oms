@@ -79,3 +79,4 @@ sftp-config.json
 storage/debugbar
 auth.json
 !storage/app/documents/*
+!views.pdf

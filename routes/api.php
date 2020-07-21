@@ -231,6 +231,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::delete('','CargoController@delete');
 
                 Route::prefix('courier-call')->group(function () {
+                    Route::get('check', 'CargoController@checkExternalStatus');
                     Route::post('', 'CargoController@createCourierCall');
                     Route::put('cancel', 'CargoController@cancelCourierCall');
                 });

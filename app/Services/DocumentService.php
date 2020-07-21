@@ -7,6 +7,7 @@ use App\Models\Delivery\Cargo;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackageItem;
+use App\Models\Order\Order;
 use App\Services\Dto\Out\DocumentDto;
 use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
@@ -14,10 +15,11 @@ use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use MerchantManagement\Services\MerchantService\MerchantService;
+use mikehaertl\wkhtmlto\Pdf;
 use PhpOffice\PhpWord\TemplateProcessor;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\ProductService\ProductService;
-use MerchantManagement\Services\MerchantService\MerchantService;
 
 /**
  * Сервис для формирования документов
@@ -26,6 +28,9 @@ use MerchantManagement\Services\MerchantService\MerchantService;
  */
 class DocumentService
 {
+    /** @var string */
+    const DISK = 'document-templates';
+    
     /** @var string - акт-претензия для отправления */
     public const CLAIM_ACT = 'claim-act.docx';
     /** @var string - акт приема-передачи отправления/груза*/
@@ -36,6 +41,9 @@ class DocumentService
     public const INVENTORY = 'inventory.docx';
     /** @var string - окончание в имени файла с шаблоном для программного заполнения данными */
     public const TEMPLATE_SUFFIX = '-template';
+
+    /** @var string */
+    public const TICKETS = 'order-tickets.pdf';
 
     /**
      * Сформировать "Акт приема-передачи по отправлению"
@@ -87,7 +95,7 @@ class DocumentService
             }
             $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
-            $deliveryId = Shipment::where('number', '=', $shipment->number)->first()->delivery_id;
+            $deliveryId = Shipment::query()->where('number', '=', $shipment->number)->first()->delivery_id;
             $deliveryServiceId = Delivery::find($deliveryId)->delivery_service;
             $logisticOperator = $listsService->deliveryService($deliveryServiceId);
 
@@ -113,10 +121,10 @@ class DocumentService
             $templateProcessor->setValues($tableTotalRow);
 
             $documentName = $this->getFileWithSuffix(self::ACCEPTANCE_ACT, '-' . $shipment->number);
-            $documentPath = Storage::disk('document-templates')->path('') . $documentName;
+            $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
             $templateProcessor->saveAs($documentPath);
             $this->saveDocument($documentDto, $documentPath, $documentName);
-            Storage::disk('document-templates')->delete($documentName);
+            Storage::disk(static::DISK)->delete($documentName);
         } catch (Exception $e) {
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
@@ -215,10 +223,10 @@ class DocumentService
             $templateProcessor->setValues($tableTotalRow);
 
             $documentName = $this->getFileWithSuffix(self::ACCEPTANCE_ACT, '-' . $cargo->id);
-            $documentPath = Storage::disk('document-templates')->path('') . $documentName;
+            $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
             $templateProcessor->saveAs($documentPath);
             $this->saveDocument($documentDto, $documentPath, $documentName);
-            Storage::disk('document-templates')->delete($documentName);
+            Storage::disk(static::DISK)->delete($documentName);
         } catch (Exception $e) {
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
@@ -280,10 +288,10 @@ class DocumentService
             $templateProcessor->setValues($fieldValues);
 
             $documentName = $this->getFileWithSuffix(self::ASSEMBLING_CARD, '-' . $shipment->number);
-            $documentPath = Storage::disk('document-templates')->path('') . $documentName;
+            $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
             $templateProcessor->saveAs($documentPath);
             $this->saveDocument($documentDto, $documentPath, $documentName);
-            Storage::disk('document-templates')->delete($documentName);
+            Storage::disk(static::DISK)->delete($documentName);
         } catch (Exception $e) {
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
@@ -328,7 +336,7 @@ class DocumentService
             }
             $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
-            $deliveryId = Shipment::where('number', '=', $shipment->number)->first()->delivery_id;
+            $deliveryId = Shipment::query()->where('number', '=', $shipment->number)->first()->delivery_id;
             $delivery = Delivery::find($deliveryId);
             $deliveryAddress = $delivery->delivery_address;
 
@@ -345,10 +353,44 @@ class DocumentService
             $templateProcessor->setValues($fieldValues);
 
             $documentName = $this->getFileWithSuffix(self::INVENTORY, '-' . $shipment->number);
-            $documentPath = Storage::disk('document-templates')->path('') . $documentName;
+            $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
             $templateProcessor->saveAs($documentPath);
             $this->saveDocument($documentDto, $documentPath, $documentName);
-            Storage::disk('document-templates')->delete($documentName);
+            Storage::disk(static::DISK)->delete($documentName);
+        } catch (Exception $e) {
+            $documentDto->success = false;
+            $documentDto->message = $e->getMessage();
+        }
+
+        return $documentDto;
+    }
+
+    /**
+     * @param  Order  $order
+     * @return DocumentDto
+     * @throws \Throwable
+     */
+    public function getOrderPdfTickets(Order $order): DocumentDto
+    {
+        $documentDto = new DocumentDto();
+        try {
+            $pdf = new Pdf();
+
+            /** @var OrderService $orderService */
+            $orderService = resolve(OrderService::class);
+            $orderInfoDto = $orderService->getTicketsInfo($order, true);
+
+            $html = view('pdf::ticket', [
+                'order' => $orderInfoDto,
+            ])->render();
+            $pdf->addPage($html, [], Pdf::TYPE_HTML);
+            $documentName = $this->getFileWithSuffix(self::TICKETS, '-' . $order->number);
+            $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
+            if (Storage::disk(static::DISK)->put($documentName, '')) {
+                $pdf->saveAs($documentPath);
+                $this->saveDocument($documentDto, $documentPath, $documentName);
+                Storage::disk(static::DISK)->delete($documentName);
+            }
         } catch (Exception $e) {
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
@@ -380,7 +422,7 @@ class DocumentService
     {
         $programTemplate = $this->getFileWithSuffix($template, self::TEMPLATE_SUFFIX);
 
-        return new TemplateProcessor(Storage::disk('document-templates')->path($programTemplate));
+        return new TemplateProcessor(Storage::disk(static::DISK)->path($programTemplate));
     }
 
     /**

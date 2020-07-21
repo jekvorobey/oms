@@ -142,11 +142,7 @@ class BasketItem extends OmsModel
      */
     public function getTicketIds(): ?array
     {
-        if ($this->type == Basket::TYPE_MASTER) {
-            return isset($this->product['ticket_ids']) ? (array)$this->product['ticket_ids'] : null;
-        } else {
-            return null;
-        }
+        return isset($this->product['ticket_ids']) ? (array)$this->product['ticket_ids'] : null;
     }
 
     /**
@@ -155,6 +151,22 @@ class BasketItem extends OmsModel
     public function setTicketIds(array $ticketIds): void
     {
         $this->setProductField('ticket_ids', $ticketIds);
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getSprintId(): ?int
+    {
+        return isset($this->product['sprint_id']) ? (int)$this->product['sprint_id'] : null;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTicketTypeName(): ?string
+    {
+        return isset($this->product['ticket_type_name']) ? (string)$this->product['ticket_type_name'] : null;
     }
 
     /**

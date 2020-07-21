@@ -235,4 +235,22 @@ class Order extends OmsModel
          */
         return $this->isPaid();
     }
+
+    /**
+     * Заказ является заказом с товарами?
+     * @return bool
+     */
+    public function isProductOrder(): bool
+    {
+        return $this->type == Basket::TYPE_PRODUCT;
+    }
+
+    /**
+     * Заказ является заказом с мастер-классами?
+     * @return bool
+     */
+    public function isPublicEventOrder(): bool
+    {
+        return $this->type == Basket::TYPE_MASTER;
+    }
 }

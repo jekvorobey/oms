@@ -66,6 +66,7 @@ class OrderObserver
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
         $this->returnTickets($order);
+        $this->sendTicketsEmail($order);
     }
 
     /**
@@ -265,7 +266,7 @@ class OrderObserver
     }
 
     /**
-     * Установить статус заказа всем доставкам и отправлениями.
+     * Вернуть остатки по билетам.
      * @param  Order $order
      */
     protected function returnTickets(Order $order): void
@@ -274,6 +275,20 @@ class OrderObserver
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->returnTickets(collect($order));
+        }
+    }
+
+    /**
+     * Отправить билеты на мастер-классы на почту покупателю заказа и всем участникам.
+     * @param  Order  $order
+     * @throws \Throwable
+     */
+    protected function sendTicketsEmail(Order $order): void
+    {
+        if ($order->payment_status != $order->getOriginal('payment_status') && $order->isPaid()) {
+            /** @var OrderService $orderService */
+            $orderService = resolve(OrderService::class);
+            $orderService->sendTicketsEmail($order);
         }
     }
 }
