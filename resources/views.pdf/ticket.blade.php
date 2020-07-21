@@ -98,9 +98,10 @@
                             </svg>
                         </div>
                         <div class="col col-3">
-                            <div style="height: 40px; border: 3px solid #141116; box-sizing: border-box; text-align: center;">
+                            {{--todo Доделать вставку кода - сейчас у масткр-классов их нет --}}
+                            {{--<div style="height: 40px; border: 3px solid #141116; box-sizing: border-box; text-align: center;">
                                 <span style="font-weight: bold; font-size: 28px; color: #141116;">0BST2020</span>
-                            </div>
+                            </div>--}}
                         </div>
                     </div>
                     <table style="margin-top: 40px;">
@@ -155,6 +156,7 @@
                         </tr>
                         <tr>
                             <td colspan="2" style="background: #F8F8F8; padding: 10px;">
+                                {{--todo Доделать вставку Я.Карты с точками мест --}}
                                 <span style="font-weight: bold; font-size: 26px; color: #141116; display: block">По всем вопросам и предложениям обращаться к организатору</span>
                                 <span style="font-weight: bold; font-size: 24px; color: #141116; display: block">{{$publicEvent->organizer->name}}</span>
                                 <span style="font-size: 20px; color: #7D7D7D; display: block">{{$publicEvent->organizer->description}}</span>

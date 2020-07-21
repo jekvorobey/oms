@@ -310,7 +310,7 @@ class OrderService
     /**
      * Отправить билеты на мастер-классы на почту покупателю заказа
      * @param  Order  $order
-     * @throws \Exception
+     * @throws \Throwable
      */
     public function sendTicketsEmail(Order $order): void
     {
@@ -372,6 +372,14 @@ class OrderService
         $ticketEmailDto->setCustomer($customerInfoDto);
         $ticketEmailDto->setOrder($orderInfoDto);
         $ticketEmailDto->addTo($order->receiver_email, $order->receiver_name);
+
+        /** @var DocumentService $documentService */
+        $documentService = resolve(DocumentService::class);
+        $documentDto = $documentService->getOrderPdfTickets($order);
+        if ($documentDto->success) {
+            $ticketEmailDto->addFileId($documentDto->file_id);
+        }
+
         /** @var MailService $mailService */
         $mailService = resolve(MailService::class);
         $mailService->send($ticketEmailDto);

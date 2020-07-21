@@ -855,12 +855,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-message-lib.git",
-                "reference": "e0f7000e32addccf6fd423af47192cbae06765b5"
+                "reference": "187998a83ba32a76efb5d0013002cc35aacae67e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-message-lib/repository/archive.zip?sha=e0f7000e32addccf6fd423af47192cbae06765b5",
-                "reference": "e0f7000e32addccf6fd423af47192cbae06765b5",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-message-lib/repository/archive.zip?sha=187998a83ba32a76efb5d0013002cc35aacae67e",
+                "reference": "187998a83ba32a76efb5d0013002cc35aacae67e",
                 "shasum": ""
             },
             "require": {
@@ -895,7 +895,7 @@
                 }
             ],
             "description": "iBT message client",
-            "time": "2020-07-20T15:50:37+00:00"
+            "time": "2020-07-21T09:20:36+00:00"
         },
         {
             "name": "greensight/ibt-pim-lib",

@@ -30,7 +30,7 @@ class OrderSendTicketsByEmail extends Command
     /**
      * Execute the console command.
      * @param OrderService $orderService
-     * @throws \Exception
+     * @throws \Throwable
      */
     public function handle(OrderService $orderService)
     {
