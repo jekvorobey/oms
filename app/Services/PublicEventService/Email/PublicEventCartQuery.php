@@ -79,6 +79,8 @@ class PublicEventCartQuery
             PublicEventQuery::NEAREST_TIME_FROM,
             PublicEventQuery::NEAREST_PLACE_NAME,
             PublicEventQuery::CATALOG_IMAGE,
+            PublicEventQuery::PLACES,
+            PublicEventQuery::STAGES,
         ]);
 
         return $this->repository->find($this);

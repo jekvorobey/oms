@@ -38,7 +38,7 @@ if (! function_exists('price_format')) {
      */
     function price_format(float $value): string
     {
-        return number_format($value, 2, '.', ' ');
+        return str_replace('.00', '', number_format($value, 2, '.', ' '));
     }
 }
 
@@ -52,5 +52,27 @@ if (! function_exists('qty_format')) {
     function qty_format(float $value): string
     {
         return number_format($value, 0, '.', ' ');
+    }
+}
+
+if (! function_exists('short_day_of_week')) {
+
+    /**
+     * @param  int  $dayNumber
+     * @return string
+     */
+    function short_day_of_week(int $dayNumber): string
+    {
+        $days = [
+            'вс',
+            'пн',
+            'вт',
+            'ср',
+            'чт',
+            'пт',
+            'сб',
+        ];
+
+        return isset($days[$dayNumber]) ? $days[$dayNumber] : '';
     }
 }

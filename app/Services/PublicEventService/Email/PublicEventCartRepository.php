@@ -56,6 +56,8 @@ class PublicEventCartRepository
             $card->name = $publicEvent[PublicEventQuery::NAME];
             $card->sprintId = $publicEvent[PublicEventQuery::SPRINT_ID];
             $card->speakers = $publicEvent[PublicEventQuery::SPEAKERS];
+            $card->places = $publicEvent[PublicEventQuery::PLACES];
+            $card->stages = $publicEvent[PublicEventQuery::STAGES];
             $card->organizer = $publicEvent[PublicEventQuery::ORGANIZER];
             $card->code = $publicEvent[PublicEventQuery::CODE];
             $card->active = $publicEvent[PublicEventQuery::ACTIVE];

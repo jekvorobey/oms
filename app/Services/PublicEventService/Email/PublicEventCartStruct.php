@@ -30,4 +30,8 @@ class PublicEventCartStruct
     public $nearestTimeFrom;
     /** @var string */
     public $nearestPlaceName;
+    /** @var array */
+    public $places;
+    /** @var array */
+    public $stages;
 }

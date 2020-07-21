@@ -280,7 +280,8 @@ class OrderObserver
 
     /**
      * Отправить билеты на мастер-классы на почту покупателю заказа и всем участникам.
-     * @param  Order $order
+     * @param  Order  $order
+     * @throws \Exception
      */
     protected function sendTicketsEmail(Order $order): void
     {
