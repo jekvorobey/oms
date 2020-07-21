@@ -153,6 +153,22 @@ class OrderObserver
                     ),
                     $this->generateNotificationVariables($order)
                 );
+
+                $notificationService->send(
+                    $user_id,
+                    'klientstatus_zakaza_otmenen',
+                    $this->generateNotificationVariables($order)
+                );
+            }
+        }
+
+        if(($order->is_problem != $order->getOriginal('is_problem')) && $order->is_problem) {
+            foreach($order->deliveries as $delivery) {
+                $notificationService->send(
+                    $user_id,
+                    'klientstatus_zakaza_problemnyy',
+                    $this->generateNotificationVariables($order)
+                );
             }
         }
     }
