@@ -102,6 +102,27 @@ class DeliveryObserver
                 )
             );
         }
+
+        if($delivery->delivery_address != $delivery->getOriginal('delivery_address')) {
+            $notificationService->send(
+                $customer,
+                'servisnyeizmenenie_zakaza_adres_dostavki'
+            );
+        }
+
+        if($delivery->receiver_name != $delivery->getOriginal('receiver_name')) {
+            $notificationService->send(
+                $customer,
+                'servisnyeizmenenie_zakaza_poluchatel_dostavki'
+            );
+        }
+
+        if($delivery->delivery_time_end != $delivery->getOriginal('delivery_time_end')) {
+            $notificationService->send(
+                $customer,
+                'servisnyeizmenenie_zakaza_data_dostavki'
+            );
+        }
     }
 
     /**
