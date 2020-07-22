@@ -104,7 +104,7 @@
                             </div>--}}
                         </div>
                     </div>
-                    <table style="margin-top: 40px;">
+                    <table style="margin-top: 40px; margin-bottom: 40px;">
                         <tr>
                             <td style="width: 650px;">
                                 <span style="font-weight: bold; font-size: 28px; color: #141116; display: block">{{$ticketsInfo->name}}</span>
@@ -192,7 +192,7 @@
                         </tr>
                         <tr style="page-break-after: auto;">
                             <td colspan="2">
-                                <div style="margin-top: 16px; ">
+                                <div style="margin-top: 32px; ">
                                     <span style="font-weight: bold; font-size: 25px; color: #141116; text-transform: uppercase; display: block">Как добраться</span>
                                 </div>
                             </td>
@@ -202,7 +202,7 @@
                                 <td colspan="2">
                                     <div style="margin-top: 10px;">
                                         <span style="font-weight: bold; font-size: 25px; color: #141116; display: block">@if($publicEvent->places->count() > 1){{$loop->index + 1}}. @endif{{$place->address}}</span>
-                                        <span style="font-size: 25px; color: #141116; display: block">{{$place->description}}</span>
+                                        <span style="font-size: 25px; color: #141116; display: block">{!! $place->description !!}</span>
                                         @php
                                             $gallery = $place->gallery->filter(function (\App\Services\Dto\Internal\PublicEventOrder\GalleryItemInfoDto $galleryItemInfoDto) {
                                                 return $galleryItemInfoDto->type == \Pim\Dto\PublicEvent\MediaDto::TYPE_IMAGE;
@@ -246,7 +246,7 @@
                                         @endif
                                     </td>
                                     <td style="width: 610px;">
-                                        <span style="font-size: 22px; color: #141116; display: block">{{$stage->description}}</span>
+                                        <span style="font-size: 22px; color: #141116; display: block">{!! $stage->description !!}</span>
                                     </td>
                                 </tr>
                                 <tr>
