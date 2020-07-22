@@ -82,6 +82,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::put('cancel','OrdersController@cancel');
             Route::put('pay','OrdersController@pay');
             Route::delete('', 'OrdersController@delete');
+            Route::get('tickets', 'OrdersController@tickets');
         });
 
         Route::get('', 'OrdersController@read');

@@ -170,18 +170,24 @@ class OrderService
     /**
      * @param  Order  $order
      * @param  bool  $loadTickets
+     * @param  int|null  $basketItemId
      * @return PublicEventOrder\OrderInfoDto|null
      * @throws \Pim\Core\PimException
      */
-    public function getPublicEventsOrderInfo(Order $order, bool $loadTickets = false): ?PublicEventOrder\OrderInfoDto
+    public function getPublicEventsOrderInfo(
+        Order $order,
+        bool $loadTickets = false,
+        ?int $basketItemId = null
+    ): ?PublicEventOrder\OrderInfoDto
     {
         if (!$order->isPublicEventOrder()) {
             return null;
         }
 
         $order->loadMissing('basket.items');
+        $basketItems = $basketItemId ? $order->basket->items->where('id', $basketItemId) : $order->basket->items;
         //Получаем информацию по мастер-классам
-        $offerIds = $order->basket->items->pluck('offer_id');
+        $offerIds = $basketItems->pluck('offer_id');
         /** @var PublicEventCartStruct[] $cardStructs */
         [$totalCount, $cardStructs] = (new PublicEventCartRepository())->query()
             ->whereOfferIds($offerIds->all())
@@ -194,7 +200,7 @@ class OrderService
             /** @var PublicEventTicketService $ticketService */
             $ticketService = resolve(PublicEventTicketService::class);
             $ticketIds = [];
-            foreach ($order->basket->items as $item) {
+            foreach ($basketItems as $item) {
                 $ticketIds = array_merge($ticketIds, $item->getTicketIds());
             }
             if ($ticketIds) {
@@ -283,7 +289,7 @@ class OrderService
             $organizerInfoDto->email = $cardStruct->organizer['email'];
             $organizerInfoDto->site = $cardStruct->organizer['site'];
             $organizerInfoDto->messengerPhone = $cardStruct->organizer['messenger_phone'];
-            foreach ($order->basket->items as $item) {
+            foreach ($basketItems as $item) {
                 if ($cardStruct->sprintId == $item->getSprintId()) {
                     $ticketsInfoDto = new PublicEventOrder\TicketsInfoDto();
                     $publicEventInfoDto->addTicketInfo($ticketsInfoDto);
@@ -313,8 +319,6 @@ class OrderService
                             }
                         }
                     }
-
-                    break;
                 }
             }
         }
