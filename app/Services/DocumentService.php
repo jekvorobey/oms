@@ -378,7 +378,7 @@ class DocumentService
 
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
-            $orderInfoDto = $orderService->getTicketsInfo($order, true);
+            $orderInfoDto = $orderService->getPublicEventsOrderInfo($order, true);
 
             $html = view('pdf::ticket', [
                 'order' => $orderInfoDto,

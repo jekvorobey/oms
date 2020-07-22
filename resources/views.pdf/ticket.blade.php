@@ -1,6 +1,6 @@
 @extends('pdf::layouts.main')
 @php
-    /** @var \App\Services\Dto\Internal\OrderTicket\OrderInfoDto $order */
+    /** @var \App\Services\Dto\Internal\PublicEventOrder\OrderInfoDto $order */
 @endphp
 @section('content')
     <style>
@@ -204,14 +204,14 @@
                                         <span style="font-weight: bold; font-size: 25px; color: #141116; display: block">@if($publicEvent->places->count() > 1){{$loop->index + 1}}. @endif{{$place->address}}</span>
                                         <span style="font-size: 25px; color: #141116; display: block">{{$place->description}}</span>
                                         @php
-                                            $gallery = $place->gallery->filter(function (\App\Services\Dto\Internal\OrderTicket\GalleryItemInfoDto $galleryItemInfoDto) {
+                                            $gallery = $place->gallery->filter(function (\App\Services\Dto\Internal\PublicEventOrder\GalleryItemInfoDto $galleryItemInfoDto) {
                                                 return $galleryItemInfoDto->type == \Pim\Dto\PublicEvent\MediaDto::TYPE_IMAGE;
                                             });
                                         @endphp
                                         @if($gallery->isNotEmpty())
                                             <table style="border: none; width: 100%;">
                                                 @php
-                                                    /** @var \Illuminate\Support\Collection|\App\Services\Dto\Internal\OrderTicket\GalleryItemInfoDto[] $galleryItemsInfoDto */
+                                                    /** @var \Illuminate\Support\Collection|\App\Services\Dto\Internal\PublicEventOrder\GalleryItemInfoDto[] $galleryItemsInfoDto */
                                                 @endphp
                                                 @foreach($gallery->chunk(3) as $galleryItemsInfoDto)
                                                     <tr>

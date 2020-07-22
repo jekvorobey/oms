@@ -1,15 +1,20 @@
 <?php
 
-namespace App\Services\Dto\Internal\OrderTicket;
+namespace App\Services\Dto\Internal\PublicEventOrder;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
 
 /**
  * Class PublicEventInfoDto
  * @package App\Services\Dto\Internal\OrderTicket
  */
-class PublicEventInfoDto
+class PublicEventInfoDto implements Arrayable
 {
+    /** @var int */
+    public $id;
+    /** @var string */
+    public $code;
     /** @var Collection|SpeakerInfoDto[] */
     public $speakers;
     /** @var Collection|PlaceInfoDto[] */
@@ -62,5 +67,22 @@ class PublicEventInfoDto
     public function addTicketInfo(TicketsInfoDto $ticketsInfoDto): void
     {
         $this->ticketsInfo->push($ticketsInfoDto);
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'code' => $this->code,
+            'speakers' => $this->speakers->map(function (SpeakerInfoDto $speakerInfoDto) {
+                return $speakerInfoDto->toArray();
+            })->values()->toArray(),
+            'ticketsInfo' => $this->ticketsInfo->map(function (TicketsInfoDto $ticketsInfoDto) {
+                return $ticketsInfoDto->toArray();
+            })->toArray(),
+        ];
     }
 }

@@ -77,6 +77,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::post('', 'DeliveryController@create');
             });
 
+            Route::get('', 'OrdersController@readOne');
             Route::put('', 'OrdersController@update');
             Route::put('cancel','OrdersController@cancel');
             Route::put('pay','OrdersController@pay');

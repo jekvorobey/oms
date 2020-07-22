@@ -50,6 +50,33 @@ class OrdersController extends Controller
     }
 
     /**
+     * Получить детальную информацию о заказе в зависимости от его типа
+     * @param  int  $id
+     * @param  Request  $request
+     * @param  OrderService  $orderService
+     * @return JsonResponse
+     * @throws \Pim\Core\PimException
+     */
+    public function readOne(int $id, Request $request, OrderService $orderService): JsonResponse
+    {
+        $order = Order::find($id);
+        if (!$order) {
+            throw new \Exception("Order by id={$id} not found");
+        }
+
+        if ($order->isProductOrder()) {
+            $reader = new OrderReader();
+            $item = $reader->list((new RestQuery($request))->setFilter('id', $id))->first();
+        } else {
+            $item = $orderService->getPublicEventsOrderInfo($order, true);
+        }
+
+        return response()->json([
+            'item' => $item->toArray(),
+        ]);
+    }
+
+    /**
      * Получить количество заказов по заданому фильтру
      * @param  Request  $request
      * @return JsonResponse
