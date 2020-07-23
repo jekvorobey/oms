@@ -367,18 +367,26 @@ class DocumentService
 
     /**
      * @param  Order  $order
+     * @param  int|null $basketItemId - id элемента корзины, для которого необходимо получить pdf-файл с билетами
      * @return DocumentDto
      * @throws \Throwable
      */
-    public function getOrderPdfTickets(Order $order): DocumentDto
+    public function getOrderPdfTickets(Order $order, ?int $basketItemId = null): DocumentDto
     {
+        if (!$order->isPaid()) {
+            throw new Exception("Order is not paid");
+        }
+
         $documentDto = new DocumentDto();
         try {
             $pdf = new Pdf();
 
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
-            $orderInfoDto = $orderService->getTicketsInfo($order, true);
+            $orderInfoDto = $orderService->getPublicEventsOrderInfo($order, true, $basketItemId);
+            if (!$orderInfoDto) {
+                throw new Exception('Order is not PublicEventOrder');
+            }
 
             $html = view('pdf::ticket', [
                 'order' => $orderInfoDto,

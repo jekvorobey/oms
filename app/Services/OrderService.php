@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
-use App\Services\Dto\Internal\OrderTicket;
+use App\Services\Dto\Internal\PublicEventOrder;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
 use App\Services\PublicEventService\Email\PublicEventCartStruct;
@@ -170,17 +170,24 @@ class OrderService
     /**
      * @param  Order  $order
      * @param  bool  $loadTickets
-     * @return OrderTicket\OrderInfoDto|null
+     * @param  int|null  $basketItemId
+     * @return PublicEventOrder\OrderInfoDto|null
+     * @throws \Pim\Core\PimException
      */
-    public function getTicketsInfo(Order $order, bool $loadTickets = false): ?OrderTicket\OrderInfoDto
+    public function getPublicEventsOrderInfo(
+        Order $order,
+        bool $loadTickets = false,
+        ?int $basketItemId = null
+    ): ?PublicEventOrder\OrderInfoDto
     {
         if (!$order->isPublicEventOrder()) {
             return null;
         }
 
         $order->loadMissing('basket.items');
+        $basketItems = $basketItemId ? $order->basket->items->where('id', $basketItemId) : $order->basket->items;
         //Получаем информацию по мастер-классам
-        $offerIds = $order->basket->items->pluck('offer_id');
+        $offerIds = $basketItems->pluck('offer_id');
         /** @var PublicEventCartStruct[] $cardStructs */
         [$totalCount, $cardStructs] = (new PublicEventCartRepository())->query()
             ->whereOfferIds($offerIds->all())
@@ -193,7 +200,7 @@ class OrderService
             /** @var PublicEventTicketService $ticketService */
             $ticketService = resolve(PublicEventTicketService::class);
             $ticketIds = [];
-            foreach ($order->basket->items as $item) {
+            foreach ($basketItems as $item) {
                 $ticketIds = array_merge($ticketIds, $item->getTicketIds());
             }
             if ($ticketIds) {
@@ -203,20 +210,34 @@ class OrderService
         }
 
         //Формируем данные для отправки e-mail
-        $orderInfoDto = new OrderTicket\OrderInfoDto();
+        $orderInfoDto = new PublicEventOrder\OrderInfoDto();
         $orderInfoDto->id = $order->id;
+        $orderInfoDto->type = $order->type;
         $orderInfoDto->number = $order->number;
         $orderInfoDto->createdAt = $order->created_at;
         $orderInfoDto->price = $order->price;
+        $orderInfoDto->status = $order->status;
+        $orderInfoDto->paymentStatus = $order->payment_status;
+        $orderInfoDto->isCanceled = $order->is_canceled;
+        $orderInfoDto->receiverName = $order->receiver_name;
+        $orderInfoDto->receiverEmail = $order->receiver_email;
+        $orderInfoDto->receiverPhone = $order->receiver_phone;
         foreach ($cardStructs as $cardStruct) {
-            $publicEventInfoDto = new OrderTicket\PublicEventInfoDto();
+            $publicEventInfoDto = new PublicEventOrder\PublicEventInfoDto();
             $orderInfoDto->addPublicEvent($publicEventInfoDto);
+            $publicEventInfoDto->id = $cardStruct->id;
+            $publicEventInfoDto->code = $cardStruct->code;
+            $publicEventInfoDto->dateFrom = $cardStruct->dateFrom;
+            $publicEventInfoDto->dateTo = $cardStruct->dateTo;
 
             foreach ($cardStruct->speakers as $speaker) {
-                $speakerInfoDto = new OrderTicket\SpeakerInfoDto();
+                $speakerInfoDto = new PublicEventOrder\SpeakerInfoDto();
                 $speakerInfoDto->id = $speaker['id'];
                 $speakerInfoDto->firstName = $speaker['first_name'];
                 $speakerInfoDto->middleName = $speaker['middle_name'];
+                $speakerInfoDto->lastName = $speaker['last_name'];
+                $speakerInfoDto->phone = $speaker['phone'];
+                $speakerInfoDto->email = $speaker['email'];
                 $speakerInfoDto->lastName = $speaker['last_name'];
                 $speakerInfoDto->profession = $speaker['profession'];
                 $speakerInfoDto->avatar = $speaker['avatar'];
@@ -227,7 +248,7 @@ class OrderService
             }
 
             foreach ($cardStruct->places as $place) {
-                $placeInfoDto = new OrderTicket\PlaceInfoDto();
+                $placeInfoDto = new PublicEventOrder\PlaceInfoDto();
                 $placeInfoDto->id = $place['id'];
                 $placeInfoDto->name = $place['name'];
                 $placeInfoDto->description = $place['description'];
@@ -238,7 +259,7 @@ class OrderService
                 $placeInfoDto->longitude = $place['longitude'];
                 $placeInfoDto->longitude = $place['longitude'];
                 foreach ($place['gallery'] as $gallery) {
-                    $galleryItemInfoDto = new OrderTicket\GalleryItemInfoDto();
+                    $galleryItemInfoDto = new PublicEventOrder\GalleryItemInfoDto();
                     $placeInfoDto->addGalleryItem($galleryItemInfoDto);
                     $galleryItemInfoDto->fileId = $gallery['value'];
                     $galleryItemInfoDto->collection = $gallery['collection'];
@@ -248,7 +269,7 @@ class OrderService
             }
 
             foreach ($cardStruct->stages as $stage) {
-                $stageInfoDto = new OrderTicket\StageInfoDto();
+                $stageInfoDto = new PublicEventOrder\StageInfoDto();
                 $stageInfoDto->id = $stage['id'];
                 $stageInfoDto->name = $stage['name'];
                 $stageInfoDto->description = $stage['description'];
@@ -262,7 +283,7 @@ class OrderService
                 $publicEventInfoDto->addStage($stageInfoDto);
             }
 
-            $organizerInfoDto = new OrderTicket\OrganizerInfoDto();
+            $organizerInfoDto = new PublicEventOrder\OrganizerInfoDto();
             $publicEventInfoDto->organizer = $organizerInfoDto;
             $organizerInfoDto->name = $cardStruct->organizer['name'];
             $organizerInfoDto->description = $cardStruct->organizer['description'];
@@ -270,10 +291,11 @@ class OrderService
             $organizerInfoDto->email = $cardStruct->organizer['email'];
             $organizerInfoDto->site = $cardStruct->organizer['site'];
             $organizerInfoDto->messengerPhone = $cardStruct->organizer['messenger_phone'];
-            foreach ($order->basket->items as $item) {
+            foreach ($basketItems as $item) {
                 if ($cardStruct->sprintId == $item->getSprintId()) {
-                    $ticketsInfoDto = new OrderTicket\TicketsInfoDto();
+                    $ticketsInfoDto = new PublicEventOrder\TicketsInfoDto();
                     $publicEventInfoDto->addTicketInfo($ticketsInfoDto);
+                    $ticketsInfoDto->id = $item->id;
                     $ticketsInfoDto->name = $item->name;
                     $ticketsInfoDto->ticketTypeName = $item->getTicketTypeName();
                     $ticketsInfoDto->photoId = $cardStruct->image;
@@ -288,8 +310,9 @@ class OrderService
                         foreach ($item->getTicketIds() as $ticketId) {
                             if ($tickets->has($ticketId)) {
                                 $ticket = $tickets[$ticketId];
-                                $ticketDto = new OrderTicket\TicketInfoDto();
+                                $ticketDto = new PublicEventOrder\TicketInfoDto();
                                 $ticketsInfoDto->addTicket($ticketDto);
+                                $ticketDto->id = $ticket->id;
                                 $ticketDto->firstName = $ticket->first_name;
                                 $ticketDto->middleName = $ticket->middle_name;
                                 $ticketDto->lastName = $ticket->last_name;
@@ -298,8 +321,6 @@ class OrderService
                             }
                         }
                     }
-
-                    break;
                 }
             }
         }
@@ -322,7 +343,7 @@ class OrderService
             throw new \Exception('Не указан email-адрес получателя');
         }
 
-        $internalOrderInfoDto = $this->getTicketsInfo($order);
+        $internalOrderInfoDto = $this->getPublicEventsOrderInfo($order);
         //Формируем данные для отправки e-mail
         $orderInfoDto = new OrderInfoDto();
         $orderInfoDto->setId($internalOrderInfoDto->id);

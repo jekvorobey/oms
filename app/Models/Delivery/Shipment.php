@@ -165,7 +165,7 @@ class Shipment extends OmsModel
     public function costRecalc(bool $save = true): void
     {
         $cost = 0.0;
-        $this->load('basketItems');
+        $this->loadMissing('basketItems');
 
         foreach ($this->basketItems as $basketItem) {
             $cost += $basketItem->price;
@@ -194,7 +194,7 @@ class Shipment extends OmsModel
     public function calcWeight(): float
     {
         $weight = 0;
-        $this->load(['packages', 'basketItems']);
+        $this->loadMissing(['packages', 'basketItems']);
 
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {
@@ -215,7 +215,7 @@ class Shipment extends OmsModel
     public function calcVolume(): float
     {
         $volume = 0;
-        $this->load(['packages', 'basketItems']);
+        $this->loadMissing(['packages', 'basketItems']);
 
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {
@@ -237,7 +237,7 @@ class Shipment extends OmsModel
     public function calcMaxSide(): float
     {
         $maxSide = 0;
-        $this->load(['packages', 'basketItems']);
+        $this->loadMissing(['packages', 'basketItems']);
 
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {
@@ -268,7 +268,7 @@ class Shipment extends OmsModel
     public function identifyMaxSideName(float $maxSide): string
     {
         $maxSideName = 'width';
-        $this->load(['packages', 'basketItems']);
+        $this->loadMissing(['packages', 'basketItems']);
 
         if ($this->packages && $this->packages->isNotEmpty()) {
             foreach ($this->packages as $package) {

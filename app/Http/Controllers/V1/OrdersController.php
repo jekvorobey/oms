@@ -16,6 +16,7 @@ use App\Models\Order\OrderConfirmationType;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use App\Services\DocumentService;
 use App\Services\OrderService;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -46,6 +47,62 @@ class OrdersController extends Controller
 
         return response()->json([
             'items' => $reader->list(new RestQuery($request)),
+        ]);
+    }
+
+    /**
+     * Получить детальную информацию о заказе в зависимости от его типа
+     * @param  int  $id
+     * @param  Request  $request
+     * @param  OrderService  $orderService
+     * @return JsonResponse
+     * @throws \Pim\Core\PimException
+     */
+    public function readOne(int $id, Request $request, OrderService $orderService): JsonResponse
+    {
+        $order = Order::find($id);
+        if (!$order) {
+            throw new \Exception("Order by id={$id} not found");
+        }
+
+        if ($order->isProductOrder()) {
+            $reader = new OrderReader();
+            $item = $reader->list((new RestQuery($request))->setFilter('id', $id))->first();
+        } else {
+            $item = $orderService->getPublicEventsOrderInfo($order, true);
+        }
+
+        return response()->json([
+            'item' => $item->toArray(),
+        ]);
+    }
+
+    /**
+     * @param  int  $id
+     * @param  Request  $request
+     * @param  DocumentService  $documentService
+     * @return JsonResponse
+     * @throws \Throwable
+     */
+    public function tickets(int $id, Request $request, DocumentService $documentService): JsonResponse
+    {
+        $data = $request->validate([
+            'basket_item_id' => 'sometimes|integer',
+        ]);
+
+        /** @var Order $order */
+        $order = Order::query()->where('id', $id)->with('basket.items')->first();
+        if (!$order) {
+            throw new \Exception("Order by id={$id} not found");
+        }
+
+        $documentDto = $documentService->getOrderPdfTickets($order, $data['basket_item_id'] ?? null);
+        if (!$documentDto->success) {
+            throw new \Exception("Tickets not formed");
+        }
+
+        return response()->json([
+            'file_id' => $documentDto->file_id
         ]);
     }
 

@@ -20,6 +20,10 @@ class PublicEventCartStruct
     public $organizer;
     /** @var string */
     public $code;
+    /** @var string */
+    public $dateFrom;
+    /** @var string */
+    public $dateTo;
     /** @var mixed */
     public $image;
     /** @var bool */

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Dto\Internal\OrderTicket;
+namespace App\Services\Dto\Internal\PublicEventOrder;
 
 /**
  * Class OrganizerInfoDto

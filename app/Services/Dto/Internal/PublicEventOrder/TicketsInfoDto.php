@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Services\Dto\Internal\OrderTicket;
+namespace App\Services\Dto\Internal\PublicEventOrder;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -9,8 +10,10 @@ use Illuminate\Support\Collection;
  * Class PublicEventInfoDto
  * @package App\Mail\PublicEvent\SendTicket\Dto
  */
-class TicketsInfoDto
+class TicketsInfoDto implements Arrayable
 {
+    /** @var int */
+    public $id;
     /** @var int */
     public $photoId;
     /** @var string */
@@ -46,5 +49,26 @@ class TicketsInfoDto
     public function addTicket(TicketInfoDto $ticketDto): void
     {
         $this->tickets->push($ticketDto);
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'photo_id' => $this->photoId,
+            'name' => $this->name,
+            'ticket_type_name' => $this->ticketTypeName,
+            'nearest_date' => $this->nearestDate,
+            'nearest_time_from' => $this->nearestTimeFrom,
+            'nearest_place_name' => $this->nearestPlaceName,
+            'price' => $this->price,
+            'tickets_qty' => $this->ticketsQty,
+            'tickets' => $this->tickets->map(function (TicketInfoDto $ticketDto) {
+                return $ticketDto->toArray();
+            })->toArray(),
+        ];
     }
 }
