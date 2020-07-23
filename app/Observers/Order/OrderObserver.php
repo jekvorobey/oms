@@ -452,7 +452,7 @@ class OrderObserver
 
         $payment = $order->payments->first();
 
-        $link = $payment->paymentSystem()->paymentLink($payment);
+        $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
 
         $goods = $order->basket->items->map(function (BasketItem $item) {
             return [
