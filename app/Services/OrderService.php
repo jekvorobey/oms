@@ -227,6 +227,8 @@ class OrderService
             $orderInfoDto->addPublicEvent($publicEventInfoDto);
             $publicEventInfoDto->id = $cardStruct->id;
             $publicEventInfoDto->code = $cardStruct->code;
+            $publicEventInfoDto->dateFrom = $cardStruct->dateFrom;
+            $publicEventInfoDto->dateTo = $cardStruct->dateTo;
 
             foreach ($cardStruct->speakers as $speaker) {
                 $speakerInfoDto = new PublicEventOrder\SpeakerInfoDto();
