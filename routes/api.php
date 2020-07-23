@@ -77,10 +77,12 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::post('', 'DeliveryController@create');
             });
 
+            Route::get('', 'OrdersController@readOne');
             Route::put('', 'OrdersController@update');
             Route::put('cancel','OrdersController@cancel');
             Route::put('pay','OrdersController@pay');
             Route::delete('', 'OrdersController@delete');
+            Route::get('tickets', 'OrdersController@tickets');
         });
 
         Route::get('', 'OrdersController@read');
@@ -231,6 +233,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::delete('','CargoController@delete');
 
                 Route::prefix('courier-call')->group(function () {
+                    Route::get('check', 'CargoController@checkExternalStatus');
                     Route::post('', 'CargoController@createCourierCall');
                     Route::put('cancel', 'CargoController@cancelCourierCall');
                 });

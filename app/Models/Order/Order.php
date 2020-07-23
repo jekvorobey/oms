@@ -31,9 +31,9 @@ use Illuminate\Support\Collection;
  * @property int $basket_id - id корзины
  * @property int $type - тип заказа (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)
  *
- * @property string $receiver_name - имя получателя (используемся только при покупке мастер-классов)
- * @property string $receiver_phone - телефон получателя (используемся только при покупке мастер-классов)
- * @property string $receiver_email - e-mail получателя (используемся только при покупке мастер-классов)
+ * @property string $receiver_name - имя получателя (используется только при покупке мастер-классов)
+ * @property string $receiver_phone - телефон получателя (используется только при покупке мастер-классов)
+ * @property string $receiver_email - e-mail получателя (используется только при покупке мастер-классов)
  *
  * @property float $cost - стоимость (расчитывается автоматически)
  * @property float $price
@@ -66,6 +66,7 @@ use Illuminate\Support\Collection;
  * @property Collection|OrderDiscount[] $discounts - скидки к заказу
  * @property Collection|OrderPromoCode[] $promoCodes - промокоды применённые к заказу
  * @property Collection|OrderBonus[] $bonuses - бонусы применённые к заказу
+ * @property Collection|OrderReturn[] $orderReturns - возвраты по заказу
  * @property Collection|History[] $history - история изменений
  */
 class Order extends OmsModel
@@ -146,6 +147,14 @@ class Order extends OmsModel
     public function bonuses(): HasMany
     {
         return $this->hasMany(OrderBonus::class, 'order_id');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function orderReturns(): HasMany
+    {
+        return $this->hasMany(OrderReturn::class);
     }
 
     /**
@@ -234,5 +243,23 @@ class Order extends OmsModel
          * что заказ с постоплатой и может быть обработан без оплаты
          */
         return $this->isPaid();
+    }
+
+    /**
+     * Заказ является заказом с товарами?
+     * @return bool
+     */
+    public function isProductOrder(): bool
+    {
+        return $this->type == Basket::TYPE_PRODUCT;
+    }
+
+    /**
+     * Заказ является заказом с мастер-классами?
+     * @return bool
+     */
+    public function isPublicEventOrder(): bool
+    {
+        return $this->type == Basket::TYPE_MASTER;
     }
 }

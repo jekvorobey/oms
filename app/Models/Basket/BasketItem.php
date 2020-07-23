@@ -5,10 +5,12 @@ namespace App\Models\Basket;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\OmsModel;
+use App\Models\Order\OrderReturnItem;
 use App\Services\PublicEventService\Cart\PublicEventCartRepository;
 use App\Services\PublicEventService\Cart\PublicEventCartStruct;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Pim\Services\OfferService\OfferService;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -34,17 +36,6 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @property-read Basket $basket
  * @property-read ShipmentItem $shipmentItem
  * @property-read ShipmentPackageItem $shipmentPackageItem
- *
- * @OA\Schema(
- *     schema="BasketItem",
- *     @OA\Property(property="id", type="integer", description="id оффера в корзине"),
- *     @OA\Property(property="basket_id", type="integer", description="id корзины"),
- *     @OA\Property(property="offer_id", type="integer", description="id предложения мерчанта"),
- *     @OA\Property(property="name", type="string", description="название товара"),
- *     @OA\Property(property="qty", type="integer", description="кол-во"),
- *     @OA\Property(property="price", type="number", description="цена за единицу товара с учетом скидки"),
- *     @OA\Property(property="cost", type="number", description="сумма за все кол-во товара без учета скидки"),
- * )
  */
 class BasketItem extends OmsModel
 {
@@ -84,6 +75,14 @@ class BasketItem extends OmsModel
     public function shipmentPackageItem(): HasOne
     {
         return $this->hasOne(ShipmentPackageItem::class);
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function orderReturnItems(): HasMany
+    {
+        return $this->hasMany(OrderReturnItem::class);
     }
 
     /**
@@ -142,11 +141,7 @@ class BasketItem extends OmsModel
      */
     public function getTicketIds(): ?array
     {
-        if ($this->type == Basket::TYPE_MASTER) {
-            return isset($this->product['ticket_ids']) ? (array)$this->product['ticket_ids'] : null;
-        } else {
-            return null;
-        }
+        return isset($this->product['ticket_ids']) ? (array)$this->product['ticket_ids'] : null;
     }
 
     /**
@@ -155,6 +150,22 @@ class BasketItem extends OmsModel
     public function setTicketIds(array $ticketIds): void
     {
         $this->setProductField('ticket_ids', $ticketIds);
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getSprintId(): ?int
+    {
+        return isset($this->product['sprint_id']) ? (int)$this->product['sprint_id'] : null;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTicketTypeName(): ?string
+    {
+        return isset($this->product['ticket_type_name']) ? (string)$this->product['ticket_type_name'] : null;
     }
 
     /**

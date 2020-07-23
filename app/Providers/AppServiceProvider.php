@@ -12,6 +12,7 @@ use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
+use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Observers\Basket\BasketItemObserver;
 use App\Observers\Basket\BasketObserver;
@@ -23,11 +24,8 @@ use App\Observers\Delivery\ShipmentPackageItemObserver;
 use App\Observers\Delivery\ShipmentPackageObserver;
 use App\Observers\Order\OrderCommentObserver;
 use App\Observers\Order\OrderObserver;
+use App\Observers\Order\OrderReturnObserver;
 use App\Observers\Payment\PaymentObserver;
-use App\Services\BasketService;
-use App\Services\DeliveryService;
-use App\Services\OrderService;
-use App\Services\PaymentService\PaymentService;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use L5Swagger\L5SwaggerServiceProvider;
@@ -62,21 +60,10 @@ class AppServiceProvider extends ServiceProvider
             return $client;
         });
 
-        $this->app->singleton(BasketService::class, function () {
-            return new BasketService();
-        });
-        $this->app->singleton(OrderService::class, function () {
-            return new OrderService();
-        });
-        $this->app->singleton(PaymentService::class, function () {
-            return new PaymentService();
-        });
-        $this->app->singleton(DeliveryService::class, function () {
-            return new DeliveryService();
-        });
-
         $this->addObservers();
         $this->addMorphForHistory();
+
+        $this->loadViewsFrom(base_path('resources/views.pdf'), 'pdf');
     }
 
     protected function addObservers(): void
@@ -86,6 +73,8 @@ class AppServiceProvider extends ServiceProvider
 
         Order::observe(OrderObserver::class);
         OrderComment::observe(OrderCommentObserver::class);
+
+        OrderReturn::observe(OrderReturnObserver::class);
 
         Delivery::observe(DeliveryObserver::class);
         Shipment::observe(ShipmentObserver::class);
@@ -105,6 +94,7 @@ class AppServiceProvider extends ServiceProvider
             Delivery::class,
             Order::class,
             OrderComment::class,
+            OrderReturn::class,
             Payment::class,
             Shipment::class,
             ShipmentItem::class,

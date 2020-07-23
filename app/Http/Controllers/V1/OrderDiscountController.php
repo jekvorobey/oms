@@ -23,7 +23,7 @@ class OrderDiscountController extends Controller
         # Сумма заказов с использованием скидки (в рублях)
         $ordersSumWithDiscount = (int) Order::query()
             ->forDiscountReport($discountId)
-            ->sum(DB::raw('`price` + `delivery_price`'));
+            ->sum('price');
 
         # Количество пользователей, которые воспользовались скидкой
         $customersCount = Order::query()

@@ -78,6 +78,7 @@ class OrderObserver
         $this->setStatusToChildren($order);
         $this->returnTickets($order);
         $this->sendNotification($order);
+        $this->sendTicketsEmail($order);
     }
 
     protected function sendCreatedNotification(Order $order)
@@ -370,7 +371,7 @@ class OrderObserver
     }
 
     /**
-     * Установить статус заказа всем доставкам и отправлениями.
+     * Вернуть остатки по билетам.
      * @param  Order $order
      */
     protected function returnTickets(Order $order): void
@@ -479,5 +480,18 @@ class OrderObserver
             'ORDER_TEXT' => $order->comment->text,
             'goods' => $goods
         ];
+    }
+    /**
+     * Отправить билеты на мастер-классы на почту покупателю заказа и всем участникам.
+     * @param  Order  $order
+     * @throws \Throwable
+     */
+    protected function sendTicketsEmail(Order $order): void
+    {
+        if ($order->payment_status != $order->getOriginal('payment_status') && $order->isPaid()) {
+            /** @var OrderService $orderService */
+            $orderService = resolve(OrderService::class);
+            $orderService->sendTicketsEmail($order);
+        }
     }
 }
