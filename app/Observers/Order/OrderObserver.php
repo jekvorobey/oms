@@ -20,7 +20,6 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
-use MerchantManagement\Services\MerchantService\MerchantService;
 
 /**
  * Class OrderObserver
@@ -458,11 +457,12 @@ class OrderObserver
         $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
 
         $goods = $order->basket->items->map(function (BasketItem $item) {
+            $deliveryMethodId = optional(optional(optional(optional($item)->shipmentItem)->shipment)->delivery)->delivery_method;
             return [
                 'name' => $item->name,
                 'price' => $item->price,
                 'count' => $item->qty,
-                'delivery' => DeliveryMethod::methodById($item->shipmentItem->shipment->delivery->delivery_method),
+                'delivery' => $deliveryMethodId ? DeliveryMethod::methodById($deliveryMethodId) : null,
             ];
         });
 
@@ -480,7 +480,7 @@ class OrderObserver
             'CALL_TK' => $optionService->get(OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE),
             'CUSTOMER_NAME' => $user->first_name,
             'ORDER_CONTACT_NUMBER' => $order->number,
-            'ORDER_TEXT' => $order->comment->text,
+            'ORDER_TEXT' => optional($order->comment)->text,
             'goods' => $goods
         ];
     }

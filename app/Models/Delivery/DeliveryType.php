@@ -25,8 +25,8 @@ class DeliveryType
     public static function all()
     {
         return [
-            new self(self::TYPE_SPLIT, 'Несколькими доставками'),
-            new self(self::TYPE_CONSOLIDATION, 'Одной доставкой'),
+            self::TYPE_SPLIT => new self(self::TYPE_SPLIT, 'Несколькими доставками'),
+            self::TYPE_CONSOLIDATION => new self(self::TYPE_CONSOLIDATION, 'Одной доставкой'),
         ];
     }
     /**
