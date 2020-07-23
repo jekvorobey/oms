@@ -395,9 +395,12 @@ class OrderObserver
     protected function createNotificationType(int $orderStatus, bool $consolidation, bool $postomat)
     {
         $slug = $this->intoStringStatus($orderStatus);
-        $slug = $this->appendTypeModifiers($slug, $consolidation, $postomat);
 
-        return $slug;
+        if($slug) {
+            return $this->appendTypeModifiers($slug, $consolidation, $postomat);
+        } 
+        
+        return '';
     }
 
     protected function intoStringStatus(int $orderStatus)
