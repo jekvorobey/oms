@@ -12,6 +12,8 @@ use App\Models\History\HistoryType;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use Exception;
+use Greensight\Customer\Services\CustomerService\CustomerService;
+use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 
 /**
  * Class ShipmentObserver
@@ -66,6 +68,35 @@ class ShipmentObserver
         $this->setStatusToDelivery($shipment);
         $this->setIsCanceledToDelivery($shipment);
         $this->setTakenStatusToCargo($shipment);
+        $this->sendNotification($shipment);
+    }
+
+    protected function sendNotification(Shipment $shipment)
+    {
+        $notificationService = app(ServiceNotificationService::class);
+        $customerService = app(CustomerService::class);
+
+        $customer = $customerService->customers(
+            $customerService
+                ->newQuery()
+                ->setFilter('id', '=', $shipment->delivery->order->customer_id)
+        )
+        ->first()
+        ->user_id;
+
+        if(($shipment->is_canceled != $shipment->getOriginal('is_canceled')) && $shipment->is_canceled) {
+            $notificationService->send(
+                $customer,
+                'klient_status_zakaza_otmenen'
+            );
+        }
+
+        if(($shipment->is_problem != $shipment->getOriginal('is_problem')) && $shipment->is_problem) {
+            $notificationService->send(
+                $customer,
+                'klient_status_zakaza_problemnyy'
+            );
+        }
     }
     
     /**
