@@ -77,7 +77,7 @@ class BasketService
         $item = $basket->items->first(function (BasketItem $item) use ($offerId, $bundleId) {
             return $bundleId ?
                 $item->offer_id == $offerId && $item->bundle_id == $bundleId :
-                $item->offer_id == $offerId;
+                $item->offer_id == $offerId && is_null($item->bundle_id);
         });
 
         if (!$item) {

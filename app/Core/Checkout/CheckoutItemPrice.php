@@ -4,6 +4,7 @@ namespace App\Core\Checkout;
 
 class CheckoutItemPrice
 {
+    public $basketItemId;
     public $offerId;
     public $cost;
     public $price;
@@ -14,13 +15,14 @@ class CheckoutItemPrice
     {
         $itemPrice = new self();
         @([
+            'basketItemId' => $itemPrice->basketItemId,
             'offerId' => $itemPrice->offerId,
             'cost' => $itemPrice->cost,
             'price' => $itemPrice->price,
             'bonusSpent' => $itemPrice->bonusSpent,
             'bonusDiscount' => $itemPrice->bonusDiscount,
         ] = $data);
-        
+
         return $itemPrice;
     }
 }
