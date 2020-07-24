@@ -103,24 +103,39 @@ class DeliveryObserver
             );
         }
 
+        $order_id = $delivery->order->id;
+        $link_order = sprintf("%s/profile/orders/%d", config('app.showcase_host'), $delivery->order->id);
+
         if($delivery->delivery_address != $delivery->getOriginal('delivery_address')) {
             $notificationService->send(
                 $customer,
-                'servisnyeizmenenie_zakaza_adres_dostavki'
+                'servisnyeizmenenie_zakaza_adres_dostavki',
+                [
+                    'ORDER_ID' => $order_id,
+                    'LINK_ORDER' => $link_order
+                ]
             );
         }
 
         if($delivery->receiver_name != $delivery->getOriginal('receiver_name')) {
             $notificationService->send(
                 $customer,
-                'servisnyeizmenenie_zakaza_poluchatel_dostavki'
+                'servisnyeizmenenie_zakaza_poluchatel_dostavki',
+                [
+                    'ORDER_ID' => $order_id,
+                    'LINK_ORDER' => $link_order
+                ]
             );
         }
 
         if($delivery->delivery_time_end != $delivery->getOriginal('delivery_time_end')) {
             $notificationService->send(
                 $customer,
-                'servisnyeizmenenie_zakaza_data_dostavki'
+                'servisnyeizmenenie_zakaza_data_dostavki',
+                [
+                    'ORDER_ID' => $order_id,
+                    'LINK_ORDER' => $link_order
+                ]
             );
         }
     }
