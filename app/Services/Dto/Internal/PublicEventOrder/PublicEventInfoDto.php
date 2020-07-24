@@ -15,6 +15,10 @@ class PublicEventInfoDto implements Arrayable
     public $id;
     /** @var string */
     public $code;
+    /** @var string */
+    public $dateFrom;
+    /** @var string */
+    public $dateTo;
     /** @var Collection|SpeakerInfoDto[] */
     public $speakers;
     /** @var Collection|PlaceInfoDto[] */
@@ -77,6 +81,8 @@ class PublicEventInfoDto implements Arrayable
         return [
             'id' => $this->id,
             'code' => $this->code,
+            'dateFrom' => $this->dateFrom,
+            'dateTo' => $this->dateTo,
             'speakers' => $this->speakers->map(function (SpeakerInfoDto $speakerInfoDto) {
                 return $speakerInfoDto->toArray();
             })->values()->toArray(),

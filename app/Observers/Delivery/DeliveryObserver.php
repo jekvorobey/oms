@@ -11,6 +11,9 @@ use App\Models\History\HistoryType;
 use App\Models\Order\OrderStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
+use Greensight\Customer\Services\CustomerService\CustomerService;
+use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 
 /**
  * Class DeliveryObserver
@@ -77,6 +80,49 @@ class DeliveryObserver
         $this->setIsCanceledToOrder($delivery);
         $this->notifyIfShipped($delivery);
         $this->notifyIfReadyForRecipient($delivery);
+        $this->sendNotification($delivery);
+    }
+
+    protected function sendNotification(Delivery $delivery)
+    {
+        $notificationService = app(ServiceNotificationService::class);
+        $customerService = app(CustomerService::class);
+
+        $customer = $customerService->customers(
+            $customerService->newQuery()
+                ->setFilter('id', '=', $delivery->order->customer_id)
+        )->first()->user_id;
+
+        if($delivery->status != $delivery->getOriginal('status')) {
+            $notificationService->send(
+                $customer,
+                $this->createNotificationType(
+                    $delivery->status,
+                    $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP
+                )
+            );
+        }
+
+        if($delivery->delivery_address != $delivery->getOriginal('delivery_address')) {
+            $notificationService->send(
+                $customer,
+                'servisnyeizmenenie_zakaza_adres_dostavki'
+            );
+        }
+
+        if($delivery->receiver_name != $delivery->getOriginal('receiver_name')) {
+            $notificationService->send(
+                $customer,
+                'servisnyeizmenenie_zakaza_poluchatel_dostavki'
+            );
+        }
+
+        if($delivery->delivery_time_end != $delivery->getOriginal('delivery_time_end')) {
+            $notificationService->send(
+                $customer,
+                'servisnyeizmenenie_zakaza_data_dostavki'
+            );
+        }
     }
 
     /**
@@ -271,6 +317,41 @@ class DeliveryObserver
             if ($newStatus == DeliveryStatus::READY_FOR_RECIPIENT) {
                 OrderSmsNotify::deliveryReadyForRecipient($delivery);
             }
+        }
+    }
+
+    protected function createNotificationType(int $status, bool $postomat)
+    {
+        $type = $this->statusToType($status);
+
+        $type .= '_bez_konsolidatsii';
+
+        if($postomat) {
+            $type .= '_pvzpostamat';
+        } else {
+            $type .= '_kurer';
+        }
+
+        return $type;
+    }
+
+    protected function statusToType(int $status)
+    {
+        switch ($status) {
+            case DeliveryStatus::ON_POINT_IN:
+                return 'status_dostavkiv_protsesse_dostavki';
+            case DeliveryStatus::READY_FOR_RECIPIENT:
+                return 'status_dostavkinakhoditsya_v_punkte_vydachi';
+            case DeliveryStatus::DONE:
+                return 'status_dostavkipoluchena';
+            case DeliveryStatus::CANCELLATION_EXPECTED:
+                return 'status_dostavkiotmenena';
+            case DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER:
+                return 'status_dostavkiv_protsesse_vozvrata';
+            case DeliveryStatus::RETURNED:
+                return 'status_dostavkivozvrashchena';
+            case DeliveryStatus::PRE_ORDER:
+                return 'status_dostavkipredzakaz_ozhidaem_postupleniya_tovara';
         }
     }
 }

@@ -75,6 +75,8 @@ class PublicEventCartQuery
             PublicEventQuery::SPEAKERS,
             PublicEventQuery::CODE,
             PublicEventQuery::ACTIVE,
+            PublicEventQuery::DATE_FROM,
+            PublicEventQuery::DATE_TO,
             PublicEventQuery::NEAREST_DATE,
             PublicEventQuery::NEAREST_TIME_FROM,
             PublicEventQuery::NEAREST_PLACE_NAME,

@@ -60,6 +60,9 @@ class PublicEventCartRepository
             $card->stages = $publicEvent[PublicEventQuery::STAGES];
             $card->organizer = $publicEvent[PublicEventQuery::ORGANIZER];
             $card->code = $publicEvent[PublicEventQuery::CODE];
+            $card->dateFrom = $publicEvent[PublicEventQuery::DATE_FROM];
+            $card->dateTo = $publicEvent[PublicEventQuery::DATE_TO];
+            $card->code = $publicEvent[PublicEventQuery::CODE];
             $card->active = $publicEvent[PublicEventQuery::ACTIVE];
             $card->nearestDate = $publicEvent[PublicEventQuery::NEAREST_DATE];
             $card->nearestTimeFrom = $publicEvent[PublicEventQuery::NEAREST_TIME_FROM];
