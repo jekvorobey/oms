@@ -108,7 +108,7 @@ class CheckoutOrder
 
         foreach ($prices as $priceData) {
             $checkoutItemPrice = CheckoutItemPrice::fromArray($priceData);
-            $order->prices[$checkoutItemPrice->offerId] = $checkoutItemPrice;
+            $order->prices[$checkoutItemPrice->basketItemId] = $checkoutItemPrice;
         }
 
         foreach ($deliveries as $deliveryData) {
@@ -166,7 +166,7 @@ class CheckoutOrder
     {
         $basket = $this->basket();
         foreach ($basket->items as $item) {
-            $priceItem = $this->prices[$item->offer_id] ?? null;
+            $priceItem = $this->prices[$item->id] ?? null;
             if (!$priceItem) {
                 throw new Exception('price is not supplied for basket item');
             }
