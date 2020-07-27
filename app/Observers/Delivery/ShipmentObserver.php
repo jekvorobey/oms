@@ -12,8 +12,11 @@ use App\Models\History\HistoryType;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use Exception;
+use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use MerchantManagement\Services\MerchantService\MerchantService;
+use MerchantManagement\Services\OperatorService\OperatorService;
 
 /**
  * Class ShipmentObserver
@@ -39,6 +42,7 @@ class ShipmentObserver
     public function created(Shipment $shipment)
     {
         History::saveEvent(HistoryType::TYPE_CREATE, [$shipment->delivery->order, $shipment], $shipment);
+        $this->sendCreatedNotification($shipment);
     }
     
     /**
@@ -68,35 +72,7 @@ class ShipmentObserver
         $this->setStatusToDelivery($shipment);
         $this->setIsCanceledToDelivery($shipment);
         $this->setTakenStatusToCargo($shipment);
-        $this->sendNotification($shipment);
-    }
-
-    protected function sendNotification(Shipment $shipment)
-    {
-        $notificationService = app(ServiceNotificationService::class);
-        $customerService = app(CustomerService::class);
-
-        $customer = $customerService->customers(
-            $customerService
-                ->newQuery()
-                ->setFilter('id', '=', $shipment->delivery->order->customer_id)
-        )
-        ->first()
-        ->user_id;
-
-        if(($shipment->is_canceled != $shipment->getOriginal('is_canceled')) && $shipment->is_canceled) {
-            $notificationService->send(
-                $customer,
-                'klient_status_zakaza_otmenen'
-            );
-        }
-
-        if(($shipment->is_problem != $shipment->getOriginal('is_problem')) && $shipment->is_problem) {
-            $notificationService->send(
-                $customer,
-                'klient_status_zakaza_problemnyy'
-            );
-        }
+        $this->sendStatusNotification($shipment);
     }
     
     /**
@@ -478,6 +454,53 @@ class ShipmentObserver
             $delivery = $shipment->delivery;
             $delivery->status = DeliveryStatus::PRE_ORDER;
             $delivery->save();
+        }
+    }
+
+    protected function sendCreatedNotification(Shipment $shipment)
+    {
+        $serviceNotificationService = app(ServiceNotificationService::class);
+        $operatorService = app(OperatorService::class);
+
+        $operators = $operatorService->operators((new RestQuery)->setFilter('merchant_id', '=', $shipment->merchant_id));
+
+        foreach($operators as $operator) {
+            $serviceNotificationService->send($operator->user_id, 'klientoformlen_novyy_zakaz', [
+                'QUANTITY_ORDERS' => 1,
+                'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+            ]);
+        }
+    }
+
+    protected function sendStatusNotification(Shipment $shipment)
+    {
+        $serviceNotificationService = app(ServiceNotificationService::class);
+        $operatorService = app(OperatorService::class);
+
+        $operators = $operatorService->operators((new RestQuery)->setFilter('merchant_id', '=', $shipment->merchant_id));
+
+        foreach($operators as $operator) {
+            if(($shipment->is_canceled != $shipment->getOriginal('is_canceled')) && $shipment->is_canceled) {
+                $serviceNotificationService->send(
+                    $operator->user_id,
+                    'klientstatus_zakaza_otmenen',
+                    [
+                        'QUANTITY_ORDERS' => 1,
+                        'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                    ]
+                );
+            }
+
+            if(($shipment->is_problem != $shipment->getOriginal('is_problem')) && $shipment->is_problem) {
+                $serviceNotificationService->send(
+                    $operator->user_id,
+                    'klientstatus_zakaza_problemnyy',
+                    [
+                        'QUANTITY_ORDERS' => 1,
+                        'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                    ]
+                );
+            }
         }
     }
 }

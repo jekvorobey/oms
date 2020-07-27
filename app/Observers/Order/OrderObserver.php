@@ -94,11 +94,7 @@ class OrderObserver
             ->first()
             ->user_id;
 
-        $notificationService->send(
-            $user_id,
-            'klientoformlen_novyy_zakaz',
-            $this->generateNotificationVariables($order)
-        );
+        $this->sendStatusNotification($notificationService, $order, $user_id);
     }
 
     protected function sendNotification(Order $order)
@@ -130,17 +126,7 @@ class OrderObserver
         }
 
         if($order->status != $order->getOriginal('status')) {
-            foreach($order->deliveries as $delivery) {
-                $notificationService->send(
-                    $user_id,
-                    $this->createNotificationType(
-                        $order->status,
-                        $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
-                        $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
-                    ),
-                    $this->generateNotificationVariables($order)
-                );
-            }
+            $this->sendStatusNotification($notificationService, $order, $user_id);
         }
 
         if(($order->is_canceled != $order->getOriginal('is_canceled')) && $order->is_canceled) {
@@ -153,23 +139,32 @@ class OrderObserver
                     ),
                     $this->generateNotificationVariables($order)
                 );
-
-                $notificationService->send(
-                    $user_id,
-                    'klientstatus_zakaza_otmenen',
-                    $this->generateNotificationVariables($order)
-                );
             }
         }
 
-        if(($order->is_problem != $order->getOriginal('is_problem')) && $order->is_problem) {
-            foreach($order->deliveries as $delivery) {
-                $notificationService->send(
-                    $user_id,
-                    'klientstatus_zakaza_problemnyy',
-                    $this->generateNotificationVariables($order)
-                );
-            }
+        // if(($order->is_problem != $order->getOriginal('is_problem')) && $order->is_problem) {
+        //     foreach($order->deliveries as $delivery) {
+        //         $notificationService->send(
+        //             $user_id,
+        //             'klientstatus_zakaza_problemnyy',
+        //             $this->generateNotificationVariables($order)
+        //         );
+        //     }
+        // }
+    }
+
+    protected function sendStatusNotification(ServiceNotificationService $notificationService, Order $order, int $user_id)
+    {
+        foreach($order->deliveries as $delivery) {
+            $notificationService->send(
+                $user_id,
+                $this->createNotificationType(
+                    $order->status,
+                    $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                    $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
+                ),
+                $this->generateNotificationVariables($order)
+            );
         }
     }
 
