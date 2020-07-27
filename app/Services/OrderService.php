@@ -296,6 +296,7 @@ class OrderService
                     $ticketsInfoDto = new PublicEventOrder\TicketsInfoDto();
                     $publicEventInfoDto->addTicketInfo($ticketsInfoDto);
                     $ticketsInfoDto->id = $item->id;
+                    $ticketsInfoDto->code = $item->code;
                     $ticketsInfoDto->name = $item->name;
                     $ticketsInfoDto->ticketTypeName = $item->getTicketTypeName();
                     $ticketsInfoDto->photoId = $cardStruct->image;
@@ -313,6 +314,7 @@ class OrderService
                                 $ticketDto = new PublicEventOrder\TicketInfoDto();
                                 $ticketsInfoDto->addTicket($ticketDto);
                                 $ticketDto->id = $ticket->id;
+                                $ticketDto->code = $ticket->code;
                                 $ticketDto->firstName = $ticket->first_name;
                                 $ticketDto->middleName = $ticket->middle_name;
                                 $ticketDto->lastName = $ticket->last_name;

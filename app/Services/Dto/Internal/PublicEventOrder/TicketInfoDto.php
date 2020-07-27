@@ -13,6 +13,8 @@ class TicketInfoDto implements Arrayable
     /** @var int */
     public $id;
     /** @var string */
+    public $code;
+    /** @var string */
     public $firstName;
     /** @var string */
     public $middleName;
@@ -30,6 +32,7 @@ class TicketInfoDto implements Arrayable
     {
         return [
             'id' => $this->id,
+            'code' => $this->code,
             'first_name' => $this->firstName,
             'middle_name' => $this->middleName,
             'last_name' => $this->lastName,
