@@ -72,7 +72,7 @@ class OrderObserver
 
         $this->setPaymentStatusToChildren($order);
         $this->setIsCanceledToChildren($order);
-        $this->notifyIfOrderPaid($order);
+        // $this->notifyIfOrderPaid($order);
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
         $this->returnTickets($order);
