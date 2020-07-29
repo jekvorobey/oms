@@ -384,6 +384,8 @@ class OrderObserver
                 return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
             case PaymentStatus::PAID:
                 return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
+            default:
+                return '';
         }
     }
 
