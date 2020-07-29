@@ -415,6 +415,8 @@ class OrderObserver
                 return 'status_zakazadostavlen';
             case OrderStatus::RETURNED:
                 return 'status_zakazavozvrashchen';
+            default:
+                return '';
         }
     }
 
