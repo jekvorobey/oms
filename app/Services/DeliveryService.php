@@ -358,7 +358,7 @@ class DeliveryService
                     $cargo->xml_id = $courierCallOutputDto->xml_id;
                     $cargo->error_xml_id = $courierCallOutputDto->special_courier_call_status;
                     break;
-                } elseif($courierCallOutputDto->message) {
+                } else {
                     $cargo->error_xml_id = $courierCallOutputDto->message;
                 }
             } catch (\Exception $e) {
@@ -484,10 +484,8 @@ class DeliveryService
                 if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->xml_id) {
                     $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
                     $delivery->error_xml_id = '';
-                    $delivery->save();
-                } elseif ($deliveryOrderOutputDto->message) {
+                } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
-                    $delivery->save();
                 }
             } else {
                 $deliveryOrderOutputDto = $deliveryOrderService->updateOrder(
@@ -497,12 +495,12 @@ class DeliveryService
                 );
                 if ($deliveryOrderOutputDto->success) {
                     $delivery->error_xml_id = '';
-                    $delivery->save();
-                } elseif ($deliveryOrderOutputDto->message) {
+                } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
-                    $delivery->save();
                 }
             }
+
+            $delivery->save();
 
             /**
              * Указываем информация о кодах мест (коробок) в службе доставки
@@ -534,7 +532,7 @@ class DeliveryService
      */
     protected function formDeliveryOrder(Delivery $delivery): DeliveryOrderInputDto
     {
-        $delivery->loadMissing(['order', 'shipments.packages.items.basketItem']);
+        $delivery->loadMissing(['shipments.packages.items.basketItem']);
         $deliveryOrderInputDto = new DeliveryOrderInputDto();
 
         //Информация об получателе заказа
@@ -562,12 +560,19 @@ class DeliveryService
         //Информация о стоимосте заказа
         $deliveryOrderCostDto = new DeliveryOrderCostDto();
         $deliveryOrderInputDto->cost = $deliveryOrderCostDto;
-        $deliveryOrderCostDto->delivery_cost = round($delivery->cost, 2);
-        //todo Когда будет постоплата, передавать реальную стоимость к оплате за доставку в поле ниже
+        /**
+         * Когда будет постоплата, указать стоимость доставки в поле ниже.
+         * Уточнить, как рассчитывается стоимость доставки для одного заказа на доставку.
+         * Наверное берется стоимость доставки для всего заказа и делится на кол-во доставок:
+         * round($delivery->order->delivery_price / $delivery->order->deliveries->count(), 2)
+         */
+        $deliveryOrderCostDto->delivery_cost = 0;
+        $deliveryOrderCostDto->cod_cost = $delivery->shipments->sum('cost');
+        //todo Удалить поле delivery_cost_pay из DeliveryOrderCostDto
         $deliveryOrderCostDto->delivery_cost_pay = 0;
-        $shipmentsSum = $delivery->shipments->sum('cost');
-        $deliveryOrderCostDto->assessed_cost = $shipmentsSum;
-        $deliveryOrderCostDto->cod_cost = $shipmentsSum + $deliveryOrderCostDto->delivery_cost;
+        $deliveryOrderCostDto->assessed_cost = $deliveryOrderCostDto->cod_cost;
+        //todo Когда будет постоплата, указать true в поле ниже
+        $deliveryOrderCostDto->is_delivery_payed_by_recipient = false;
 
         //Информация об отправителе заказа
         if ($delivery->shipments->count() == 1) {
