@@ -380,7 +380,7 @@ class OrderObserver
     protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat)
     {
         switch ($payment_status) {
-            case PaymentStatus::HOLD:
+            case PaymentStatus::NOT_PAID:
                 return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
             case PaymentStatus::PAID:
                 return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
