@@ -98,10 +98,9 @@
                             </svg>
                         </div>
                         <div class="col col-3">
-                            {{--todo Доделать вставку кода - сейчас у масткр-классов их нет --}}
-                            {{--<div style="height: 40px; border: 3px solid #141116; box-sizing: border-box; text-align: center;">
-                                <span style="font-weight: bold; font-size: 28px; color: #141116;">0BST2020</span>
-                            </div>--}}
+                            <div style="height: 40px; border: 3px solid #141116; box-sizing: border-box; text-align: center;">
+                                <span style="font-weight: bold; font-size: 28px; color: #141116;">{{$ticket->code}}</span>
+                            </div>
                         </div>
                     </div>
                     <table style="margin-top: 40px; margin-bottom: 40px;">

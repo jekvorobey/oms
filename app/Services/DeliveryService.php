@@ -19,6 +19,7 @@ use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
+use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
 use Greensight\Logistics\Dto\Order\CdekDeliveryOrderReceiptDto;
@@ -357,7 +358,7 @@ class DeliveryService
                     $cargo->xml_id = $courierCallOutputDto->xml_id;
                     $cargo->error_xml_id = $courierCallOutputDto->special_courier_call_status;
                     break;
-                } elseif($courierCallOutputDto->message) {
+                } else {
                     $cargo->error_xml_id = $courierCallOutputDto->message;
                 }
             } catch (\Exception $e) {
@@ -452,14 +453,24 @@ class DeliveryService
     {
         $delivery->loadMissing('shipments');
         /**
-         * Проверяем, что товары по всем отправлениям заказа в наличии или отравления в сборке
+         * Проверяем, что товары по все отправлениям дотавки на комлектации или собраны
          */
         foreach ($delivery->shipments as $shipment) {
-            if (!in_array($shipment->status, [
+            $validShipmentStatuses = [
                 ShipmentStatus::ASSEMBLING,
                 ShipmentStatus::ASSEMBLED,
+            ];
+            /**
+             * Не все службы доставки поддерживают обновление заказа на доставку.
+             * Поэтому для тех, кто не поддерживает, создаем заказ только когда все мерчанты соберут свои отправления
+             */
+            if (in_array($delivery->delivery_service, [
+                LogisticsDeliveryService::SERVICE_DOSTAVISTA
             ])) {
-                throw new Exception('Не все отправления доставки подтверждены мерчантами');
+                $validShipmentStatuses = [ShipmentStatus::ASSEMBLED];
+            }
+            if (!in_array($shipment->status, $validShipmentStatuses)) {
+                throw new Exception('Не все отправления доставки подтверждены/собраны мерчантами');
             }
         }
 
@@ -473,10 +484,8 @@ class DeliveryService
                 if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->xml_id) {
                     $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
                     $delivery->error_xml_id = '';
-                    $delivery->save();
-                } elseif ($deliveryOrderOutputDto->message) {
+                } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
-                    $delivery->save();
                 }
             } else {
                 $deliveryOrderOutputDto = $deliveryOrderService->updateOrder(
@@ -486,12 +495,12 @@ class DeliveryService
                 );
                 if ($deliveryOrderOutputDto->success) {
                     $delivery->error_xml_id = '';
-                    $delivery->save();
-                } elseif ($deliveryOrderOutputDto->message) {
+                } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
-                    $delivery->save();
                 }
             }
+
+            $delivery->save();
 
             /**
              * Указываем информация о кодах мест (коробок) в службе доставки
@@ -517,12 +526,13 @@ class DeliveryService
 
     /**
      * Сформировать заказ на доставку
-     * @param Delivery $delivery
+     * @param  Delivery  $delivery
      * @return DeliveryOrderInputDto
+     * @throws \Cms\Core\CmsException
      */
     protected function formDeliveryOrder(Delivery $delivery): DeliveryOrderInputDto
     {
-        $delivery->loadMissing(['order', 'shipments.packages.items.basketItem']);
+        $delivery->loadMissing(['shipments.packages.items.basketItem']);
         $deliveryOrderInputDto = new DeliveryOrderInputDto();
 
         //Информация об получателе заказа
@@ -550,10 +560,19 @@ class DeliveryService
         //Информация о стоимосте заказа
         $deliveryOrderCostDto = new DeliveryOrderCostDto();
         $deliveryOrderInputDto->cost = $deliveryOrderCostDto;
-        $deliveryOrderCostDto->delivery_cost = $delivery->cost;
-        //todo Когда будет постоплата, передавать реальную стоимость к оплате за доставку в поле ниже
+        /**
+         * Когда будет постоплата, указать стоимость доставки в поле ниже.
+         * Уточнить, как рассчитывается стоимость доставки для одного заказа на доставку.
+         * Наверное берется стоимость доставки для всего заказа и делится на кол-во доставок:
+         * round($delivery->order->delivery_price / $delivery->order->deliveries->count(), 2)
+         */
+        $deliveryOrderCostDto->delivery_cost = 0;
+        $deliveryOrderCostDto->cod_cost = $delivery->shipments->sum('cost');
+        //todo Удалить поле delivery_cost_pay из DeliveryOrderCostDto
         $deliveryOrderCostDto->delivery_cost_pay = 0;
-        $deliveryOrderCostDto->assessed_cost = $delivery->shipments->sum('cost');
+        $deliveryOrderCostDto->assessed_cost = $deliveryOrderCostDto->cod_cost;
+        //todo Когда будет постоплата, указать true в поле ниже
+        $deliveryOrderCostDto->is_delivery_payed_by_recipient = false;
 
         //Информация об отправителе заказа
         if ($delivery->shipments->count() == 1) {
@@ -676,9 +695,10 @@ class DeliveryService
                         $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
                         $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
                         $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
-                        $deliveryOrderItemDto->cost = round($item->qty > 0 ? $basketItem->cost / $item->qty : 0, 2);
+                        $deliveryOrderItemDto->cost = round($item->qty > 0 ? $basketItem->price / $item->qty : 0, 2);
                         //todo Когда будет постоплата, передавать реальную стоимость к оплате за товары доставки в поле ниже
                         $deliveryOrderItemDto->price = 0;
+                        $deliveryOrderItemDto->assessed_cost = $deliveryOrderItemDto->cost;
                     }
                 }
             } else {
@@ -707,6 +727,7 @@ class DeliveryService
                     $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->cost / $basketItem->qty : 0, 2);
                     //todo Когда будет постоплата, передавать реальную стоимость к оплате за товары доставки в поле ниже
                     $deliveryOrderItemDto->price = 0;
+                    $deliveryOrderItemDto->assessed_cost = $deliveryOrderItemDto->cost;
                 }
             }
         }
