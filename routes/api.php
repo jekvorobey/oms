@@ -89,6 +89,10 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('payments')->group(function () {
+        Route::prefix('payment-methods')->group(function () {
+            Route::get('', 'PaymentMethodsController@read');
+            Route::put('{id}', 'PaymentMethodsController@update');
+        });
         Route::prefix('handler')->group(function () {
             Route::post('local', 'PaymentsController@handlerLocal')->name('handler.localPayment');
             Route::post('yandex', 'PaymentsController@handlerYandex')->name('handler.yandexPayment');
