@@ -164,6 +164,11 @@ class OrderService
                 $ticketService = resolve(PublicEventTicketService::class);
                 $ticketService->returnTickets($ticketIds);
             }
+
+            foreach ($orders as $order) {
+                $order->status = OrderStatus::RETURNED;
+                $order->save();
+            }
         }
     }
 

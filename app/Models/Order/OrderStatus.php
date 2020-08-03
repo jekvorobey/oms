@@ -2,6 +2,8 @@
 
 namespace App\Models\Order;
 
+use App\Models\Basket\Basket;
+
 /**
  * Статус заказа
  * Class OrderStatus
@@ -36,6 +38,8 @@ class OrderStatus
     public $id;
     /** @var string */
     public $name;
+    /** @var int[] - типы заказов, для которых актуален статус */
+    public $types;
 
     /**
      * @return array
@@ -45,67 +49,110 @@ class OrderStatus
         return [
             self::CREATED => new self(
                 self::CREATED,
-                'Оформлен'
+                'Оформлен',
+                [
+                    Basket::TYPE_PRODUCT,
+                    Basket::TYPE_MASTER,
+                ]
             ),
             self::AWAITING_CHECK => new self(
                 self::AWAITING_CHECK,
-                'Ожидает проверки АОЗ'
+                'Ожидает проверки АОЗ',
+                [
+                    Basket::TYPE_PRODUCT,
+                    Basket::TYPE_MASTER,
+                ]
             ),
             self::CHECKING => new self(
                 self::CHECKING,
-                'Проверка АОЗ'
+                'Проверка АОЗ',
+                [
+                    Basket::TYPE_PRODUCT,
+                    Basket::TYPE_MASTER,
+                ]
             ),
             self::AWAITING_CONFIRMATION => new self(
                 self::AWAITING_CONFIRMATION,
-                'Ожидает подтверждения Мерчантом'
+                'Ожидает подтверждения Мерчантом',
+                [
+                    Basket::TYPE_PRODUCT,
+                ]
             ),
             self::IN_PROCESSING => new self(
                 self::IN_PROCESSING,
-                'В обработке'
+                'В обработке',
+                [
+                    Basket::TYPE_PRODUCT,
+                ]
             ),
             self::TRANSFERRED_TO_DELIVERY => new self(
                 self::TRANSFERRED_TO_DELIVERY,
-                'Передан на доставку'
+                'Передан на доставку',
+                [
+                    Basket::TYPE_PRODUCT,
+                ]
             ),
             self::DELIVERING => new self(
                 self::DELIVERING,
-                'В процессе доставки'
+                'В процессе доставки',
+                [
+                    Basket::TYPE_PRODUCT,
+                ]
             ),
             self::READY_FOR_RECIPIENT => new self(
                 self::READY_FOR_RECIPIENT,
-                'Находится в Пункте Выдачи'
+                'Находится в Пункте Выдачи',
+                [
+                    Basket::TYPE_PRODUCT,
+                ]
             ),
             self::DONE => new self(
                 self::DONE,
-                'Доставлен'
+                'Доставлен',
+                [
+                    Basket::TYPE_PRODUCT,
+                    Basket::TYPE_MASTER,
+                ]
             ),
             self::RETURNED => new self(
                 self::RETURNED,
-                'Возвращен'
+                'Возвращен',
+                [
+                    Basket::TYPE_PRODUCT,
+                    Basket::TYPE_MASTER,
+                ]
             ),
             self::PRE_ORDER => new self(
                 self::PRE_ORDER,
-                'Предзаказ: ожидаем поступления товара'
+                'Предзаказ: ожидаем поступления товара',
+                [
+                    Basket::TYPE_PRODUCT,
+                ]
             ),
         ];
     }
 
     /**
+     * @param  int  $type
      * @return array
      */
-    public static function validValues(): array
+    public static function validValues(int $type = Basket::TYPE_PRODUCT): array
     {
-        return array_keys(static::all());
+        return array_keys(array_filter(static::all(), function (self $orderStatus) use ($type) {
+            return in_array($type, $orderStatus->types);
+        }));
     }
 
     /**
-     * PaymentStatus constructor.
+     * OrderStatus constructor.
      * @param  int  $id
      * @param  string  $name
+     * @param  array  $types
      */
-    public function __construct(int $id, string $name)
+    public function __construct(int $id, string $name, array $types)
     {
         $this->id = $id;
         $this->name = $name;
+        $this->types = $types;
     }
 }

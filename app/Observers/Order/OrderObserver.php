@@ -3,6 +3,7 @@
 namespace App\Observers\Order;
 
 use App\Core\OrderSmsNotify;
+use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\DeliveryType;
@@ -340,7 +341,9 @@ class OrderObserver
     protected function setAwaitingConfirmationStatus(Order $order): void
     {
         if ($order->status == OrderStatus::CREATED && !$order->is_require_check && $order->canBeProcessed()) {
-            $order->status = OrderStatus::AWAITING_CONFIRMATION;
+            if ($order->type == Basket::TYPE_PRODUCT) {
+                $order->status = OrderStatus::AWAITING_CONFIRMATION;
+            }
         }
     }
 
@@ -497,6 +500,7 @@ class OrderObserver
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->sendTicketsEmail($order);
+            $order->status = OrderStatus::DONE;
         }
     }
 }
