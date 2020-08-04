@@ -65,7 +65,7 @@ class OrderObserver
      * Handle the order "updated" event.
      * @param  Order  $order
      * @return void
-     * @throws \Exception
+     * @throws \Throwable
      */
     public function updated(Order $order)
     {
@@ -76,9 +76,7 @@ class OrderObserver
         // $this->notifyIfOrderPaid($order);
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
-        $this->returnTickets($order);
         $this->sendNotification($order);
-        $this->sendTicketsEmail($order);
     }
 
     protected function sendCreatedNotification(Order $order)
@@ -173,6 +171,7 @@ class OrderObserver
      * Handle the order "saving" event.
      * @param  Order  $order
      * @return void
+     * @throws \Throwable
      */
     public function saving(Order $order)
     {
@@ -181,6 +180,8 @@ class OrderObserver
         $this->setCanceledAt($order);
         $this->setAwaitingCheckStatus($order);
         $this->setAwaitingConfirmationStatus($order);
+        $this->sendTicketsEmail($order);
+        $this->returnTickets($order);
 
         //Данная команда должна быть в самом низу перед всеми $this->set*Status()
         $this->setStatusAt($order);
@@ -376,7 +377,8 @@ class OrderObserver
         if ($order->payment_status != $order->getOriginal('payment_status') && $order->payment_status == PaymentStatus::TIMEOUT) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
-            $orderService->returnTickets(collect($order));
+            //Не сохраняем данные по заказу внутри метода возврата билетов, иначе будет цикл
+            $orderService->returnTickets(collect()->push($order), false);
         }
     }
 

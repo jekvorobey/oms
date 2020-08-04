@@ -38,13 +38,17 @@ class FixPublicEventOrdersStatus extends Command
         $orders = Order::query()
             ->where('type', Basket::TYPE_MASTER)
             ->where(function(Builder $query) {
-                $query->where('status', OrderStatus::AWAITING_CONFIRMATION)
+                $query->whereIn('status', [OrderStatus::AWAITING_CONFIRMATION, OrderStatus::CREATED])
                     ->orWhereHas('orderReturns');
             })
             ->with('orderReturns')
             ->get();
         foreach ($orders as $order) {
-            $order->status = $order->orderReturns->count() ? OrderStatus::RETURNED : OrderStatus::DONE;
+            if ($order->orderReturns->count()) {
+                $order->status = OrderStatus::RETURNED;
+            } elseif ($order->isPaid()) {
+                $order->status = OrderStatus::DONE;
+            }
             $order->save();
         }
     }

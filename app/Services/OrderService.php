@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
 use App\Services\Dto\Internal\PublicEventOrder;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
@@ -101,6 +102,9 @@ class OrderService
     protected function setPaymentStatus(Order $order, int $status, bool $save = true): bool
     {
         $order->payment_status = $status;
+        if ($order->payment_status == PaymentStatus::TIMEOUT) {
+            $order->is_canceled = true;
+        }
 
         return $save ? $order->save() : true;
     }
@@ -144,8 +148,9 @@ class OrderService
     /**
      * Вернуть остатки по билетам
      * @param  Collection|Order[]  $orders
+     * @param bool $saveOrders - сохранить данные по заказам
      */
-    public function returnTickets(Collection $orders): void
+    public function returnTickets(Collection $orders, bool $saveOrders = true): void
     {
         if ($orders->isNotEmpty()) {
             $ticketIds = [];
@@ -166,8 +171,12 @@ class OrderService
             }
 
             foreach ($orders as $order) {
-                $order->status = OrderStatus::RETURNED;
-                $order->save();
+                if ($order->isPaid()) {
+                    $order->status = OrderStatus::RETURNED;
+                    if ($saveOrders) {
+                        $order->save();
+                    }
+                }
             }
         }
     }
