@@ -3,6 +3,7 @@
 namespace App\Observers\Order;
 
 use App\Core\OrderSmsNotify;
+use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\DeliveryType;
@@ -64,7 +65,7 @@ class OrderObserver
      * Handle the order "updated" event.
      * @param  Order  $order
      * @return void
-     * @throws \Exception
+     * @throws \Throwable
      */
     public function updated(Order $order)
     {
@@ -75,9 +76,7 @@ class OrderObserver
         // $this->notifyIfOrderPaid($order);
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
-        $this->returnTickets($order);
         $this->sendNotification($order);
-        $this->sendTicketsEmail($order);
     }
 
     protected function sendCreatedNotification(Order $order)
@@ -172,6 +171,7 @@ class OrderObserver
      * Handle the order "saving" event.
      * @param  Order  $order
      * @return void
+     * @throws \Throwable
      */
     public function saving(Order $order)
     {
@@ -180,6 +180,8 @@ class OrderObserver
         $this->setCanceledAt($order);
         $this->setAwaitingCheckStatus($order);
         $this->setAwaitingConfirmationStatus($order);
+        $this->sendTicketsEmail($order);
+        $this->returnTickets($order);
 
         //Данная команда должна быть в самом низу перед всеми $this->set*Status()
         $this->setStatusAt($order);
@@ -340,7 +342,9 @@ class OrderObserver
     protected function setAwaitingConfirmationStatus(Order $order): void
     {
         if ($order->status == OrderStatus::CREATED && !$order->is_require_check && $order->canBeProcessed()) {
-            $order->status = OrderStatus::AWAITING_CONFIRMATION;
+            if ($order->type == Basket::TYPE_PRODUCT) {
+                $order->status = OrderStatus::AWAITING_CONFIRMATION;
+            }
         }
     }
 
@@ -373,14 +377,15 @@ class OrderObserver
         if ($order->payment_status != $order->getOriginal('payment_status') && $order->payment_status == PaymentStatus::TIMEOUT) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
-            $orderService->returnTickets(collect($order));
+            //Не сохраняем данные по заказу внутри метода возврата билетов, иначе будет цикл
+            $orderService->returnTickets(collect()->push($order), false);
         }
     }
 
     protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat)
     {
         switch ($payment_status) {
-            case PaymentStatus::HOLD:
+            case PaymentStatus::NOT_PAID:
                 return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
             case PaymentStatus::PAID:
                 return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
@@ -493,10 +498,11 @@ class OrderObserver
      */
     protected function sendTicketsEmail(Order $order): void
     {
-        if ($order->payment_status != $order->getOriginal('payment_status') && $order->isPaid()) {
+        if ($order->payment_status != $order->getOriginal('payment_status') && $order->isPaid() && $order->isPublicEventOrder()) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->sendTicketsEmail($order);
+            $order->status = OrderStatus::DONE;
         }
     }
 }

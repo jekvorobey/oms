@@ -202,7 +202,7 @@ class OrdersController extends Controller
             'customer_id' => 'nullable|integer',
             'cost' => 'nullable|numeric',
 
-            'status' => ['nullable', Rule::in(OrderStatus::validValues())],
+            'status' => ['nullable', Rule::in(OrderStatus::validValues($order->type))],
             'payment_status' => ['nullable', Rule::in(PaymentStatus::validValues())],
 
             'delivery_type' => ['nullable', Rule::in(DeliveryType::validValues())],
