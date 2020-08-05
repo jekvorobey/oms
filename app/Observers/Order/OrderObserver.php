@@ -498,7 +498,7 @@ class OrderObserver
      */
     protected function sendTicketsEmail(Order $order): void
     {
-        if ($order->payment_status != $order->getOriginal('payment_status') && $order->isPaid()) {
+        if ($order->payment_status != $order->getOriginal('payment_status') && $order->isPaid() && $order->isPublicEventOrder()) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->sendTicketsEmail($order);
