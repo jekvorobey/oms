@@ -564,12 +564,7 @@ class ShipmentsController extends Controller
             ->with(['basketItems', 'delivery.order'])
             ->where('status', '>=', ShipmentStatus::ASSEMBLING)
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
-            ->where(function($query) {
-                return $query->doesntHave('export')
-                    ->orWhereHas('export', function ($subquery) {
-                        return $subquery->whereNull('shipment_xml_id')->where('err_code', '!=', 500);
-                    });
-            })
+            ->doesntHave('export')
             ->get();
 
         return response()->json([
