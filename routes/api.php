@@ -20,6 +20,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 
     Route::prefix('baskets')->group(function () {
         Route::get('by-customer/{customerId}', 'BasketController@getCurrentBasket');
+        Route::get('qty-by-offer-ids', 'BasketController@qtyByOfferIds');
 
         Route::prefix('{basketId}')->group(function () {
             Route::put('items/{offerId}', 'BasketController@setItemByBasket');
