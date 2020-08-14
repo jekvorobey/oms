@@ -265,6 +265,7 @@ class Delivery extends OmsModel
     public static function deliveriesInDelivery(bool $withShipments = false): Collection
     {
         $query = self::query()
+            ->where('is_canceled', false)
             ->whereNotNull('xml_id')
             ->where('xml_id', '!=', '')
             ->whereNotIn('status', static::getFinalStatus());
