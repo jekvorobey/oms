@@ -88,10 +88,10 @@ class DeliveryObserver
         $notificationService = app(ServiceNotificationService::class);
         $customerService = app(CustomerService::class);
 
-        $customer = $customerService->customers(
+        $customer = optional($customerService->customers(
             $customerService->newQuery()
                 ->setFilter('id', '=', $delivery->order->customer_id)
-        )->first()->user_id;
+        )->first())->user_id;
 
         if($delivery->status != $delivery->getOriginal('status')) {
             $notificationService->send(

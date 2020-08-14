@@ -140,7 +140,39 @@ class Delivery extends OmsModel
         foreach ($value as &$item) {
             $item = (string)$item;
         }
+
+        if ($value) {
+            $value['address_string'] = join(', ', array_filter([
+                $value['post_index'] ?? null,
+                $value['region'] ?? null,
+                $value['city'] ?? null,
+                $value['street'] ?? null,
+                $value['house'] ?? null,
+                $value['block'] ?? null,
+                isset($value['flat']) && $value['flat'] ? 'офис' . $value['flat'] : null,
+            ]));
+        }
+
         $this->attributes['delivery_address'] = json_encode($value);
+    }
+
+    public function getDeliveryAddressString(): string
+    {
+        if (!isset($this->delivery_address['address_string'])) {
+            $deliveryAddress = $this->delivery_address;
+            $deliveryAddress['address_string'] = join(', ', array_filter([
+                $deliveryAddress['post_index'] ?? null,
+                $deliveryAddress['region'] ?? null,
+                $deliveryAddress['city'] ?? null,
+                $deliveryAddress['street'] ?? null,
+                $deliveryAddress['house'] ?? null,
+                $deliveryAddress['block'] ?? null,
+                isset($deliveryAddress['flat']) && $deliveryAddress['flat'] ? 'офис' . $deliveryAddress['flat'] : null,
+            ]));
+            $this->delivery_address = $deliveryAddress;
+        }
+
+        return (string)$this->delivery_address['address_string'];
     }
 
     /**
