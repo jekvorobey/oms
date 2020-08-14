@@ -212,8 +212,8 @@ class BasketController extends Controller
 
         $basketsQty = DB::table(with(new BasketItem())->getTable())
             ->select('offer_id', DB::raw('count(*) as total'))
+            ->whereIn('offer_id', $data['offer_ids'])
             ->groupBy('offer_id')
-            ->having('offer_id', $data['offer_ids'])
             ->pluck('total','offer_id')
             ->all();
 
