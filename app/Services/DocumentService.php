@@ -339,7 +339,7 @@ class DocumentService
             $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
             $delivery = $shipment->delivery;
-            if ($delivery->delivery_method == DeliveryMethod::METHOD_DELIVERY) {
+            if ($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
                 /** @var ListsService $listService */
                 $listService = resolve(ListsService::class);
                 /** @var PointDto $point */
