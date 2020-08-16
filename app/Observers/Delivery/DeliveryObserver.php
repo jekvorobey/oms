@@ -88,10 +88,10 @@ class DeliveryObserver
         $notificationService = app(ServiceNotificationService::class);
         $customerService = app(CustomerService::class);
 
-        $customer = $customerService->customers(
+        $customer = optional($customerService->customers(
             $customerService->newQuery()
                 ->setFilter('id', '=', $delivery->order->customer_id)
-        )->first()->user_id;
+        )->first())->user_id;
 
         if($delivery->status != $delivery->getOriginal('status')) {
             $notificationService->send(
@@ -106,7 +106,7 @@ class DeliveryObserver
         $order_id = $delivery->order->id;
         $link_order = sprintf("%s/profile/orders/%d", config('app.showcase_host'), $delivery->order->id);
 
-        if(isset($delivery->getChanges()['delivery_address'])) {
+        if(isset($delivery->getChanges()['delivery_address']) && $customer) {
             $notificationService->send(
                 $customer,
                 'servisnyeizmenenie_zakaza_adres_dostavki',

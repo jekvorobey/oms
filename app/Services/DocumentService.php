@@ -11,7 +11,9 @@ use App\Models\Order\Order;
 use App\Services\Dto\Out\DocumentDto;
 use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
+use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
+use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -313,7 +315,7 @@ class DocumentService
 
         try {
             $templateProcessor = $this->getTemplateProcessor(self::INVENTORY);
-            $shipment->loadMissing('basketItems');
+            $shipment->loadMissing('basketItems', 'delivery');
 
             $offersIds = $shipment->basketItems->pluck('offer_id')->all();
             $productsByOffers = $this->getProductsByOffers($offersIds);
@@ -336,14 +338,21 @@ class DocumentService
             }
             $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
-            $deliveryId = Shipment::query()->where('number', '=', $shipment->number)->first()->delivery_id;
-            $delivery = Delivery::find($deliveryId);
-            $deliveryAddress = $delivery->delivery_address;
+            $delivery = $shipment->delivery;
+            if ($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
+                /** @var ListsService $listService */
+                $listService = resolve(ListsService::class);
+                /** @var PointDto $point */
+                $point = $listService->points($listService->newQuery()->setFilter('id', $delivery->point_id))->first();
+                $deliveryAddress = $point->address['address_string'] ?? '';
+            } else {
+                $deliveryAddress = $delivery->getDeliveryAddressString();
+            }
 
             $fieldValues = [
                 'shipment_number' => $shipment->number,
                 'receiver_name' => $delivery->receiver_name,
-                'receiver_address' => $deliveryAddress['city'].' ,'.$deliveryAddress['street'].' ,'.$deliveryAddress['house'].' ,'.$deliveryAddress['flat'],
+                'receiver_address' => $deliveryAddress,
                 'table.total_product_qty' => qty_format($shipment->basketItems->sum('qty')),
                 'table.total_product_price_per_unit' => $shipment->basketItems->sum(function (BasketItem $basketItem) {
                     return $basketItem->price / $basketItem->qty;
