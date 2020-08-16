@@ -344,15 +344,15 @@ class DocumentService
                 $listService = resolve(ListsService::class);
                 /** @var PointDto $point */
                 $point = $listService->points($listService->newQuery()->setFilter('id', $delivery->point_id))->first();
-                $deliveryAddress = $point->address;
+                $deliveryAddress = $point->address['address_string'] ?? '';
             } else {
-                $deliveryAddress = $delivery->delivery_address;
+                $deliveryAddress = $delivery->getDeliveryAddressString();
             }
 
             $fieldValues = [
                 'shipment_number' => $shipment->number,
                 'receiver_name' => $delivery->receiver_name,
-                'receiver_address' => $deliveryAddress['city'].' ,'.$deliveryAddress['street'].' ,'.$deliveryAddress['house'].' ,'.$deliveryAddress['flat'],
+                'receiver_address' => $deliveryAddress,
                 'table.total_product_qty' => qty_format($shipment->basketItems->sum('qty')),
                 'table.total_product_price_per_unit' => $shipment->basketItems->sum(function (BasketItem $basketItem) {
                     return $basketItem->price / $basketItem->qty;

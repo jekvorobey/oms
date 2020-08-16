@@ -142,37 +142,41 @@ class Delivery extends OmsModel
         }
 
         if ($value) {
-            $value['address_string'] = join(', ', array_filter([
-                $value['post_index'] ?? null,
-                $value['region'] ?? null,
-                $value['city'] ?? null,
-                $value['street'] ?? null,
-                $value['house'] ?? null,
-                $value['block'] ?? null,
-                isset($value['flat']) && $value['flat'] ? 'офис' . $value['flat'] : null,
-            ]));
+            $value['address_string'] = $this->formDeliveryAddressString($value);
         }
 
         $this->attributes['delivery_address'] = json_encode($value);
     }
 
+    /**
+     * @return string
+     */
     public function getDeliveryAddressString(): string
     {
         if (!isset($this->delivery_address['address_string'])) {
             $deliveryAddress = $this->delivery_address;
-            $deliveryAddress['address_string'] = join(', ', array_filter([
-                $deliveryAddress['post_index'] ?? null,
-                $deliveryAddress['region'] ?? null,
-                $deliveryAddress['city'] ?? null,
-                $deliveryAddress['street'] ?? null,
-                $deliveryAddress['house'] ?? null,
-                $deliveryAddress['block'] ?? null,
-                isset($deliveryAddress['flat']) && $deliveryAddress['flat'] ? 'офис' . $deliveryAddress['flat'] : null,
-            ]));
+            $deliveryAddress['address_string'] = $this->formDeliveryAddressString($deliveryAddress);
             $this->delivery_address = $deliveryAddress;
         }
 
         return (string)$this->delivery_address['address_string'];
+    }
+
+    /**
+     * @param  array  $address
+     * @return string
+     */
+    private function formDeliveryAddressString(array $address): string
+    {
+        return (string)join(', ', array_filter([
+            $address['post_index'] ?? null,
+            $address['region'] ?? null,
+            $address['city'] ?? null,
+            $address['street'] ?? null,
+            $address['house'] ?? null,
+            $address['block'] ?? null,
+            $address['flat'] ?? null,
+        ]));
     }
 
     /**
