@@ -140,7 +140,43 @@ class Delivery extends OmsModel
         foreach ($value as &$item) {
             $item = (string)$item;
         }
+
+        if ($value) {
+            $value['address_string'] = $this->formDeliveryAddressString($value);
+        }
+
         $this->attributes['delivery_address'] = json_encode($value);
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeliveryAddressString(): string
+    {
+        if (!isset($this->delivery_address['address_string'])) {
+            $deliveryAddress = $this->delivery_address;
+            $deliveryAddress['address_string'] = $this->formDeliveryAddressString($deliveryAddress);
+            $this->delivery_address = $deliveryAddress;
+        }
+
+        return (string)$this->delivery_address['address_string'];
+    }
+
+    /**
+     * @param  array  $address
+     * @return string
+     */
+    private function formDeliveryAddressString(array $address): string
+    {
+        return (string)join(', ', array_filter([
+            $address['post_index'] ?? null,
+            $address['region'] ?? null,
+            $address['city'] ?? null,
+            $address['street'] ?? null,
+            $address['house'] ?? null,
+            $address['block'] ?? null,
+            $address['flat'] ?? null,
+        ]));
     }
 
     /**
@@ -265,6 +301,7 @@ class Delivery extends OmsModel
     public static function deliveriesInDelivery(bool $withShipments = false): Collection
     {
         $query = self::query()
+            ->where('is_canceled', false)
             ->whereNotNull('xml_id')
             ->where('xml_id', '!=', '')
             ->whereNotIn('status', static::getFinalStatus());
