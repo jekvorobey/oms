@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $is_canceled_at - дата установки флага отмены груза
  * @property int $delivery_service
  *
+ * @property string $cdek_intake_number - Номер заявки СДЭК на вызов курьера
  * @property string $xml_id
  * @property string $error_xml_id - текст последней ошибки при создании заявки на вызов курьера для забора груза в службе доставки
  * @property float $width - ширина (расчитывается автоматически)
@@ -49,6 +50,7 @@ class Cargo extends OmsModel
         'store_id',
         'status',
         'delivery_service',
+        'cdek_intake_number',
         'xml_id',
         'shipping_problem_comment',
     ];

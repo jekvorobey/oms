@@ -19,6 +19,7 @@ use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
+use Greensight\Logistics\Dto\CourierCall\ExternalStatusCheckDto;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
@@ -438,7 +439,8 @@ class DeliveryService
             $status = $courierCallService
                 ->checkExternalStatus($cargo->delivery_service, $cargo->xml_id);
 
-            $cargo->error_xml_id = $status;
+            $cargo->error_xml_id = $status->error;
+            $cargo->cdek_intake_number = $status->intake_number;
             $cargo->updated_at = Carbon::now();
             $cargo->save();
         }
