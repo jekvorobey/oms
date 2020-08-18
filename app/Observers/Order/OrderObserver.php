@@ -5,6 +5,7 @@ namespace App\Observers\Order;
 use App\Core\OrderSmsNotify;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
+use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\DeliveryType;
 use App\Models\Delivery\ShipmentStatus;
@@ -12,6 +13,7 @@ use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
+use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
@@ -456,7 +458,9 @@ class OrderObserver
         $customer = $customerService->customers($customerService->newQuery()->setFilter('id', '=', $order->customer_id))->first();
         $user = $userService->users($userService->newQuery()->setFilter('id', '=', $customer->user_id))->first();
 
+        /** @var Payment $payment */
         $payment = $order->payments->first();
+        /** @var Delivery $delivery */
         $delivery = $order->deliveries->first();
 
         $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
@@ -471,8 +475,6 @@ class OrderObserver
             ];
         });
 
-        $deliveryAddress = sprintf("%s %s", $delivery->delivery_address['city'], $delivery->delivery_address['region']);
-
         return [
             'ORDER_ID' => $order->id,
             'FULL_NAME' => sprintf("%s %s %s", $user->last_name, $user->first_name, $user->middle_name),
@@ -481,7 +483,7 @@ class OrderObserver
             'ORDER_DATE' => $order->created_at->toDateString(),
             'ORDER_TIME' => $order->created_at->toTimeString(),
             'DELIVERY_TYPE' => DeliveryType::all()[$order->delivery_type]->name,
-            'DELIVERY_ADDRESS' => $deliveryAddress,
+            'DELIVERY_ADDRESS' => $delivery->getDeliveryAddressString(),
             'DELIVERY_DATE' => $delivery->delivery_at->toDateString(),
             'DELIVERY_TIME' => $delivery->delivery_at->toTimeString(),
             'CALL_TK' => $optionService->get(OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE),
