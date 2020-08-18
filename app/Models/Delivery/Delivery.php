@@ -4,6 +4,9 @@ namespace App\Models\Delivery;
 
 use App\Models\OmsModel;
 use App\Models\Order\Order;
+use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Dto\Lists\PointDto;
+use Greensight\Logistics\Services\ListsService\ListsService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
@@ -153,13 +156,22 @@ class Delivery extends OmsModel
      */
     public function getDeliveryAddressString(): string
     {
-        if (!isset($this->delivery_address['address_string'])) {
-            $deliveryAddress = $this->delivery_address;
-            $deliveryAddress['address_string'] = $this->formDeliveryAddressString($deliveryAddress);
-            $this->delivery_address = $deliveryAddress;
-        }
+        if ($this->isPickup()) {
+            /** @var ListsService $listService */
+            $listService = resolve(ListsService::class);
+            /** @var PointDto $point */
+            $point = $listService->points($listService->newQuery()->setFilter('id', $this->point_id))->first();
 
-        return (string)$this->delivery_address['address_string'];
+            return $point->address['address_string'] ?? '';
+        } else {
+            if (!isset($this->delivery_address['address_string'])) {
+                $deliveryAddress = $this->delivery_address;
+                $deliveryAddress['address_string'] = $this->formDeliveryAddressString($deliveryAddress);
+                $this->delivery_address = $deliveryAddress;
+            }
+
+            return (string)$this->delivery_address['address_string'];
+        }
     }
 
     /**
@@ -310,5 +322,23 @@ class Delivery extends OmsModel
         }
 
         return $query->get();
+    }
+
+    /**
+     * Доставка с самовывозом?
+     * @return bool
+     */
+    public function isPickup(): bool
+    {
+        return $this->delivery_method == DeliveryMethod::METHOD_PICKUP;
+    }
+
+    /**
+     * Доставка с курьерской доставкой?
+     * @return bool
+     */
+    public function isDelivery(): bool
+    {
+        return $this->delivery_method == DeliveryMethod::METHOD_DELIVERY;
     }
 }

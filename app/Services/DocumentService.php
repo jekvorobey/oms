@@ -11,9 +11,7 @@ use App\Models\Order\Order;
 use App\Services\Dto\Out\DocumentDto;
 use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
-use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
-use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -339,20 +337,10 @@ class DocumentService
             $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
             $delivery = $shipment->delivery;
-            if ($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
-                /** @var ListsService $listService */
-                $listService = resolve(ListsService::class);
-                /** @var PointDto $point */
-                $point = $listService->points($listService->newQuery()->setFilter('id', $delivery->point_id))->first();
-                $deliveryAddress = $point->address['address_string'] ?? '';
-            } else {
-                $deliveryAddress = $delivery->getDeliveryAddressString();
-            }
-
             $fieldValues = [
                 'shipment_number' => $shipment->number,
                 'receiver_name' => $delivery->receiver_name,
-                'receiver_address' => $deliveryAddress,
+                'receiver_address' => $delivery->getDeliveryAddressString(),
                 'table.total_product_qty' => qty_format($shipment->basketItems->sum('qty')),
                 'table.total_product_price_per_unit' => $shipment->basketItems->sum(function (BasketItem $basketItem) {
                     return $basketItem->price / $basketItem->qty;
