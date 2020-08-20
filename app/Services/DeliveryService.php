@@ -422,6 +422,7 @@ class DeliveryService
                 ->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
 
             $cargo->xml_id = '';
+            $cargo->cdek_intake_number = null;
             $cargo->error_xml_id = '';
             $cargo->save();
         }
