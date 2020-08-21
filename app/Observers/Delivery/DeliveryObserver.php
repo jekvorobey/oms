@@ -85,58 +85,62 @@ class DeliveryObserver
 
     protected function sendNotification(Delivery $delivery)
     {
-        $notificationService = app(ServiceNotificationService::class);
-        $customerService = app(CustomerService::class);
+        try {
+            $notificationService = app(ServiceNotificationService::class);
+            $customerService = app(CustomerService::class);
 
-        $customer = optional($customerService->customers(
-            $customerService->newQuery()
-                ->setFilter('id', '=', $delivery->order->customer_id)
-        )->first())->user_id;
+            $customer = optional($customerService->customers(
+                $customerService->newQuery()
+                    ->setFilter('id', '=', $delivery->order->customer_id)
+            )->first())->user_id;
 
-        if($delivery->status != $delivery->getOriginal('status')) {
-            $notificationService->send(
-                $customer,
-                $this->createNotificationType(
-                    $delivery->status,
-                    $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP
-                )
-            );
-        }
+            if ($delivery->status != $delivery->getOriginal('status')) {
+                $notificationService->send(
+                    $customer,
+                    $this->createNotificationType(
+                        $delivery->status,
+                        $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP
+                    )
+                );
+            }
 
-        $order_id = $delivery->order->id;
-        $link_order = sprintf("%s/profile/orders/%d", config('app.showcase_host'), $delivery->order->id);
+            $order_id = $delivery->order->id;
+            $link_order = sprintf("%s/profile/orders/%d", config('app.showcase_host'), $delivery->order->id);
 
-        if(isset($delivery->getChanges()['delivery_address']) && $customer) {
-            $notificationService->send(
-                $customer,
-                'servisnyeizmenenie_zakaza_adres_dostavki',
-                [
-                    'ORDER_ID' => $order_id,
-                    'LINK_ORDER' => $link_order
-                ]
-            );
-        }
+            if (isset($delivery->getChanges()['delivery_address']) && $customer) {
+                $notificationService->send(
+                    $customer,
+                    'servisnyeizmenenie_zakaza_adres_dostavki',
+                    [
+                        'ORDER_ID' => $order_id,
+                        'LINK_ORDER' => $link_order
+                    ]
+                );
+            }
 
-        if($delivery->receiver_name != $delivery->getOriginal('receiver_name')) {
-            $notificationService->send(
-                $customer,
-                'servisnyeizmenenie_zakaza_poluchatel_dostavki',
-                [
-                    'ORDER_ID' => $order_id,
-                    'LINK_ORDER' => $link_order
-                ]
-            );
-        }
+            if ($delivery->receiver_name != $delivery->getOriginal('receiver_name')) {
+                $notificationService->send(
+                    $customer,
+                    'servisnyeizmenenie_zakaza_poluchatel_dostavki',
+                    [
+                        'ORDER_ID' => $order_id,
+                        'LINK_ORDER' => $link_order
+                    ]
+                );
+            }
 
-        if($delivery->delivery_time_end != $delivery->getOriginal('delivery_time_end')) {
-            $notificationService->send(
-                $customer,
-                'servisnyeizmenenie_zakaza_data_dostavki',
-                [
-                    'ORDER_ID' => $order_id,
-                    'LINK_ORDER' => $link_order
-                ]
-            );
+            if ($delivery->delivery_time_end != $delivery->getOriginal('delivery_time_end')) {
+                $notificationService->send(
+                    $customer,
+                    'servisnyeizmenenie_zakaza_data_dostavki',
+                    [
+                        'ORDER_ID' => $order_id,
+                        'LINK_ORDER' => $link_order
+                    ]
+                );
+            }
+        } catch (\Exception $e) {
+            logger($e->getMessage(), $e->getTrace());
         }
     }
 
