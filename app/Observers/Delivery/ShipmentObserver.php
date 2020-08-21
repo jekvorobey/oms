@@ -13,9 +13,7 @@ use App\Services\DeliveryService;
 use App\Services\OrderService;
 use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
-use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
-use MerchantManagement\Services\MerchantService\MerchantService;
 use MerchantManagement\Services\OperatorService\OperatorService;
 
 /**
@@ -459,48 +457,58 @@ class ShipmentObserver
 
     protected function sendCreatedNotification(Shipment $shipment)
     {
-        $serviceNotificationService = app(ServiceNotificationService::class);
-        $operatorService = app(OperatorService::class);
+        try {
+            $serviceNotificationService = app(ServiceNotificationService::class);
+            $operatorService = app(OperatorService::class);
 
-        $operators = $operatorService->operators((new RestQuery)->setFilter('merchant_id', '=', $shipment->merchant_id));
+            $operators = $operatorService->operators((new RestQuery)->setFilter('merchant_id', '=',
+                $shipment->merchant_id));
 
-        foreach($operators as $operator) {
-            $serviceNotificationService->send($operator->user_id, 'klientoformlen_novyy_zakaz', [
-                'QUANTITY_ORDERS' => 1,
-                'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
-            ]);
+            foreach ($operators as $operator) {
+                $serviceNotificationService->send($operator->user_id, 'klientoformlen_novyy_zakaz', [
+                    'QUANTITY_ORDERS' => 1,
+                    'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                ]);
+            }
+        } catch (\Exception $e) {
+            logger($e->getMessage(), $e->getTrace());
         }
     }
 
     protected function sendStatusNotification(Shipment $shipment)
     {
-        $serviceNotificationService = app(ServiceNotificationService::class);
-        $operatorService = app(OperatorService::class);
+        try {
+            $serviceNotificationService = app(ServiceNotificationService::class);
+            $operatorService = app(OperatorService::class);
 
-        $operators = $operatorService->operators((new RestQuery)->setFilter('merchant_id', '=', $shipment->merchant_id));
+            $operators = $operatorService->operators((new RestQuery)->setFilter('merchant_id', '=',
+                $shipment->merchant_id));
 
-        foreach($operators as $operator) {
-            if(($shipment->is_canceled != $shipment->getOriginal('is_canceled')) && $shipment->is_canceled) {
-                $serviceNotificationService->send(
-                    $operator->user_id,
-                    'klientstatus_zakaza_otmenen',
-                    [
-                        'QUANTITY_ORDERS' => 1,
-                        'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
-                    ]
-                );
+            foreach ($operators as $operator) {
+                if (($shipment->is_canceled != $shipment->getOriginal('is_canceled')) && $shipment->is_canceled) {
+                    $serviceNotificationService->send(
+                        $operator->user_id,
+                        'klientstatus_zakaza_otmenen',
+                        [
+                            'QUANTITY_ORDERS' => 1,
+                            'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                        ]
+                    );
+                }
+
+                if (($shipment->is_problem != $shipment->getOriginal('is_problem')) && $shipment->is_problem) {
+                    $serviceNotificationService->send(
+                        $operator->user_id,
+                        'klientstatus_zakaza_problemnyy',
+                        [
+                            'QUANTITY_ORDERS' => 1,
+                            'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                        ]
+                    );
+                }
             }
-
-            if(($shipment->is_problem != $shipment->getOriginal('is_problem')) && $shipment->is_problem) {
-                $serviceNotificationService->send(
-                    $operator->user_id,
-                    'klientstatus_zakaza_problemnyy',
-                    [
-                        'QUANTITY_ORDERS' => 1,
-                        'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
-                    ]
-                );
-            }
+        } catch (\Exception $e) {
+            logger($e->getMessage(), $e->getTrace());
         }
     }
 }
