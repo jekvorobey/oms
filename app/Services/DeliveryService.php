@@ -210,6 +210,9 @@ class DeliveryService
         if ($shipment->cargo_id) {
             throw new Exception('Отправление уже добавлено в груз');
         }
+        if (!$shipment->delivery->xml_id) {
+            throw new Exception('Задание на доставку не создано');
+        }
 
         $deliveryService = $this->getZeroMileShipmentDeliveryServiceId($shipment);
 

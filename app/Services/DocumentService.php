@@ -71,6 +71,9 @@ class DocumentService
                     /** @var ProductDto $product */
                     $product = isset($productsByOffers[$item->basketItem->offer_id]) ?
                         $productsByOffers[$item->basketItem->offer_id]['product'] : [];
+                    if ($shipment->delivery->delivery_service == LogisticsDeliveryService::SERVICE_CDEK) {
+                        $package->xml_id = $shipment->delivery->xml_id;
+                    }
 
                     $tableRows[] = [
                         'table.row' => $packageNum == 0 ? 1 : '',
@@ -178,6 +181,9 @@ class DocumentService
                         /** @var ProductDto $product */
                         $product = isset($productsByOffers[$item->basketItem->offer_id]) ?
                             $productsByOffers[$item->basketItem->offer_id]['product'] : [];
+                        if ($shipment->delivery->delivery_service == LogisticsDeliveryService::SERVICE_CDEK) {
+                            $package->xml_id = $shipment->delivery->xml_id;
+                        }
 
                         $tableRows[] = [
                             'table.row' => $packageNum == 0 ? $shipmentNum + 1 : '',
