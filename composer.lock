@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "darkaonline/l5-swagger",
-            "version": "5.8.3",
+            "version": "5.8.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/DarkaOnLine/L5-Swagger.git",
-                "reference": "32b312a7c5f0501fc79efef812ed2dade6d97200"
+                "reference": "fddbeed402553c7548e3389d2c501c4fdad57dbe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/DarkaOnLine/L5-Swagger/zipball/32b312a7c5f0501fc79efef812ed2dade6d97200",
-                "reference": "32b312a7c5f0501fc79efef812ed2dade6d97200",
+                "url": "https://api.github.com/repos/DarkaOnLine/L5-Swagger/zipball/fddbeed402553c7548e3389d2c501c4fdad57dbe",
+                "reference": "fddbeed402553c7548e3389d2c501c4fdad57dbe",
                 "shasum": ""
             },
             "require": {
@@ -68,7 +68,7 @@
                 "laravel",
                 "swagger"
             ],
-            "time": "2019-09-04T12:15:22+00:00"
+            "time": "2020-08-21T05:39:35+00:00"
         },
         {
             "name": "dnoegel/php-xdg-base-dir",
@@ -581,12 +581,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-cm-lib.git",
-                "reference": "aaba79dddad7ea72c9ed5dbcb44b6901db68c642"
+                "reference": "8829e788621b66a6b1dd04322805b40c3dbba8a3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cm-lib/repository/archive.zip?sha=aaba79dddad7ea72c9ed5dbcb44b6901db68c642",
-                "reference": "aaba79dddad7ea72c9ed5dbcb44b6901db68c642",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cm-lib/repository/archive.zip?sha=8829e788621b66a6b1dd04322805b40c3dbba8a3",
+                "reference": "8829e788621b66a6b1dd04322805b40c3dbba8a3",
                 "shasum": ""
             },
             "require": {
@@ -621,7 +621,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2020-07-26T19:46:26+00:00"
+            "time": "2020-08-25T13:08:27+00:00"
         },
         {
             "name": "greensight/ibt-cms-lib",
@@ -771,12 +771,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-marketing-lib.git",
-                "reference": "c0782ba54a6f79ea6e205ce8be4f8107c6285f97"
+                "reference": "3381b6d88d0d5f6b975ed2cd9c15711fc42dcdfb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-marketing-lib/repository/archive.zip?sha=c0782ba54a6f79ea6e205ce8be4f8107c6285f97",
-                "reference": "c0782ba54a6f79ea6e205ce8be4f8107c6285f97",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-marketing-lib/repository/archive.zip?sha=3381b6d88d0d5f6b975ed2cd9c15711fc42dcdfb",
+                "reference": "3381b6d88d0d5f6b975ed2cd9c15711fc42dcdfb",
                 "shasum": ""
             },
             "require": {
@@ -811,7 +811,7 @@
                 }
             ],
             "description": "iBT marketing client",
-            "time": "2020-07-13T00:50:05+00:00"
+            "time": "2020-08-24T15:12:28+00:00"
         },
         {
             "name": "greensight/ibt-merchant-management-lib",
@@ -904,12 +904,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-pim-lib.git",
-                "reference": "b68106bbc848a989fbe0fce569ef3a3eb57a2a16"
+                "reference": "04e944ace9f32fd8c7c8d4db5bdd3fe30b02778f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=b68106bbc848a989fbe0fce569ef3a3eb57a2a16",
-                "reference": "b68106bbc848a989fbe0fce569ef3a3eb57a2a16",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=04e944ace9f32fd8c7c8d4db5bdd3fe30b02778f",
+                "reference": "04e944ace9f32fd8c7c8d4db5bdd3fe30b02778f",
                 "shasum": ""
             },
             "require": {
@@ -933,7 +933,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2020-08-19T14:44:59+00:00"
+            "time": "2020-08-26T11:15:09+00:00"
         },
         {
             "name": "greensight/ibt-store-lib",
@@ -1538,16 +1538,16 @@
         },
         {
             "name": "league/flysystem",
-            "version": "1.1.2",
+            "version": "1.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/flysystem.git",
-                "reference": "63cd8c14708b9544d3f61d3c15b747fda1c95c6e"
+                "reference": "9be3b16c877d477357c015cec057548cf9b2a14a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/63cd8c14708b9544d3f61d3c15b747fda1c95c6e",
-                "reference": "63cd8c14708b9544d3f61d3c15b747fda1c95c6e",
+                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/9be3b16c877d477357c015cec057548cf9b2a14a",
+                "reference": "9be3b16c877d477357c015cec057548cf9b2a14a",
                 "shasum": ""
             },
             "require": {
@@ -1619,7 +1619,7 @@
                 "sftp",
                 "storage"
             ],
-            "time": "2020-08-18T10:57:55+00:00"
+            "time": "2020-08-23T07:39:11+00:00"
         },
         {
             "name": "league/mime-type-detection",
@@ -1911,16 +1911,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "2.38.0",
+            "version": "2.39.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/briannesbitt/Carbon.git",
-                "reference": "d8f6a6a91d1eb9304527b040500f61923e97674b"
+                "reference": "0a41ea7f7fedacf307b7a339800e10356a042918"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/d8f6a6a91d1eb9304527b040500f61923e97674b",
-                "reference": "d8f6a6a91d1eb9304527b040500f61923e97674b",
+                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/0a41ea7f7fedacf307b7a339800e10356a042918",
+                "reference": "0a41ea7f7fedacf307b7a339800e10356a042918",
                 "shasum": ""
             },
             "require": {
@@ -1986,7 +1986,7 @@
                 "datetime",
                 "time"
             ],
-            "time": "2020-08-04T19:12:46+00:00"
+            "time": "2020-08-24T12:35:58+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -2799,16 +2799,16 @@
         },
         {
             "name": "swagger-api/swagger-ui",
-            "version": "v3.32.3",
+            "version": "v3.32.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/swagger-api/swagger-ui.git",
-                "reference": "9bde965015987251977e3c28e2ff3660bc47c1a6"
+                "reference": "fdb7f71710b66d1ae084d28a9eb615a447a37329"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/9bde965015987251977e3c28e2ff3660bc47c1a6",
-                "reference": "9bde965015987251977e3c28e2ff3660bc47c1a6",
+                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/fdb7f71710b66d1ae084d28a9eb615a447a37329",
+                "reference": "fdb7f71710b66d1ae084d28a9eb615a447a37329",
                 "shasum": ""
             },
             "type": "library",
@@ -2852,7 +2852,7 @@
                 "swagger",
                 "ui"
             ],
-            "time": "2020-08-19T18:51:32+00:00"
+            "time": "2020-08-20T23:44:44+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",
@@ -6158,7 +6158,6 @@
             "keywords": [
                 "tokenizer"
             ],
-            "abandoned": true,
             "time": "2019-09-17T06:23:10+00:00"
         },
         {
