@@ -4,11 +4,13 @@ namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Basket\Basket;
+use App\Models\Basket\BasketItem;
 use App\Services\BasketService;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -195,6 +197,29 @@ class BasketController extends Controller
     protected function getItems(Basket $basket): array
     {
         return $basket->items->toArray();
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    protected function qtyByOfferIds(Request $request): JsonResponse
+    {
+        $data = $this->validate($request, [
+            'offer_ids' => 'required|array',
+            'offer_ids.*' => 'integer',
+        ]);
+
+        $basketsQty = DB::table(with(new BasketItem())->getTable())
+            ->select('offer_id', DB::raw('count(*) as total'))
+            ->whereIn('offer_id', $data['offer_ids'])
+            ->groupBy('offer_id')
+            ->pluck('total','offer_id')
+            ->all();
+
+        return response()->json([
+            'baskets_qty' => $basketsQty,
+        ]);
     }
 }
 

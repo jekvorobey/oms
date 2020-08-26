@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "darkaonline/l5-swagger",
-            "version": "5.8.3",
+            "version": "5.8.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/DarkaOnLine/L5-Swagger.git",
-                "reference": "32b312a7c5f0501fc79efef812ed2dade6d97200"
+                "reference": "fddbeed402553c7548e3389d2c501c4fdad57dbe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/DarkaOnLine/L5-Swagger/zipball/32b312a7c5f0501fc79efef812ed2dade6d97200",
-                "reference": "32b312a7c5f0501fc79efef812ed2dade6d97200",
+                "url": "https://api.github.com/repos/DarkaOnLine/L5-Swagger/zipball/fddbeed402553c7548e3389d2c501c4fdad57dbe",
+                "reference": "fddbeed402553c7548e3389d2c501c4fdad57dbe",
                 "shasum": ""
             },
             "require": {
@@ -68,7 +68,7 @@
                 "laravel",
                 "swagger"
             ],
-            "time": "2019-09-04T12:15:22+00:00"
+            "time": "2020-08-21T05:39:35+00:00"
         },
         {
             "name": "dnoegel/php-xdg-base-dir",
@@ -105,16 +105,16 @@
         },
         {
             "name": "doctrine/annotations",
-            "version": "1.10.3",
+            "version": "1.10.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/annotations.git",
-                "reference": "5db60a4969eba0e0c197a19c077780aadbc43c5d"
+                "reference": "bfe91e31984e2ba76df1c1339681770401ec262f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/annotations/zipball/5db60a4969eba0e0c197a19c077780aadbc43c5d",
-                "reference": "5db60a4969eba0e0c197a19c077780aadbc43c5d",
+                "url": "https://api.github.com/repos/doctrine/annotations/zipball/bfe91e31984e2ba76df1c1339681770401ec262f",
+                "reference": "bfe91e31984e2ba76df1c1339681770401ec262f",
                 "shasum": ""
             },
             "require": {
@@ -124,7 +124,8 @@
             },
             "require-dev": {
                 "doctrine/cache": "1.*",
-                "phpunit/phpunit": "^7.5"
+                "phpstan/phpstan": "^0.12.20",
+                "phpunit/phpunit": "^7.5 || ^9.1.5"
             },
             "type": "library",
             "extra": {
@@ -170,7 +171,7 @@
                 "docblock",
                 "parser"
             ],
-            "time": "2020-05-25T17:24:27+00:00"
+            "time": "2020-08-10T19:35:50+00:00"
         },
         {
             "name": "doctrine/inflector",
@@ -580,12 +581,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-cm-lib.git",
-                "reference": "aaba79dddad7ea72c9ed5dbcb44b6901db68c642"
+                "reference": "8829e788621b66a6b1dd04322805b40c3dbba8a3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cm-lib/repository/archive.zip?sha=aaba79dddad7ea72c9ed5dbcb44b6901db68c642",
-                "reference": "aaba79dddad7ea72c9ed5dbcb44b6901db68c642",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cm-lib/repository/archive.zip?sha=8829e788621b66a6b1dd04322805b40c3dbba8a3",
+                "reference": "8829e788621b66a6b1dd04322805b40c3dbba8a3",
                 "shasum": ""
             },
             "require": {
@@ -620,7 +621,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2020-07-26T19:46:26+00:00"
+            "time": "2020-08-25T13:08:27+00:00"
         },
         {
             "name": "greensight/ibt-cms-lib",
@@ -628,12 +629,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-cms-lib.git",
-                "reference": "ed222d544ac03d6683543dbb97cd811c311685a4"
+                "reference": "dac29ea980ceb7aacc1967e24d44e3303dd4c4d8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cms-lib/repository/archive.zip?sha=ed222d544ac03d6683543dbb97cd811c311685a4",
-                "reference": "ed222d544ac03d6683543dbb97cd811c311685a4",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cms-lib/repository/archive.zip?sha=dac29ea980ceb7aacc1967e24d44e3303dd4c4d8",
+                "reference": "dac29ea980ceb7aacc1967e24d44e3303dd4c4d8",
                 "shasum": ""
             },
             "require": {
@@ -657,7 +658,7 @@
                 }
             ],
             "description": "iBT CMS service client",
-            "time": "2020-08-06T16:49:25+00:00"
+            "time": "2020-08-19T15:07:19+00:00"
         },
         {
             "name": "greensight/ibt-common-lib",
@@ -665,12 +666,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-common-ms-code.git",
-                "reference": "f20a638a39b19e8bf3232b12d1f22f89fdc896f7"
+                "reference": "663795d56db4dce27d25fa055ff57bad4ffde04b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-common-ms-code/repository/archive.zip?sha=f20a638a39b19e8bf3232b12d1f22f89fdc896f7",
-                "reference": "f20a638a39b19e8bf3232b12d1f22f89fdc896f7",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-common-ms-code/repository/archive.zip?sha=663795d56db4dce27d25fa055ff57bad4ffde04b",
+                "reference": "663795d56db4dce27d25fa055ff57bad4ffde04b",
                 "shasum": ""
             },
             "require": {
@@ -714,7 +715,7 @@
                 }
             ],
             "description": "iBT common code for all microservices",
-            "time": "2020-06-22T10:38:32+00:00"
+            "time": "2020-08-17T15:51:25+00:00"
         },
         {
             "name": "greensight/ibt-logistics-lib",
@@ -722,12 +723,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-logistics-lib.git",
-                "reference": "5186d452b85b388e06a778301878a686aedcd5b8"
+                "reference": "96467dadd2642aea4f5c95f4673f72eb2147fbd9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=5186d452b85b388e06a778301878a686aedcd5b8",
-                "reference": "5186d452b85b388e06a778301878a686aedcd5b8",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=96467dadd2642aea4f5c95f4673f72eb2147fbd9",
+                "reference": "96467dadd2642aea4f5c95f4673f72eb2147fbd9",
                 "shasum": ""
             },
             "require": {
@@ -762,7 +763,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2020-07-31T07:56:44+00:00"
+            "time": "2020-08-20T17:58:58+00:00"
         },
         {
             "name": "greensight/ibt-marketing-lib",
@@ -770,12 +771,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-marketing-lib.git",
-                "reference": "c0782ba54a6f79ea6e205ce8be4f8107c6285f97"
+                "reference": "3381b6d88d0d5f6b975ed2cd9c15711fc42dcdfb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-marketing-lib/repository/archive.zip?sha=c0782ba54a6f79ea6e205ce8be4f8107c6285f97",
-                "reference": "c0782ba54a6f79ea6e205ce8be4f8107c6285f97",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-marketing-lib/repository/archive.zip?sha=3381b6d88d0d5f6b975ed2cd9c15711fc42dcdfb",
+                "reference": "3381b6d88d0d5f6b975ed2cd9c15711fc42dcdfb",
                 "shasum": ""
             },
             "require": {
@@ -810,7 +811,7 @@
                 }
             ],
             "description": "iBT marketing client",
-            "time": "2020-07-13T00:50:05+00:00"
+            "time": "2020-08-24T15:12:28+00:00"
         },
         {
             "name": "greensight/ibt-merchant-management-lib",
@@ -903,12 +904,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-pim-lib.git",
-                "reference": "843c9d4b34a734d761505d94c5ac024aab3019f2"
+                "reference": "04e944ace9f32fd8c7c8d4db5bdd3fe30b02778f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=843c9d4b34a734d761505d94c5ac024aab3019f2",
-                "reference": "843c9d4b34a734d761505d94c5ac024aab3019f2",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=04e944ace9f32fd8c7c8d4db5bdd3fe30b02778f",
+                "reference": "04e944ace9f32fd8c7c8d4db5bdd3fe30b02778f",
                 "shasum": ""
             },
             "require": {
@@ -932,7 +933,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2020-08-11T11:42:18+00:00"
+            "time": "2020-08-26T11:15:09+00:00"
         },
         {
             "name": "greensight/ibt-store-lib",
@@ -1537,16 +1538,16 @@
         },
         {
             "name": "league/flysystem",
-            "version": "1.1.0",
+            "version": "1.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/flysystem.git",
-                "reference": "481c0174b9c99b189959e2bb9d6f52188ed1f692"
+                "reference": "9be3b16c877d477357c015cec057548cf9b2a14a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/481c0174b9c99b189959e2bb9d6f52188ed1f692",
-                "reference": "481c0174b9c99b189959e2bb9d6f52188ed1f692",
+                "url": "https://api.github.com/repos/thephpleague/flysystem/zipball/9be3b16c877d477357c015cec057548cf9b2a14a",
+                "reference": "9be3b16c877d477357c015cec057548cf9b2a14a",
                 "shasum": ""
             },
             "require": {
@@ -1618,7 +1619,7 @@
                 "sftp",
                 "storage"
             ],
-            "time": "2020-08-09T15:57:10+00:00"
+            "time": "2020-08-23T07:39:11+00:00"
         },
         {
             "name": "league/mime-type-detection",
@@ -1910,16 +1911,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "2.38.0",
+            "version": "2.39.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/briannesbitt/Carbon.git",
-                "reference": "d8f6a6a91d1eb9304527b040500f61923e97674b"
+                "reference": "0a41ea7f7fedacf307b7a339800e10356a042918"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/d8f6a6a91d1eb9304527b040500f61923e97674b",
-                "reference": "d8f6a6a91d1eb9304527b040500f61923e97674b",
+                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/0a41ea7f7fedacf307b7a339800e10356a042918",
+                "reference": "0a41ea7f7fedacf307b7a339800e10356a042918",
                 "shasum": ""
             },
             "require": {
@@ -1985,20 +1986,20 @@
                 "datetime",
                 "time"
             ],
-            "time": "2020-08-04T19:12:46+00:00"
+            "time": "2020-08-24T12:35:58+00:00"
         },
         {
             "name": "nikic/php-parser",
-            "version": "v4.8.0",
+            "version": "v4.9.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "8c58eb4cd4f3883f82611abeac2efbc3dbed787e"
+                "reference": "aaee038b912e567780949787d5fe1977be11a778"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/8c58eb4cd4f3883f82611abeac2efbc3dbed787e",
-                "reference": "8c58eb4cd4f3883f82611abeac2efbc3dbed787e",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/aaee038b912e567780949787d5fe1977be11a778",
+                "reference": "aaee038b912e567780949787d5fe1977be11a778",
                 "shasum": ""
             },
             "require": {
@@ -2006,7 +2007,7 @@
                 "php": ">=7.0"
             },
             "require-dev": {
-                "ircmaxell/php-yacc": "^0.0.6",
+                "ircmaxell/php-yacc": "^0.0.7",
                 "phpunit/phpunit": "^6.5 || ^7.0 || ^8.0 || ^9.0"
             },
             "bin": [
@@ -2015,7 +2016,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "4.8-dev"
+                    "dev-master": "4.9-dev"
                 }
             },
             "autoload": {
@@ -2037,7 +2038,7 @@
                 "parser",
                 "php"
             ],
-            "time": "2020-08-09T10:23:20+00:00"
+            "time": "2020-08-18T19:48:01+00:00"
         },
         {
             "name": "opis/closure",
@@ -2798,16 +2799,16 @@
         },
         {
             "name": "swagger-api/swagger-ui",
-            "version": "v3.31.1",
+            "version": "v3.32.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/swagger-api/swagger-ui.git",
-                "reference": "752488edf7ff5b3f98fde2d069e4cd5eff150cd0"
+                "reference": "fdb7f71710b66d1ae084d28a9eb615a447a37329"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/752488edf7ff5b3f98fde2d069e4cd5eff150cd0",
-                "reference": "752488edf7ff5b3f98fde2d069e4cd5eff150cd0",
+                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/fdb7f71710b66d1ae084d28a9eb615a447a37329",
+                "reference": "fdb7f71710b66d1ae084d28a9eb615a447a37329",
                 "shasum": ""
             },
             "type": "library",
@@ -2851,7 +2852,7 @@
                 "swagger",
                 "ui"
             ],
-            "time": "2020-07-30T18:09:18+00:00"
+            "time": "2020-08-20T23:44:44+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",
@@ -5421,16 +5422,16 @@
         },
         {
             "name": "mockery/mockery",
-            "version": "1.3.2",
+            "version": "1.3.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mockery/mockery.git",
-                "reference": "9b6f117dd7d36dc3858d8d8ddf9b3d584fcae283"
+                "reference": "60fa2f67f6e4d3634bb4a45ff3171fa52215800d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mockery/mockery/zipball/9b6f117dd7d36dc3858d8d8ddf9b3d584fcae283",
-                "reference": "9b6f117dd7d36dc3858d8d8ddf9b3d584fcae283",
+                "url": "https://api.github.com/repos/mockery/mockery/zipball/60fa2f67f6e4d3634bb4a45ff3171fa52215800d",
+                "reference": "60fa2f67f6e4d3634bb4a45ff3171fa52215800d",
                 "shasum": ""
             },
             "require": {
@@ -5439,7 +5440,7 @@
                 "php": ">=5.6.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "~5.7.10|~6.5|~7.0|~8.0|~9.0"
+                "phpunit/phpunit": "^5.7.10|^6.5|^7.5|^8.5|^9.3"
             },
             "type": "library",
             "extra": {
@@ -5482,7 +5483,7 @@
                 "test double",
                 "testing"
             ],
-            "time": "2020-07-09T08:23:05+00:00"
+            "time": "2020-08-11T18:10:21+00:00"
         },
         {
             "name": "myclabs/deep-copy",
@@ -5749,16 +5750,16 @@
         },
         {
             "name": "phpdocumentor/reflection-docblock",
-            "version": "5.2.0",
+            "version": "5.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpDocumentor/ReflectionDocBlock.git",
-                "reference": "3170448f5769fe19f456173d833734e0ff1b84df"
+                "reference": "d870572532cd70bc3fab58f2e23ad423c8404c44"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/3170448f5769fe19f456173d833734e0ff1b84df",
-                "reference": "3170448f5769fe19f456173d833734e0ff1b84df",
+                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/d870572532cd70bc3fab58f2e23ad423c8404c44",
+                "reference": "d870572532cd70bc3fab58f2e23ad423c8404c44",
                 "shasum": ""
             },
             "require": {
@@ -5797,7 +5798,7 @@
                 }
             ],
             "description": "With this component, a library can provide support for annotations via DocBlocks or otherwise retrieve information that is embedded in a DocBlock.",
-            "time": "2020-07-20T20:05:34+00:00"
+            "time": "2020-08-15T11:14:08+00:00"
         },
         {
             "name": "phpdocumentor/type-resolver",
