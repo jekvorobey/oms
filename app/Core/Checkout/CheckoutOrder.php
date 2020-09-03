@@ -17,11 +17,15 @@ use App\Models\Payment\PaymentSystem;
 use Exception;
 use Greensight\Customer\Dto\CustomerBonusDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
+use Greensight\Store\Dto\StockDto;
+use Greensight\Store\Services\StockService\StockService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Pim\Dto\PublicEvent\PublicEventTicketTypeDto;
 use Pim\Dto\PublicEvent\TicketDto;
 use Pim\Dto\PublicEvent\TicketStatus;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
+use Pim\Services\PublicEventTicketTypeService\RestPublicEventTicketTypeService;
 
 class CheckoutOrder
 {
@@ -145,6 +149,7 @@ class CheckoutOrder
     public function save(): array
     {
         return DB::transaction(function () {
+            $this->checkOffersStocks();
             $this->commitPrices();
             $order = $this->createOrder();
             $this->debitingBonus($order);
@@ -157,6 +162,77 @@ class CheckoutOrder
 
             return [$order->id, $order->number];
         });
+    }
+
+    /**
+     * Проверить, что кол-во товаров в корзине еще доступно к покупке
+     * @throws Exception
+     */
+    private function checkOffersStocks(): void
+    {
+        $basket = $this->basket();
+        if (!$basket->isProductBasket() && !$basket->isPublicEventBasket()) {
+            return;
+        }
+
+        $offerIds = [];
+        $storeIds = [];
+        $ticketTypeIds = [];
+        foreach ($basket->items as $item) {
+            $offerIds[] = $item->offer_id;
+            if ($basket->isProductBasket()) {
+                if (!in_array($item->getStoreId(), $storeIds)) {
+                    $storeIds[] = $item->getStoreId();
+                }
+            } elseif ($basket->isPublicEventBasket()) {
+                $ticketTypeIds[] = $item->getTicketTypeId();
+            }
+        }
+
+        $stocks = collect();
+        $ticketTypes = collect();
+        if ($basket->isProductBasket()) {
+            if ($offerIds && $storeIds) {
+                /** @var StockService $stockService */
+                $stockService = resolve(StockService::class);
+                $stocksQuery = $stockService->newQuery()
+                    ->setFilter('offer_id', $offerIds)
+                    ->setFilter('store_id', $storeIds);
+                $stocks = $stockService->stocks($stocksQuery);
+            }
+        } elseif ($basket->isPublicEventBasket()) {
+            if ($ticketTypeIds) {
+                /** @var RestPublicEventTicketTypeService $ticketTypeService */
+                $ticketTypeService = resolve(RestPublicEventTicketTypeService::class);
+                $ticketTypes = $ticketTypeService->query()
+                    ->setFilter('id', $ticketTypeIds)
+                    ->addFields('tickettype', 'id', 'qty', 'placesOccupied')
+                    ->get();
+            }
+        }
+
+        foreach ($basket->items as $item) {
+            if ($basket->isProductBasket()) {
+                /** @var StockDto $stock */
+                $stock = $stocks
+                    ->where('store_id', $item->getStoreId())
+                    ->where('offer_id', $item->offer_id)
+                    ->first();
+                if (!$stock || $item->qty > $stock->qty) {
+                    throw new Exception("Qty product offer by id {$item->offer_id} more than available at store with id {$item->getStoreId()}", 400);
+                }
+            } elseif ($basket->isPublicEventBasket()) {
+                /** @var PublicEventTicketTypeDto $ticketType */
+                $ticketType = $ticketTypes->where('id', $item->getTicketTypeId())->first();
+                if (!$ticketType) {
+                    throw new Exception("TicketType by id={$item->getTicketTypeId()} not found", 404);
+                }
+                $qtyFree = $ticketType->qty - $ticketType->placesOccupied;
+                if ($item->qty > $qtyFree) {
+                    throw new Exception("Qty public event offer by id {$item->offer_id} more than available", 400);
+                }
+            }
+        }
     }
 
     /**
@@ -415,8 +491,12 @@ class CheckoutOrder
     {
         static $basket = null;
         if (!$basket) {
-            $basket = Basket::query()->where('id', $this->basketId)->first();
+            $basket = Basket::query()
+                ->where('id', $this->basketId)
+                ->with('items')
+                ->first();
         }
+
         return $basket;
     }
 

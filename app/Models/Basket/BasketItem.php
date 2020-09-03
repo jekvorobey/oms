@@ -136,6 +136,14 @@ class BasketItem extends OmsModel
     }
 
     /**
+     * @return int|null
+     */
+    public function getStoreId(): ?int
+    {
+        return isset($this->product['store_id']) ? (int)$this->product['store_id'] : null;
+    }
+
+    /**
      * Получить id билетов на мастер-классы
      * @return array|null
      */
@@ -158,6 +166,14 @@ class BasketItem extends OmsModel
     public function getSprintId(): ?int
     {
         return isset($this->product['sprint_id']) ? (int)$this->product['sprint_id'] : null;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getTicketTypeId(): ?int
+    {
+        return isset($this->product['ticket_type_id']) ? (int)$this->product['ticket_type_id'] : null;
     }
 
     /**

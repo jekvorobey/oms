@@ -45,4 +45,22 @@ class Basket extends OmsModel
     {
         return $this->hasMany(BasketItem::class);
     }
+
+    /**
+     * Корзина является корзиной с товарами?
+     * @return bool
+     */
+    public function isProductBasket(): bool
+    {
+        return $this->type == Basket::TYPE_PRODUCT;
+    }
+
+    /**
+     * Корзина является корзиной с мастер-классами?
+     * @return bool
+     */
+    public function isPublicEventBasket(): bool
+    {
+        return $this->type == Basket::TYPE_MASTER;
+    }
 }
