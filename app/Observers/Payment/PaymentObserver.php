@@ -44,11 +44,9 @@ class PaymentObserver
     {
         logger()->info('Payment saved', ['payment' => $payment]);
         if ($payment->getOriginal('status') != $payment->status) {
-            logger()->info('Order refresh status start');
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->refreshPaymentStatus($payment->order);
-            logger()->info('Order refresh status stop');
         }
     }
 

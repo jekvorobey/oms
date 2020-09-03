@@ -5,6 +5,7 @@ namespace App\Console;
 use App\Console\Commands\ApproveBonus;
 use App\Console\Commands\CancelExpiredOrders;
 use App\Console\Commands\CargoExport;
+use App\Console\Commands\CheckCourierCallsForCDEK;
 use App\Console\Commands\CommitPayments;
 use App\Console\Commands\UpdateDeliveriesStatus;
 use Greensight\Store\Dto\StoreDto;
@@ -37,6 +38,7 @@ class Kernel extends ConsoleKernel
         $schedule->command(UpdateDeliveriesStatus::class)->everyTenMinutes();
         $schedule->command(CommitPayments::class)->hourly();
         $schedule->command(ApproveBonus::class)->dailyAt('00:00');
+        $schedule->command(CheckCourierCallsForCDEK::class)->everyFiveMinutes();
         $this->cargoExportByStores($schedule);
     }
 
@@ -48,6 +50,7 @@ class Kernel extends ConsoleKernel
     protected function commands()
     {
         $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__.'/Commands/OneTime');
 
         require base_path('routes/console.php');
     }

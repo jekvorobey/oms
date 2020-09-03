@@ -71,6 +71,9 @@ class DocumentService
                     /** @var ProductDto $product */
                     $product = isset($productsByOffers[$item->basketItem->offer_id]) ?
                         $productsByOffers[$item->basketItem->offer_id]['product'] : [];
+                    if ($shipment->delivery->delivery_service == LogisticsDeliveryService::SERVICE_CDEK) {
+                        $package->xml_id = $shipment->delivery->xml_id;
+                    }
 
                     $tableRows[] = [
                         'table.row' => $packageNum == 0 ? 1 : '',
@@ -178,6 +181,9 @@ class DocumentService
                         /** @var ProductDto $product */
                         $product = isset($productsByOffers[$item->basketItem->offer_id]) ?
                             $productsByOffers[$item->basketItem->offer_id]['product'] : [];
+                        if ($shipment->delivery->delivery_service == LogisticsDeliveryService::SERVICE_CDEK) {
+                            $package->xml_id = $shipment->delivery->xml_id;
+                        }
 
                         $tableRows[] = [
                             'table.row' => $packageNum == 0 ? $shipmentNum + 1 : '',
@@ -313,7 +319,7 @@ class DocumentService
 
         try {
             $templateProcessor = $this->getTemplateProcessor(self::INVENTORY);
-            $shipment->loadMissing('basketItems');
+            $shipment->loadMissing('basketItems', 'delivery');
 
             $offersIds = $shipment->basketItems->pluck('offer_id')->all();
             $productsByOffers = $this->getProductsByOffers($offersIds);
@@ -336,14 +342,11 @@ class DocumentService
             }
             $templateProcessor->cloneRowAndSetValues('table.row', $tableRows);
 
-            $deliveryId = Shipment::query()->where('number', '=', $shipment->number)->first()->delivery_id;
-            $delivery = Delivery::find($deliveryId);
-            $deliveryAddress = $delivery->delivery_address;
-
+            $delivery = $shipment->delivery;
             $fieldValues = [
                 'shipment_number' => $shipment->number,
                 'receiver_name' => $delivery->receiver_name,
-                'receiver_address' => $deliveryAddress['city'].' ,'.$deliveryAddress['street'].' ,'.$deliveryAddress['house'].' ,'.$deliveryAddress['flat'],
+                'receiver_address' => $delivery->getDeliveryAddressString(),
                 'table.total_product_qty' => qty_format($shipment->basketItems->sum('qty')),
                 'table.total_product_price_per_unit' => $shipment->basketItems->sum(function (BasketItem $basketItem) {
                     return $basketItem->price / $basketItem->qty;

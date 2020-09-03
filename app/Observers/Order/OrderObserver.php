@@ -3,6 +3,7 @@
 namespace App\Observers\Order;
 
 use App\Core\OrderSmsNotify;
+use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
@@ -14,6 +15,7 @@ use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
+use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
@@ -67,7 +69,7 @@ class OrderObserver
      * Handle the order "updated" event.
      * @param  Order  $order
      * @return void
-     * @throws \Exception
+     * @throws \Throwable
      */
     public function updated(Order $order)
     {
@@ -78,82 +80,88 @@ class OrderObserver
         // $this->notifyIfOrderPaid($order);
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
-        $this->returnTickets($order);
         $this->sendNotification($order);
-        $this->sendTicketsEmail($order);
     }
 
     protected function sendCreatedNotification(Order $order)
     {
-        $notificationService = app(ServiceNotificationService::class);
-        $customerService = app(CustomerService::class);
+        try {
+            $notificationService = app(ServiceNotificationService::class);
+            $customerService = app(CustomerService::class);
 
-        $user_id = $customerService
-            ->customers(
-                $customerService
-                    ->newQuery()
-                    ->setFilter('id', '=', $order->customer_id)
-            )
-            ->first()
-            ->user_id;
+            $user_id = $customerService
+                ->customers(
+                    $customerService
+                        ->newQuery()
+                        ->setFilter('id', '=', $order->customer_id)
+                )
+                ->first()
+                ->user_id;
 
-        $this->sendStatusNotification($notificationService, $order, $user_id);
+            $this->sendStatusNotification($notificationService, $order, $user_id);
+        } catch (\Exception $e) {
+            logger($e->getMessage(), $e->getTrace());
+        }
     }
 
     protected function sendNotification(Order $order)
     {
-        $notificationService = app(ServiceNotificationService::class);
-        $customerService = app(CustomerService::class);
+        try {
+            $notificationService = app(ServiceNotificationService::class);
+            $customerService = app(CustomerService::class);
 
-        $user_id = $customerService
-            ->customers(
-                $customerService
-                    ->newQuery()
-                    ->setFilter('id', '=', $order->customer_id)
-            )
-            ->first()
-            ->user_id;
+            $user_id = $customerService
+                ->customers(
+                    $customerService
+                        ->newQuery()
+                        ->setFilter('id', '=', $order->customer_id)
+                )
+                ->first()
+                ->user_id;
 
-        if($order->payment_status != $order->getOriginal('payment_status')) {
-            foreach($order->deliveries as $delivery) {
-                $notificationService->send(
-                    $user_id,
-                    $this->createPaymentNotificationType(
-                        $order->payment_status,
-                        $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
-                        $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
-                    ),
-                    $this->generateNotificationVariables($order)
-                );
+            if ($order->payment_status != $order->getOriginal('payment_status')) {
+                foreach ($order->deliveries as $delivery) {
+                    $notificationService->send(
+                        $user_id,
+                        $this->createPaymentNotificationType(
+                            $order->payment_status,
+                            $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                            $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        ),
+                        $this->generateNotificationVariables($order)
+                    );
+                }
             }
-        }
 
-        if($order->status != $order->getOriginal('status')) {
-            $this->sendStatusNotification($notificationService, $order, $user_id);
-        }
-
-        if(($order->is_canceled != $order->getOriginal('is_canceled')) && $order->is_canceled) {
-            foreach($order->deliveries as $delivery) {
-                $notificationService->send(
-                    $user_id,
-                    $this->createCancelledNotificationType(
-                        $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
-                        $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
-                    ),
-                    $this->generateNotificationVariables($order)
-                );
+            if ($order->status != $order->getOriginal('status')) {
+                $this->sendStatusNotification($notificationService, $order, $user_id);
             }
-        }
 
-        // if(($order->is_problem != $order->getOriginal('is_problem')) && $order->is_problem) {
-        //     foreach($order->deliveries as $delivery) {
-        //         $notificationService->send(
-        //             $user_id,
-        //             'klientstatus_zakaza_problemnyy',
-        //             $this->generateNotificationVariables($order)
-        //         );
-        //     }
-        // }
+            if (($order->is_canceled != $order->getOriginal('is_canceled')) && $order->is_canceled) {
+                foreach ($order->deliveries as $delivery) {
+                    $notificationService->send(
+                        $user_id,
+                        $this->createCancelledNotificationType(
+                            $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                            $delivery->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        ),
+                        $this->generateNotificationVariables($order)
+                    );
+                }
+            }
+
+            // if(($order->is_problem != $order->getOriginal('is_problem')) && $order->is_problem) {
+            //     foreach($order->deliveries as $delivery) {
+            //         $notificationService->send(
+            //             $user_id,
+            //             'klientstatus_zakaza_problemnyy',
+            //             $this->generateNotificationVariables($order)
+            //         );
+            //     }
+            // }
+        } catch (\Exception $e) {
+            logger($e->getMessage(), $e->getTrace());
+        }
     }
 
     protected function sendStatusNotification(ServiceNotificationService $notificationService, Order $order, int $user_id)
@@ -175,6 +183,7 @@ class OrderObserver
      * Handle the order "saving" event.
      * @param  Order  $order
      * @return void
+     * @throws \Throwable
      */
     public function saving(Order $order)
     {
@@ -183,6 +192,8 @@ class OrderObserver
         $this->setCanceledAt($order);
         $this->setAwaitingCheckStatus($order);
         $this->setAwaitingConfirmationStatus($order);
+        $this->sendTicketsEmail($order);
+        $this->returnTickets($order);
 
         //Данная команда должна быть в самом низу перед всеми $this->set*Status()
         $this->setStatusAt($order);
@@ -343,7 +354,9 @@ class OrderObserver
     protected function setAwaitingConfirmationStatus(Order $order): void
     {
         if ($order->status == OrderStatus::CREATED && !$order->is_require_check && $order->canBeProcessed()) {
-            $order->status = OrderStatus::AWAITING_CONFIRMATION;
+            if ($order->type == Basket::TYPE_PRODUCT) {
+                $order->status = OrderStatus::AWAITING_CONFIRMATION;
+            }
         }
     }
 
@@ -376,7 +389,8 @@ class OrderObserver
         if ($order->payment_status != $order->getOriginal('payment_status') && $order->payment_status == PaymentStatus::TIMEOUT) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
-            $orderService->returnTickets(collect($order));
+            //Не сохраняем данные по заказу внутри метода возврата билетов, иначе будет цикл
+            $orderService->returnTickets(collect()->push($order), false);
         }
     }
 
@@ -454,6 +468,7 @@ class OrderObserver
         $customer = $customerService->customers($customerService->newQuery()->setFilter('id', '=', $order->customer_id))->first();
         $user = $userService->users($userService->newQuery()->setFilter('id', '=', $customer->user_id))->first();
 
+        /** @var Payment $payment */
         $payment = $order->payments->first();
 
         $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
@@ -583,10 +598,11 @@ class OrderObserver
      */
     protected function sendTicketsEmail(Order $order): void
     {
-        if ($order->payment_status != $order->getOriginal('payment_status') && $order->isPaid()) {
+        if ($order->payment_status != $order->getOriginal('payment_status') && $order->isPaid() && $order->isPublicEventOrder()) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->sendTicketsEmail($order);
+            $order->status = OrderStatus::DONE;
         }
     }
 

@@ -19,6 +19,7 @@ use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
+use Greensight\Logistics\Dto\CourierCall\ExternalStatusCheckDto;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
@@ -209,6 +210,9 @@ class DeliveryService
         }
         if ($shipment->cargo_id) {
             throw new Exception('Отправление уже добавлено в груз');
+        }
+        if (!$shipment->delivery->xml_id) {
+            throw new Exception('Задание на доставку не создано');
         }
 
         $deliveryService = $this->getZeroMileShipmentDeliveryServiceId($shipment);
@@ -421,6 +425,7 @@ class DeliveryService
                 ->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
 
             $cargo->xml_id = '';
+            $cargo->cdek_intake_number = null;
             $cargo->error_xml_id = '';
             $cargo->save();
         }
@@ -438,7 +443,8 @@ class DeliveryService
             $status = $courierCallService
                 ->checkExternalStatus($cargo->delivery_service, $cargo->xml_id);
 
-            $cargo->error_xml_id = $status;
+            $cargo->error_xml_id = $status->error;
+            $cargo->cdek_intake_number = $status->intake_number;
             $cargo->updated_at = Carbon::now();
             $cargo->save();
         }

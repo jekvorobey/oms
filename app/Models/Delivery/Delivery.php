@@ -4,6 +4,9 @@ namespace App\Models\Delivery;
 
 use App\Models\OmsModel;
 use App\Models\Order\Order;
+use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Dto\Lists\PointDto;
+use Greensight\Logistics\Services\ListsService\ListsService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
@@ -140,7 +143,52 @@ class Delivery extends OmsModel
         foreach ($value as &$item) {
             $item = (string)$item;
         }
+
+        if ($value) {
+            $value['address_string'] = $this->formDeliveryAddressString($value);
+        }
+
         $this->attributes['delivery_address'] = json_encode($value);
+    }
+
+    /**
+     * @return string
+     */
+    public function getDeliveryAddressString(): string
+    {
+        if ($this->isPickup()) {
+            /** @var ListsService $listService */
+            $listService = resolve(ListsService::class);
+            /** @var PointDto $point */
+            $point = $listService->points($listService->newQuery()->setFilter('id', $this->point_id))->first();
+
+            return $point->address['address_string'] ?? '';
+        } else {
+            if (!isset($this->delivery_address['address_string'])) {
+                $deliveryAddress = $this->delivery_address;
+                $deliveryAddress['address_string'] = $this->formDeliveryAddressString($deliveryAddress);
+                $this->delivery_address = $deliveryAddress;
+            }
+
+            return (string)$this->delivery_address['address_string'];
+        }
+    }
+
+    /**
+     * @param  array  $address
+     * @return string
+     */
+    private function formDeliveryAddressString(array $address): string
+    {
+        return (string)join(', ', array_filter([
+            $address['post_index'] ?? null,
+            $address['region'] ?? null,
+            $address['city'] ?? null,
+            $address['street'] ?? null,
+            $address['house'] ?? null,
+            $address['block'] ?? null,
+            $address['flat'] ?? null,
+        ]));
     }
 
     /**
@@ -265,6 +313,7 @@ class Delivery extends OmsModel
     public static function deliveriesInDelivery(bool $withShipments = false): Collection
     {
         $query = self::query()
+            ->where('is_canceled', false)
             ->whereNotNull('xml_id')
             ->where('xml_id', '!=', '')
             ->whereNotIn('status', static::getFinalStatus());
@@ -273,5 +322,23 @@ class Delivery extends OmsModel
         }
 
         return $query->get();
+    }
+
+    /**
+     * Доставка с самовывозом?
+     * @return bool
+     */
+    public function isPickup(): bool
+    {
+        return $this->delivery_method == DeliveryMethod::METHOD_PICKUP;
+    }
+
+    /**
+     * Доставка с курьерской доставкой?
+     * @return bool
+     */
+    public function isDelivery(): bool
+    {
+        return $this->delivery_method == DeliveryMethod::METHOD_DELIVERY;
     }
 }
