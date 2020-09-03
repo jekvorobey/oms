@@ -99,7 +99,12 @@ class DeliveryObserver
                 $this->createNotificationType(
                     $delivery->status,
                     $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP
-                )
+                ),
+                [
+                    'DELIVERY_DATE' => $delivery->delivery_at->toDateString(),
+                    'DELIVERY_TIME' => $delivery->delivery_at->toTimeString(),
+                    'PART_PRICE' => $delivery->cost,
+                ]
             );
         }
 
