@@ -99,6 +99,7 @@ class OrderObserver
                 ->user_id;
 
             $this->sendStatusNotification($notificationService, $order, $user_id);
+            $notificationService->sendToAdmin('aozzakazzakaz_oformlen');
         } catch (\Exception $e) {
             logger($e->getMessage(), $e->getTrace());
         }
@@ -144,6 +145,9 @@ class OrderObserver
                     ),
                     $this->generateNotificationVariables($order)
                 );
+                $notificationService->sendToAdmin('aozzakazzakaz_otmenen');
+            } else {
+                $notificationService->sendToAdmin('aozzakazzakaz_izmenen');
             }
         } catch (\Exception $e) {
             logger($e->getMessage(), $e->getTrace());
