@@ -7,6 +7,8 @@ use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Services\BasketService;
 use App\Services\OrderService;
+use Greensight\Customer\Services\CustomerService\CustomerService;
+use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -220,6 +222,32 @@ class BasketController extends Controller
         return response()->json([
             'baskets_qty' => $basketsQty,
         ]);
+    }
+
+    public function notifyExpiredOffers(int $offer)
+    {
+        $customerService = app(CustomerService::class);
+        $serviceNotificationService = app(ServiceNotificationService::class);
+
+        BasketItem::query()
+            ->where('offer_id', $offer)
+            ->get()
+            ->map(function (BasketItem $basketItem) use ($customerService) {
+                return [
+                    'item' => $basketItem,
+                    'customer' => $customerService->customers(
+                        $customerService
+                            ->newQuery()
+                            ->setFilter('id', $basketItem->basket->customer_id)
+                    )->first()
+                ];
+            })
+            ->each(function ($el) use ($serviceNotificationService) {
+                $serviceNotificationService->send(
+                    $el['customer']->user_id,
+                    'tovardostupnost_kh_tovarov_v_korzine_izmenilas'
+                );
+            });
     }
 }
 
