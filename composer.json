@@ -64,6 +64,7 @@
         "laravel/tinker": "^1.0",
         "mikehaertl/php-pdftk": "^0.8.1",
         "phpoffice/phpword": "^0.17.0",
+        "spatie/calendar-links": "^1.4",
         "yandex-money/yandex-checkout-sdk-php": "^1.5"
     },
     "require-dev": {
