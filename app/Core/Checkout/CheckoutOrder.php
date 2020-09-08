@@ -22,8 +22,11 @@ use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Greensight\Store\Dto\StockDto;
 use Greensight\Store\Services\StockService\StockService;
+use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Pim\Dto\PublicEvent\MediaDto;
+use Pim\Dto\PublicEvent\PlaceDto;
 use Pim\Dto\PublicEvent\PublicEventTicketTypeDto;
 use Pim\Dto\PublicEvent\TicketDto;
 use Pim\Dto\PublicEvent\TicketStatus;
@@ -514,11 +517,27 @@ class CheckoutOrder
             $stages = $publicEventSprintStageService->find(
                 $publicEventSprintStageService->query()
                     ->setFilter('id', $sprint->id)
-            )->map(function ($stage) use ($publicEventPlaceService, $publicEventSpeakerService) {
+                    ->addSort('time_from')
+            )->map(function ($stage) use ($publicEventPlaceService, $publicEventSpeakerService, $publicEventMediaService, $fileService) {
                 $place = $publicEventPlaceService->find(
                     $publicEventPlaceService->query()
                         ->setFilter('id', $stage->place_id)
                 )->first();
+
+                $placeMedia = $publicEventMediaService->find(
+                    $publicEventMediaService->query()
+                        ->setFilter('collection', 'default')
+                        ->setFilter('media_id', $place->id)
+                        ->setFilter('media_type', 'App\Models\PublicEvent\PublicEventPlace')
+                )->map(function (MediaDto $media) {
+                    return $media->value;
+                })->pipe(function (Collection $collection) use ($fileService) {
+                    return $fileService->getFiles($collection->toArray())
+                        ->map(function ($file) {
+                            return $file->absoluteUrl();
+                        })
+                        ->toArray();
+                });
 
                 $speakers = $publicEventSpeakerService->getByStage($stage->id);
 
@@ -536,7 +555,8 @@ class CheckoutOrder
                         'from' => $stage->time_from,
                         'to' => $stage->time_to
                     ],
-                    $place->description
+                    $place,
+                    $placeMedia
                 ];
             });
 
@@ -622,12 +642,16 @@ class CheckoutOrder
                     'email' => $organizer->email,
                     'site' => $organizer->site
                 ],
-                'map' => 'https://google.com',
+                'map' => $this->generateMapImage(
+                    $stages->map(function ($stage) {
+                        return $stage[5];
+                    })
+                ),
                 'routes' => $stages->map(function ($stage) {
                     return [
                         'title' => $stage[0],
-                        'text' => $stage[5],
-                        'images' => []
+                        'text' => $stage[5]->description,
+                        'images' => $stage[6]
                     ];
                 })->all(),
                 'programs' => $stages->map(function ($el) use ($fileService) {
@@ -689,6 +713,17 @@ class CheckoutOrder
                 ['pdfs' => ['pdf.ticket' => $pdfs]]
             );
         }
+    }
+    
+    private function generateMapImage(Collection $points)
+    {
+        $query = $points
+            ->map(function (PlaceDto $point, $key) {
+                return sprintf('%s,%s,%s', $point->longitude, $point->latitude, $key + 1);
+            })
+            ->join('~');
+
+        return sprintf('https://enterprise.static-maps.yandex.ru/1.x/?key=%s&l=map&pt=%s', config('app.y_maps_key'), $query);
     }
 
     /**
