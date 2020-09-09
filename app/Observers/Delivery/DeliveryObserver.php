@@ -160,13 +160,20 @@ class DeliveryObserver
                 );
             }
 
-            if ($delivery->delivery_time_end != $delivery->getOriginal('delivery_time_end')) {
+            if ($delivery->delivery_at != $delivery->getOriginal('delivery_at')) {
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_data_dostavki',
                     [
                         'ORDER_ID' => $order_id,
-                        'LINK_ORDER' => $link_order
+                        'LINK_ORDER' => $link_order,
+                        'CUSTOMER_NAME' => $user->first_name,
+                        'DELIVERY_TYPE' => DeliveryType::all()[$delivery->order->delivery_type]->name,
+                        'DELIVERY_DATE' => $delivery->delivery_at->locale('ru')->isoFormat('D MMMM, dddd'),
+                        'DELIVERY_TIME' => sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end),
+                        'FULL_NAME' => $delivery->receiver_name,
+                        'ORDER_CONTACT_NUMBER' => $delivery->receiver_phone,
+                        'ORDER_TEXT' => optional(optional($delivery->order)->comment)->text ?? ''
                     ]
                 );
             }
