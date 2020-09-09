@@ -5,6 +5,7 @@ namespace App\Observers\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
+use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Pim\Services\SearchService\SearchService;
@@ -70,11 +71,19 @@ class BasketItemObserver
         $searchService = resolve(SearchService::class);
         $searchService->markProductForIndexViaOffer($basketItem->offer_id);
 
+        /** @var Order */
         $order = $basketItem->basket->order;
         if($order) {
             app(ServiceNotificationService::class)->send($order->getUser()->id, 'servisnyeizmenenie_zakaza_sostav_zakaza', [
                 'ORDER_ID' => $order->id,
-                'LINK_ORDER' => sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id)
+                'CUSTOMER_NAME' => $order->getUser()->first_name,
+                'LINK_ORDER' => sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
+                'NAME_GOODS' => $basketItem->name,
+                'PART_PRICE' => number_format($basketItem->cost, 2),
+                'NUMBER' => (int) $basketItem->qty,
+                'DELIVERY_PRICE' => number_format($basketItem->shipmentItem->shipment->cost, 2),
+                'TOTAL_PRICE' => number_format($order->cost, 2),
+                'REFUND_ORDER' => number_format($basketItem->cost, 2),
             ]);
         }
     }
