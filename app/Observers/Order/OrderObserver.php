@@ -551,7 +551,7 @@ class OrderObserver
                             return [
                                 'name' => $item->name,
                                 'count' => (int) $item->qty,
-                                'price' => number_format($item->price, 2),
+                                'price' => (int) $item->price,
                                 'image' => ''
                             ];
                         })
@@ -566,14 +566,14 @@ class OrderObserver
             'params' => [
                 'Получатель' => $user->first_name,
                 'Телефон' => $order->customerPhone(),
-                'Сумма заказа' => number_format($order->cost, 2),
+                'Сумма заказа' => (int) $order->cost,
                 'Получение' => DeliveryType::all()[$order->delivery_type]->name,
                 'Дата доставки' => $deliveryDate,
                 'Адрес доставки' => $deliveryAddress
             ],
             'shipments' => $shipments->toArray(),
-            'delivery_price' => number_format($order->delivery_cost, 2),
-            'total_price' => number_format($order->cost, 2),
+            'delivery_price' => (int) $order->delivery_cost,
+            'total_price' => (int) $order->cost,
             'finisher_text' => sprintf(
                 'Узнать статус выполнения заказа можно в <a href="%s">Личном кабинете</a>',
                 sprintf("%s/profile", config('app.showcase_host'))

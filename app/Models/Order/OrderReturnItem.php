@@ -42,4 +42,26 @@ class OrderReturnItem extends OmsModel
     {
         return $this->belongsTo(BasketItem::class);
     }
+
+    public static function boot()
+    {
+        parent::boot();
+
+        self::created(function (OrderReturnItem $item) {
+            $order = $item->orderReturn->order;
+            $basketItem = $item->basketItem;
+
+            app(ServiceNotificationService::class)->send($order->getUser()->id, 'servisnyeizmenenie_zakaza_sostav_zakaza', [
+                'ORDER_ID' => $order->id,
+                'CUSTOMER_NAME' => $order->getUser()->first_name,
+                'LINK_ORDER' => sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
+                'NAME_GOODS' => $basketItem->name,
+                'PART_PRICE' => (int) $basketItem->cost,
+                'NUMBER' => (int) $item->qty,
+                'DELIVERY_PRICE' => (int) $basketItem->shipmentItem->shipment->cost,
+                'TOTAL_PRICE' => (int) $order->cost,
+                'REFUND_ORDER' => (int) $item->price,
+            ]);
+        });
+    }
 }

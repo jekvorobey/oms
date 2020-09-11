@@ -596,7 +596,7 @@ class CheckoutOrder
             $classes[] = [
                 'name' => $event->name,
                 'info' => $event->description,
-                'price' => number_format($basketItem->cost, 2),
+                'price' => (int) $basketItem->cost,
                 'count' => (int) $basketItem->qty,
                 'image' => $url,
                 'manager' => [
@@ -615,7 +615,7 @@ class CheckoutOrder
             $pdfs[] = [
                 'name' => $event->name,
                 'id' => $event->id,
-                'cost' => number_format($basketItem->cost, 2),
+                'cost' => (int) $basketItem->cost,
                 'order_num' => $order->id,
                 'bought_at' => $order->created_at->locale('ru')->isoFormat('D MMMM, HH:mm'),
                 'time' => $stages->map(function ($el) {
@@ -693,7 +693,7 @@ class CheckoutOrder
             'params' => [
                 'Получатель' => $user->first_name,
                 'Телефон' => $user->phone,
-                'Сумма заказа' => number_format($order->cost, 2)
+                'Сумма заказа' => (int) $order->cost
             ],
             'classes' => $classes
         ];
