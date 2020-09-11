@@ -629,12 +629,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-cms-lib.git",
-                "reference": "dac29ea980ceb7aacc1967e24d44e3303dd4c4d8"
+                "reference": "28911b1d05eba18eb4319596367147bfdd852db1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cms-lib/repository/archive.zip?sha=dac29ea980ceb7aacc1967e24d44e3303dd4c4d8",
-                "reference": "dac29ea980ceb7aacc1967e24d44e3303dd4c4d8",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cms-lib/repository/archive.zip?sha=28911b1d05eba18eb4319596367147bfdd852db1",
+                "reference": "28911b1d05eba18eb4319596367147bfdd852db1",
                 "shasum": ""
             },
             "require": {
@@ -658,7 +658,7 @@
                 }
             ],
             "description": "iBT CMS service client",
-            "time": "2020-08-19T15:07:19+00:00"
+            "time": "2020-09-08T23:30:38+00:00"
         },
         {
             "name": "greensight/ibt-common-lib",
@@ -771,12 +771,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-marketing-lib.git",
-                "reference": "e946b4ccdae17756b35633c64c18061781662952"
+                "reference": "f8937e85a4413f3791eb674615d5061ab51d28ad"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-marketing-lib/repository/archive.zip?sha=e946b4ccdae17756b35633c64c18061781662952",
-                "reference": "e946b4ccdae17756b35633c64c18061781662952",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-marketing-lib/repository/archive.zip?sha=f8937e85a4413f3791eb674615d5061ab51d28ad",
+                "reference": "f8937e85a4413f3791eb674615d5061ab51d28ad",
                 "shasum": ""
             },
             "require": {
@@ -811,7 +811,7 @@
                 }
             ],
             "description": "iBT marketing client",
-            "time": "2020-09-08T11:16:03+00:00"
+            "time": "2020-09-09T11:21:09+00:00"
         },
         {
             "name": "greensight/ibt-merchant-management-lib",
@@ -904,12 +904,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-pim-lib.git",
-                "reference": "ee5c01d108db081889336db28460aab5116b4980"
+                "reference": "96d65bb75be186e32d029b9f2ed0bdedf017a087"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=ee5c01d108db081889336db28460aab5116b4980",
-                "reference": "ee5c01d108db081889336db28460aab5116b4980",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=96d65bb75be186e32d029b9f2ed0bdedf017a087",
+                "reference": "96d65bb75be186e32d029b9f2ed0bdedf017a087",
                 "shasum": ""
             },
             "require": {
@@ -933,7 +933,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2020-09-04T13:53:41+00:00"
+            "time": "2020-09-10T17:06:52+00:00"
         },
         {
             "name": "greensight/ibt-store-lib",
@@ -1914,16 +1914,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "2.39.1",
+            "version": "2.39.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/briannesbitt/Carbon.git",
-                "reference": "7af467873250583cc967a59ee9df29fabab193c1"
+                "reference": "326efde1bc09077a26cb77f6e2e32e13f06c27f2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/7af467873250583cc967a59ee9df29fabab193c1",
-                "reference": "7af467873250583cc967a59ee9df29fabab193c1",
+                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/326efde1bc09077a26cb77f6e2e32e13f06c27f2",
+                "reference": "326efde1bc09077a26cb77f6e2e32e13f06c27f2",
                 "shasum": ""
             },
             "require": {
@@ -1989,7 +1989,7 @@
                 "datetime",
                 "time"
             ],
-            "time": "2020-09-04T13:11:37+00:00"
+            "time": "2020-09-10T12:16:42+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -2849,16 +2849,16 @@
         },
         {
             "name": "swagger-api/swagger-ui",
-            "version": "v3.32.5",
+            "version": "v3.33.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/swagger-api/swagger-ui.git",
-                "reference": "57f39bd5724956d96af43a86439e2808b981fb18"
+                "reference": "829d87530030bb5bfa24a5093d098c672adfbb9b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/57f39bd5724956d96af43a86439e2808b981fb18",
-                "reference": "57f39bd5724956d96af43a86439e2808b981fb18",
+                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/829d87530030bb5bfa24a5093d098c672adfbb9b",
+                "reference": "829d87530030bb5bfa24a5093d098c672adfbb9b",
                 "shasum": ""
             },
             "type": "library",
@@ -2902,7 +2902,7 @@
                 "swagger",
                 "ui"
             ],
-            "time": "2020-08-27T20:11:06+00:00"
+            "time": "2020-09-10T23:20:14+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",
