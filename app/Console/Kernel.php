@@ -7,6 +7,7 @@ use App\Console\Commands\CancelExpiredOrders;
 use App\Console\Commands\CargoExport;
 use App\Console\Commands\CheckCourierCallsForCDEK;
 use App\Console\Commands\CommitPayments;
+use App\Console\Commands\NotifyPublicEvent;
 use App\Console\Commands\UpdateDeliveriesStatus;
 use Greensight\Store\Dto\StoreDto;
 use Greensight\Store\Services\StoreService\StoreService;
@@ -38,6 +39,7 @@ class Kernel extends ConsoleKernel
         $schedule->command(UpdateDeliveriesStatus::class)->everyTenMinutes();
         $schedule->command(CommitPayments::class)->hourly();
         $schedule->command(ApproveBonus::class)->dailyAt('00:00');
+        $schedule->command(NotifyPublicEvent::class)->dailyAt('00:00');
         $schedule->command(CheckCourierCallsForCDEK::class)->everyFiveMinutes();
         $this->cargoExportByStores($schedule);
     }

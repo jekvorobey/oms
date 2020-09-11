@@ -19,6 +19,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('baskets')->group(function () {
+        Route::post('notify-expired/{offer}', 'BasketController@notifyExpiredOffers');
         Route::get('by-customer/{customerId}', 'BasketController@getCurrentBasket');
         Route::get('qty-by-offer-ids', 'BasketController@qtyByOfferIds');
 

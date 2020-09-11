@@ -14,18 +14,32 @@ use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderPromoCode;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
+use Carbon\Carbon;
 use Exception;
+use Greensight\CommonMsa\Services\FileService\FileService;
 use Greensight\Customer\Dto\CustomerBonusDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
+use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Greensight\Store\Dto\StockDto;
 use Greensight\Store\Services\StockService\StockService;
+use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Pim\Dto\PublicEvent\MediaDto;
+use Pim\Dto\PublicEvent\PlaceDto;
 use Pim\Dto\PublicEvent\PublicEventTicketTypeDto;
 use Pim\Dto\PublicEvent\TicketDto;
 use Pim\Dto\PublicEvent\TicketStatus;
+use Pim\Services\PublicEventMediaService\PublicEventMediaService;
+use Pim\Services\PublicEventOrganizerService\PublicEventOrganizerService;
+use Pim\Services\PublicEventPlaceService\PublicEventPlaceService;
+use Pim\Services\PublicEventService\PublicEventService;
+use Pim\Services\PublicEventSpeakerService\PublicEventSpeakerService;
+use Pim\Services\PublicEventSprintService\PublicEventSprintService;
+use Pim\Services\PublicEventSprintStageService\PublicEventSprintStageService;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use Pim\Services\PublicEventTicketTypeService\RestPublicEventTicketTypeService;
+use Spatie\CalendarLinks\Link;
 
 class CheckoutOrder
 {
@@ -154,7 +168,7 @@ class CheckoutOrder
             $order = $this->createOrder();
             $this->debitingBonus($order);
             $this->createShipments($order);
-            $this->createTickets();
+            $this->createTickets($order);
             $this->createPayment($order);
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
@@ -416,7 +430,7 @@ class CheckoutOrder
     /**
      * @throws Exception
      */
-    private function createTickets(): void
+    private function createTickets(Order $order): void
     {
         if ($this->publicEvents->isEmpty()) {
             return;
@@ -425,7 +439,7 @@ class CheckoutOrder
         /** @var PublicEventTicketService $ticketService */
         $ticketService = resolve(PublicEventTicketService::class);
 
-        /** @var BasketItem[] $basketItems */
+        /** @var Collection|BasketItem[] $basketItems */
         $basketItems = BasketItem::query()->where('basket_id', $this->basketId)->get();
         /** @var Collection|CheckoutPublicEvent[] $publicEvents */
         $publicEvents = $this->publicEvents->keyBy('offerId');
@@ -469,6 +483,247 @@ class CheckoutOrder
                 throw new Exception("Ошибка при сохранении билета: {$e->getMessage()}");
             }
         }
+
+        try {
+            $this->sendTicketNotification($order, $basketItems);
+        } catch (Exception $e) {
+            logger($e->getMessage(), $e->getTrace());
+        }
+    }
+
+    private function sendTicketNotification(Order $order, Collection $basketItems)
+    {
+        $publicEventService = app(PublicEventService::class);
+        $publicEventSprintService = app(PublicEventSprintService::class);
+        $publicEventMediaService = app(PublicEventMediaService::class);
+        $publicEventOrganizerService = app(PublicEventOrganizerService::class);
+        $publicEventSprintStageService = app(PublicEventSprintStageService::class);
+        $publicEventSpeakerService = app(PublicEventSpeakerService::class);
+        $publicEventPlaceService = app(PublicEventPlaceService::class);
+        $fileService = app(FileService::class);
+        $serviceNotificationService = app(ServiceNotificationService::class);
+
+        $user = $order->getUser();
+
+        $classes = [];
+        $pdfs = [];
+        foreach($basketItems as $basketItem) {
+            $sprint = $publicEventSprintService->find(
+                $publicEventSprintService
+                    ->query()
+                    ->setFilter('id', $basketItem->product['sprint_id'])
+            )->first();
+
+            $stages = $publicEventSprintStageService->find(
+                $publicEventSprintStageService->query()
+                    ->setFilter('id', $sprint->id)
+                    ->addSort('time_from')
+            )->map(function ($stage) use ($publicEventPlaceService, $publicEventSpeakerService, $publicEventMediaService, $fileService) {
+                $place = $publicEventPlaceService->find(
+                    $publicEventPlaceService->query()
+                        ->setFilter('id', $stage->place_id)
+                )->first();
+
+                $placeMedia = $publicEventMediaService->find(
+                    $publicEventMediaService->query()
+                        ->setFilter('collection', 'default')
+                        ->setFilter('media_id', $place->id)
+                        ->setFilter('media_type', 'App\Models\PublicEvent\PublicEventPlace')
+                )->map(function (MediaDto $media) {
+                    return $media->value;
+                })->pipe(function (Collection $collection) use ($fileService) {
+                    return $fileService->getFiles($collection->toArray())
+                        ->map(function ($file) {
+                            return $file->absoluteUrl();
+                        })
+                        ->toArray();
+                });
+
+                $speakers = $publicEventSpeakerService->getByStage($stage->id);
+
+                return [
+                    sprintf("%s, %s", $place->name, $place->address),
+                    Carbon::parse($stage->date)->locale('ru')->isoFormat('D MMMM'),
+                    Carbon::parse($stage->time_from)->format('H:m'),
+                    Carbon::parse($stage->time_to)->format('H:m'),
+                    [
+                        'title' => $stage->name,
+                        'text' => $stage->description,
+                        'kit' => $stage->raider,
+                        'speakers' => collect($speakers['items']),
+                        'date' => $stage->date,
+                        'from' => $stage->time_from,
+                        'to' => $stage->time_to
+                    ],
+                    $place,
+                    $placeMedia
+                ];
+            });
+
+            $event = $publicEventService->findPublicEvents(
+                $publicEventService
+                    ->query()
+                    ->setFilter('id', $sprint->public_event_id)
+            )->first();
+
+            $media = $publicEventMediaService->find(
+                $publicEventMediaService->query()
+                    ->setFilter('collection', 'detail')
+                    ->setFilter('media_id', $event->id)
+                    ->setFilter('media_type', 'App\Models\PublicEvent\PublicEvent')
+            )->first();
+
+            $organizer = $publicEventOrganizerService->find(
+                $publicEventOrganizerService->query()
+                    ->setFilter('id', $event->organizer_id)
+            )->first();
+
+            // Временное решение
+            // Здесь нужна компрессия
+            $url = $fileService
+                ->getFiles([$media->value])
+                ->first()
+                ->absoluteUrl();
+
+            $link = Link::create(
+                $event->name,
+                Carbon::createFromDate($stages->first()[4]['date'])->setTimeFromTimeString($stages->first()[4]['from']),
+                Carbon::createFromDate($stages->first()[4]['date'])->setTimeFromTimeString($stages->first()[4]['to']),
+            )
+            ->description($event->description)
+            ->address($stages->first()[0]);
+
+            $classes[] = [
+                'name' => $event->name,
+                'info' => $event->description,
+                'price' => number_format($basketItem->cost, 2),
+                'count' => (int) $basketItem->qty,
+                'image' => $url,
+                'manager' => [
+                    'name' => $organizer->name,
+                    'about' => $organizer->description,
+                    'phone' => $organizer->phone,
+                    'messagers' => false,
+                    'email' => $organizer->email,
+                    'site' => $organizer->site
+                ],
+                'apple_wallet' => $link->ics(),
+                'google_calendar' => $link->google(),
+                'calendar' => $link->ics()
+            ];
+
+            $pdfs[] = [
+                'name' => $event->name,
+                'id' => $event->id,
+                'cost' => number_format($basketItem->cost, 2),
+                'order_num' => $order->id,
+                'bought_at' => $order->created_at->locale('ru')->isoFormat('D MMMM, HH:mm'),
+                'time' => $stages->map(function ($el) {
+                    return sprintf(
+                        "%s, %s-%s",
+                        $el[1],
+                        $el[2],
+                        $el[3]
+                    );
+                })->all(),
+                'adress' => $stages->map(function ($el) {
+                    return $el[0];
+                })->all(),
+                'participant' => [
+                    'name' => sprintf("%s %s", $user->last_name, $user->first_name),
+                    'email' => $user->email,
+                    'phone' => $user->phone
+                ],
+                'manager' => [
+                    'name' => $organizer->name,
+                    'about' => $organizer->description,
+                    'phone' => $organizer->phone,
+                    'messangers' => false,
+                    'email' => $organizer->email,
+                    'site' => $organizer->site
+                ],
+                'map' => $this->generateMapImage(
+                    $stages->map(function ($stage) {
+                        return $stage[5];
+                    })
+                ),
+                'routes' => $stages->map(function ($stage) {
+                    return [
+                        'title' => $stage[0],
+                        'text' => $stage[5]->description,
+                        'images' => $stage[6]
+                    ];
+                })->all(),
+                'programs' => $stages->map(function ($el) use ($fileService) {
+                    return [
+                        'title' => $el[4]['title'],
+                        'date' => sprintf('%s, %s-%s', $el[1], $el[2], $el[3]),
+                        'adress' => $el[0],
+                        'text' => $el[4]['text'],
+                        'kit' => $el[4]['kit'],
+                        'speakers' => ($el[4]['speakers'])->map(function ($speaker) use ($fileService) {
+                            return [
+                                'name' => sprintf('%s %s', $speaker['first_name'], $speaker['last_name']),
+                                'about' => $speaker['description'],
+                                'avatar' => $fileService
+                                    ->getFiles([$speaker['file_id']])
+                                    ->first()
+                                    ->absoluteUrl()
+                            ];
+                        })->all()
+                    ];
+                })->all()
+            ];
+        }
+
+        $data = [
+            'menu' => [
+                'НОВИНКИ' => sprintf('%s/new', config('app.showcase_host')),
+                'АКЦИИ' => sprintf('%s/promo', config('app.showcase_host')),
+                'ПОДБОРКИ' => sprintf('%s/sets', config('app.showcase_host')),
+                'БРЕНДЫ' => sprintf('%s/brands', config('app.showcase_host')),
+                'МАСТЕР-КЛАССЫ' => sprintf('%s/masterclasses', config('app.showcase_host')),
+            ],
+            'title' => sprintf(
+                '%s, СПАСИБО ЗА ЗАКАЗ!',
+                mb_strtoupper($user->first_name)
+            ),
+            'text' => sprintf('Заказ <u>%s</u> успешно оплачен,
+            <br>Билеты находятся в прикрепленном PDF файле', $order->id),
+            'params' => [
+                'Получатель' => $user->first_name,
+                'Телефон' => $user->phone,
+                'Сумма заказа' => number_format($order->cost, 2)
+            ],
+            'classes' => $classes
+        ];
+
+        if($basketItems->count() > 1) {
+            $serviceNotificationService->send(
+                $user->id,
+                'kupleny_bilety_neskolko_shtuk',
+                $data,
+                ['pdfs' => ['pdf.ticket' => $pdfs]]
+            );
+        } else {
+            $serviceNotificationService->send(
+                $user->id,
+                'kuplen_bilet',
+                $data,
+                ['pdfs' => ['pdf.ticket' => $pdfs]]
+            );
+        }
+    }
+    
+    private function generateMapImage(Collection $points)
+    {
+        $query = $points
+            ->map(function (PlaceDto $point, $key) {
+                return sprintf('%s,%s,%s', $point->longitude, $point->latitude, $key + 1);
+            })
+            ->join('~');
+
+        return sprintf('https://enterprise.static-maps.yandex.ru/1.x/?key=%s&l=map&pt=%s', config('app.y_maps_key'), $query);
     }
 
     /**

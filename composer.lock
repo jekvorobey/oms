@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1afcac634c777dd53cb2e2c14e73e81f",
+    "content-hash": "d754e3c05efb66fef176c6f206ffa7ec",
     "packages": [
         {
             "name": "darkaonline/l5-swagger",
@@ -369,16 +369,16 @@
         },
         {
             "name": "egulias/email-validator",
-            "version": "2.1.19",
+            "version": "2.1.20",
             "source": {
                 "type": "git",
                 "url": "https://github.com/egulias/EmailValidator.git",
-                "reference": "840d5603eb84cc81a6a0382adac3293e57c1c64c"
+                "reference": "f46887bc48db66c7f38f668eb7d6ae54583617ff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/egulias/EmailValidator/zipball/840d5603eb84cc81a6a0382adac3293e57c1c64c",
-                "reference": "840d5603eb84cc81a6a0382adac3293e57c1c64c",
+                "url": "https://api.github.com/repos/egulias/EmailValidator/zipball/f46887bc48db66c7f38f668eb7d6ae54583617ff",
+                "reference": "f46887bc48db66c7f38f668eb7d6ae54583617ff",
                 "shasum": ""
             },
             "require": {
@@ -423,7 +423,7 @@
                 "validation",
                 "validator"
             ],
-            "time": "2020-08-08T21:28:19+00:00"
+            "time": "2020-09-06T13:44:32+00:00"
         },
         {
             "name": "erusev/parsedown",
@@ -629,12 +629,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-cms-lib.git",
-                "reference": "dac29ea980ceb7aacc1967e24d44e3303dd4c4d8"
+                "reference": "28911b1d05eba18eb4319596367147bfdd852db1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cms-lib/repository/archive.zip?sha=dac29ea980ceb7aacc1967e24d44e3303dd4c4d8",
-                "reference": "dac29ea980ceb7aacc1967e24d44e3303dd4c4d8",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-cms-lib/repository/archive.zip?sha=28911b1d05eba18eb4319596367147bfdd852db1",
+                "reference": "28911b1d05eba18eb4319596367147bfdd852db1",
                 "shasum": ""
             },
             "require": {
@@ -658,7 +658,7 @@
                 }
             ],
             "description": "iBT CMS service client",
-            "time": "2020-08-19T15:07:19+00:00"
+            "time": "2020-09-08T23:30:38+00:00"
         },
         {
             "name": "greensight/ibt-common-lib",
@@ -771,12 +771,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-marketing-lib.git",
-                "reference": "3381b6d88d0d5f6b975ed2cd9c15711fc42dcdfb"
+                "reference": "f8937e85a4413f3791eb674615d5061ab51d28ad"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-marketing-lib/repository/archive.zip?sha=3381b6d88d0d5f6b975ed2cd9c15711fc42dcdfb",
-                "reference": "3381b6d88d0d5f6b975ed2cd9c15711fc42dcdfb",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-marketing-lib/repository/archive.zip?sha=f8937e85a4413f3791eb674615d5061ab51d28ad",
+                "reference": "f8937e85a4413f3791eb674615d5061ab51d28ad",
                 "shasum": ""
             },
             "require": {
@@ -811,7 +811,7 @@
                 }
             ],
             "description": "iBT marketing client",
-            "time": "2020-08-24T15:12:28+00:00"
+            "time": "2020-09-09T11:21:09+00:00"
         },
         {
             "name": "greensight/ibt-merchant-management-lib",
@@ -856,12 +856,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-message-lib.git",
-                "reference": "c0e3989c19b2ebf06d05b5827542f0a5aa083755"
+                "reference": "e77675e1afb9d050f570a04f90ef4f721be2775e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-message-lib/repository/archive.zip?sha=c0e3989c19b2ebf06d05b5827542f0a5aa083755",
-                "reference": "c0e3989c19b2ebf06d05b5827542f0a5aa083755",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-message-lib/repository/archive.zip?sha=e77675e1afb9d050f570a04f90ef4f721be2775e",
+                "reference": "e77675e1afb9d050f570a04f90ef4f721be2775e",
                 "shasum": ""
             },
             "require": {
@@ -896,7 +896,7 @@
                 }
             ],
             "description": "iBT message client",
-            "time": "2020-08-07T14:32:10+00:00"
+            "time": "2020-09-07T17:14:14+00:00"
         },
         {
             "name": "greensight/ibt-pim-lib",
@@ -904,12 +904,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-pim-lib.git",
-                "reference": "cab8e39d78e59d2ffd3db17406110004cc157175"
+                "reference": "96d65bb75be186e32d029b9f2ed0bdedf017a087"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=cab8e39d78e59d2ffd3db17406110004cc157175",
-                "reference": "cab8e39d78e59d2ffd3db17406110004cc157175",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-pim-lib/repository/archive.zip?sha=96d65bb75be186e32d029b9f2ed0bdedf017a087",
+                "reference": "96d65bb75be186e32d029b9f2ed0bdedf017a087",
                 "shasum": ""
             },
             "require": {
@@ -933,7 +933,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2020-09-01T22:22:06+00:00"
+            "time": "2020-09-10T17:06:52+00:00"
         },
         {
             "name": "greensight/ibt-store-lib",
@@ -1914,16 +1914,16 @@
         },
         {
             "name": "nesbot/carbon",
-            "version": "2.39.0",
+            "version": "2.39.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/briannesbitt/Carbon.git",
-                "reference": "0a41ea7f7fedacf307b7a339800e10356a042918"
+                "reference": "326efde1bc09077a26cb77f6e2e32e13f06c27f2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/0a41ea7f7fedacf307b7a339800e10356a042918",
-                "reference": "0a41ea7f7fedacf307b7a339800e10356a042918",
+                "url": "https://api.github.com/repos/briannesbitt/Carbon/zipball/326efde1bc09077a26cb77f6e2e32e13f06c27f2",
+                "reference": "326efde1bc09077a26cb77f6e2e32e13f06c27f2",
                 "shasum": ""
             },
             "require": {
@@ -1936,7 +1936,7 @@
                 "doctrine/orm": "^2.7",
                 "friendsofphp/php-cs-fixer": "^2.14 || ^3.0",
                 "kylekatarnls/multi-tester": "^2.0",
-                "phpmd/phpmd": "^2.8",
+                "phpmd/phpmd": "^2.9",
                 "phpstan/extension-installer": "^1.0",
                 "phpstan/phpstan": "^0.12.35",
                 "phpunit/phpunit": "^7.5 || ^8.0",
@@ -1989,7 +1989,7 @@
                 "datetime",
                 "time"
             ],
-            "time": "2020-08-24T12:35:58+00:00"
+            "time": "2020-09-10T12:16:42+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -2045,16 +2045,16 @@
         },
         {
             "name": "opis/closure",
-            "version": "3.5.6",
+            "version": "3.5.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opis/closure.git",
-                "reference": "e8d34df855b0a0549a300cb8cb4db472556e8aa9"
+                "reference": "4531e53afe2fc660403e76fb7644e95998bff7bf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opis/closure/zipball/e8d34df855b0a0549a300cb8cb4db472556e8aa9",
-                "reference": "e8d34df855b0a0549a300cb8cb4db472556e8aa9",
+                "url": "https://api.github.com/repos/opis/closure/zipball/4531e53afe2fc660403e76fb7644e95998bff7bf",
+                "reference": "4531e53afe2fc660403e76fb7644e95998bff7bf",
                 "shasum": ""
             },
             "require": {
@@ -2102,7 +2102,7 @@
                 "serialization",
                 "serialize"
             ],
-            "time": "2020-08-11T08:46:50+00:00"
+            "time": "2020-09-06T17:02:15+00:00"
         },
         {
             "name": "paragonie/random_compat",
@@ -2801,17 +2801,64 @@
             "time": "2020-02-21T04:36:14+00:00"
         },
         {
-            "name": "swagger-api/swagger-ui",
-            "version": "v3.32.5",
+            "name": "spatie/calendar-links",
+            "version": "1.4.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/swagger-api/swagger-ui.git",
-                "reference": "57f39bd5724956d96af43a86439e2808b981fb18"
+                "url": "https://github.com/spatie/calendar-links.git",
+                "reference": "c705b17416e2cf0b673a742f9fb6716a111ed984"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/57f39bd5724956d96af43a86439e2808b981fb18",
-                "reference": "57f39bd5724956d96af43a86439e2808b981fb18",
+                "url": "https://api.github.com/repos/spatie/calendar-links/zipball/c705b17416e2cf0b673a742f9fb6716a111ed984",
+                "reference": "c705b17416e2cf0b673a742f9fb6716a111ed984",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.2 || ^8.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^8.5 || ^9.0",
+                "spatie/phpunit-snapshot-assertions": "^3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Spatie\\CalendarLinks\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastian De Deyne",
+                    "email": "sebastian@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Generate add to calendar links for Google, iCal and other calendar systems",
+            "homepage": "https://github.com/spatie/calendar-links",
+            "keywords": [
+                "calendar-links",
+                "spatie"
+            ],
+            "time": "2020-09-01T09:49:15+00:00"
+        },
+        {
+            "name": "swagger-api/swagger-ui",
+            "version": "v3.33.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/swagger-api/swagger-ui.git",
+                "reference": "829d87530030bb5bfa24a5093d098c672adfbb9b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/829d87530030bb5bfa24a5093d098c672adfbb9b",
+                "reference": "829d87530030bb5bfa24a5093d098c672adfbb9b",
                 "shasum": ""
             },
             "type": "library",
@@ -2855,7 +2902,7 @@
                 "swagger",
                 "ui"
             ],
-            "time": "2020-08-27T20:11:06+00:00"
+            "time": "2020-09-10T23:20:14+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",
@@ -4256,16 +4303,16 @@
         },
         {
             "name": "symfony/service-contracts",
-            "version": "v2.1.3",
+            "version": "v2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/service-contracts.git",
-                "reference": "58c7475e5457c5492c26cc740cc0ad7464be9442"
+                "reference": "d15da7ba4957ffb8f1747218be9e1a121fd298a1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/service-contracts/zipball/58c7475e5457c5492c26cc740cc0ad7464be9442",
-                "reference": "58c7475e5457c5492c26cc740cc0ad7464be9442",
+                "url": "https://api.github.com/repos/symfony/service-contracts/zipball/d15da7ba4957ffb8f1747218be9e1a121fd298a1",
+                "reference": "d15da7ba4957ffb8f1747218be9e1a121fd298a1",
                 "shasum": ""
             },
             "require": {
@@ -4278,7 +4325,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.1-dev"
+                    "dev-master": "2.2-dev"
                 },
                 "thanks": {
                     "name": "symfony/contracts",
@@ -4314,7 +4361,7 @@
                 "interoperability",
                 "standards"
             ],
-            "time": "2020-07-06T13:23:11+00:00"
+            "time": "2020-09-07T11:33:47+00:00"
         },
         {
             "name": "symfony/translation",
@@ -4394,16 +4441,16 @@
         },
         {
             "name": "symfony/translation-contracts",
-            "version": "v2.1.3",
+            "version": "v2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/translation-contracts.git",
-                "reference": "616a9773c853097607cf9dd6577d5b143ffdcd63"
+                "reference": "77ce1c3627c9f39643acd9af086631f842c50c4d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/translation-contracts/zipball/616a9773c853097607cf9dd6577d5b143ffdcd63",
-                "reference": "616a9773c853097607cf9dd6577d5b143ffdcd63",
+                "url": "https://api.github.com/repos/symfony/translation-contracts/zipball/77ce1c3627c9f39643acd9af086631f842c50c4d",
+                "reference": "77ce1c3627c9f39643acd9af086631f842c50c4d",
                 "shasum": ""
             },
             "require": {
@@ -4415,7 +4462,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.1-dev"
+                    "dev-master": "2.2-dev"
                 },
                 "thanks": {
                     "name": "symfony/contracts",
@@ -4451,7 +4498,7 @@
                 "interoperability",
                 "standards"
             ],
-            "time": "2020-07-06T13:23:11+00:00"
+            "time": "2020-09-07T11:33:47+00:00"
         },
         {
             "name": "symfony/var-dumper",
@@ -4787,16 +4834,16 @@
         },
         {
             "name": "zircote/swagger-php",
-            "version": "3.0.5",
+            "version": "3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zircote/swagger-php.git",
-                "reference": "7f4b9e09c9e96a4c7dd57b0a4ddd5b45f1e261e1"
+                "reference": "9d172471e56433b5c7061006b9a766f262a3edfd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zircote/swagger-php/zipball/7f4b9e09c9e96a4c7dd57b0a4ddd5b45f1e261e1",
-                "reference": "7f4b9e09c9e96a4c7dd57b0a4ddd5b45f1e261e1",
+                "url": "https://api.github.com/repos/zircote/swagger-php/zipball/9d172471e56433b5c7061006b9a766f262a3edfd",
+                "reference": "9d172471e56433b5c7061006b9a766f262a3edfd",
                 "shasum": ""
             },
             "require": {
@@ -4829,13 +4876,17 @@
             "authors": [
                 {
                     "name": "Robert Allen",
-                    "email": "zircote@gmail.com",
-                    "homepage": "http://www.zircote.com"
+                    "email": "zircote@gmail.com"
                 },
                 {
                     "name": "Bob Fanger",
                     "email": "bfanger@gmail.com",
-                    "homepage": "http://bfanger.nl"
+                    "homepage": "https://bfanger.nl"
+                },
+                {
+                    "name": "Martin Rademacher",
+                    "email": "mano@radebatz.net",
+                    "homepage": "https://radebatz.net"
                 }
             ],
             "description": "swagger-php - Generate interactive documentation for your RESTful API using phpdoc annotations",
@@ -4846,7 +4897,7 @@
                 "rest",
                 "service discovery"
             ],
-            "time": "2020-08-24T04:51:22+00:00"
+            "time": "2020-09-03T20:18:43+00:00"
         }
     ],
     "packages-dev": [

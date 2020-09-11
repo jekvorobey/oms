@@ -467,7 +467,14 @@ class ShipmentObserver
             foreach ($operators as $operator) {
                 $serviceNotificationService->send($operator->user_id, 'klientoformlen_novyy_zakaz', [
                     'QUANTITY_ORDERS' => 1,
-                    'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                    'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id),
+                    'CUSTOMER_NAME' => $shipment->delivery->order->getUser()->first_name,
+                    'SUM_ORDERS' => number_format($shipment->cost, 2),
+                    'GOODS_NAME' => $shipment->items->first()->basketItem->name,
+                    'QUANTITY_GOODS' => (int) $shipment->items->first()->basketItem->qty,
+                    'PRISE_GOODS' => number_format($shipment->items->first()->basketItem->price, 2),
+                    'ALL_QUANTITY_GOODS' => (int) $shipment->items()->with('basketItem')->get()->sum('basketItem.qty'),
+                    'ALL_PRISE_GOODS' => number_format($shipment->cost, 2)
                 ]);
             }
         } catch (\Exception $e) {
