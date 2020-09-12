@@ -9,10 +9,20 @@ use App\Models\Order\OrderReturnItem;
 use App\Services\PublicEventService\Cart\PublicEventCartRepository;
 use App\Services\PublicEventService\Cart\PublicEventCartStruct;
 use Exception;
+use Greensight\CommonMsa\Services\FileService\FileService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Pim\Dto\Offer\OfferDto;
+use Pim\Dto\Product\ProductImageDto;
+use Pim\Dto\Product\ProductImageType;
+use Pim\Dto\PublicEvent\MediaDto;
+use Pim\Dto\PublicEvent\PublicEventMediaDto;
+use Pim\Dto\PublicEvent\SprintDto;
 use Pim\Services\OfferService\OfferService;
+use Pim\Services\ProductService\ProductService;
+use Pim\Services\PublicEventMediaService\PublicEventMediaService;
+use Pim\Services\PublicEventSprintService\PublicEventSprintService;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
@@ -193,5 +203,67 @@ class BasketItem extends OmsModel
         $product = $this->product;
         $product[$field] = $value;
         $this->product = $product;
+    }
+
+    public function getItemMedia()
+    {
+        switch ($this->type) {
+            case Basket::TYPE_PRODUCT:
+                return $this->getProductMedia();
+            case Basket::TYPE_MASTER:
+                return $this->getMasterMedia();
+        }
+    }
+
+    private function getProductMedia()
+    {
+        /** @var OfferService */
+        $offerService = app(OfferService::class);
+        /** @var ProductService */
+        $productService = app(ProductService::class);
+
+        /** @var OfferDto */
+        $offer = $offerService->offers(
+            $offerService->newQuery()
+                ->setFilter('id', $this->offer_id)
+        )->first();
+
+        return $productService
+            ->allImages([$offer->product_id], ProductImageType::TYPE_MAIN)
+            ->map(function (ProductImageDto $image) {
+                return $image->url;
+            })
+            ->toArray();
+    }
+
+    private function getMasterMedia()
+    {
+        /** @var PublicEventSprintService */
+        $sprintService = app(PublicEventSprintService::class);
+        /** @var PublicEventMediaService */
+        $publicEventMediaService = app(PublicEventMediaService::class);
+        /** @var FileService */
+        $fileService = app(FileService::class);
+
+        /** @var SprintDto */
+        $sprint = $sprintService->find(
+            $sprintService->query()
+                ->setFilter('id', $this->product['sprint_id'])
+        )->first();
+
+        return $publicEventMediaService
+            ->find(
+                $publicEventMediaService->query()
+                    ->setFilter('collection', 'detail')
+                    ->setFilter('media_id', $sprint->public_event_id)
+                    ->setFilter('media_type', 'App\Models\PublicEvent\PublicEvent')
+            )
+            ->map(function (MediaDto $media) use ($fileService) {
+                return $fileService
+                    ->getFiles([$media->value])
+                    ->first()
+                    ->absoluteUrl();
+            })
+            ->toArray();
     }
 }

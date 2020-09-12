@@ -465,20 +465,20 @@ class OrderObserver
                 return [
                     '%s, ВАШ ЗАКАЗ ОЖИДАЕТ ОПЛАТЫ',
                     sprintf('Ваш заказ %s ожидает оплаты. Чтобы перейти
-                    <br>к оплате нажмите на кнопку "Оплатить заказ"', $order->id)
+                    <br>к оплате нажмите на кнопку "Оплатить заказ"', $order->number)
                 ];
             }
 
             switch ($order->status) {
                 case OrderStatus::CREATED:
-                    return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->id)];
+                    return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
                 case OrderStatus::DELIVERING:
                     return ['%s, ВАШ ЗАКАЗ В ПУТИ', 'Ваш заказ подтвержден и передан в транспортную компанию. <br>Ожидайте звонка курьера.'];
                 case OrderStatus::READY_FOR_RECIPIENT:
                     return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
                 case OrderStatus::DONE:
                     return [
-                        '%s, ' . sprintf("ВАШ ЗАКАЗ %s ВЫПОЛНЕН", $order->id),
+                        '%s, ' . sprintf("ВАШ ЗАКАЗ %s ВЫПОЛНЕН", $order->number),
                         'Спасибо что выбрали нас! Надеемся что процесс покупки доставил
                         <br>вам исключительно положительные эмоции.
                         <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
@@ -488,7 +488,7 @@ class OrderObserver
                     return [
                         '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
                         sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
-                        <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->id)
+                        <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
                     ];
             }
         })();
@@ -515,13 +515,7 @@ class OrderObserver
             ->deliveries
             ->unique('delivery_address')
             ->map(function (Delivery $delivery) {
-                return sprintf(
-                    "%s, %s, %s, %s",
-                    $delivery->delivery_address['street'] ?? '',
-                    $delivery->delivery_address['house'] ?? '',
-                    $delivery->delivery_address['city'] ?? '',
-                    $delivery->delivery_address['post_index'] ?? ''
-                );
+                return $delivery->formDeliveryAddressString($delivery->delivery_address);
             })
             ->join('<br>');
 
@@ -529,6 +523,14 @@ class OrderObserver
             ->deliveries
             ->map(function (Delivery $delivery) {
                 return $this->formatDeliveryDate($delivery);
+            })
+            ->unique()
+            ->join('<br>');
+
+        $deliveryMethod = $order
+            ->deliveries
+            ->map(function (Delivery $delivery) {
+                return DeliveryMethod::methodById($delivery->delivery_method)->name;
             })
             ->unique()
             ->join('<br>');
@@ -552,7 +554,7 @@ class OrderObserver
                                 'name' => $item->name,
                                 'count' => (int) $item->qty,
                                 'price' => (int) $item->price,
-                                'image' => ''
+                                'image' => $item->getItemMedia()[0] ?? ''
                             ];
                         })
                         ->toArray()
@@ -567,7 +569,7 @@ class OrderObserver
                 'Получатель' => $user->first_name,
                 'Телефон' => $order->customerPhone(),
                 'Сумма заказа' => (int) $order->cost,
-                'Получение' => DeliveryType::all()[$order->delivery_type]->name,
+                'Получение' => $deliveryMethod,
                 'Дата доставки' => $deliveryDate,
                 'Адрес доставки' => $deliveryAddress
             ],
@@ -606,7 +608,7 @@ class OrderObserver
 
     // public function testSend()
     // {
-    //     $order = Order::find(771);
+    //     $order = Order::find(770);
     //     $notificationService = app(ServiceNotificationService::class);
     //     $customerService = app(CustomerService::class);
 

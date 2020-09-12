@@ -178,7 +178,7 @@ class Delivery extends OmsModel
      * @param  array  $address
      * @return string
      */
-    private function formDeliveryAddressString(array $address): string
+    public function formDeliveryAddressString(array $address): string
     {
         return (string)join(', ', array_filter([
             $address['post_index'] ?? null,
