@@ -584,6 +584,31 @@ class OrderObserver
                 'Узнать статус выполнения заказа можно в <a href="%s">Личном кабинете</a>',
                 sprintf("%s/profile", config('app.showcase_host'))
             ),
+            'ORDER_ID' => $order->number,
+            'FULL_NAME' => sprintf('%s %s', $user->first_name, $user->last_name),
+            'LINK_ACCOUNT' => sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
+            'ORDER_DATE' => $order->created_at->toDateString(),
+            'ORDER_TIME' => $order->created_at->toTimeString(),
+            'DELIVERY_TYPE' => DeliveryType::all()[$order->delivery_type]->name,
+            'DELIVERY_ADDRESS' => (function () use ($order) {
+                /** @var Delivery */
+                $delivery = $order->deliveries->first();
+                return $delivery
+                    ->formDeliveryAddressString($delivery->delivery_address);
+            })(),
+            'DELIVERY_DATE' => $order
+                ->deliveries
+                ->first()
+                ->delivery_at
+                ->toDateString(),
+            'DELIVERY_TIME' => $order
+                ->deliveries
+                ->first()
+                ->delivery_at
+                ->toTimeString(),
+            'CUSTOMER_NAME' => $user->first_name,
+            'ORDER_CONTACT_NUMBER' => $order->number,
+            'ORDER_TEXT' => optional($order->comment)->text
         ];
     }
     /**
