@@ -396,6 +396,10 @@ class OrderObserver
 
     protected function createNotificationType(int $orderStatus, bool $consolidation, bool $postomat)
     {
+        if($orderStatus == OrderStatus::READY_FOR_RECIPIENT) {
+            $postomat = true;
+        }
+
         $slug = $this->intoStringStatus($orderStatus);
 
         if($slug) {
