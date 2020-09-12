@@ -575,7 +575,7 @@ class OrderObserver
             ],
             'shipments' => $shipments->toArray(),
             'delivery_price' => (int) $order->delivery_cost,
-            'total_price' => (int) $order->cost,
+            'total_price' => (int) $order->price,
             'finisher_text' => sprintf(
                 'Узнать статус выполнения заказа можно в <a href="%s">Личном кабинете</a>',
                 sprintf("%s/profile", config('app.showcase_host'))
@@ -606,21 +606,21 @@ class OrderObserver
         return $date;
     }
 
-    // public function testSend()
-    // {
-    //     $order = Order::find(770);
-    //     $notificationService = app(ServiceNotificationService::class);
-    //     $customerService = app(CustomerService::class);
+    public function testSend()
+    {
+        $order = Order::find(770);
+        $notificationService = app(ServiceNotificationService::class);
+        $customerService = app(CustomerService::class);
 
-    //     $user_id = $customerService
-    //         ->customers(
-    //             $customerService
-    //                 ->newQuery()
-    //                 ->setFilter('id', '=', $order->customer_id)
-    //         )
-    //         ->first()
-    //         ->user_id;
+        $user_id = $customerService
+            ->customers(
+                $customerService
+                    ->newQuery()
+                    ->setFilter('id', '=', $order->customer_id)
+            )
+            ->first()
+            ->user_id;
 
-    //     $this->sendStatusNotification($notificationService, $order, $user_id);
-    // }
+        $this->sendStatusNotification($notificationService, $order, $user_id);
+    }
 }
