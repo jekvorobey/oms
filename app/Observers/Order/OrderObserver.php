@@ -519,6 +519,10 @@ class OrderObserver
             })
             ->join('<br>');
 
+        if(empty($deliveryAddress)) {
+            $deliveryAddress = 'ПВЗ';
+        }
+
         $deliveryDate = $order
             ->deliveries
             ->map(function (Delivery $delivery) {
