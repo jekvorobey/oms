@@ -597,7 +597,7 @@ class CheckoutOrder
                 'name' => $event->name,
                 'info' => $event->description,
                 'price' => (int) $basketItem->price,
-                'count' => (int) $basketItem->qty,
+                'count' => sprintf('%s %s', (int) $basketItem->qty, $this->generateTicketWord((int) $basketItem->qty)),
                 'image' => $url,
                 'manager' => [
                     'name' => $organizer->name,
@@ -724,6 +724,19 @@ class CheckoutOrder
             ->join('~');
 
         return sprintf('https://enterprise.static-maps.yandex.ru/1.x/?key=%s&l=map&pt=%s', config('app.y_maps_key'), $query);
+    }
+
+    private function generateTicketWord(int $count)
+    {
+        if($count == 1) {
+            return 'билет';
+        }
+
+        if($count > 1 && $count < 5) {
+            return 'билета';
+        }
+
+        return 'билетов';
     }
 
     /**
