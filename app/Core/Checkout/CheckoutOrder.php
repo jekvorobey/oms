@@ -614,7 +614,7 @@ class CheckoutOrder
             ];
 
             $pdfs[] = [
-                'name' => $event->name,
+                'name' => sprintf('%s (%s)', $event->name, $basketItem->product['ticket_type_name']),
                 'id' => $event->id,
                 'cost' => (int) $basketItem->price,
                 'order_num' => $order->id,
