@@ -491,7 +491,7 @@ class CheckoutOrder
         }
     }
 
-    private function sendTicketNotification(Order $order, Collection $basketItems)
+    public function sendTicketNotification(Order $order, Collection $basketItems)
     {
         $publicEventService = app(PublicEventService::class);
         $publicEventSprintService = app(PublicEventSprintService::class);
@@ -501,6 +501,7 @@ class CheckoutOrder
         $publicEventSpeakerService = app(PublicEventSpeakerService::class);
         $publicEventPlaceService = app(PublicEventPlaceService::class);
         $fileService = app(FileService::class);
+        /** @var ServiceNotificationService */
         $serviceNotificationService = app(ServiceNotificationService::class);
 
         $user = $order->getUser();
@@ -630,9 +631,9 @@ class CheckoutOrder
                     return $el[0];
                 })->all(),
                 'participant' => [
-                    'name' => sprintf("%s %s", $user->last_name, $user->first_name),
-                    'email' => $user->email,
-                    'phone' => $user->phone
+                    'name' => $order->receiver_name,
+                    'email' => $order->receiver_email,
+                    'phone' => $order->receiver_phone
                 ],
                 'manager' => [
                     'name' => $organizer->name,
@@ -712,6 +713,18 @@ class CheckoutOrder
                 $data,
                 ['pdfs' => ['pdf.ticket' => $pdfs]]
             );
+        }
+
+        if($order->receiver_email != $user->email) {
+            foreach($pdfs as $pdf) {
+                $serviceNotificationService->sendFile(
+                    'Куплен билет',
+                    $order->receiver_email,
+                    $order->receiver_name,
+                    'pdf.ticket',
+                    $pdf
+                );
+            }
         }
     }
     
