@@ -527,6 +527,16 @@ class OrderObserver
             $deliveryAddress = 'ПВЗ';
         }
 
+        $goods = $order->basket->items->map(function (BasketItem $item) {
+            $deliveryMethodId = optional(optional(optional(optional($item)->shipmentItem)->shipment)->delivery)->delivery_method;
+            return [
+                'name' => $item->name,
+                'price' => $item->price,
+                'count' => $item->qty,
+                'delivery' => $deliveryMethodId ? DeliveryMethod::methodById($deliveryMethodId) : null,
+            ];
+        });
+
         $deliveryDate = $order
             ->deliveries
             ->map(function (Delivery $delivery) {
@@ -612,7 +622,8 @@ class OrderObserver
                 ->toTimeString(),
             'CUSTOMER_NAME' => $user->first_name,
             'ORDER_CONTACT_NUMBER' => $order->number,
-            'ORDER_TEXT' => optional($order->comment)->text
+            'ORDER_TEXT' => optional($order->comment)->text,
+            'goods' => $goods
         ];
     }
     /**
