@@ -9,6 +9,7 @@ use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationSe
 use Illuminate\Support\Collection;
 use Pim\Dto\PublicEvent\MediaDto;
 use Pim\Dto\PublicEvent\PlaceDto;
+use Pim\Dto\PublicEvent\TicketDto;
 use Pim\Services\PublicEventMediaService\PublicEventMediaService;
 use Pim\Services\PublicEventOrganizerService\PublicEventOrganizerService;
 use Pim\Services\PublicEventPlaceService\PublicEventPlaceService;
@@ -16,6 +17,7 @@ use Pim\Services\PublicEventService\PublicEventService;
 use Pim\Services\PublicEventSpeakerService\PublicEventSpeakerService;
 use Pim\Services\PublicEventSprintService\PublicEventSprintService;
 use Pim\Services\PublicEventSprintStageService\PublicEventSprintStageService;
+use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use Spatie\CalendarLinks\Link;
 
 class TicketNotifierService
@@ -41,6 +43,9 @@ class TicketNotifierService
     /** @var PublicEventPlaceService */
     protected $publicEventPlaceService;
 
+    /** @var PublicEventTicketService */
+    protected $publicEventTicketService;
+
     /** @var FileService */
     protected $fileService;
 
@@ -55,6 +60,7 @@ class TicketNotifierService
         PublicEventSprintStageService $publicEventSprintStageService,
         PublicEventSpeakerService $publicEventSpeakerService,
         PublicEventPlaceService $publicEventPlaceService,
+        PublicEventTicketService $publicEventTicketService,
         FileService $fileService,
         ServiceNotificationService $serviceNotificationService
     ) {
@@ -65,6 +71,7 @@ class TicketNotifierService
         $this->publicEventSprintStageService = $publicEventSprintStageService;
         $this->publicEventSpeakerService = $publicEventSpeakerService;
         $this->publicEventPlaceService = $publicEventPlaceService;
+        $this->publicEventTicketService = $publicEventTicketService;
         $this->fileService = $fileService;
         $this->serviceNotificationService = $serviceNotificationService;
     }
@@ -185,69 +192,78 @@ class TicketNotifierService
                 'calendar' => $link->ics()
             ];
 
-            $pdfs[] = [
-                'name' => sprintf('%s (%s)', $event->name, $basketItem->product['ticket_type_name']),
-                'id' => $event->id,
-                'cost' => (int) $basketItem->price,
-                'order_num' => $order->id,
-                'bought_at' => $order->created_at->locale('ru')->isoFormat('D MMMM, HH:mm'),
-                'time' => $stages->map(function ($el) {
-                    return sprintf(
-                        "%s, %s-%s",
-                        $el[1],
-                        $el[2],
-                        $el[3]
-                    );
-                })->all(),
-                'adress' => $stages->map(function ($el) {
-                    return $el[0];
-                })->all(),
-                'participant' => [
-                    'name' => $order->receiver_name,
-                    'email' => $order->receiver_email,
-                    'phone' => $order->receiver_phone
-                ],
-                'manager' => [
-                    'name' => $organizer->name,
-                    'about' => $organizer->description,
-                    'phone' => $organizer->phone,
-                    'messangers' => false,
-                    'email' => $organizer->email,
-                    'site' => $organizer->site
-                ],
-                'map' => $this->generateMapImage(
-                    $stages->map(function ($stage) {
-                        return $stage[5];
-                    })
-                ),
-                'routes' => $stages->map(function ($stage) {
-                    return [
-                        'title' => $stage[0],
-                        'text' => $stage[5]->description,
-                        'images' => $stage[6]
-                    ];
-                })->all(),
-                'programs' => $stages->map(function ($el) {
-                    return [
-                        'title' => $el[4]['title'],
-                        'date' => sprintf('%s, %s-%s', $el[1], $el[2], $el[3]),
-                        'adress' => $el[0],
-                        'text' => $el[4]['text'],
-                        'kit' => $el[4]['kit'],
-                        'speakers' => ($el[4]['speakers'])->map(function ($speaker) {
-                            return [
-                                'name' => sprintf('%s %s', $speaker['first_name'], $speaker['last_name']),
-                                'about' => $speaker['description'],
-                                'avatar' => $this
-                                    ->fileService
-                                    ->getFiles([$speaker['file_id']])
-                                    ->first()
-                                    ->absoluteUrl()
-                            ];
-                        })->all()
-                    ];
-                })->all()
-            ];
+            foreach($basketItem->product['ticket_ids'] as $ticket) {
+                /** @var TicketDto */
+                $ticket = $this->publicEventTicketService->tickets(
+                    $this->publicEventTicketService
+                        ->newQuery()
+                        ->setFilter('id', $ticket)
+                )->first();
+
+                $pdfs[] = [
+                    'name' => sprintf('%s (%s)', $event->name, $basketItem->product['ticket_type_name']),
+                    'id' => $ticket->code,
+                    'cost' => (int) $basketItem->price,
+                    'order_num' => $order->id,
+                    'bought_at' => $order->created_at->locale('ru')->isoFormat('D MMMM, HH:mm'),
+                    'time' => $stages->map(function ($el) {
+                        return sprintf(
+                            "%s, %s-%s",
+                            $el[1],
+                            $el[2],
+                            $el[3]
+                        );
+                    })->all(),
+                    'adress' => $stages->map(function ($el) {
+                        return $el[0];
+                    })->all(),
+                    'participant' => [
+                        'name' => $order->receiver_name,
+                        'email' => $order->receiver_email,
+                        'phone' => $order->receiver_phone
+                    ],
+                    'manager' => [
+                        'name' => $organizer->name,
+                        'about' => $organizer->description,
+                        'phone' => $organizer->phone,
+                        'messangers' => false,
+                        'email' => $organizer->email,
+                        'site' => $organizer->site
+                    ],
+                    'map' => $this->generateMapImage(
+                        $stages->map(function ($stage) {
+                            return $stage[5];
+                        })
+                    ),
+                    'routes' => $stages->map(function ($stage) {
+                        return [
+                            'title' => $stage[0],
+                            'text' => $stage[5]->description,
+                            'images' => $stage[6]
+                        ];
+                    })->all(),
+                    'programs' => $stages->map(function ($el) {
+                        return [
+                            'title' => $el[4]['title'],
+                            'date' => sprintf('%s, %s-%s', $el[1], $el[2], $el[3]),
+                            'adress' => $el[0],
+                            'text' => $el[4]['text'],
+                            'kit' => $el[4]['kit'],
+                            'speakers' => ($el[4]['speakers'])->map(function ($speaker) {
+                                return [
+                                    'name' => sprintf('%s %s', $speaker['first_name'], $speaker['last_name']),
+                                    'about' => $speaker['description'],
+                                    'avatar' => $this
+                                        ->fileService
+                                        ->getFiles([$speaker['file_id']])
+                                        ->first()
+                                        ->absoluteUrl()
+                                ];
+                            })->all()
+                        ];
+                    })->all()
+                ];
+            }
         }
 
         $data = [
