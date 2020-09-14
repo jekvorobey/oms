@@ -86,7 +86,7 @@ class TicketNotifierService
             $stages = $this->publicEventSprintStageService->find(
                 $this->publicEventSprintStageService
                     ->query()
-                    ->setFilter('id', $sprint->id)
+                    ->setFilter('sprint_id', $sprint->id)
                     ->addSort('time_from')
             )->map(function ($stage) {
                 $place = $this->publicEventPlaceService->find(
@@ -323,5 +323,10 @@ class TicketNotifierService
         }
 
         return 'билетов';
+    }
+
+    public function test()
+    {
+        $this->notify(Order::find(797));
     }
 }
