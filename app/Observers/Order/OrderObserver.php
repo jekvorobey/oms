@@ -590,8 +590,8 @@ class OrderObserver
             'button' => $button,
             'params' => [
                 'Получатель' => $user->first_name,
-                'Телефон' => $order->customerPhone(),
-                'Сумма заказа' => (int) $order->cost,
+                'Телефон' => $this->formatNumber($order->customerPhone()),
+                'Сумма заказа' => sprintf('%s ₽', (int) $order->cost),
                 'Получение' => $deliveryMethod,
                 'Дата доставки' => $deliveryDate,
                 'Адрес доставки' => $deliveryAddress
@@ -653,6 +653,12 @@ class OrderObserver
             $date .= sprintf(", с %s до %s", $delivery->delivery_time_start, $delivery->delivery_time_end);
         }
         return $date;
+    }
+
+    public function formatNumber(string $number)
+    {
+        $number = substr($number, 1);
+        return '+'.substr($number, 0, 1).' '.substr($number, 1, 3).' '.substr($number, 4, 3).'-'.substr($number, 7, 2).'-'.substr($number, 9, 2);
     }
 
     public function testSend()
