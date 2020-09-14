@@ -122,6 +122,13 @@ class OrderObserver
                 ->user_id;
 
             if ($order->payment_status != $order->getOriginal('payment_status')) {
+                if(
+                    in_array($order->payment_status, [PaymentStatus::HOLD, PaymentStatus::PAID]) &&
+                    $order->getOriginal('payment_status') != PaymentStatus::HOLD
+                ) {
+                    $this->sendStatusNotification($notificationService, $order, $user_id);
+                }
+
                 if($order->payment_status == PaymentStatus::HOLD && $order->type == Basket::TYPE_MASTER) {
                     app(TicketNotifierService::class)->notify($order);
                 }
@@ -137,7 +144,7 @@ class OrderObserver
                 );
             }
 
-            if ($order->status != $order->getOriginal('status')) {
+            if ($order->status != $order->getOriginal('status') && $order->status != OrderStatus::CREATED) {
                 $this->sendStatusNotification($notificationService, $order, $user_id);
             }
 
