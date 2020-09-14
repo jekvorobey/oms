@@ -19,6 +19,7 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
+use App\Services\TicketNotifierService;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
 use Greensight\CommonMsa\Services\AuthService\UserService;
@@ -121,6 +122,10 @@ class OrderObserver
                 ->user_id;
 
             if ($order->payment_status != $order->getOriginal('payment_status')) {
+                if($order->payment_status == PaymentStatus::HOLD && $order->type == Basket::TYPE_MASTER) {
+                    app(TicketNotifierService::class)->notify($order);
+                }
+
                 $notificationService->send(
                     $user_id,
                     $this->createPaymentNotificationType(
