@@ -121,30 +121,39 @@ class OrderObserver
                 ->first()
                 ->user_id;
 
+            $sent_notification = false;
+
             if ($order->payment_status != $order->getOriginal('payment_status')) {
                 if(
                     in_array($order->payment_status, [PaymentStatus::HOLD, PaymentStatus::PAID]) &&
                     $order->getOriginal('payment_status') != PaymentStatus::HOLD
                 ) {
-                    $this->sendStatusNotification($notificationService, $order, $user_id);
+                    $this->sendStatusNotification($notificationService, $order, $user_id, true);
+                    $sent_notification = true;
                 }
 
                 if($order->payment_status == PaymentStatus::HOLD && $order->type == Basket::TYPE_MASTER) {
                     app(TicketNotifierService::class)->notify($order);
                 }
 
-                $notificationService->send(
-                    $user_id,
-                    $this->createPaymentNotificationType(
-                        $order->payment_status,
-                        $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
-                        $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
-                    ),
-                    $this->generateNotificationVariables($order)
-                );
+                if(!($order->payment_status == PaymentStatus::PAID && $order->getOriginal('payment_status') == PaymentStatus::HOLD)) {
+                    $notificationService->send(
+                        $user_id,
+                        $this->createPaymentNotificationType(
+                            $order->payment_status,
+                            $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                            $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        ),
+                        $this->generateNotificationVariables($order, $order->payment_status == PaymentStatus::NOT_PAID)
+                    );
+                }
             }
 
-            if ($order->status != $order->getOriginal('status') && $order->status != OrderStatus::CREATED) {
+            if (
+                $order->status != $order->getOriginal('status')
+                && !in_array($order->status, [OrderStatus::CREATED, OrderStatus::AWAITING_CONFIRMATION])
+                && !$sent_notification
+            ) {
                 $this->sendStatusNotification($notificationService, $order, $user_id);
             }
 
@@ -166,7 +175,7 @@ class OrderObserver
         }
     }
 
-    protected function sendStatusNotification(ServiceNotificationService $notificationService, Order $order, int $user_id)
+    protected function sendStatusNotification(ServiceNotificationService $notificationService, Order $order, int $user_id, bool $override_success = false)
     {
         $notificationService->send(
             $user_id,
@@ -175,7 +184,7 @@ class OrderObserver
                 $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                 $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
             ),
-            $this->generateNotificationVariables($order)
+            $this->generateNotificationVariables($order, false, $override_success)
         );
     }
 
@@ -401,6 +410,8 @@ class OrderObserver
                 return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
             case PaymentStatus::PAID:
                 return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
+            case PaymentStatus::HOLD:
+                return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
             default:
                 return '';
         }
@@ -427,6 +438,8 @@ class OrderObserver
             case OrderStatus::PRE_ORDER: 
                 return 'status_zakazapredzakaz_ozhidaem_postupleniya_tovara';
             case OrderStatus::CREATED:
+                return 'status_zakazaoformlen';
+            case OrderStatus::AWAITING_CONFIRMATION:
                 return 'status_zakazaoformlen';
             case OrderStatus::DELIVERING:
                 return 'status_zakazav_protsesse_dostavki';
@@ -463,11 +476,10 @@ class OrderObserver
         return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
     }
 
-    public function generateNotificationVariables(Order $order, bool $awaiting_payment = false)
+    public function generateNotificationVariables(Order $order, bool $awaiting_payment = false, bool $override_success = false)
     {
         $customerService = app(CustomerService::class);
         $userService = app(UserService::class);
-        // $optionService = app(OptionService::class);
 
         $customer = $customerService->customers($customerService->newQuery()->setFilter('id', '=', $order->customer_id))->first();
         $user = $userService->users($userService->newQuery()->setFilter('id', '=', $customer->user_id))->first();
@@ -476,7 +488,11 @@ class OrderObserver
         $payment = $order->payments->first();
 
         $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
-        [$title, $text] = (function () use ($order, $awaiting_payment) {
+        [$title, $text] = (function () use ($order, $awaiting_payment, $override_success) {
+            if($override_success) {
+                return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
+            }
+            
             if($awaiting_payment) {
                 return [
                     '%s, ВАШ ЗАКАЗ ОЖИДАЕТ ОПЛАТЫ',
@@ -545,7 +561,7 @@ class OrderObserver
                 'name' => $item->name,
                 'price' => $item->price,
                 'count' => $item->qty,
-                'delivery' => $deliveryMethodId ? DeliveryMethod::methodById($deliveryMethodId) : null,
+                'delivery' => $deliveryMethodId ? DeliveryMethod::methodById($deliveryMethodId)->name : null,
             ];
         });
 
@@ -613,29 +629,30 @@ class OrderObserver
             'ORDER_ID' => $order->number,
             'FULL_NAME' => sprintf('%s %s', $user->first_name, $user->last_name),
             'LINK_ACCOUNT' => sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
+            'LINK_PAY' => $link,
             'ORDER_DATE' => $order->created_at->toDateString(),
             'ORDER_TIME' => $order->created_at->toTimeString(),
             'DELIVERY_TYPE' => DeliveryType::all()[$order->delivery_type]->name,
             'DELIVERY_ADDRESS' => (function () use ($order) {
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
-                return $delivery
-                    ->formDeliveryAddressString($delivery->delivery_address);
+                return optional($delivery)
+                    ->formDeliveryAddressString($delivery->delivery_address) ?? '';
             })(),
-            'DELIVERY_DATE' => $order
+            'DELIVERY_DATE' => optional(optional($order
                 ->deliveries
-                ->first()
-                ->delivery_at
-                ->toDateString(),
-            'DELIVERY_TIME' => $order
+                ->first())
+                ->delivery_at)
+                ->toDateString() ?? '',
+            'DELIVERY_TIME' => optional(optional($order
                 ->deliveries
-                ->first()
-                ->delivery_at
-                ->toTimeString(),
+                ->first())
+                ->delivery_at)
+                ->toTimeString() ?? '',
             'CUSTOMER_NAME' => $user->first_name,
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->comment)->text,
-            'goods' => $goods
+            'goods' => $goods->all()
         ];
     }
     /**

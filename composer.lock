@@ -723,12 +723,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:greensight/ibt-logistics-lib.git",
-                "reference": "96467dadd2642aea4f5c95f4673f72eb2147fbd9"
+                "reference": "485d697d8f519ecac7e0e96f7878046f67a8a49f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=96467dadd2642aea4f5c95f4673f72eb2147fbd9",
-                "reference": "96467dadd2642aea4f5c95f4673f72eb2147fbd9",
+                "url": "https://gitlab.com/api/v4/projects/greensight%2Fibt-logistics-lib/repository/archive.zip?sha=485d697d8f519ecac7e0e96f7878046f67a8a49f",
+                "reference": "485d697d8f519ecac7e0e96f7878046f67a8a49f",
                 "shasum": ""
             },
             "require": {
@@ -763,7 +763,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2020-08-20T17:58:58+00:00"
+            "time": "2020-09-13T22:36:35+00:00"
         },
         {
             "name": "greensight/ibt-marketing-lib",
@@ -4750,16 +4750,16 @@
         },
         {
             "name": "yandex-money/yandex-checkout-sdk-php",
-            "version": "1.6.5",
+            "version": "1.6.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/yandex-money/yandex-checkout-sdk-php.git",
-                "reference": "16bc8e6db378a649a470c0132ebee7f6eedd4fb0"
+                "reference": "a00251693a4cc50a9dbaffaf1951a5b94d9bbf2f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/yandex-money/yandex-checkout-sdk-php/zipball/16bc8e6db378a649a470c0132ebee7f6eedd4fb0",
-                "reference": "16bc8e6db378a649a470c0132ebee7f6eedd4fb0",
+                "url": "https://api.github.com/repos/yandex-money/yandex-checkout-sdk-php/zipball/a00251693a4cc50a9dbaffaf1951a5b94d9bbf2f",
+                "reference": "a00251693a4cc50a9dbaffaf1951a5b94d9bbf2f",
                 "shasum": ""
             },
             "require": {
@@ -4784,7 +4784,7 @@
             "license": [
                 "MIT"
             ],
-            "time": "2020-07-24T13:29:13+00:00"
+            "time": "2020-09-15T08:42:17+00:00"
         },
         {
             "name": "zendframework/zend-escaper",
