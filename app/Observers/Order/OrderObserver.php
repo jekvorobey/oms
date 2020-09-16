@@ -128,12 +128,12 @@ class OrderObserver
                     in_array($order->payment_status, [PaymentStatus::HOLD, PaymentStatus::PAID]) &&
                     $order->getOriginal('payment_status') != PaymentStatus::HOLD
                 ) {
+                    if($order->type == Basket::TYPE_MASTER) {
+                        app(TicketNotifierService::class)->notify($order);
+                    }
+
                     $this->sendStatusNotification($notificationService, $order, $user_id, true);
                     $sent_notification = true;
-                }
-
-                if($order->payment_status == PaymentStatus::HOLD && $order->type == Basket::TYPE_MASTER) {
-                    app(TicketNotifierService::class)->notify($order);
                 }
 
                 if(!($order->payment_status == PaymentStatus::PAID && $order->getOriginal('payment_status') == PaymentStatus::HOLD)) {
