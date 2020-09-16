@@ -118,7 +118,9 @@ class DeliveryObserver
 
             $user = $delivery->order->getUser();
 
-            if (isset($delivery->getChanges()['delivery_address']) && $customer) {
+            if (isset($delivery->getChanges()['delivery_address']) && $customer
+                && array_diff($delivery->delivery_address, $delivery->getOriginal('delivery_address')) != array_diff($delivery->getOriginal('delivery_address'), $delivery->delivery_address)
+            ) {
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_adres_dostavki',
