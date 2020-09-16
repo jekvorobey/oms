@@ -119,7 +119,7 @@ class DeliveryObserver
             $user = $delivery->order->getUser();
 
             if (isset($delivery->getChanges()['delivery_address']) && $customer
-                && array_diff($delivery->delivery_address, $delivery->getOriginal('delivery_address')) != array_diff($delivery->getOriginal('delivery_address'), $delivery->delivery_address)
+                && array_diff($delivery->delivery_address, json_decode($delivery->getOriginal('delivery_address'), true)) != array_diff(json_decode($delivery->getOriginal('delivery_address'), true), $delivery->delivery_address)
             ) {
                 $notificationService->send(
                     $customer,
@@ -157,7 +157,7 @@ class DeliveryObserver
                 );
             }
 
-            if ($delivery->pdd != $delivery->getOriginal('pdd')) {
+            if (Carbon::parse($delivery->pdd)->diffInDays(Carbon::parse($delivery->getOriginal('pdd'))) != 0) {
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_data_dostavki',
