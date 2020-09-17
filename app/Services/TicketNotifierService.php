@@ -202,6 +202,8 @@ class TicketNotifierService
                 )->first();
 
                 $pdfs[] = [
+                    'RECEIVER_EMAIL' => $ticket->email,
+                    'RECEIVER_NAME' => $ticket->first_name,
                     'name' => sprintf('%s (%s)', $event->name, $basketItem->product['ticket_type_name']),
                     'id' => $ticket->code,
                     'cost' => (int) $basketItem->price,
@@ -305,12 +307,12 @@ class TicketNotifierService
             );
         }
 
-        if($order->receiver_email != $user->email) {
-            foreach($pdfs as $pdf) {
+        foreach($pdfs as $pdf) {
+            if($pdf['RECEIVER_EMAIL'] != $user->email) {
                 $this->serviceNotificationService->sendFile(
-                    'Куплен билет',
-                    $order->receiver_email,
-                    $order->receiver_name,
+                    'Билеты на мастер-класс',
+                    $pdf['RECEIVER_EMAIL'],
+                    $pdf['RECEIVER_NAME'],
                     'pdf.ticket',
                     $pdf
                 );
