@@ -204,6 +204,7 @@ class TicketNotifierService
                 $pdfs[] = [
                     'RECEIVER_EMAIL' => $ticket->email,
                     'RECEIVER_NAME' => $ticket->first_name,
+                    'MESSAGE_FILENAME' => sprintf('order-tickets-%s', $ticket->code),
                     'name' => sprintf('%s (%s)', $event->name, $basketItem->product['ticket_type_name']),
                     'id' => $ticket->code,
                     'cost' => (int) $basketItem->price,
