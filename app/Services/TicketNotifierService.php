@@ -281,8 +281,8 @@ class TicketNotifierService
             'text' => sprintf('Заказ <u>%s</u> успешно оплачен,
             <br>Билеты находятся в прикрепленном PDF файле', $order->id),
             'params' => [
-                'Получатель' => $user->first_name,
-                'Телефон' => $user->phone,
+                'Получатель' => $order->receiver_name,
+                'Телефон' => $order->receiver_phone,
                 'Сумма заказа' => (int) $order->price
             ],
             'classes' => $classes
