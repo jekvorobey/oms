@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order\Order;
+use App\Observers\Order\OrderObserver;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Services\FileService\FileService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
@@ -182,7 +183,7 @@ class TicketNotifierService
                 'manager' => [
                     'name' => $organizer->name,
                     'about' => $organizer->description,
-                    'phone' => $organizer->phone,
+                    'phone' => OrderObserver::formatNumber($organizer->phone),
                     'messagers' => false,
                     'email' => $organizer->email,
                     'site' => $organizer->site
@@ -220,12 +221,12 @@ class TicketNotifierService
                     'participant' => [
                         'name' => $order->receiver_name,
                         'email' => $order->receiver_email,
-                        'phone' => $order->receiver_phone
+                        'phone' => OrderObserver::formatNumber($order->receiver_phone)
                     ],
                     'manager' => [
                         'name' => $organizer->name,
                         'about' => $organizer->description,
-                        'phone' => $organizer->phone,
+                        'phone' => OrderObserver::formatNumber($organizer->phone),
                         'messangers' => false,
                         'email' => $organizer->email,
                         'site' => $organizer->site
@@ -282,7 +283,7 @@ class TicketNotifierService
             <br>Билеты находятся в прикрепленном PDF файле', $order->id),
             'params' => [
                 'Получатель' => $order->receiver_name,
-                'Телефон' => $order->receiver_phone,
+                'Телефон' => OrderObserver::formatNumber($order->receiver_phone),
                 'Сумма заказа' => (int) $order->price
             ],
             'classes' => $classes
@@ -321,7 +322,7 @@ class TicketNotifierService
     {
         $query = $points
             ->map(function (PlaceDto $point, $key) {
-                return sprintf('%s,%s,%s', $point->longitude, $point->latitude, $key + 1);
+                return sprintf('%s,%s,pm2ntm%s', $point->longitude, $point->latitude, $key + 1);
             })
             ->join('~');
 

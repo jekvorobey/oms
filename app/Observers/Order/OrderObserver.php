@@ -613,7 +613,7 @@ class OrderObserver
             'button' => $button,
             'params' => [
                 'Получатель' => $user->first_name,
-                'Телефон' => $this->formatNumber($order->customerPhone()),
+                'Телефон' => static::formatNumber($order->customerPhone()),
                 'Сумма заказа' => sprintf('%s ₽', (int) $order->cost),
                 'Получение' => $deliveryMethod,
                 'Дата доставки' => $deliveryDate,
@@ -679,7 +679,7 @@ class OrderObserver
         return $date;
     }
 
-    public function formatNumber(string $number)
+    public static function formatNumber(string $number)
     {
         $number = substr($number, 1);
         return '+'.substr($number, 0, 1).' '.substr($number, 1, 3).' '.substr($number, 4, 3).'-'.substr($number, 7, 2).'-'.substr($number, 9, 2);
