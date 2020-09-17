@@ -219,9 +219,9 @@ class TicketNotifierService
                         return $el[0];
                     })->all(),
                     'participant' => [
-                        'name' => $order->receiver_name,
-                        'email' => $order->receiver_email,
-                        'phone' => OrderObserver::formatNumber($order->receiver_phone)
+                        'name' => sprintf('%s %s', $ticket->first_name, $ticket->last_name),
+                        'email' => $ticket->email,
+                        'phone' => OrderObserver::formatNumber($ticket->phone)
                     ],
                     'manager' => [
                         'name' => $organizer->name,
