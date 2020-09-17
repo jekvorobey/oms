@@ -122,7 +122,7 @@ class TicketNotifierService
 
                 return [
                     sprintf("%s, %s", $place->name, $place->address),
-                    Carbon::parse($stage->date)->locale('ru')->isoFormat('D MMMM (ddd)'),
+                    Carbon::parse($stage->date)->locale('ru')->isoFormat('D MMMM (dd)'),
                     Carbon::parse($stage->time_from)->format('H:m'),
                     Carbon::parse($stage->time_to)->format('H:m'),
                     [
