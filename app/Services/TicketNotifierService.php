@@ -284,7 +284,7 @@ class TicketNotifierService
             'params' => [
                 'Получатель' => $order->receiver_name,
                 'Телефон' => OrderObserver::formatNumber($order->receiver_phone),
-                'Сумма заказа' => (int) $order->price
+                'Сумма заказа' => sprintf('%s ₽', (int) $order->price)
             ],
             'classes' => $classes
         ];
