@@ -164,7 +164,7 @@ class OrderObserver
                         $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                         $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
                     ),
-                    $this->generateNotificationVariables($order)
+                    $this->generateNotificationVariables($order, false, false, true)
                 );
                 $notificationService->sendToAdmin('aozzakazzakaz_otmenen');
             } else {
@@ -476,7 +476,7 @@ class OrderObserver
         return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
     }
 
-    public function generateNotificationVariables(Order $order, bool $awaiting_payment = false, bool $override_success = false)
+    public function generateNotificationVariables(Order $order, bool $awaiting_payment = false, bool $override_success = false, bool $override_cancel = false)
     {
         $customerService = app(CustomerService::class);
         $userService = app(UserService::class);
@@ -488,9 +488,17 @@ class OrderObserver
         $payment = $order->payments->first();
 
         $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
-        [$title, $text] = (function () use ($order, $awaiting_payment, $override_success) {
+        [$title, $text] = (function () use ($order, $awaiting_payment, $override_success, $override_cancel) {
             if($override_success) {
                 return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
+            }
+
+            if($override_cancel) {
+                return [
+                    '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
+                    sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
+                    <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
+                ];
             }
             
             if($awaiting_payment) {
@@ -516,16 +524,16 @@ class OrderObserver
                         <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
                         <br>еще лучше и удобнее'
                     ];
-                case OrderStatus::RETURNED:
-                    return [
-                        '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
-                        sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
-                        <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
-                    ];
+                // case OrderStatus::RETURNED:
+                //     return [
+                //         '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
+                //         sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
+                //         <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
+                //     ];
             }
         })();
 
-        $button = (function () use ($order, $awaiting_payment, $link) {
+        $button = (function () use ($awaiting_payment, $link, $override_cancel) {
             if($awaiting_payment) {
                 return [
                     'text' => 'ОПЛАТИТЬ ЗАКАЗ',
@@ -533,7 +541,7 @@ class OrderObserver
                 ];
             }
 
-            if($order->status == OrderStatus::RETURNED) {
+            if($override_cancel) {
                 return [
                     'text' => 'НАПИСАТЬ НАМ',
                     'link' => sprintf("%s/feedback", config('app.showcase_host'))
