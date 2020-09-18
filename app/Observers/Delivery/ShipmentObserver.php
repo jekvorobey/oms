@@ -469,12 +469,12 @@ class ShipmentObserver
                     'QUANTITY_ORDERS' => 1,
                     'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id),
                     'CUSTOMER_NAME' => $shipment->delivery->order->getUser()->first_name,
-                    'SUM_ORDERS' => number_format($shipment->cost, 2),
+                    'SUM_ORDERS' => (int) $shipment->cost,
                     'GOODS_NAME' => $shipment->items->first()->basketItem->name,
                     'QUANTITY_GOODS' => (int) $shipment->items->first()->basketItem->qty,
-                    'PRISE_GOODS' => number_format($shipment->items->first()->basketItem->price, 2),
+                    'PRISE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                     'ALL_QUANTITY_GOODS' => (int) $shipment->items()->with('basketItem')->get()->sum('basketItem.qty'),
-                    'ALL_PRISE_GOODS' => number_format($shipment->cost, 2)
+                    'ALL_PRISE_GOODS' => (int) $shipment->cost
                 ]);
             }
         } catch (\Exception $e) {

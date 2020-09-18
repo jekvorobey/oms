@@ -351,74 +351,72 @@ class OrderService
      */
     public function sendTicketsEmail(Order $order): void
     {
-        if (!$order->isPublicEventOrder()) {
-            return;
-        }
+        // if (!$order->isPublicEventOrder()) {
+        //     return;
+        // }
 
-        if (!$order->receiver_email) {
-            throw new \Exception('Не указан email-адрес получателя');
-        }
+        // if (!$order->receiver_email) {
+        //     throw new \Exception('Не указан email-адрес получателя');
+        // }
 
-        $internalOrderInfoDto = $this->getPublicEventsOrderInfo($order);
-        //Формируем данные для отправки e-mail
-        $orderInfoDto = new OrderInfoDto();
-        $orderInfoDto->setId($internalOrderInfoDto->id);
-        $orderInfoDto->setNumber($internalOrderInfoDto->number);
-        $orderInfoDto->setPrice($internalOrderInfoDto->price);
-        foreach ($internalOrderInfoDto->publicEvents as $publicEvent) {
-            $publicEventInfoDto = new PublicEventInfoDto();
-            $orderInfoDto->addPublicEvent($publicEventInfoDto);
+        // $internalOrderInfoDto = $this->getPublicEventsOrderInfo($order);
+        // //Формируем данные для отправки e-mail
+        // $orderInfoDto = new OrderInfoDto();
+        // $orderInfoDto->setId($internalOrderInfoDto->id);
+        // $orderInfoDto->setNumber($internalOrderInfoDto->number);
+        // $orderInfoDto->setPrice($internalOrderInfoDto->price);
+        // foreach ($internalOrderInfoDto->publicEvents as $publicEvent) {
+        //     $publicEventInfoDto = new PublicEventInfoDto();
+        //     $orderInfoDto->addPublicEvent($publicEventInfoDto);
 
-            foreach ($publicEvent->speakers as $speaker) {
-                $speakerInfoDto = new SpeakerInfoDto();
-                $publicEventInfoDto->addSpeaker($speakerInfoDto);
-                $speakerInfoDto->setFirstName($speaker->firstName);
-                $speakerInfoDto->setMiddleName($speaker->middleName);
-                $speakerInfoDto->setLastName($speaker->lastName);
-                $speakerInfoDto->setProfession($speaker->profession);
-            }
+        //     foreach ($publicEvent->speakers as $speaker) {
+        //         $speakerInfoDto = new SpeakerInfoDto();
+        //         $publicEventInfoDto->addSpeaker($speakerInfoDto);
+        //         $speakerInfoDto->setFirstName($speaker->firstName);
+        //         $speakerInfoDto->setMiddleName($speaker->middleName);
+        //         $speakerInfoDto->setLastName($speaker->lastName);
+        //         $speakerInfoDto->setProfession($speaker->profession);
+        //     }
 
-            $organizerInfoDto = new OrganizerInfoDto();
-            $publicEventInfoDto->setOrganizer($organizerInfoDto);
-            $organizer = $publicEvent->organizer;
-            $organizerInfoDto->setName($organizer->name);
-            $organizerInfoDto->setDescription($organizer->description);
-            $organizerInfoDto->setPhone($organizer->phone);
-            $organizerInfoDto->setEmail($organizer->email);
-            $organizerInfoDto->setSite($organizer->site);
-            $organizerInfoDto->setMessengerPhone($organizer->messengerPhone);
-            foreach ($publicEvent->ticketsInfo as $ticket) {
-                $ticketsInfoDto = new TicketsInfoDto();
-                $publicEventInfoDto->addTicket($ticketsInfoDto);
-                $ticketsInfoDto->setName($ticket->name);
-                $ticketsInfoDto->setTicketTypeName($ticket->ticketTypeName);
-                $ticketsInfoDto->setPhotoId($ticket->photoId);
-                $ticketsInfoDto->setNearestDate($ticket->nearestDate);
-                $ticketsInfoDto->setNearestTimeFrom($ticket->nearestTimeFrom);
-                $ticketsInfoDto->setNearestPlaceName($ticket->nearestPlaceName);
-                $ticketsInfoDto->setPrice($ticket->price);
-                $ticketsInfoDto->setTicketsQty($ticket->ticketsQty);
-            }
-        }
+        //     $organizerInfoDto = new OrganizerInfoDto();
+        //     $publicEventInfoDto->setOrganizer($organizerInfoDto);
+        //     $organizer = $publicEvent->organizer;
+        //     $organizerInfoDto->setName($organizer->name);
+        //     $organizerInfoDto->setDescription($organizer->description);
+        //     $organizerInfoDto->setPhone($organizer->phone);
+        //     $organizerInfoDto->setEmail($organizer->email);
+        //     $organizerInfoDto->setSite($organizer->site);
+        //     $organizerInfoDto->setMessengerPhone($organizer->messengerPhone);
+        //     foreach ($publicEvent->ticketsInfo as $ticket) {
+        //         $ticketsInfoDto = new TicketsInfoDto();
+        //         $publicEventInfoDto->addTicket($ticketsInfoDto);
+        //         $ticketsInfoDto->setName($ticket->name);
+        //         $ticketsInfoDto->setTicketTypeName($ticket->ticketTypeName);
+        //         $ticketsInfoDto->setPhotoId($ticket->photoId);
+        //         $ticketsInfoDto->setNearestDate($ticket->nearestDate);
+        //         $ticketsInfoDto->setNearestTimeFrom($ticket->nearestTimeFrom);
+        //         $ticketsInfoDto->setNearestPlaceName($ticket->nearestPlaceName);
+        //         $ticketsInfoDto->setPrice($ticket->price);
+        //         $ticketsInfoDto->setTicketsQty($ticket->ticketsQty);
+        //     }
+        // }
 
-        $ticketEmailDto = new TicketEmailDto();
-        $customerInfoDto = new CustomerInfoDto();
-        $customerInfoDto->setName($order->receiver_name);
-        $customerInfoDto->setPhone($order->receiver_phone);
-        $customerInfoDto->setEmail($order->receiver_email);
-        $ticketEmailDto->setCustomer($customerInfoDto);
-        $ticketEmailDto->setOrder($orderInfoDto);
-        $ticketEmailDto->addTo($order->receiver_email, $order->receiver_name);
+        // $ticketEmailDto = new TicketEmailDto();
+        // $customerInfoDto = new CustomerInfoDto();
+        // $customerInfoDto->setName($order->receiver_name);
+        // $customerInfoDto->setPhone($order->receiver_phone);
+        // $customerInfoDto->setEmail($order->receiver_email);
+        // $ticketEmailDto->setCustomer($customerInfoDto);
+        // $ticketEmailDto->setOrder($orderInfoDto);
+        // $ticketEmailDto->addTo($order->receiver_email, $order->receiver_name);
 
-        /** @var DocumentService $documentService */
-        $documentService = resolve(DocumentService::class);
-        $documentDto = $documentService->getOrderPdfTickets($order);
-        if ($documentDto->success) {
-            $ticketEmailDto->addFileId($documentDto->file_id);
-        }
+        // $documentService = resolve(DocumentService::class);
+        // $documentDto = $documentService->getOrderPdfTickets($order);
+        // if ($documentDto->success) {
+        //     $ticketEmailDto->addFileId($documentDto->file_id);
+        // }
 
-        /** @var MailService $mailService */
-        $mailService = resolve(MailService::class);
-        $mailService->send($ticketEmailDto);
+        // $mailService = resolve(MailService::class);
+        // $mailService->send($ticketEmailDto);
     }
 }

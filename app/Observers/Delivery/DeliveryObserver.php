@@ -12,6 +12,7 @@ use App\Models\History\HistoryType;
 use App\Models\Order\OrderStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
+use Carbon\Carbon;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
@@ -104,8 +105,8 @@ class DeliveryObserver
                         $delivery->status,
                         $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
                         [
-                            'DELIVERY_DATE' => $delivery->delivery_at->toDateString(),
-                            'DELIVERY_TIME' => $delivery->delivery_at->toTimeString(),
+                            'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->toDateString(),
+                            'DELIVERY_TIME' => Carbon::parse($delivery->pdd)->toTimeString(),
                             'PART_PRICE' => $delivery->cost,
                         ]
                     )
@@ -117,7 +118,9 @@ class DeliveryObserver
 
             $user = $delivery->order->getUser();
 
-            if (isset($delivery->getChanges()['delivery_address']) && $customer) {
+            if (isset($delivery->getChanges()['delivery_address']) && $customer
+                && array_diff($delivery->delivery_address, json_decode($delivery->getOriginal('delivery_address'), true)) != array_diff(json_decode($delivery->getOriginal('delivery_address'), true), $delivery->delivery_address)
+            ) {
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_adres_dostavki',
@@ -125,15 +128,9 @@ class DeliveryObserver
                         'ORDER_ID' => $order_id,
                         'LINK_ORDER' => $link_order,
                         'CUSTOMER_NAME' => $user->first_name,
-                        'DELIVERY_ADDRESS' => sprintf(
-                            "%s, %s, %s, %s",
-                            $delivery->delivery_address['street'] ?? '',
-                            $delivery->delivery_address['house'] ?? '',
-                            $delivery->delivery_address['city'] ?? '',
-                            $delivery->delivery_address['post_index'] ?? ''
-                        ),
+                        'DELIVERY_ADDRESS' => $delivery->formDeliveryAddressString($delivery->delivery_address),
                         'DELIVERY_TYPE' => DeliveryType::all()[$delivery->order->delivery_type]->name,
-                        'DELIVERY_DATE' => $delivery->delivery_at->locale('ru')->isoFormat('D MMMM, dddd'),
+                        'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
                         'DELIVERY_TIME' => sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end),
                         'FULL_NAME' => $delivery->receiver_name,
                         'ORDER_CONTACT_NUMBER' => $delivery->receiver_phone,
@@ -151,7 +148,7 @@ class DeliveryObserver
                         'LINK_ORDER' => $link_order,
                         'CUSTOMER_NAME' => $user->first_name,
                         'DELIVERY_TYPE' => DeliveryType::all()[$delivery->order->delivery_type]->name,
-                        'DELIVERY_DATE' => $delivery->delivery_at->locale('ru')->isoFormat('D MMMM, dddd'),
+                        'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
                         'DELIVERY_TIME' => sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end),
                         'FULL_NAME' => $delivery->receiver_name,
                         'ORDER_CONTACT_NUMBER' => $delivery->receiver_phone,
@@ -160,7 +157,7 @@ class DeliveryObserver
                 );
             }
 
-            if ($delivery->delivery_at != $delivery->getOriginal('delivery_at')) {
+            if (Carbon::parse($delivery->pdd)->diffInDays(Carbon::parse($delivery->getOriginal('pdd'))) != 0) {
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_data_dostavki',
@@ -169,7 +166,7 @@ class DeliveryObserver
                         'LINK_ORDER' => $link_order,
                         'CUSTOMER_NAME' => $user->first_name,
                         'DELIVERY_TYPE' => DeliveryType::all()[$delivery->order->delivery_type]->name,
-                        'DELIVERY_DATE' => $delivery->delivery_at->locale('ru')->isoFormat('D MMMM, dddd'),
+                        'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
                         'DELIVERY_TIME' => sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end),
                         'FULL_NAME' => $delivery->receiver_name,
                         'ORDER_CONTACT_NUMBER' => $delivery->receiver_phone,
