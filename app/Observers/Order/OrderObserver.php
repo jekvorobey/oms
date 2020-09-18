@@ -660,10 +660,11 @@ class OrderObserver
                 ->toTimeString() ?? '',
             'CUSTOMER_NAME' => $user->first_name,
             'ORDER_CONTACT_NUMBER' => $order->number,
-            'ORDER_TEXT' => optional($order->comment)->text,
+            'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'goods' => $goods->all()
         ];
     }
+
     /**
      * Отправить билеты на мастер-классы на почту покупателю заказа и всем участникам.
      * @param  Order  $order
