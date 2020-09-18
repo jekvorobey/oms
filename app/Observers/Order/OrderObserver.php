@@ -651,7 +651,7 @@ class OrderObserver
                 ->toTimeString() ?? '',
             'CUSTOMER_NAME' => $user->first_name,
             'ORDER_CONTACT_NUMBER' => $order->number,
-            'ORDER_TEXT' => $order->manager_comment ?? "",
+            'ORDER_TEXT' => optional($order->comment)->text,
             'goods' => $goods->all()
         ];
     }
