@@ -632,7 +632,7 @@ class OrderObserver
             'LINK_PAY' => $link,
             'ORDER_DATE' => $order->created_at->toDateString(),
             'ORDER_TIME' => $order->created_at->toTimeString(),
-            'DELIVERY_TYPE' => DeliveryType::all()[$order->delivery_type]->name,
+            'DELIVERY_TYPE' => DeliveryMethod::methodById($order->deliveries->first()->delivery_method)->name,
             'DELIVERY_ADDRESS' => (function () use ($order) {
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
@@ -651,7 +651,7 @@ class OrderObserver
                 ->toTimeString() ?? '',
             'CUSTOMER_NAME' => $user->first_name,
             'ORDER_CONTACT_NUMBER' => $order->number,
-            'ORDER_TEXT' => optional($order->comment)->text,
+            'ORDER_TEXT' => $order->manager_comment ?? "",
             'goods' => $goods->all()
         ];
     }
