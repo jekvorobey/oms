@@ -511,6 +511,7 @@ class OrderObserver
 
             switch ($order->status) {
                 case OrderStatus::CREATED:
+                case OrderStatus::AWAITING_CONFIRMATION:
                     return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
                 case OrderStatus::DELIVERING:
                     return ['%s, ВАШ ЗАКАЗ В ПУТИ', 'Ваш заказ подтвержден и передан в транспортную компанию. <br>Ожидайте звонка курьера.'];
