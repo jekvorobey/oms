@@ -72,17 +72,24 @@ class PaymentService
 
     /**
      * Установить статус оплаты "Просрочено"
-     * @param  int  $paymentId
+     * @param  Payment  $payment
      * @return bool
      */
-    public function timeout(int $paymentId): bool
+    public function timeout(Payment $payment): bool
     {
-        $payment = $this->getPayment($paymentId);
-        if (is_null($payment)) {
-            return false;
-        }
-
         $payment->status = PaymentStatus::TIMEOUT;
+
+        return $payment->save();
+    }
+
+    /**
+     * Установить статус оплаты "Ожидает оплаты"
+     * @param  Payment  $payment
+     * @return bool
+     */
+    public function waiting(Payment $payment): bool
+    {
+        $payment->status = PaymentStatus::WAITING;
 
         return $payment->save();
     }
