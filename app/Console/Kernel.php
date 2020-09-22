@@ -8,6 +8,7 @@ use App\Console\Commands\CargoExport;
 use App\Console\Commands\CheckCourierCallsForCDEK;
 use App\Console\Commands\CommitPayments;
 use App\Console\Commands\NotifyPublicEvent;
+use App\Console\Commands\SetWaitingStatus2Payment;
 use App\Console\Commands\UpdateDeliveriesStatus;
 use Greensight\Store\Dto\StoreDto;
 use Greensight\Store\Services\StoreService\StoreService;
@@ -35,6 +36,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $schedule->command(SetWaitingStatus2Payment::class)->everyMinute();
         $schedule->command(CancelExpiredOrders::class)->everyMinute();
         $schedule->command(UpdateDeliveriesStatus::class)->everyTenMinutes();
         $schedule->command(CommitPayments::class)->hourly();

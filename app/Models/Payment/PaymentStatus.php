@@ -18,6 +18,8 @@ class PaymentStatus
     public const HOLD = 4;
     /** @var int - ошибка */
     public const ERROR = 5;
+    /** @var int - ожидает оплаты */
+    public const WAITING = 6;
 
     /** @var int */
     public $id;
@@ -35,6 +37,7 @@ class PaymentStatus
             new self(self::TIMEOUT, 'Просрочено'),
             new self(self::HOLD, 'Средства захолдированы'),
             new self(self::ERROR, 'Ошибка проведения платежа'),
+            new self(self::WAITING, 'Ожидает оплаты'),
         ];
     }
 
@@ -49,6 +52,7 @@ class PaymentStatus
             self::TIMEOUT,
             self::HOLD,
             self::ERROR,
+            self::WAITING,
         ];
     }
 
