@@ -437,6 +437,10 @@ class OrderObserver
             $postomat = true;
         }
 
+        if($orderStatus == OrderStatus::DONE) {
+            $consolidation = true;
+        }
+
         $slug = $this->intoStringStatus($orderStatus);
 
         if($slug) {
