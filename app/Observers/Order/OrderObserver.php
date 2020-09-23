@@ -33,6 +33,11 @@ use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationSe
  */
 class OrderObserver
 {
+    const OVERRIDE_CANCEL = 1;
+    const OVERRIDE_AWAITING_PAYMENT = 2;
+    const OVERRIDE_SUCCESSFUL_PAYMENT = 3;
+    const OVERRIDE_SUCCESS = 4;
+
     /**
      * @var array - автоматическая установка статусов для всех дочерних доставок и отправлений заказа
      */
@@ -132,7 +137,7 @@ class OrderObserver
                         app(TicketNotifierService::class)->notify($order);
                     }
 
-                    $this->sendStatusNotification($notificationService, $order, $user_id, true);
+                    $this->sendStatusNotification($notificationService, $order, $user_id, static::OVERRIDE_SUCCESS);
                     $sent_notification = true;
                 }
 
@@ -144,7 +149,16 @@ class OrderObserver
                             $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                             $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
                         ),
-                        $this->generateNotificationVariables($order, $order->payment_status == PaymentStatus::NOT_PAID)
+                        $this->generateNotificationVariables($order, (function () use ($order) {
+                            switch ($order->payment_status) {
+                                case PaymentStatus::NOT_PAID:
+                                    return static::OVERRIDE_AWAITING_PAYMENT;
+                                case PaymentStatus::PAID:
+                                    return static::OVERRIDE_SUCCESSFUL_PAYMENT;
+                            }
+
+                            return null;
+                        })())
                     );
                 }
             }
@@ -164,7 +178,7 @@ class OrderObserver
                         $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                         $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
                     ),
-                    $this->generateNotificationVariables($order, false, false, true)
+                    $this->generateNotificationVariables($order, static::OVERRIDE_CANCEL)
                 );
                 $notificationService->sendToAdmin('aozzakazzakaz_otmenen');
             } else {
@@ -175,7 +189,7 @@ class OrderObserver
         }
     }
 
-    protected function sendStatusNotification(ServiceNotificationService $notificationService, Order $order, int $user_id, bool $override_success = false)
+    protected function sendStatusNotification(ServiceNotificationService $notificationService, Order $order, int $user_id, int $override = null)
     {
         $notificationService->send(
             $user_id,
@@ -184,7 +198,7 @@ class OrderObserver
                 $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                 $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
             ),
-            $this->generateNotificationVariables($order, false, $override_success)
+            $this->generateNotificationVariables($order, $override)
         );
     }
 
@@ -476,7 +490,7 @@ class OrderObserver
         return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
     }
 
-    public function generateNotificationVariables(Order $order, bool $awaiting_payment = false, bool $override_success = false, bool $override_cancel = false)
+    public function generateNotificationVariables(Order $order, int $override = null)
     {
         $customerService = app(CustomerService::class);
         $userService = app(UserService::class);
@@ -488,12 +502,12 @@ class OrderObserver
         $payment = $order->payments->first();
 
         $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
-        [$title, $text] = (function () use ($order, $awaiting_payment, $override_success, $override_cancel) {
-            if($override_success) {
+        [$title, $text] = (function () use ($order, $override, $user) {
+            if($override == static::OVERRIDE_SUCCESS) {
                 return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
             }
 
-            if($override_cancel) {
+            if($override == static::OVERRIDE_CANCEL) {
                 return [
                     '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
                     sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
@@ -501,11 +515,22 @@ class OrderObserver
                 ];
             }
             
-            if($awaiting_payment) {
+            if($override == static::OVERRIDE_AWAITING_PAYMENT) {
                 return [
                     '%s, ВАШ ЗАКАЗ ОЖИДАЕТ ОПЛАТЫ',
                     sprintf('Ваш заказ %s ожидает оплаты. Чтобы перейти
                     <br>к оплате нажмите на кнопку "Оплатить заказ"', $order->number)
+                ];
+            }
+
+            if($override == static::OVERRIDE_SUCCESSFUL_PAYMENT) {
+                return [
+                    sprintf('ЗАКАЗ %s ОПЛАЧЕН И ПРИНЯТ В ОБРАБОТКУ!', $order->number),
+                    sprintf('%s, заказ %s оплачен и принят в обработку.
+                    Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
+                    $user->first_name,
+                    $order->number,
+                    sprintf('%s/profile', config('app.showcase_host')))
                 ];
             }
 
@@ -534,15 +559,15 @@ class OrderObserver
             }
         })();
 
-        $button = (function () use ($awaiting_payment, $link, $override_cancel) {
-            if($awaiting_payment) {
+        $button = (function () use ($link, $override) {
+            if($override == static::OVERRIDE_AWAITING_PAYMENT) {
                 return [
                     'text' => 'ОПЛАТИТЬ ЗАКАЗ',
                     'link' => $link
                 ];
             }
 
-            if($override_cancel) {
+            if($override == static::OVERRIDE_CANCEL) {
                 return [
                     'text' => 'НАПИСАТЬ НАМ',
                     'link' => sprintf("%s/feedback", config('app.showcase_host'))
