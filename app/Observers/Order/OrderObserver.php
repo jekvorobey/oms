@@ -494,7 +494,7 @@ class OrderObserver
         return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
     }
 
-    public function generateNotificationVariables(Order $order, int $override = null)
+    public function generateNotificationVariables(Order $order, int $override = null, Delivery $override_delivery = null)
     {
         $customerService = app(CustomerService::class);
         $userService = app(UserService::class);
@@ -506,7 +506,42 @@ class OrderObserver
         $payment = $order->payments->first();
 
         $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
-        [$title, $text] = (function () use ($order, $override, $user) {
+        [$title, $text] = (function () use ($order, $override, $user, $override_delivery) {
+            if($override_delivery) {
+                $bonus = optional($order->bonuses->first());
+
+                if($override_delivery->status == DeliveryStatus::DONE) {
+                    return [
+                        sprintf('ВАМ НАЧИСЛЕН: %s ₽ БОНУС ЗА ЗАКАЗ', $bonus->bonus ?? 0),
+                        sprintf('%s, здравствуйте! 
+                        Вам начислен: %s ₽ бонус за заказ %s. Бонусы будут действительны до %s. Потратить их можно на следующую покупку. 
+                        
+                        Нам важно ваше мнение!
+                        Мы будем признательны, если вы поделитесь своим мнением о купленном товаре!
+                        Оставить отзыв можно, пройдя по ссылке: %s',
+                        $user->first_name,
+                        $bonus->bonus ?? 0,
+                        $order->number,
+                        $bonus->getExpirationDate() ?? 'не указано',
+                        config('app.showcase_host'))
+                    ];
+                }
+                
+                if($override_delivery->status == DeliveryStatus::RETURNED) {
+                    return [
+                        sprintf('ЗАКАЗ %s ОТМЕНЕН, ВОЗВРАТ ПРОИЗВЕДЕН', $order->number),
+                        sprintf('Заказ %s на сумму %s р. отменен.
+
+                        Возврат денежных средств на сумму %s р. произведен. Срок зависит от вашего банка.
+                        Если у вас возникли сложности с заказом - сообщите нам. 
+                        Мы сделаем все возможное, чтобы вам помочь!',
+                        $order->number,
+                        $order->orderReturns->first()->price,
+                        $order->orderReturns->first()->price)
+                    ];
+                }
+            }
+
             if($override == static::OVERRIDE_SUCCESS) {
                 return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
             }
@@ -603,28 +638,45 @@ class OrderObserver
             ];
         });
 
-        $deliveryDate = $order
-            ->deliveries
-            ->map(function (Delivery $delivery) {
-                return $this->formatDeliveryDate($delivery);
-            })
-            ->unique()
-            ->join('<br>');
+        $deliveryDate = null;
+        if($override_delivery) {
+            $deliveryDate = $this->formatDeliveryDate($override_delivery);
+        } else {
+            $deliveryDate = $order
+                ->deliveries
+                ->map(function (Delivery $delivery) {
+                    return $this->formatDeliveryDate($delivery);
+                })
+                ->unique()
+                ->join('<br>');
+        }
 
-        $deliveryMethod = $order
-            ->deliveries
-            ->map(function (Delivery $delivery) {
-                return DeliveryMethod::methodById($delivery->delivery_method)->name;
-            })
-            ->unique()
-            ->join('<br>');
+        $deliveryMethod = null;
+        if($override_delivery) {
+            $deliveryMethod = DeliveryMethod::methodById($override_delivery->delivery_method)->name;
+        } else {
+            $deliveryMethod = $order
+                ->deliveries
+                ->map(function (Delivery $delivery) {
+                    return DeliveryMethod::methodById($delivery->delivery_method)->name;
+                })
+                ->unique()
+                ->join('<br>');
+        }
 
-        $shipments = $order
-            ->deliveries
-            ->map(function (Delivery $delivery) {
-                return $delivery->shipments;
-            })
-            ->flatten()
+        $shipments = null;
+        if($override_delivery) {
+            $shipments = $override_delivery->shipments;
+        } else {
+            $shipments = $order
+                ->deliveries
+                ->map(function (Delivery $delivery) {
+                    return $delivery->shipments;
+                })
+                ->flatten();
+        }
+
+        $shipments = $shipments
             ->map(function (Shipment $shipment) {
                 return [
                     'date' => $this->formatDeliveryDate($shipment->delivery),

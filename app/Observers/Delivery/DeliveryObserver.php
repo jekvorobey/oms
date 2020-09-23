@@ -10,6 +10,7 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\OrderStatus;
+use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use Carbon\Carbon;
@@ -104,12 +105,20 @@ class DeliveryObserver
                     $this->createNotificationType(
                         $delivery->status,
                         $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
-                        [
+                    ),
+                    (function () use ($delivery) {
+                        switch ($delivery->status) {
+                            case DeliveryStatus::DONE:
+                            case DeliveryStatus::RETURNED:
+                                return app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery);
+                        }
+
+                        return [
                             'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->toDateString(),
                             'DELIVERY_TIME' => Carbon::parse($delivery->pdd)->toTimeString(),
                             'PART_PRICE' => $delivery->cost,
-                        ]
-                    )
+                        ];
+                    })()
                 );
             }
 
