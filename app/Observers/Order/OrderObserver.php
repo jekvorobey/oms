@@ -742,6 +742,7 @@ class OrderObserver
             'CUSTOMER_NAME' => $user->first_name,
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
+            'RETURN_REPRICE' => optional($order->orderReturns->first())->price ?? 0,
             'goods' => $goods->all()
         ];
     }
