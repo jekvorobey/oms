@@ -4,8 +4,11 @@ namespace App\Http\Controllers\V1;
 
 use App\Core\Checkout\CheckoutOrder;
 use App\Http\Controllers\Controller;
+use App\Models\Basket\Basket;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -20,7 +23,107 @@ class CheckoutController extends Controller
      */
     public function commit(Request $request): JsonResponse
     {
-        $checkoutOrder = CheckoutOrder::fromArray($request->all());
+        $basketId = $request->get('basketId');
+        if (!$basketId) {
+            throw new BadRequestHttpException('basketId is required');
+        }
+        $basket = Basket::find($basketId);
+        if (!$basket) {
+            throw new BadRequestHttpException('Basket not found');
+        }
+
+        $data = $this->validate($request, [
+            'customerId' => ['required', 'integer'],
+            'basketId' => ['required', 'integer'],
+
+            'receiverName' => [Rule::requiredIf($basket->isPublicEventBasket()), 'string'],
+            'receiverPhone' => [Rule::requiredIf($basket->isPublicEventBasket()), 'regex:/^\+7\d{10}$/'],
+            'receiverEmail' => [Rule::requiredIf($basket->isPublicEventBasket()), 'email'],
+
+            'cost' => ['required', 'numeric'],
+            'price' => ['required', 'numeric'],
+            'paymentMethodId' => ['required', 'integer'],
+            'confirmationTypeId' => ['required', 'integer'],
+            'spentBonus' => ['required', 'integer'],
+            'addedBonus' => ['sometimes', 'integer'],
+
+            'promoCodes' => ['required', 'array'],
+            'promoCodes.*.promo_code_id' => ['sometimes', 'integer'],
+            'promoCodes.*.name' => ['sometimes', 'string'],
+            'promoCodes.*.code' => ['sometimes', 'string'],
+            'promoCodes.*.type' => ['sometimes', 'integer'],
+            'promoCodes.*.status' => ['sometimes', 'integer'],
+            'promoCodes.*.discount_id' => ['sometimes', 'integer'],
+            'promoCodes.*.gift_id' => ['sometimes', 'integer'],
+            'promoCodes.*.bonus_id' => ['sometimes', 'integer'],
+            'promoCodes.*.owner_id' => ['sometimes', 'integer'],
+
+            'certificates' => ['required', 'array'],
+            'certificates.*' => ['sometimes', 'string'],
+
+            'prices' => ['required', 'array'],
+            'prices.*.basketItemId' => ['required', 'integer'],
+            'prices.*.offerId' => ['required', 'integer'],
+            'prices.*.cost' => ['required', 'numeric'],
+            'prices.*.price' => ['required', 'numeric'],
+            'prices.*.bonusSpent' => ['required', 'integer'],
+            'prices.*.bonusDiscount' => ['required', 'integer'],
+
+            'discounts' => ['required', 'array'],
+            'discounts.*.discount_id' => ['sometimes', 'integer'],
+            'discounts.*.name' => ['sometimes', 'string'],
+            'discounts.*.type' => ['sometimes', 'integer'],
+            'discounts.*.change' => ['sometimes', 'integer'],
+            'discounts.*.merchant_id' => ['sometimes', 'integer'],
+            'discounts.*.visible_in_catalog' => ['sometimes', 'boolean'],
+            'discounts.*.promo_code_only' => ['sometimes', 'boolean'],
+            'discounts.*.items' => ['sometimes', 'array'],
+            'discounts.*.items.*.offer_id' => ['sometimes', 'integer'],
+            'discounts.*.items.*.product_id' => ['sometimes', 'integer'],
+            'discounts.*.items.*.change' => ['sometimes', 'numeric'],
+
+            'bonuses' => ['required', 'array'],
+            'bonuses.*.bonus_id' => ['sometimes', 'integer'],
+            'bonuses.*.name' => ['sometimes', 'string'],
+            'bonuses.*.type' => ['sometimes', 'integer'],
+            'bonuses.*.bonus' => ['sometimes', 'integer'],
+            'bonuses.*.valid_period' => ['sometimes', 'integer'],
+            'bonuses.*.items' => ['sometimes', 'integer'],
+            'bonuses.*.items.*.offer_id' => ['sometimes', 'integer'],
+            'bonuses.*.items.*.product_id' => ['sometimes', 'integer'],
+            'bonuses.*.items.*.bonus' => ['sometimes', 'integer'],
+
+            'deliveryTypeId' => ['required', 'integer'],
+            'deliveryPrice' => ['required', 'numeric'],
+            'deliveryCost' => ['required', 'numeric'],
+
+            'deliveries' => [Rule::requiredIf($basket->isProductBasket()), 'array'],
+            'deliveries.*.tariffId' => ['required', 'integer'],
+            'deliveries.*.deliveryMethod' => ['required', 'integer'],
+            'deliveries.*.deliveryService' => ['required', 'integer'],
+            'deliveries.*.pointId' => ['sometimes', 'integer', 'nullable'],
+            'deliveries.*.selectedDate' => ['sometimes', 'string', 'nullable'],
+            'deliveries.*.deliveryTimeStart' => ['sometimes', 'string', 'nullable'],
+            'deliveries.*.deliveryTimeEnd' => ['sometimes', 'string', 'nullable'],
+            'deliveries.*.deliveryTimeCode' => ['sometimes', 'string', 'nullable'],
+            'deliveries.*.dt' => ['required', 'integer'],
+            'deliveries.*.pdd' => ['required', 'string'],
+            'deliveries.*.cost' => ['required', 'numeric'],
+            'deliveries.*.deliveryAddress' => ['sometimes', 'array', 'nullable'],
+            'deliveries.*.receiverName' => ['required', 'string'],
+            'deliveries.*.receiverPhone' => ['required', 'regex:/^\+7\d{10}$/'],
+            'deliveries.*.receiverEmail' => ['required', 'email'],
+
+            'deliveries.*.shipments' => ['required', 'array'],
+            'deliveries.*.shipments.*.merchantId' => ['required', 'integer'],
+            'deliveries.*.shipments.*.storeId' => ['required', 'integer'],
+            'deliveries.*.shipments.*.cost' => ['required', 'numeric'],
+            'deliveries.*.shipments.*.date' => ['sometimes', 'string', 'nullable'],
+            'deliveries.*.shipments.*.psd' => ['required', 'string'],
+            'deliveries.*.shipments.*.items' => ['required', 'array'],
+        ]);
+
+        $checkoutOrder = CheckoutOrder::fromArray($data);
         try {
             [$orderId, $orderNumber] = $checkoutOrder->save();
         } catch (\Exception $e) {
