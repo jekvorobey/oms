@@ -527,7 +527,7 @@ class OrderObserver
                     ];
                 }
                 
-                if($override_delivery->status == DeliveryStatus::RETURNED) {
+                if($override_delivery->status == DeliveryStatus::CANCELLATION_EXPECTED) {
                     return [
                         sprintf('ЗАКАЗ %s ОТМЕНЕН, ВОЗВРАТ ПРОИЗВЕДЕН', $order->number),
                         sprintf('Заказ %s на сумму %s р. отменен.
@@ -538,6 +538,33 @@ class OrderObserver
                         $order->number,
                         $order->orderReturns->first()->price,
                         $order->orderReturns->first()->price)
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER) {
+                    return [
+                        sprintf('ЗАЯВКА НА ВОЗВРАТ ПО ЗАКАЗУ %s ОФОРМЛЕНА', $order->number),
+                        sprintf('Вы успешно оформили заявку на возврат товара из заказа %s %s.
+                        Вам необходимо передать возвращаемый товар в курьерскую службу согласно условиям возврата товара %s
+                        
+                        Если у вас возникли сложности с заказом - сообщите нам. 
+                        Мы сделаем все возможное, чтобы вам помочь!',
+                        $order->number,
+                        sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
+                        sprintf('%s/purchase-returns', config('app.showcase_host')))
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::RETURNED) {
+                    return [
+                        sprintf('ВОЗВРАТ ПО ЗАКАЗУ %s ПРОИЗВЕДЕН', $order->number),
+                        sprintf('Возврат по заказу %s в размере %s р. произведен. 
+                        Срок возврата денежных средств зависит от вашего банка.
+                        
+                        Если у вас возникли сложности с заказом - сообщите нам. 
+                        Мы сделаем все возможное, чтобы вам помочь!',
+                        $order->number,
+                        (int) $order->price)
                     ];
                 }
             }
