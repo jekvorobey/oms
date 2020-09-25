@@ -16,27 +16,15 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
 use Exception;
-use Greensight\CommonMsa\Services\FileService\FileService;
 use Greensight\Customer\Dto\CustomerBonusDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
-use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Greensight\Store\Dto\StockDto;
 use Greensight\Store\Services\StockService\StockService;
-use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Pim\Dto\PublicEvent\MediaDto;
-use Pim\Dto\PublicEvent\PlaceDto;
 use Pim\Dto\PublicEvent\PublicEventTicketTypeDto;
 use Pim\Dto\PublicEvent\TicketDto;
 use Pim\Dto\PublicEvent\TicketStatus;
-use Pim\Services\PublicEventMediaService\PublicEventMediaService;
-use Pim\Services\PublicEventOrganizerService\PublicEventOrganizerService;
-use Pim\Services\PublicEventPlaceService\PublicEventPlaceService;
-use Pim\Services\PublicEventService\PublicEventService;
-use Pim\Services\PublicEventSpeakerService\PublicEventSpeakerService;
-use Pim\Services\PublicEventSprintService\PublicEventSprintService;
-use Pim\Services\PublicEventSprintStageService\PublicEventSprintStageService;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use Pim\Services\PublicEventTicketTypeService\RestPublicEventTicketTypeService;
 use Spatie\CalendarLinks\Link;
@@ -391,8 +379,12 @@ class CheckoutOrder
 
             $delivery->point_id = $checkoutDelivery->pointId;
             $delivery->delivery_at = $checkoutDelivery->selectedDate;
-            $delivery->delivery_time_start = $checkoutDelivery->deliveryTimeStart;
-            $delivery->delivery_time_end = $checkoutDelivery->deliveryTimeEnd;
+            $delivery->delivery_time_start = $checkoutDelivery->deliveryTimeStart ?
+                Carbon::createFromFormat('H',  $checkoutDelivery->deliveryTimeStart) :
+                null;
+            $delivery->delivery_time_end = $checkoutDelivery->deliveryTimeEnd ?
+                Carbon::createFromFormat('H',  $checkoutDelivery->deliveryTimeEnd) :
+                null;
             $delivery->delivery_time_code = $checkoutDelivery->deliveryTimeCode;
             $delivery->dt = $checkoutDelivery->dt;
             $delivery->pdd = $checkoutDelivery->pdd;
