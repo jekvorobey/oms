@@ -26,6 +26,7 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use GuzzleHttp\Client;
 
 /**
  * Class OrderObserver
@@ -745,8 +746,8 @@ class OrderObserver
             ),
             'ORDER_ID' => $order->number,
             'FULL_NAME' => sprintf('%s %s', $user->first_name, $user->last_name),
-            'LINK_ACCOUNT' => sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
-            'LINK_PAY' => $link,
+            'LINK_ACCOUNT' => (string) $this->shortenLink(sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id)),
+            'LINK_PAY' => (string) $this->shortenLink($link),
             'ORDER_DATE' => $order->created_at->toDateString(),
             'ORDER_TIME' => $order->created_at->toTimeString(),
             'DELIVERY_TYPE' => DeliveryMethod::methodById($order->deliveries->first()->delivery_method)->name,
@@ -802,6 +803,18 @@ class OrderObserver
     {
         $number = substr($number, 1);
         return '+'.substr($number, 0, 1).' '.substr($number, 1, 3).' '.substr($number, 4, 3).'-'.substr($number, 7, 2).'-'.substr($number, 9, 2);
+    }
+
+    protected function shortenLink(string $link)
+    {
+        /** @var Client */
+        $client = app(Client::class);
+
+        return $client->request('GET', 'https://clck.ru/--', [
+            'query' => [
+                'url' => $link
+            ]
+        ])->getBody();
     }
 
     public function testSend()
