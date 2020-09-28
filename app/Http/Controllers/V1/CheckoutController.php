@@ -38,7 +38,7 @@ class CheckoutController extends Controller
 
             'receiverName' => [Rule::requiredIf($basket->isPublicEventBasket()), 'string'],
             'receiverPhone' => [Rule::requiredIf($basket->isPublicEventBasket()), 'regex:/^\+7\d{10}$/'],
-            'receiverEmail' => [Rule::requiredIf($basket->isPublicEventBasket()), 'email'],
+            'receiverEmail' => [Rule::requiredIf($basket->isPublicEventBasket()), 'email', 'nullable'],
 
             'cost' => ['required', 'numeric'],
             'price' => ['required', 'numeric'],
@@ -112,7 +112,7 @@ class CheckoutController extends Controller
             'deliveries.*.deliveryAddress' => ['sometimes', 'array', 'nullable'],
             'deliveries.*.receiverName' => ['required', 'string'],
             'deliveries.*.receiverPhone' => ['required', 'regex:/^\+7\d{10}$/'],
-            'deliveries.*.receiverEmail' => ['required', 'email'],
+            'deliveries.*.receiverEmail' => ['email', 'nullable'],
 
             'deliveries.*.shipments' => ['required', 'array'],
             'deliveries.*.shipments.*.merchantId' => ['required', 'integer'],
