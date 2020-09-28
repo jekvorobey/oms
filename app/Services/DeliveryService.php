@@ -19,7 +19,6 @@ use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
-use Greensight\Logistics\Dto\CourierCall\ExternalStatusCheckDto;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
@@ -593,7 +592,9 @@ class DeliveryService
             $store = $storeService->store($shipment->store_id, $storeService->newQuery()->include('storeContact'));
             $merchant = $merchantService->merchant($shipment->merchant_id);
 
-            $senderDto = new DeliveryOrderInput\SenderDto($store->address);
+            $storeAddress = $store->address;
+            $storeAddress['street'] = $storeAddress['street'] ? : '-'; //у cdek и b2cpl улица обязательна
+            $senderDto = new DeliveryOrderInput\SenderDto($storeAddress);
             $deliveryOrderInputDto->sender = $senderDto;
             $senderDto->is_seller = true;
             $senderDto->company_name = $merchant->legal_name;
@@ -650,7 +651,7 @@ class DeliveryService
                 $recipientDto->area = $pointDto->address['area'] ?? '';
                 $recipientDto->city = $pointDto->address['city'] ?? '';
                 $recipientDto->city_guid = $pointDto->city_guid;
-                $recipientDto->street = $pointDto->address['street'] ? : 'нет'; //у cdek и b2cpl улица обязательна
+                $recipientDto->street = $pointDto->address['street'] ? : '-'; //у cdek и b2cpl улица обязательна
                 $recipientDto->house = $pointDto->address['house'] ?? '';
                 $recipientDto->block = $pointDto->address['block'] ?? '';
                 $recipientDto->flat = $pointDto->address['flat'] ?? '';
