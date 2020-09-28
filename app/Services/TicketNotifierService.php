@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Observers\Order\OrderObserver;
 use Carbon\Carbon;
@@ -9,7 +10,9 @@ use Greensight\CommonMsa\Services\FileService\FileService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Illuminate\Support\Collection;
 use Pim\Dto\PublicEvent\MediaDto;
+use Pim\Dto\PublicEvent\OrganizerDto;
 use Pim\Dto\PublicEvent\PlaceDto;
+use Pim\Dto\PublicEvent\PublicEventDto;
 use Pim\Dto\PublicEvent\TicketDto;
 use Pim\Services\PublicEventMediaService\PublicEventMediaService;
 use Pim\Services\PublicEventOrganizerService\PublicEventOrganizerService;
@@ -19,6 +22,7 @@ use Pim\Services\PublicEventSpeakerService\PublicEventSpeakerService;
 use Pim\Services\PublicEventSprintService\PublicEventSprintService;
 use Pim\Services\PublicEventSprintStageService\PublicEventSprintStageService;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
+use Pim\Services\PublicEventTypeService\PublicEventTypeService;
 use Spatie\CalendarLinks\Link;
 
 class TicketNotifierService
@@ -53,6 +57,9 @@ class TicketNotifierService
     /** @var ServiceNotificationService */
     protected $serviceNotificationService;
 
+    /** @var PublicEventTypeService */
+    protected $publicEventTypeService;
+
     public function __construct(
         PublicEventService $publicEventService,
         PublicEventSprintService $publicEventSprintService,
@@ -62,6 +69,7 @@ class TicketNotifierService
         PublicEventSpeakerService $publicEventSpeakerService,
         PublicEventPlaceService $publicEventPlaceService,
         PublicEventTicketService $publicEventTicketService,
+        PublicEventTypeService $publicEventTypeService,
         FileService $fileService,
         ServiceNotificationService $serviceNotificationService
     ) {
@@ -73,6 +81,7 @@ class TicketNotifierService
         $this->publicEventSpeakerService = $publicEventSpeakerService;
         $this->publicEventPlaceService = $publicEventPlaceService;
         $this->publicEventTicketService = $publicEventTicketService;
+        $this->publicEventTypeService = $publicEventTypeService;
         $this->fileService = $fileService;
         $this->serviceNotificationService = $serviceNotificationService;
     }
@@ -81,6 +90,12 @@ class TicketNotifierService
     {
         $basketItems = $order->basket->items;
         $user = $order->getUser();
+
+        /** @var PublicEventDto */
+        $firstEvent = null;
+
+        /** @var OrganizerDto */
+        $firstOrganizer = null;
 
         $classes = [];
         $pdfs = [];
@@ -146,6 +161,10 @@ class TicketNotifierService
                     ->setFilter('id', $sprint->public_event_id)
             )->first();
 
+            if($firstEvent == null) {
+                $firstEvent = $event;
+            }
+
             $media = $this->publicEventMediaService->find(
                 $this->publicEventMediaService->query()
                     ->setFilter('collection', 'detail')
@@ -157,6 +176,10 @@ class TicketNotifierService
                 $this->publicEventOrganizerService->query()
                     ->setFilter('id', $event->organizer_id)
             )->first();
+
+            if($firstOrganizer == null) {
+                $firstOrganizer = $organizer;
+            }
 
             // Временное решение
             // Здесь нужна компрессия
@@ -270,6 +293,11 @@ class TicketNotifierService
             }
         }
 
+        $type = $this->publicEventTypeService->find(
+            $this->publicEventTypeService->query()
+                ->setFilter('id', $firstEvent->type_id)
+        )->first();
+
         $data = [
             'menu' => [
                 'НОВИНКИ' => sprintf('%s/new', config('app.showcase_host')),
@@ -283,13 +311,24 @@ class TicketNotifierService
                 mb_strtoupper($user->first_name)
             ),
             'text' => sprintf('Заказ <u>%s</u> успешно оплачен,
-            <br>Билеты находятся в прикрепленном PDF файле', $order->id),
+            <br>Билеты находятся в прикрепленном PDF файле', $order->number),
             'params' => [
                 'Получатель' => $order->receiver_name,
                 'Телефон' => OrderObserver::formatNumber($order->receiver_phone),
                 'Сумма заказа' => sprintf('%s ₽', (int) $order->price)
             ],
-            'classes' => $classes
+            'classes' => $classes,
+            'CUSTOMER_NAME' => $user->first_name,
+            'ORDER_ID' => $order->number,
+            'CLASS_TYPE' => $type->name,
+            'NAME_CLASS' => $firstEvent->name,
+            'LINK_ACCOUNT' => sprintf('%s/profile', config('app.showcase_host')),
+            'CALL_ORG' => $firstOrganizer->phone,
+            'MAIL_ORG' => $firstOrganizer->email,
+            'LINK_ORDER' => sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id),
+            'LINK_TICKET' => sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id),
+            'REFUND_ORDER' => sprintf('%s ₽', (int) optional($order->orderReturns->first())->price),
+            'NUMBER_TICKET' => optional(optional($order->orderReturns->first())->items)->count() ?? 0
         ];
 
         if($basketItems->count() > 1) {

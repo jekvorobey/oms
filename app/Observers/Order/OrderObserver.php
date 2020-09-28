@@ -26,6 +26,7 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use GuzzleHttp\Client;
 
 /**
  * Class OrderObserver
@@ -33,6 +34,11 @@ use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationSe
  */
 class OrderObserver
 {
+    const OVERRIDE_CANCEL = 1;
+    const OVERRIDE_AWAITING_PAYMENT = 2;
+    const OVERRIDE_SUCCESSFUL_PAYMENT = 3;
+    const OVERRIDE_SUCCESS = 4;
+
     /**
      * @var array - автоматическая установка статусов для всех дочерних доставок и отправлений заказа
      */
@@ -132,7 +138,7 @@ class OrderObserver
                         app(TicketNotifierService::class)->notify($order);
                     }
 
-                    $this->sendStatusNotification($notificationService, $order, $user_id, true);
+                    $this->sendStatusNotification($notificationService, $order, $user_id, static::OVERRIDE_SUCCESS);
                     $sent_notification = true;
                 }
 
@@ -144,7 +150,16 @@ class OrderObserver
                             $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                             $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
                         ),
-                        $this->generateNotificationVariables($order, $order->payment_status == PaymentStatus::NOT_PAID)
+                        $this->generateNotificationVariables($order, (function () use ($order) {
+                            switch ($order->payment_status) {
+                                case PaymentStatus::NOT_PAID:
+                                    return static::OVERRIDE_AWAITING_PAYMENT;
+                                case PaymentStatus::PAID:
+                                    return static::OVERRIDE_SUCCESSFUL_PAYMENT;
+                            }
+
+                            return null;
+                        })())
                     );
                 }
             }
@@ -164,7 +179,7 @@ class OrderObserver
                         $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                         $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
                     ),
-                    $this->generateNotificationVariables($order)
+                    $this->generateNotificationVariables($order, static::OVERRIDE_CANCEL)
                 );
                 $notificationService->sendToAdmin('aozzakazzakaz_otmenen');
             } else {
@@ -175,7 +190,7 @@ class OrderObserver
         }
     }
 
-    protected function sendStatusNotification(ServiceNotificationService $notificationService, Order $order, int $user_id, bool $override_success = false)
+    protected function sendStatusNotification(ServiceNotificationService $notificationService, Order $order, int $user_id, int $override = null)
     {
         $notificationService->send(
             $user_id,
@@ -184,7 +199,7 @@ class OrderObserver
                 $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
                 $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
             ),
-            $this->generateNotificationVariables($order, false, $override_success)
+            $this->generateNotificationVariables($order, $override)
         );
     }
 
@@ -423,6 +438,10 @@ class OrderObserver
             $postomat = true;
         }
 
+        if($orderStatus == OrderStatus::DONE) {
+            $consolidation = true;
+        }
+
         $slug = $this->intoStringStatus($orderStatus);
 
         if($slug) {
@@ -476,7 +495,7 @@ class OrderObserver
         return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
     }
 
-    public function generateNotificationVariables(Order $order, bool $awaiting_payment = false, bool $override_success = false)
+    public function generateNotificationVariables(Order $order, int $override = null, Delivery $override_delivery = null)
     {
         $customerService = app(CustomerService::class);
         $userService = app(UserService::class);
@@ -488,12 +507,82 @@ class OrderObserver
         $payment = $order->payments->first();
 
         $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
-        [$title, $text] = (function () use ($order, $awaiting_payment, $override_success) {
-            if($override_success) {
+        [$title, $text] = (function () use ($order, $override, $user, $override_delivery) {
+            if($override_delivery) {
+                $bonus = optional($order->bonuses->first());
+
+                if($override_delivery->status == DeliveryStatus::DONE) {
+                    return [
+                        sprintf('ВАМ НАЧИСЛЕН: %s ₽ БОНУС ЗА ЗАКАЗ', $bonus->bonus ?? 0),
+                        sprintf('%s, здравствуйте! 
+                        Вам начислен: %s ₽ бонус за заказ %s. Бонусы будут действительны до %s. Потратить их можно на следующую покупку. 
+                        
+                        Нам важно ваше мнение!
+                        Мы будем признательны, если вы поделитесь своим мнением о купленном товаре!
+                        Оставить отзыв можно, пройдя по ссылке: %s',
+                        $user->first_name,
+                        $bonus->bonus ?? 0,
+                        $order->number,
+                        $bonus->getExpirationDate() ?? 'не указано',
+                        config('app.showcase_host'))
+                    ];
+                }
+                
+                if($override_delivery->status == DeliveryStatus::CANCELLATION_EXPECTED) {
+                    return [
+                        sprintf('ЗАКАЗ %s ОТМЕНЕН, ВОЗВРАТ ПРОИЗВЕДЕН', $order->number),
+                        sprintf('Заказ %s на сумму %s р. отменен.
+
+                        Возврат денежных средств на сумму %s р. произведен. Срок зависит от вашего банка.
+                        Если у вас возникли сложности с заказом - сообщите нам. 
+                        Мы сделаем все возможное, чтобы вам помочь!',
+                        $order->number,
+                        $order->orderReturns->first()->price,
+                        $order->orderReturns->first()->price)
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER) {
+                    return [
+                        sprintf('ЗАЯВКА НА ВОЗВРАТ ПО ЗАКАЗУ %s ОФОРМЛЕНА', $order->number),
+                        sprintf('Вы успешно оформили заявку на возврат товара из заказа %s %s.
+                        Вам необходимо передать возвращаемый товар в курьерскую службу согласно условиям возврата товара %s
+                        
+                        Если у вас возникли сложности с заказом - сообщите нам. 
+                        Мы сделаем все возможное, чтобы вам помочь!',
+                        $order->number,
+                        sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
+                        sprintf('%s/purchase-returns', config('app.showcase_host')))
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::RETURNED) {
+                    return [
+                        sprintf('ВОЗВРАТ ПО ЗАКАЗУ %s ПРОИЗВЕДЕН', $order->number),
+                        sprintf('Возврат по заказу %s в размере %s р. произведен. 
+                        Срок возврата денежных средств зависит от вашего банка.
+                        
+                        Если у вас возникли сложности с заказом - сообщите нам. 
+                        Мы сделаем все возможное, чтобы вам помочь!',
+                        $order->number,
+                        (int) $order->price)
+                    ];
+                }
+            }
+
+            if($override == static::OVERRIDE_SUCCESS) {
                 return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
             }
+
+            if($override == static::OVERRIDE_CANCEL) {
+                return [
+                    '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
+                    sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
+                    <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
+                ];
+            }
             
-            if($awaiting_payment) {
+            if($override == static::OVERRIDE_AWAITING_PAYMENT) {
                 return [
                     '%s, ВАШ ЗАКАЗ ОЖИДАЕТ ОПЛАТЫ',
                     sprintf('Ваш заказ %s ожидает оплаты. Чтобы перейти
@@ -501,8 +590,20 @@ class OrderObserver
                 ];
             }
 
+            if($override == static::OVERRIDE_SUCCESSFUL_PAYMENT) {
+                return [
+                    sprintf('ЗАКАЗ %s ОПЛАЧЕН И ПРИНЯТ В ОБРАБОТКУ!', $order->number),
+                    sprintf('%s, заказ %s оплачен и принят в обработку.
+                    Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
+                    $user->first_name,
+                    $order->number,
+                    sprintf('%s/profile', config('app.showcase_host')))
+                ];
+            }
+
             switch ($order->status) {
                 case OrderStatus::CREATED:
+                case OrderStatus::AWAITING_CONFIRMATION:
                     return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
                 case OrderStatus::DELIVERING:
                     return ['%s, ВАШ ЗАКАЗ В ПУТИ', 'Ваш заказ подтвержден и передан в транспортную компанию. <br>Ожидайте звонка курьера.'];
@@ -516,24 +617,24 @@ class OrderObserver
                         <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
                         <br>еще лучше и удобнее'
                     ];
-                case OrderStatus::RETURNED:
-                    return [
-                        '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
-                        sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
-                        <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
-                    ];
+                // case OrderStatus::RETURNED:
+                //     return [
+                //         '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
+                //         sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
+                //         <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
+                //     ];
             }
         })();
 
-        $button = (function () use ($order, $awaiting_payment, $link) {
-            if($awaiting_payment) {
+        $button = (function () use ($link, $override) {
+            if($override == static::OVERRIDE_AWAITING_PAYMENT) {
                 return [
                     'text' => 'ОПЛАТИТЬ ЗАКАЗ',
                     'link' => $link
                 ];
             }
 
-            if($order->status == OrderStatus::RETURNED) {
+            if($override == static::OVERRIDE_CANCEL) {
                 return [
                     'text' => 'НАПИСАТЬ НАМ',
                     'link' => sprintf("%s/feedback", config('app.showcase_host'))
@@ -565,28 +666,45 @@ class OrderObserver
             ];
         });
 
-        $deliveryDate = $order
-            ->deliveries
-            ->map(function (Delivery $delivery) {
-                return $this->formatDeliveryDate($delivery);
-            })
-            ->unique()
-            ->join('<br>');
+        $deliveryDate = null;
+        if($override_delivery) {
+            $deliveryDate = $this->formatDeliveryDate($override_delivery);
+        } else {
+            $deliveryDate = $order
+                ->deliveries
+                ->map(function (Delivery $delivery) {
+                    return $this->formatDeliveryDate($delivery);
+                })
+                ->unique()
+                ->join('<br>');
+        }
 
-        $deliveryMethod = $order
-            ->deliveries
-            ->map(function (Delivery $delivery) {
-                return DeliveryMethod::methodById($delivery->delivery_method)->name;
-            })
-            ->unique()
-            ->join('<br>');
+        $deliveryMethod = null;
+        if($override_delivery) {
+            $deliveryMethod = DeliveryMethod::methodById($override_delivery->delivery_method)->name;
+        } else {
+            $deliveryMethod = $order
+                ->deliveries
+                ->map(function (Delivery $delivery) {
+                    return DeliveryMethod::methodById($delivery->delivery_method)->name;
+                })
+                ->unique()
+                ->join('<br>');
+        }
 
-        $shipments = $order
-            ->deliveries
-            ->map(function (Delivery $delivery) {
-                return $delivery->shipments;
-            })
-            ->flatten()
+        $shipments = null;
+        if($override_delivery) {
+            $shipments = $override_delivery->shipments;
+        } else {
+            $shipments = $order
+                ->deliveries
+                ->map(function (Delivery $delivery) {
+                    return $delivery->shipments;
+                })
+                ->flatten();
+        }
+
+        $shipments = $shipments
             ->map(function (Shipment $shipment) {
                 return [
                     'date' => $this->formatDeliveryDate($shipment->delivery),
@@ -628,11 +746,11 @@ class OrderObserver
             ),
             'ORDER_ID' => $order->number,
             'FULL_NAME' => sprintf('%s %s', $user->first_name, $user->last_name),
-            'LINK_ACCOUNT' => sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
-            'LINK_PAY' => $link,
+            'LINK_ACCOUNT' => (string) $this->shortenLink(sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id)),
+            'LINK_PAY' => (string) $this->shortenLink($link),
             'ORDER_DATE' => $order->created_at->toDateString(),
             'ORDER_TIME' => $order->created_at->toTimeString(),
-            'DELIVERY_TYPE' => DeliveryType::all()[$order->delivery_type]->name,
+            'DELIVERY_TYPE' => DeliveryMethod::methodById($order->deliveries->first()->delivery_method)->name,
             'DELIVERY_ADDRESS' => (function () use ($order) {
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
@@ -651,10 +769,12 @@ class OrderObserver
                 ->toTimeString() ?? '',
             'CUSTOMER_NAME' => $user->first_name,
             'ORDER_CONTACT_NUMBER' => $order->number,
-            'ORDER_TEXT' => optional($order->comment)->text,
+            'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
+            'RETURN_REPRICE' => (int) $order->price,
             'goods' => $goods->all()
         ];
     }
+
     /**
      * Отправить билеты на мастер-классы на почту покупателю заказа и всем участникам.
      * @param  Order  $order
@@ -683,6 +803,18 @@ class OrderObserver
     {
         $number = substr($number, 1);
         return '+'.substr($number, 0, 1).' '.substr($number, 1, 3).' '.substr($number, 4, 3).'-'.substr($number, 7, 2).'-'.substr($number, 9, 2);
+    }
+
+    protected function shortenLink(string $link)
+    {
+        /** @var Client */
+        $client = app(Client::class);
+
+        return $client->request('GET', 'https://clck.ru/--', [
+            'query' => [
+                'url' => $link
+            ]
+        ])->getBody();
     }
 
     public function testSend()
