@@ -142,7 +142,7 @@ class OrderObserver
                     $sent_notification = true;
                 }
 
-                if(!($order->payment_status == PaymentStatus::PAID && $order->getOriginal('payment_status') == PaymentStatus::HOLD)) {
+                if(!(in_array($order->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD]) && $order->getOriginal('payment_status') == PaymentStatus::HOLD)) {
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
@@ -155,6 +155,7 @@ class OrderObserver
                                 case PaymentStatus::NOT_PAID:
                                     return static::OVERRIDE_AWAITING_PAYMENT;
                                 case PaymentStatus::PAID:
+                                case PaymentStatus::HOLD:
                                     return static::OVERRIDE_SUCCESSFUL_PAYMENT;
                             }
 
