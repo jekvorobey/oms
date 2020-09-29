@@ -440,13 +440,13 @@ class OrderObserver
             $orderStatus = OrderStatus::CREATED;
         }
 
-        if($orderStatus == OrderStatus::READY_FOR_RECIPIENT) {
-            $postomat = true;
-        }
+        // if($orderStatus == OrderStatus::READY_FOR_RECIPIENT) {
+        //     $postomat = true;
+        // }
 
-        if($orderStatus == OrderStatus::DONE) {
-            $consolidation = true;
-        }
+        // if($orderStatus == OrderStatus::DONE) {
+        //     $consolidation = true;
+        // }
 
         $slug = $this->intoStringStatus($orderStatus);
 
@@ -745,6 +745,7 @@ class OrderObserver
             ],
             'shipments' => $shipments->toArray(),
             'delivery_price' => (int) $order->delivery_cost,
+            'delivery_method' => $deliveryMethod,
             'total_price' => (int) $order->price,
             'finisher_text' => sprintf(
                 'Узнать статус выполнения заказа можно в <a href="%s">Личном кабинете</a>',
@@ -825,7 +826,16 @@ class OrderObserver
 
     public function testSend()
     {
-        $order = Order::find(770);
+        // $order = Order::find(904);
+        $order = Order::query()
+            ->whereStatus(1)
+            ->whereDeliveryType(DeliveryMethod::METHOD_DELIVERY)
+            ->whereHas('deliveries', function ($q) {
+                $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
+            })
+            ->latest()
+            ->firstOrFail();
+
         $notificationService = app(ServiceNotificationService::class);
         $customerService = app(CustomerService::class);
 
