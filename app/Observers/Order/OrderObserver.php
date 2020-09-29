@@ -197,7 +197,8 @@ class OrderObserver
             $this->createNotificationType(
                 $order->status,
                 $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
-                $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP,
+                $override
             ),
             $this->generateNotificationVariables($order, $override)
         );
@@ -432,8 +433,12 @@ class OrderObserver
         }
     }
 
-    protected function createNotificationType(int $orderStatus, bool $consolidation, bool $postomat)
+    protected function createNotificationType(int $orderStatus, bool $consolidation, bool $postomat, int $override = null)
     {
+        if($override == static::OVERRIDE_SUCCESS) {
+            $orderStatus = OrderStatus::CREATED;
+        }
+
         if($orderStatus == OrderStatus::READY_FOR_RECIPIENT) {
             $postomat = true;
         }
@@ -746,8 +751,8 @@ class OrderObserver
             ),
             'ORDER_ID' => $order->number,
             'FULL_NAME' => sprintf('%s %s', $user->first_name, $user->last_name),
-            'LINK_ACCOUNT' => (string) $this->shortenLink(sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id)),
-            'LINK_PAY' => (string) $this->shortenLink($link),
+            'LINK_ACCOUNT' => (string) static::shortenLink(sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id)),
+            'LINK_PAY' => (string) static::shortenLink($link),
             'ORDER_DATE' => $order->created_at->toDateString(),
             'ORDER_TIME' => $order->created_at->toTimeString(),
             'DELIVERY_TYPE' => DeliveryMethod::methodById($order->deliveries->first()->delivery_method)->name,
@@ -805,7 +810,7 @@ class OrderObserver
         return '+'.substr($number, 0, 1).' '.substr($number, 1, 3).' '.substr($number, 4, 3).'-'.substr($number, 7, 2).'-'.substr($number, 9, 2);
     }
 
-    protected function shortenLink(string $link)
+    public static function shortenLink(string $link)
     {
         /** @var Client */
         $client = app(Client::class);
