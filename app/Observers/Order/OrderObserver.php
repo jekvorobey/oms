@@ -22,6 +22,7 @@ use App\Services\OrderService;
 use App\Services\TicketNotifierService;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
+use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
@@ -142,7 +143,10 @@ class OrderObserver
                     $sent_notification = true;
                 }
 
-                if(!(in_array($order->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD]) && $order->getOriginal('payment_status') == PaymentStatus::HOLD)) {
+                if(
+                    !(in_array($order->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD]) && $order->getOriginal('payment_status') == PaymentStatus::HOLD)
+                    && $order->payment_status != PaymentStatus::NOT_PAID
+                ) {
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
@@ -152,7 +156,7 @@ class OrderObserver
                         ),
                         $this->generateNotificationVariables($order, (function () use ($order) {
                             switch ($order->payment_status) {
-                                case PaymentStatus::NOT_PAID:
+                                case PaymentStatus::WAITING:
                                     return static::OVERRIDE_AWAITING_PAYMENT;
                                 case PaymentStatus::PAID:
                                 case PaymentStatus::HOLD:
@@ -424,6 +428,7 @@ class OrderObserver
     {
         switch ($payment_status) {
             case PaymentStatus::NOT_PAID:
+            case PaymentStatus::WAITING:
                 return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
             case PaymentStatus::PAID:
                 return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
@@ -732,11 +737,11 @@ class OrderObserver
             });
 
         return [
-            'title' => sprintf($title, mb_strtoupper($user->first_name)),
+            'title' => sprintf($title, $this->parseName($user, $order)),
             'text' => $text,
             'button' => $button,
             'params' => [
-                'Получатель' => $user->first_name,
+                'Получатель' => $this->parseName($user, $order),
                 'Телефон' => static::formatNumber($order->customerPhone()),
                 'Сумма заказа' => sprintf('%s ₽', (int) $order->cost),
                 'Получение' => $deliveryMethod,
@@ -774,7 +779,7 @@ class OrderObserver
                 ->first())
                 ->delivery_at)
                 ->toTimeString() ?? '',
-            'CUSTOMER_NAME' => $user->first_name,
+            'CUSTOMER_NAME' => $this->parseName($user, $order),
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'RETURN_REPRICE' => (int) $order->price,
@@ -806,14 +811,33 @@ class OrderObserver
         return $date;
     }
 
+    protected function parseName(UserDto $user, Order $order)
+    {
+        if(isset($user->first_name)) {
+            return mb_strtoupper($user->first_name);
+        }
+
+        $words = explode($order->receiver_name, ' ');
+
+        if(isset($words[1])) {
+            return mb_strtoupper($words[1]);
+        }
+
+        return mb_strtoupper($words[0]);
+    }
+
     public static function formatNumber(string $number)
     {
         $number = substr($number, 1);
         return '+'.substr($number, 0, 1).' '.substr($number, 1, 3).' '.substr($number, 4, 3).'-'.substr($number, 7, 2).'-'.substr($number, 9, 2);
     }
 
-    public static function shortenLink(string $link)
+    public static function shortenLink(?string $link)
     {
+        if($link === null) {
+            return '';
+        }
+
         /** @var Client */
         $client = app(Client::class);
 
@@ -829,7 +853,8 @@ class OrderObserver
         // $order = Order::find(904);
         $order = Order::query()
             ->whereStatus(1)
-            ->whereDeliveryType(DeliveryMethod::METHOD_DELIVERY)
+            ->where('payment_status', '!=', 6)
+            ->whereDeliveryType(DeliveryType::TYPE_SPLIT)
             ->whereHas('deliveries', function ($q) {
                 $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
             })
@@ -848,6 +873,10 @@ class OrderObserver
             ->first()
             ->user_id;
 
-        $this->sendStatusNotification($notificationService, $order, $user_id);
+        $order->status = 1;
+        $order->payment_status = PaymentStatus::WAITING;
+
+        // $this->sendStatusNotification($notificationService, $order, $user_id);
+        $this->sendNotification($order);
     }
 }
