@@ -115,6 +115,8 @@ class DeliveryObserver
                         switch ($delivery->status) {
                             case DeliveryStatus::DONE:
                             case DeliveryStatus::RETURNED:
+                            case DeliveryStatus::ON_POINT_IN:
+                            case DeliveryStatus::READY_FOR_RECIPIENT:
                                 return app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery);
                         }
 

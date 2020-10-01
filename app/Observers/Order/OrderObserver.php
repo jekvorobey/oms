@@ -575,6 +575,28 @@ class OrderObserver
                         (int) $order->price)
                     ];
                 }
+
+                if($override_delivery->status == DeliveryStatus::ON_POINT_IN) {
+                    return [
+                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
+                        sprintf('Заказ №%s на сумму %s р. передано в службу доставки. 
+                        Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
+                        $order->number,
+                        (int) $order->price,
+                        sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id))
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::READY_FOR_RECIPIENT) {
+                    return [
+                        sprintf('ЗАКАЗ %s ОЖИДАЕТ В ПУНКТЕ ВЫДАЧИ!', $order->number),
+                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s. 
+                        ВНИМАНИЕ! Получить заказ может только контактное лицо, указанное в заказе, с паспортом.',
+                        $order->number,
+                        (int) $order->price,
+                        $override_delivery->getDeliveryAddressString())
+                    ];
+                }
             }
 
             if($override == static::OVERRIDE_SUCCESS) {
