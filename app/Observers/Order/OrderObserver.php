@@ -26,6 +26,7 @@ use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use GuzzleHttp\Client;
 
@@ -649,10 +650,20 @@ class OrderObserver
             return [];
         })();
 
+        /** @var ListsService */
+        $points = app(ListsService::class);
+
         $deliveryAddress = $order
             ->deliveries
             ->unique('delivery_address')
-            ->map(function (Delivery $delivery) {
+            ->map(function (Delivery $delivery) use ($points) {
+                if($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
+                    return $delivery->formDeliveryAddressString($points->points(
+                        $points->newQuery()
+                            ->setFilter('id', $delivery->point_id)
+                    )->first()->address);
+                }
+
                 return $delivery->formDeliveryAddressString($delivery->delivery_address ?? []);
             })
             ->join('<br>');
