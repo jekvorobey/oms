@@ -774,6 +774,12 @@ class OrderObserver
                 return optional($delivery)
                     ->formDeliveryAddressString($delivery->delivery_address ?? []) ?? '';
             })(),
+            'DELIVIRY_ADDRESS' => (function () use ($order) {
+                /** @var Delivery */
+                $delivery = $order->deliveries->first();
+                return optional($delivery)
+                    ->formDeliveryAddressString($delivery->delivery_address ?? []) ?? '';
+            })(),
             'DELIVERY_DATE' => optional(optional($order
                 ->deliveries
                 ->first())
@@ -784,10 +790,23 @@ class OrderObserver
                 ->first())
                 ->delivery_at)
                 ->toTimeString() ?? '',
+            'OPER_MODE' => (function () use ($order, $points) {
+                $point_id = optional($order->deliveries->first())->point_id;
+
+                if($point_id == null) {
+                    return '';
+                }
+
+                return $points->points(
+                    $points->newQuery()
+                        ->setFilter('id', $point_id)
+                )->first()->timetable;
+            })(),
             'CUSTOMER_NAME' => $this->parseName($user, $order),
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'RETURN_REPRICE' => (int) $order->price,
+            'CALL_TK' => app(OptionService::class)->get(OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE),
             'goods' => $goods->all()
         ];
     }
@@ -877,7 +896,7 @@ class OrderObserver
             ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
             ->whereDeliveryType(DeliveryType::TYPE_SPLIT)
             ->whereHas('deliveries', function ($q) {
-                $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
+                $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
             })
             // ->whereDoesntHave('deliveries', function ($q) {
             //     $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
