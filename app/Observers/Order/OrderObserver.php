@@ -14,6 +14,7 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\Order;
+use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -818,6 +819,23 @@ class OrderObserver
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'RETURN_REPRICE' => (int) $order->price,
+            'NUMBER_BAL' => (function () use ($order) {
+                return $order
+                    ->bonuses
+                    ->filter(function (OrderBonus $bonus) {
+                        $bonus->status == OrderBonus::STATUS_ACTIVE;
+                    })
+                    ->sum(function (OrderBonus $bonus) {
+                        return $bonus->bonus;
+                    });
+            })(),
+            'DEADLINE_BAL' => (function () use ($order) {
+                return optional($order
+                    ->bonuses()
+                    ->orderBy('valid_period')
+                    ->first())
+                    ->getExpirationDate() ?? 'неопределенного срока';
+            })(),
             'goods' => $goods->all()
         ];
     }
