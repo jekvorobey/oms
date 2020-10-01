@@ -119,7 +119,15 @@ class DeliveryObserver
 
                         return [
                             'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->toDateString(),
-                            'DELIVERY_TIME' => Carbon::parse($delivery->pdd)->toTimeString(),
+                            'DELIVERY_TIME' => (function () use ($delivery) {
+                                $time = Carbon::parse($delivery->pdd);
+
+                                if($time->isMidnight()) {
+                                    return '';
+                                }
+
+                                return $time->toTimeString();
+                            })(),
                             'PART_PRICE' => $delivery->cost,
                         ];
                     })()
