@@ -131,10 +131,7 @@ class OrderObserver
             $sent_notification = false;
 
             if ($order->payment_status != $order->getOriginal('payment_status')) {
-                if(
-                    in_array($order->payment_status, [PaymentStatus::HOLD, PaymentStatus::PAID]) &&
-                    $order->getOriginal('payment_status') != PaymentStatus::HOLD
-                ) {
+                if($this->shouldSendPaidNotification($order)) {
                     if($order->type == Basket::TYPE_MASTER) {
                         app(TicketNotifierService::class)->notify($order);
                     }
@@ -143,10 +140,7 @@ class OrderObserver
                     $sent_notification = true;
                 }
 
-                if(
-                    !(in_array($order->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD]) && $order->getOriginal('payment_status') == PaymentStatus::HOLD)
-                    && $order->payment_status != PaymentStatus::NOT_PAID
-                ) {
+                if($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::WAITING) {
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
@@ -848,18 +842,34 @@ class OrderObserver
         ])->getBody();
     }
 
+    protected function shouldSendPaidNotification(Order $order)
+    {
+        $paid = ($order->payment_status == PaymentStatus::HOLD) || (
+            $order->payment_status == PaymentStatus::PAID && $order->getOriginal('payment_status') != PaymentStatus::HOLD
+        );
+
+        $created = ($order->status == OrderStatus::CREATED) || (
+            $order->status == OrderStatus::AWAITING_CONFIRMATION && $order->getOriginal('status') != OrderStatus::CREATED
+        );
+
+        return $paid && $created;
+    }
+
     public function testSend()
     {
         // $order = Order::find(904);
         $order = Order::query()
-            ->whereStatus(1)
-            ->where('payment_status', '!=', 6)
+            ->where('status', '!=', OrderStatus::CREATED)
+            ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
             ->whereDeliveryType(DeliveryType::TYPE_SPLIT)
             ->whereHas('deliveries', function ($q) {
                 $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
             })
             ->latest()
             ->firstOrFail();
+
+        $st = $order->status;
+        $ps = $order->payment_status;
 
         $notificationService = app(ServiceNotificationService::class);
         $customerService = app(CustomerService::class);
@@ -873,10 +883,23 @@ class OrderObserver
             ->first()
             ->user_id;
 
-        $order->status = 1;
-        $order->payment_status = PaymentStatus::WAITING;
+        $order->status = OrderStatus::CREATED;
+        $order->payment_status = PaymentStatus::HOLD;
+
+        $order->save();
 
         // $this->sendStatusNotification($notificationService, $order, $user_id);
-        $this->sendNotification($order);
+
+        $order->status = OrderStatus::TRANSFERRED_TO_DELIVERY;
+        $order->payment_status = PaymentStatus::PAID;
+
+        $order->save();
+
+        dump("IGNORE FROM HERE");
+
+        $order->status = $st;
+        $order->payment_status = $ps;
+        
+        $order->save();
     }
 }
