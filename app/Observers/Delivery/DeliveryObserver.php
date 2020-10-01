@@ -12,6 +12,7 @@ use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
+use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderStatus;
 use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
@@ -451,6 +452,25 @@ class DeliveryObserver
             });
 
         return [
+            'NUMBER_BAL' => (function () use ($delivery) {
+                return $delivery
+                    ->order
+                    ->bonuses
+                    ->filter(function (OrderBonus $bonus) {
+                        $bonus->status == OrderBonus::STATUS_ACTIVE;
+                    })
+                    ->sum(function (OrderBonus $bonus) {
+                        return $bonus->bonus;
+                    });
+            })(),
+            'DEADLINE_BAL' => (function () use ($delivery) {
+                return optional($delivery
+                    ->order
+                    ->bonuses()
+                    ->orderBy('valid_period')
+                    ->first())
+                    ->getExpirationDate() ?? 'неопределенного срока';
+            })(),
             'ORDER_ID' => $delivery->order->number,
             'LINK_ORDER' => $link_order,
             'CUSTOMER_NAME' => $user->first_name,
