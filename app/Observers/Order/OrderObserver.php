@@ -115,7 +115,7 @@ class OrderObserver
 
     protected function sendNotification(Order $order)
     {
-        try {
+        // try {
             $notificationService = app(ServiceNotificationService::class);
             $customerService = app(CustomerService::class);
 
@@ -184,9 +184,9 @@ class OrderObserver
             } else {
                 $notificationService->sendToAdmin('aozzakazzakaz_izmenen');
             }
-        } catch (\Exception $e) {
-            logger($e->getMessage(), $e->getTrace());
-        }
+        // } catch (\Exception $e) {
+        //     logger($e->getMessage(), $e->getTrace());
+        // }
     }
 
     protected function sendStatusNotification(ServiceNotificationService $notificationService, Order $order, int $user_id, int $override = null)
@@ -653,7 +653,7 @@ class OrderObserver
             ->deliveries
             ->unique('delivery_address')
             ->map(function (Delivery $delivery) {
-                return $delivery->formDeliveryAddressString($delivery->delivery_address);
+                return $delivery->formDeliveryAddressString($delivery->delivery_address ?? []);
             })
             ->join('<br>');
 
@@ -761,7 +761,7 @@ class OrderObserver
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
                 return optional($delivery)
-                    ->formDeliveryAddressString($delivery->delivery_address) ?? '';
+                    ->formDeliveryAddressString($delivery->delivery_address ?? []) ?? '';
             })(),
             'DELIVERY_DATE' => optional(optional($order
                 ->deliveries
@@ -809,6 +809,10 @@ class OrderObserver
     {
         if(isset($user->first_name)) {
             return mb_strtoupper($user->first_name);
+        }
+
+        if(!$order->receiver_name) {
+            return '';
         }
 
         $words = explode($order->receiver_name, ' ');
@@ -859,13 +863,18 @@ class OrderObserver
     {
         // $order = Order::find(904);
         $order = Order::query()
+            ->whereNotNull('customer_id')
             ->where('status', '!=', OrderStatus::CREATED)
             ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
-            ->whereDeliveryType(DeliveryType::TYPE_SPLIT)
+            // ->whereDeliveryType(DeliveryType::TYPE_SPLIT)
             ->whereHas('deliveries', function ($q) {
+                $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
+            })
+            ->whereDoesntHave('deliveries', function ($q) {
                 $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
             })
             ->latest()
+            ->offset(1)
             ->firstOrFail();
 
         $st = $order->status;
@@ -874,14 +883,14 @@ class OrderObserver
         $notificationService = app(ServiceNotificationService::class);
         $customerService = app(CustomerService::class);
 
-        $user_id = $customerService
-            ->customers(
-                $customerService
-                    ->newQuery()
-                    ->setFilter('id', '=', $order->customer_id)
-            )
-            ->first()
-            ->user_id;
+        // $user_id = $customerService
+        //     ->customers(
+        //         $customerService
+        //             ->newQuery()
+        //             ->setFilter('id', '=', $order->customer_id)
+        //     )
+        //     ->first()
+        //     ->user_id;
 
         $order->status = OrderStatus::CREATED;
         $order->payment_status = PaymentStatus::HOLD;
@@ -890,10 +899,10 @@ class OrderObserver
 
         // $this->sendStatusNotification($notificationService, $order, $user_id);
 
-        $order->status = OrderStatus::TRANSFERRED_TO_DELIVERY;
-        $order->payment_status = PaymentStatus::PAID;
+        // $order->status = OrderStatus::TRANSFERRED_TO_DELIVERY;
+        // $order->payment_status = PaymentStatus::PAID;
 
-        $order->save();
+        // $order->save();
 
         dump("IGNORE FROM HERE");
 
