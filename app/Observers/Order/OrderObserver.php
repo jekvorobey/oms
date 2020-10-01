@@ -802,11 +802,22 @@ class OrderObserver
                         ->setFilter('id', $point_id)
                 )->first()->timetable;
             })(),
+            'CALL_TK' => (function () use ($order, $points) {
+                $point_id = optional($order->deliveries->first())->point_id;
+
+                if($point_id == null) {
+                    return app(OptionService::class)->get(OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE);
+                }
+
+                return $points->points(
+                    $points->newQuery()
+                        ->setFilter('id', $point_id)
+                )->first()->phone;
+            })(),
             'CUSTOMER_NAME' => $this->parseName($user, $order),
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'RETURN_REPRICE' => (int) $order->price,
-            'CALL_TK' => app(OptionService::class)->get(OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE),
             'goods' => $goods->all()
         ];
     }
