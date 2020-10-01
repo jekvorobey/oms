@@ -837,7 +837,7 @@ class OrderObserver
         }
     }
 
-    protected function formatDeliveryDate(Delivery $delivery)
+    public function formatDeliveryDate(Delivery $delivery)
     {
         $date = $delivery->delivery_at->locale('ru')->isoFormat('D MMMM, dddd');
         if($delivery->delivery_time_start) {
@@ -846,7 +846,7 @@ class OrderObserver
         return $date;
     }
 
-    protected function parseName(UserDto $user, Order $order)
+    public function parseName(UserDto $user, Order $order)
     {
         if(isset($user->first_name)) {
             return mb_strtoupper($user->first_name);
