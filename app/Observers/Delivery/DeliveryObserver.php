@@ -93,6 +93,10 @@ class DeliveryObserver
 
     protected function sendNotification(Delivery $delivery)
     {
+        if($delivery->order->deliveries()->count() == 1) {
+            return;
+        }
+
         try {
             $notificationService = app(ServiceNotificationService::class);
             $customerService = app(CustomerService::class);
