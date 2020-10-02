@@ -14,6 +14,7 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\Order;
+use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -22,9 +23,11 @@ use App\Services\OrderService;
 use App\Services\TicketNotifierService;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
+use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use GuzzleHttp\Client;
 
@@ -130,10 +133,7 @@ class OrderObserver
             $sent_notification = false;
 
             if ($order->payment_status != $order->getOriginal('payment_status')) {
-                if(
-                    in_array($order->payment_status, [PaymentStatus::HOLD, PaymentStatus::PAID]) &&
-                    $order->getOriginal('payment_status') != PaymentStatus::HOLD
-                ) {
+                if($this->shouldSendPaidNotification($order)) {
                     if($order->type == Basket::TYPE_MASTER) {
                         app(TicketNotifierService::class)->notify($order);
                     }
@@ -142,7 +142,7 @@ class OrderObserver
                     $sent_notification = true;
                 }
 
-                if(!($order->payment_status == PaymentStatus::PAID && $order->getOriginal('payment_status') == PaymentStatus::HOLD)) {
+                if($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::WAITING) {
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
@@ -152,9 +152,10 @@ class OrderObserver
                         ),
                         $this->generateNotificationVariables($order, (function () use ($order) {
                             switch ($order->payment_status) {
-                                case PaymentStatus::NOT_PAID:
+                                case PaymentStatus::WAITING:
                                     return static::OVERRIDE_AWAITING_PAYMENT;
                                 case PaymentStatus::PAID:
+                                case PaymentStatus::HOLD:
                                     return static::OVERRIDE_SUCCESSFUL_PAYMENT;
                             }
 
@@ -197,7 +198,8 @@ class OrderObserver
             $this->createNotificationType(
                 $order->status,
                 $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
-                $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP,
+                $override
             ),
             $this->generateNotificationVariables($order, $override)
         );
@@ -422,6 +424,7 @@ class OrderObserver
     {
         switch ($payment_status) {
             case PaymentStatus::NOT_PAID:
+            case PaymentStatus::WAITING:
                 return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
             case PaymentStatus::PAID:
                 return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
@@ -432,15 +435,19 @@ class OrderObserver
         }
     }
 
-    protected function createNotificationType(int $orderStatus, bool $consolidation, bool $postomat)
+    protected function createNotificationType(int $orderStatus, bool $consolidation, bool $postomat, int $override = null)
     {
-        if($orderStatus == OrderStatus::READY_FOR_RECIPIENT) {
-            $postomat = true;
+        if($override == static::OVERRIDE_SUCCESS) {
+            $orderStatus = OrderStatus::CREATED;
         }
 
-        if($orderStatus == OrderStatus::DONE) {
-            $consolidation = true;
-        }
+        // if($orderStatus == OrderStatus::READY_FOR_RECIPIENT) {
+        //     $postomat = true;
+        // }
+
+        // if($orderStatus == OrderStatus::DONE) {
+        //     $consolidation = true;
+        // }
 
         $slug = $this->intoStringStatus($orderStatus);
 
@@ -568,6 +575,28 @@ class OrderObserver
                         (int) $order->price)
                     ];
                 }
+
+                if($override_delivery->status == DeliveryStatus::ON_POINT_IN) {
+                    return [
+                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
+                        sprintf('Заказ №%s на сумму %s р. передано в службу доставки. 
+                        Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
+                        $order->number,
+                        (int) $order->price,
+                        sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id))
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::READY_FOR_RECIPIENT) {
+                    return [
+                        sprintf('ЗАКАЗ %s ОЖИДАЕТ В ПУНКТЕ ВЫДАЧИ!', $order->number),
+                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s. 
+                        ВНИМАНИЕ! Получить заказ может только контактное лицо, указанное в заказе, с паспортом.',
+                        $order->number,
+                        (int) $order->price,
+                        $override_delivery->getDeliveryAddressString())
+                    ];
+                }
             }
 
             if($override == static::OVERRIDE_SUCCESS) {
@@ -644,11 +673,21 @@ class OrderObserver
             return [];
         })();
 
+        /** @var ListsService */
+        $points = app(ListsService::class);
+
         $deliveryAddress = $order
             ->deliveries
             ->unique('delivery_address')
-            ->map(function (Delivery $delivery) {
-                return $delivery->formDeliveryAddressString($delivery->delivery_address);
+            ->map(function (Delivery $delivery) use ($points) {
+                if($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
+                    return $delivery->formDeliveryAddressString($points->points(
+                        $points->newQuery()
+                            ->setFilter('id', $delivery->point_id)
+                    )->first()->address);
+                }
+
+                return $delivery->formDeliveryAddressString($delivery->delivery_address ?? []);
             })
             ->join('<br>');
 
@@ -726,11 +765,11 @@ class OrderObserver
             });
 
         return [
-            'title' => sprintf($title, mb_strtoupper($user->first_name)),
+            'title' => sprintf($title, $this->parseName($user, $order)),
             'text' => $text,
             'button' => $button,
             'params' => [
-                'Получатель' => $user->first_name,
+                'Получатель' => $this->parseName($user, $order),
                 'Телефон' => static::formatNumber($order->customerPhone()),
                 'Сумма заказа' => sprintf('%s ₽', (int) $order->cost),
                 'Получение' => $deliveryMethod,
@@ -739,6 +778,7 @@ class OrderObserver
             ],
             'shipments' => $shipments->toArray(),
             'delivery_price' => (int) $order->delivery_cost,
+            'delivery_method' => $deliveryMethod,
             'total_price' => (int) $order->price,
             'finisher_text' => sprintf(
                 'Узнать статус выполнения заказа можно в <a href="%s">Личном кабинете</a>',
@@ -746,8 +786,8 @@ class OrderObserver
             ),
             'ORDER_ID' => $order->number,
             'FULL_NAME' => sprintf('%s %s', $user->first_name, $user->last_name),
-            'LINK_ACCOUNT' => (string) $this->shortenLink(sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id)),
-            'LINK_PAY' => (string) $this->shortenLink($link),
+            'LINK_ACCOUNT' => (string) static::shortenLink(sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id)),
+            'LINK_PAY' => (string) static::shortenLink($link),
             'ORDER_DATE' => $order->created_at->toDateString(),
             'ORDER_TIME' => $order->created_at->toTimeString(),
             'DELIVERY_TYPE' => DeliveryMethod::methodById($order->deliveries->first()->delivery_method)->name,
@@ -755,7 +795,13 @@ class OrderObserver
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
                 return optional($delivery)
-                    ->formDeliveryAddressString($delivery->delivery_address) ?? '';
+                    ->formDeliveryAddressString($delivery->delivery_address ?? []) ?? '';
+            })(),
+            'DELIVIRY_ADDRESS' => (function () use ($order) {
+                /** @var Delivery */
+                $delivery = $order->deliveries->first();
+                return optional($delivery)
+                    ->formDeliveryAddressString($delivery->delivery_address ?? []) ?? '';
             })(),
             'DELIVERY_DATE' => optional(optional($order
                 ->deliveries
@@ -767,10 +813,51 @@ class OrderObserver
                 ->first())
                 ->delivery_at)
                 ->toTimeString() ?? '',
-            'CUSTOMER_NAME' => $user->first_name,
+            'OPER_MODE' => (function () use ($order, $points) {
+                $point_id = optional($order->deliveries->first())->point_id;
+
+                if($point_id == null) {
+                    return '';
+                }
+
+                return $points->points(
+                    $points->newQuery()
+                        ->setFilter('id', $point_id)
+                )->first()->timetable;
+            })(),
+            'CALL_TK' => (function () use ($order, $points) {
+                $point_id = optional($order->deliveries->first())->point_id;
+
+                if($point_id == null) {
+                    return app(OptionService::class)->get(OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE);
+                }
+
+                return $points->points(
+                    $points->newQuery()
+                        ->setFilter('id', $point_id)
+                )->first()->phone;
+            })(),
+            'CUSTOMER_NAME' => $this->parseName($user, $order),
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'RETURN_REPRICE' => (int) $order->price,
+            'NUMBER_BAL' => (function () use ($order) {
+                return $order
+                    ->bonuses
+                    ->filter(function (OrderBonus $bonus) {
+                        $bonus->status == OrderBonus::STATUS_ACTIVE;
+                    })
+                    ->sum(function (OrderBonus $bonus) {
+                        return $bonus->bonus;
+                    });
+            })(),
+            'DEADLINE_BAL' => (function () use ($order) {
+                return optional($order
+                    ->bonuses()
+                    ->orderBy('valid_period')
+                    ->first())
+                    ->getExpirationDate() ?? 'неопределенного срока';
+            })(),
             'goods' => $goods->all()
         ];
     }
@@ -790,7 +877,7 @@ class OrderObserver
         }
     }
 
-    protected function formatDeliveryDate(Delivery $delivery)
+    public function formatDeliveryDate(Delivery $delivery)
     {
         $date = $delivery->delivery_at->locale('ru')->isoFormat('D MMMM, dddd');
         if($delivery->delivery_time_start) {
@@ -799,14 +886,37 @@ class OrderObserver
         return $date;
     }
 
+    public function parseName(UserDto $user, Order $order)
+    {
+        if(isset($user->first_name)) {
+            return mb_strtoupper($user->first_name);
+        }
+
+        if(!$order->receiver_name) {
+            return '';
+        }
+
+        $words = explode($order->receiver_name, ' ');
+
+        if(isset($words[1])) {
+            return mb_strtoupper($words[1]);
+        }
+
+        return mb_strtoupper($words[0]);
+    }
+
     public static function formatNumber(string $number)
     {
         $number = substr($number, 1);
         return '+'.substr($number, 0, 1).' '.substr($number, 1, 3).' '.substr($number, 4, 3).'-'.substr($number, 7, 2).'-'.substr($number, 9, 2);
     }
 
-    protected function shortenLink(string $link)
+    public static function shortenLink(?string $link)
     {
+        if($link === null) {
+            return '';
+        }
+
         /** @var Client */
         $client = app(Client::class);
 
@@ -817,21 +927,54 @@ class OrderObserver
         ])->getBody();
     }
 
+    protected function shouldSendPaidNotification(Order $order)
+    {
+        $paid = ($order->payment_status == PaymentStatus::HOLD) || (
+            $order->payment_status == PaymentStatus::PAID && $order->getOriginal('payment_status') != PaymentStatus::HOLD
+        );
+
+        $created = ($order->status == OrderStatus::CREATED) || ($order->status == OrderStatus::AWAITING_CONFIRMATION);
+
+        return $paid && $created;
+    }
+
     public function testSend()
     {
-        $order = Order::find(770);
-        $notificationService = app(ServiceNotificationService::class);
-        $customerService = app(CustomerService::class);
+        // $order = Order::find(904);
+        $order = Order::query()
+            ->whereNotNull('customer_id')
+            ->where('status', '=', OrderStatus::CREATED)
+            ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
+            ->whereDeliveryType(DeliveryType::TYPE_SPLIT)
+            ->whereHas('deliveries', function ($q) {
+                $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
+            })
+            // ->whereDoesntHave('deliveries', function ($q) {
+            //     $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
+            // })
+            ->latest()
+            ->firstOrFail();
 
-        $user_id = $customerService
-            ->customers(
-                $customerService
-                    ->newQuery()
-                    ->setFilter('id', '=', $order->customer_id)
-            )
-            ->first()
-            ->user_id;
+        $st = $order->status;
+        $ps = $order->payment_status;
 
-        $this->sendStatusNotification($notificationService, $order, $user_id);
+        $order->status = OrderStatus::CREATED;
+        $order->payment_status = PaymentStatus::HOLD;
+
+        $order->save();
+
+        // $this->sendStatusNotification($notificationService, $order, $user_id);
+
+        // $order->status = OrderStatus::TRANSFERRED_TO_DELIVERY;
+        // $order->payment_status = PaymentStatus::PAID;
+
+        // $order->save();
+
+        dump("IGNORE FROM HERE");
+
+        $order->status = $st;
+        $order->payment_status = $ps;
+        
+        $order->save();
     }
 }

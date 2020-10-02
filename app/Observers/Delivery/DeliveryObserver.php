@@ -3,12 +3,16 @@
 namespace App\Observers\Delivery;
 
 use App\Core\OrderSmsNotify;
+use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\DeliveryType;
+use App\Models\Delivery\Shipment;
+use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
+use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderStatus;
 use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
@@ -16,6 +20,7 @@ use App\Services\OrderService;
 use Carbon\Carbon;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 
 /**
@@ -110,12 +115,22 @@ class DeliveryObserver
                         switch ($delivery->status) {
                             case DeliveryStatus::DONE:
                             case DeliveryStatus::RETURNED:
+                            case DeliveryStatus::ON_POINT_IN:
+                            case DeliveryStatus::READY_FOR_RECIPIENT:
                                 return app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery);
                         }
 
                         return [
                             'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->toDateString(),
-                            'DELIVERY_TIME' => Carbon::parse($delivery->pdd)->toTimeString(),
+                            'DELIVERY_TIME' => (function () use ($delivery) {
+                                $time = Carbon::parse($delivery->pdd);
+
+                                if($time->isMidnight()) {
+                                    return '';
+                                }
+
+                                return $time->toTimeString();
+                            })(),
                             'PART_PRICE' => $delivery->cost,
                         ];
                     })()
@@ -133,18 +148,15 @@ class DeliveryObserver
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_adres_dostavki',
-                    [
-                        'ORDER_ID' => $order_id,
-                        'LINK_ORDER' => $link_order,
-                        'CUSTOMER_NAME' => $user->first_name,
-                        'DELIVERY_ADDRESS' => $delivery->formDeliveryAddressString($delivery->delivery_address),
-                        'DELIVERY_TYPE' => DeliveryType::all()[$delivery->order->delivery_type]->name,
-                        'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
-                        'DELIVERY_TIME' => sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end),
-                        'FULL_NAME' => $delivery->receiver_name,
-                        'ORDER_CONTACT_NUMBER' => $delivery->receiver_phone,
-                        'ORDER_TEXT' => optional(optional($delivery->order)->comment)->text ?? ''
-                    ]
+                    $this->makeArray($delivery, sprintf('
+                    %s, здравствуйте.
+                    Ваш заказ №%s изменен.
+
+                    Адрес доставки изменен на %s
+                    ',
+                    app(OrderObserver::class)->parseName($user, $delivery->order),
+                    $delivery->order->number,
+                    $delivery->formDeliveryAddressString($delivery->delivery_address)))
                 );
             }
 
@@ -152,17 +164,15 @@ class DeliveryObserver
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_poluchatel_dostavki',
-                    [
-                        'ORDER_ID' => $order_id,
-                        'LINK_ORDER' => $link_order,
-                        'CUSTOMER_NAME' => $user->first_name,
-                        'DELIVERY_TYPE' => DeliveryType::all()[$delivery->order->delivery_type]->name,
-                        'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
-                        'DELIVERY_TIME' => sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end),
-                        'FULL_NAME' => $delivery->receiver_name,
-                        'ORDER_CONTACT_NUMBER' => $delivery->receiver_phone,
-                        'ORDER_TEXT' => optional(optional($delivery->order)->comment)->text ?? ''
-                    ]
+                    $this->makeArray($delivery, sprintf('
+                    %s, здравствуйте.
+                    Ваш заказ №%s изменен.
+
+                    Получатель изменен: %s
+                    ',
+                    app(OrderObserver::class)->parseName($user, $delivery->order),
+                    $delivery->order->number,
+                    $delivery->receiver_name))
                 );
             }
 
@@ -170,17 +180,15 @@ class DeliveryObserver
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_data_dostavki',
-                    [
-                        'ORDER_ID' => $order_id,
-                        'LINK_ORDER' => $link_order,
-                        'CUSTOMER_NAME' => $user->first_name,
-                        'DELIVERY_TYPE' => DeliveryType::all()[$delivery->order->delivery_type]->name,
-                        'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
-                        'DELIVERY_TIME' => sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end),
-                        'FULL_NAME' => $delivery->receiver_name,
-                        'ORDER_CONTACT_NUMBER' => $delivery->receiver_phone,
-                        'ORDER_TEXT' => optional(optional($delivery->order)->comment)->text ?? ''
-                    ]
+                    $this->makeArray($delivery, sprintf('
+                    %s, здравствуйте.
+                    Ваш заказ №%s изменен.
+
+                    Дата доставки изменена на: %s
+                    ',
+                    app(OrderObserver::class)->parseName($user, $delivery->order),
+                    $delivery->order->number,
+                    $this->getDeliveryDate($delivery)))
                 );
             }
         } catch (\Exception $e) {
@@ -416,5 +424,103 @@ class DeliveryObserver
             case DeliveryStatus::PRE_ORDER:
                 return 'status_dostavkipredzakaz_ozhidaem_postupleniya_tovara';
         }
+    }
+
+    protected function makeArray(Delivery $delivery, string $text)
+    {
+        $link_order = sprintf("%s/profile/orders/%d", config('app.showcase_host'), $delivery->order->id);
+        $user = $delivery->order->getUser();
+
+        $shipments = $delivery
+            ->shipments
+            ->map(function (Shipment $shipment) {
+                return [
+                    'date' => app(OrderObserver::class)->formatDeliveryDate($shipment->delivery),
+                    'products' => $shipment
+                        ->items
+                        ->map(function (ShipmentItem $item) {
+                            return $item->basketItem;
+                        })
+                        ->map(function (BasketItem $item) {
+                            return [
+                                'name' => $item->name,
+                                'count' => (int) $item->qty,
+                                'price' => (int) $item->price,
+                                'image' => $item->getItemMedia()[0] ?? ''
+                            ];
+                        })
+                        ->toArray()
+                ];
+            });
+
+        return [
+            'NUMBER_BAL' => (function () use ($delivery) {
+                return $delivery
+                    ->order
+                    ->bonuses
+                    ->filter(function (OrderBonus $bonus) {
+                        $bonus->status == OrderBonus::STATUS_ACTIVE;
+                    })
+                    ->sum(function (OrderBonus $bonus) {
+                        return $bonus->bonus;
+                    });
+            })(),
+            'DEADLINE_BAL' => (function () use ($delivery) {
+                return optional($delivery
+                    ->order
+                    ->bonuses()
+                    ->orderBy('valid_period')
+                    ->first())
+                    ->getExpirationDate() ?? 'неопределенного срока';
+            })(),
+            'ORDER_ID' => $delivery->order->number,
+            'LINK_ORDER' => $link_order,
+            'CUSTOMER_NAME' => $user->first_name,
+            'DELIVERY_ADDRESS' => $delivery->formDeliveryAddressString($delivery->delivery_address),
+            'DELIVERY_TYPE' => DeliveryType::all()[$delivery->order->delivery_type]->name,
+            'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
+            'DELIVERY_TIME' => sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end),
+            'FULL_NAME' => $delivery->receiver_name,
+            'ORDER_CONTACT_NUMBER' => $delivery->receiver_phone,
+            'ORDER_TEXT' => optional(optional($delivery->order)->comment)->text ?? '',
+            'title' => sprintf('ЗАКАЗ %s ИЗМЕНЕН', $delivery->order->number),
+            'text' => $text,
+            'button' => [],
+            'params' => [
+                'Получатель' => app(OrderObserver::class)->parseName($user, $delivery->order),
+                'Телефон' => OrderObserver::formatNumber($delivery->order->customerPhone()),
+                'Сумма заказа' => sprintf('%s ₽', (int) $delivery->order->cost),
+                'Получение' => DeliveryMethod::methodById($delivery->delivery_method)->name,
+                'Дата доставки' => app(OrderObserver::class)->formatDeliveryDate($delivery),
+                'Адрес доставки' => (function () use ($delivery) {
+                    $points = app(ListsService::class);
+                    if($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
+                        return $delivery->formDeliveryAddressString($points->points(
+                            $points->newQuery()
+                                ->setFilter('id', $delivery->point_id)
+                        )->first()->address);
+                    }
+
+                    return $delivery->formDeliveryAddressString($delivery->delivery_address ?? []);
+                })()
+            ],
+            'shipments' => $shipments->toArray(),
+            'delivery_price' => (int) $delivery->order->delivery_cost,
+            'delivery_method' => DeliveryMethod::methodById($delivery->delivery_method)->name,
+            'total_price' => (int) $delivery->order->price,
+            'finisher_text' => sprintf(
+                'Узнать статус выполнения заказа можно в <a href="%s">Личном кабинете</a>',
+                sprintf("%s/profile", config('app.showcase_host'))
+            ),
+        ];
+    }
+
+    protected function getDeliveryDate(Delivery $delivery)
+    {
+        return sprintf(
+            '%s %s',
+            Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
+            sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end)
+        );
     }
 }
