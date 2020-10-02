@@ -807,11 +807,19 @@ class OrderObserver
                 ->first())
                 ->delivery_at)
                 ->toDateString() ?? '',
-            'DELIVERY_TIME' => optional(optional($order
-                ->deliveries
-                ->first())
-                ->delivery_at)
-                ->toTimeString() ?? '',
+            'DELIVERY_TIME' => (function () use ($order) {
+                $delivery = $order->deliveries->first();
+
+                if($delivery == null || $delivery->delivery_at == null) {
+                    return '';
+                }
+
+                if($delivery->delivery_at->isMidnight()) {
+                    return '';
+                }
+
+                return $delivery->delivery_at->toTimeString();
+            })(),
             'OPER_MODE' => (function () use ($order, $points) {
                 $point_id = optional($order->deliveries->first())->point_id;
 
