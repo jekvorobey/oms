@@ -107,38 +107,39 @@ class DeliveryObserver
             )->first());
 
             $customer = $customerRaw->user_id;
-
             if ($delivery->status != $delivery->getOriginal('status')) {
-                $notificationService->send(
-                    $customer,
-                    $this->createNotificationType(
-                        $delivery->status,
-                        $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
-                    ),
-                    (function () use ($delivery) {
-                        switch ($delivery->status) {
-                            case DeliveryStatus::DONE:
-                            case DeliveryStatus::RETURNED:
-                            case DeliveryStatus::ON_POINT_IN:
-                            case DeliveryStatus::READY_FOR_RECIPIENT:
-                                return app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery);
-                        }
+                if(!($delivery->status == DeliveryStatus::DONE && $delivery->order->bonuses()->where('status', OrderBonus::STATUS_ACTIVE)->count() == 0)) {
+                    $notificationService->send(
+                        $customer,
+                        $this->createNotificationType(
+                            $delivery->status,
+                            $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
+                        ),
+                        (function () use ($delivery) {
+                            switch ($delivery->status) {
+                                case DeliveryStatus::DONE:
+                                case DeliveryStatus::RETURNED:
+                                case DeliveryStatus::ON_POINT_IN:
+                                case DeliveryStatus::READY_FOR_RECIPIENT:
+                                    return app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery);
+                            }
 
-                        return [
-                            'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->toDateString(),
-                            'DELIVERY_TIME' => (function () use ($delivery) {
-                                $time = Carbon::parse($delivery->pdd);
+                            return [
+                                'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->toDateString(),
+                                'DELIVERY_TIME' => (function () use ($delivery) {
+                                    $time = Carbon::parse($delivery->pdd);
 
-                                if($time->isMidnight()) {
-                                    return '';
-                                }
+                                    if($time->isMidnight()) {
+                                        return '';
+                                    }
 
-                                return $time->toTimeString();
-                            })(),
-                            'PART_PRICE' => $delivery->cost,
-                        ];
-                    })()
-                );
+                                    return $time->toTimeString();
+                                })(),
+                                'PART_PRICE' => $delivery->cost,
+                            ];
+                        })()
+                    );
+                }
             }
 
             $order_id = $delivery->order->id;
