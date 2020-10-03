@@ -634,7 +634,14 @@ class OrderObserver
                 case OrderStatus::AWAITING_CONFIRMATION:
                     return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
                 case OrderStatus::DELIVERING:
-                    return ['%s, ВАШ ЗАКАЗ В ПУТИ', 'Ваш заказ подтвержден и передан в транспортную компанию. <br>Ожидайте звонка курьера.'];
+                    return [
+                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
+                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки. 
+                        <br>Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
+                        $order->number,
+                        (int) $order->price,
+                        sprintf('%s/profile', config('app.showcase_host')))
+                    ];
                 case OrderStatus::READY_FOR_RECIPIENT:
                     return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
                 case OrderStatus::DONE:
