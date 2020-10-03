@@ -482,6 +482,7 @@ class DeliveryObserver
             'LINK_ORDER' => $link_order,
             'CUSTOMER_NAME' => $user->first_name,
             'DELIVERY_ADDRESS' => $delivery->formDeliveryAddressString($delivery->delivery_address),
+            'DELIVIRY_ADDRESS' => $delivery->formDeliveryAddressString($delivery->delivery_address),
             'DELIVERY_TYPE' => DeliveryType::all()[$delivery->order->delivery_type]->name,
             'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
             'DELIVERY_TIME' => sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end),
