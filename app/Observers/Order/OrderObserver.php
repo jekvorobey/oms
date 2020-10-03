@@ -764,7 +764,7 @@ class OrderObserver
             });
 
         return [
-            'title' => sprintf($title, $this->parseName($user, $order)),
+            'title' => sprintf($title, mb_strtoupper($this->parseName($user, $order))),
             'text' => $text,
             'button' => $button,
             'params' => [
@@ -896,7 +896,7 @@ class OrderObserver
     public function parseName(UserDto $user, Order $order)
     {
         if(isset($user->first_name)) {
-            return mb_strtoupper($user->first_name);
+            return $user->first_name;
         }
 
         if(!$order->receiver_name) {
@@ -906,10 +906,10 @@ class OrderObserver
         $words = explode($order->receiver_name, ' ');
 
         if(isset($words[1])) {
-            return mb_strtoupper($words[1]);
+            return $words[1];
         }
 
-        return mb_strtoupper($words[0]);
+        return $words[0];
     }
 
     public static function formatNumber(string $number)
