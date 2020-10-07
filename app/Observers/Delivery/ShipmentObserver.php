@@ -455,7 +455,7 @@ class ShipmentObserver
         }
     }
 
-    protected function sendCreatedNotification(Shipment $shipment)
+    public function sendCreatedNotification(Shipment $shipment)
     {
         try {
             $serviceNotificationService = app(ServiceNotificationService::class);

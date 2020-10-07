@@ -60,6 +60,9 @@ class TicketNotifierService
     /** @var PublicEventTypeService */
     protected $publicEventTypeService;
 
+    /** @var DocumentService */
+    protected $documentService;
+
     public function __construct(
         PublicEventService $publicEventService,
         PublicEventSprintService $publicEventSprintService,
@@ -71,7 +74,8 @@ class TicketNotifierService
         PublicEventTicketService $publicEventTicketService,
         PublicEventTypeService $publicEventTypeService,
         FileService $fileService,
-        ServiceNotificationService $serviceNotificationService
+        ServiceNotificationService $serviceNotificationService,
+        DocumentService $documentService
     ) {
         $this->publicEventService = $publicEventService;
         $this->publicEventSprintService = $publicEventSprintService;
@@ -84,6 +88,7 @@ class TicketNotifierService
         $this->publicEventTypeService = $publicEventTypeService;
         $this->fileService = $fileService;
         $this->serviceNotificationService = $serviceNotificationService;
+        $this->documentService = $documentService;
     }
 
     public function notify(Order $order)
@@ -298,6 +303,9 @@ class TicketNotifierService
                 ->setFilter('id', $firstEvent->type_id)
         )->first();
 
+        $firstItem = $basketItems->first()->id;
+        $document = $this->documentService->getOrderPdfTickets($order, $firstItem);
+
         $data = [
             'menu' => [
                 'НОВИНКИ' => sprintf('%s/new', config('app.showcase_host')),
@@ -326,7 +334,12 @@ class TicketNotifierService
             'CALL_ORG' => $firstOrganizer->phone,
             'MAIL_ORG' => $firstOrganizer->email,
             'LINK_ORDER' => sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id),
-            'LINK_TICKET' => sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id),
+            'LINK_TICKET' => (string) OrderObserver::shortenLink(
+                $this->fileService
+                    ->getFiles([$document->file_id])
+                    ->first()
+                    ->absoluteUrl()
+            ),
             'REFUND_ORDER' => sprintf('%s ₽', (int) optional($order->orderReturns->first())->price),
             'NUMBER_TICKET' => optional(optional($order->orderReturns->first())->items)->count() ?? 0
         ];
