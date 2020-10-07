@@ -423,7 +423,6 @@ class OrderObserver
     protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat)
     {
         switch ($payment_status) {
-            case PaymentStatus::NOT_PAID:
             case PaymentStatus::WAITING:
                 return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
             case PaymentStatus::PAID:
@@ -635,7 +634,14 @@ class OrderObserver
                 case OrderStatus::AWAITING_CONFIRMATION:
                     return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
                 case OrderStatus::DELIVERING:
-                    return ['%s, ВАШ ЗАКАЗ В ПУТИ', 'Ваш заказ подтвержден и передан в транспортную компанию. <br>Ожидайте звонка курьера.'];
+                    return [
+                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
+                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки. 
+                        <br>Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
+                        $order->number,
+                        (int) $order->price,
+                        sprintf('%s/profile', config('app.showcase_host')))
+                    ];
                 case OrderStatus::READY_FOR_RECIPIENT:
                     return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
                 case OrderStatus::DONE:
@@ -765,7 +771,7 @@ class OrderObserver
             });
 
         return [
-            'title' => sprintf($title, $this->parseName($user, $order)),
+            'title' => sprintf($title, mb_strtoupper($this->parseName($user, $order))),
             'text' => $text,
             'button' => $button,
             'params' => [
@@ -808,11 +814,19 @@ class OrderObserver
                 ->first())
                 ->delivery_at)
                 ->toDateString() ?? '',
-            'DELIVERY_TIME' => optional(optional($order
-                ->deliveries
-                ->first())
-                ->delivery_at)
-                ->toTimeString() ?? '',
+            'DELIVERY_TIME' => (function () use ($order) {
+                $delivery = $order->deliveries->first();
+
+                if($delivery == null || $delivery->delivery_at == null) {
+                    return '';
+                }
+
+                if($delivery->delivery_at->isMidnight()) {
+                    return '';
+                }
+
+                return $delivery->delivery_at->toTimeString();
+            })(),
             'OPER_MODE' => (function () use ($order, $points) {
                 $point_id = optional($order->deliveries->first())->point_id;
 
@@ -889,7 +903,7 @@ class OrderObserver
     public function parseName(UserDto $user, Order $order)
     {
         if(isset($user->first_name)) {
-            return mb_strtoupper($user->first_name);
+            return $user->first_name;
         }
 
         if(!$order->receiver_name) {
@@ -899,10 +913,10 @@ class OrderObserver
         $words = explode($order->receiver_name, ' ');
 
         if(isset($words[1])) {
-            return mb_strtoupper($words[1]);
+            return $words[1];
         }
 
-        return mb_strtoupper($words[0]);
+        return $words[0];
     }
 
     public static function formatNumber(string $number)
