@@ -492,6 +492,13 @@ class DeliveryService
                 } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
                 }
+                $delivery->save();
+                foreach ($delivery->shipments as $shipment) {
+                    if (!$shipment->cargo_id) {
+                        $shipment->updated_at = now();
+                        $shipment->save();
+                    }
+                }
             } else {
                 $deliveryOrderOutputDto = $deliveryOrderService->updateOrder(
                     $delivery->delivery_service,
@@ -503,9 +510,8 @@ class DeliveryService
                 } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
                 }
+                $delivery->save();
             }
-
-            $delivery->save();
 
             /**
              * Указываем информация о кодах мест (коробок) в службе доставки
