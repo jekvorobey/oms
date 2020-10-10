@@ -461,7 +461,7 @@ class ShipmentObserver
             return;
         }
 
-        if($shipment->status != ShipmentStatus::CREATED) {
+        if(!in_array($shipment->status, [ShipmentStatus::CREATED, ShipmentStatus::AWAITING_CONFIRMATION])) {
             return;
         }
 
