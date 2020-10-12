@@ -76,26 +76,3 @@ if (! function_exists('short_day_of_week')) {
         return isset($days[$dayNumber]) ? $days[$dayNumber] : '';
     }
 }
-
-if (! function_exists('xml_entities')) {
-    /**
-     * Метод для замены XML escape characters
-     * (используется при создании документов Microsoft Office)
-     *
-     * @param $string
-     * @return string
-     */
-    function xml_entities($string)
-    {
-        return strtr(
-            $string,
-            array(
-                "<" => "&lt;",
-                ">" => "&gt;",
-                '"' => "&quot;",
-                "'" => "&apos;",
-                "&" => "&amp;",
-            )
-        );
-    }
-}

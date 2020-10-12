@@ -86,7 +86,7 @@ class DocumentService
                         ) : '',
                         'table.shipment_packages' => ($packageNum + 1) . '/' . $shipment->packages->count(),
                         'table.product_article' => $product ? $product->vendor_code : '',
-                        'table.product_name' => xml_entities($item->basketItem->name),
+                        'table.product_name' => htmlspecialchars($item->basketItem->name, ENT_QUOTES | ENT_XML1),
                         'table.product_qty' => qty_format($item->qty),
                         'table.product_weight' => isset($item->basketItem->product['weight']) ?
                             g2kg($item->qty * $item->basketItem->product['weight']) : '',
@@ -116,10 +116,10 @@ class DocumentService
                 'table.total_product_price' => price_format($shipment->basketItems->sum('price')),
                 'act_date' => strftime('%d %B %Y'),
                 'act_id' => $shipment->id,
-                'merchant_name' => xml_entities($merchant->legal_name),
+                'merchant_name' => htmlspecialchars($merchant->legal_name, ENT_QUOTES | ENT_XML1),
                 'merchant_id' => $merchant->id,
                 'merchant_register_date' => strftime('%d %B %Y', strtotime($merchant->created_at)),
-                'logistic_operator_name' => xml_entities($logisticOperator->legal_info_company_name ?? $logisticOperator->name),
+                'logistic_operator_name' => htmlspecialchars($logisticOperator->legal_info_company_name ?? $logisticOperator->name, ENT_QUOTES | ENT_XML1),
             ];
             $templateProcessor->setValues($tableTotalRow);
 
@@ -196,7 +196,7 @@ class DocumentService
                             ) : '',
                             'table.shipment_packages' => ($packageNum + 1) . '/' . $shipment->packages->count(),
                             'table.product_article' => $product ? $product->vendor_code : '',
-                            'table.product_name' => xml_entities($item->basketItem->name),
+                            'table.product_name' => htmlspecialchars($item->basketItem->name, ENT_QUOTES | ENT_XML1),
                             'table.product_qty' => qty_format($item->qty),
                             'table.product_weight' => isset($item->basketItem->product['weight']) ?
                                 g2kg($item->qty * $item->basketItem->product['weight']) : '',
@@ -221,10 +221,10 @@ class DocumentService
                 'table.total_product_price' => price_format($totalProductPrice),
                 'act_date' => strftime('%d %B %Y'),
                 'act_id' => $cargo->id,
-                'merchant_name' => xml_entities($merchant->legal_name),
+                'merchant_name' => htmlspecialchars($merchant->legal_name, ENT_QUOTES | ENT_XML1),
                 'merchant_id' => $merchant->id,
                 'merchant_register_date' => strftime('%d %B %Y', strtotime($merchant->created_at)),
-                'logistic_operator_name' => xml_entities($logisticOperator->legal_info_company_name ?? $logisticOperator->name),
+                'logistic_operator_name' => htmlspecialchars($logisticOperator->legal_info_company_name ?? $logisticOperator->name, ENT_QUOTES | ENT_XML1),
             ];
             $templateProcessor->setValues($tableTotalRow);
 
@@ -269,7 +269,7 @@ class DocumentService
                 $tableRows[] = [
                     'table.row' => count($tableRows) + 1,
                     'table.product_article' => $product ? $product->vendor_code : '',
-                    'table.product_name' => xml_entities($basketItem->name),
+                    'table.product_name' => htmlspecialchars($basketItem->name, ENT_QUOTES | ENT_XML1),
                     'table.product_code_ibt' => $product ? $product->id : '',
                     'table.product_qty' => qty_format($basketItem->qty),
                     'table.product_price_per_unit' => price_format($basketItem->price / $basketItem->qty),
@@ -288,8 +288,8 @@ class DocumentService
             $customerComment = $shipment->delivery->order->comment;
             $fieldValues = [
                 'shipment_number' => $shipment->number,
-                'delivery_service_name' => xml_entities($deliveryService->name),
-                'customer_comment' => $customerComment ? xml_entities($customerComment->text) : 'нет',
+                'delivery_service_name' => htmlspecialchars($deliveryService->name, ENT_QUOTES | ENT_XML1),
+                'customer_comment' => $customerComment ? htmlspecialchars($customerComment->text, ENT_QUOTES | ENT_XML1) : 'нет',
             ];
             $templateProcessor->setValues($fieldValues);
 
@@ -334,7 +334,7 @@ class DocumentService
                 $tableRows[] = [
                     'table.row' => count($tableRows) + 1,
                     'table.product_article' => $product ? $product->vendor_code : '',
-                    'table.product_name' => xml_entities($basketItem->name),
+                    'table.product_name' => htmlspecialchars($basketItem->name, ENT_QUOTES | ENT_XML1),
                     'table.product_qty' => qty_format($basketItem->qty),
                     'table.product_price_per_unit' => price_format($basketItem->price / $basketItem->qty),
                     'table.product_price' => price_format($basketItem->price),
@@ -345,7 +345,7 @@ class DocumentService
             $delivery = $shipment->delivery;
             $fieldValues = [
                 'shipment_number' => $shipment->number,
-                'receiver_name' => xml_entities($delivery->receiver_name),
+                'receiver_name' => htmlspecialchars($delivery->receiver_name, ENT_QUOTES | ENT_XML1),
                 'receiver_address' => $delivery->getDeliveryAddressString(),
                 'table.total_product_qty' => qty_format($shipment->basketItems->sum('qty')),
                 'table.total_product_price_per_unit' => $shipment->basketItems->sum(function (BasketItem $basketItem) {
