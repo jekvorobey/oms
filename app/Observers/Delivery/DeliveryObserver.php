@@ -97,7 +97,6 @@ class DeliveryObserver
             return;
         }
 
-
         try {
             $notificationService = app(ServiceNotificationService::class);
             $customerService = app(CustomerService::class);
@@ -150,8 +149,11 @@ class DeliveryObserver
 
             $user = $delivery->order->getUser();
 
-            if (isset($delivery->getChanges()['delivery_address']) && $customer
-                && array_diff($delivery->delivery_address, json_decode($delivery->getOriginal('delivery_address'), true)) != array_diff(json_decode($delivery->getOriginal('delivery_address'), true), $delivery->delivery_address)
+            $oldAddr = json_decode($delivery->getOriginal('delivery_address'))->address_string;
+            $newAddr = json_decode($delivery->getAttributes()['delivery_address'])->address_string;
+
+            if(
+                $oldAddr != $newAddr
             ) {
                 $notificationService->send(
                     $customer,
