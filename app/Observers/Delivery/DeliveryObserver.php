@@ -93,7 +93,7 @@ class DeliveryObserver
 
     protected function sendNotification(Delivery $delivery)
     {
-        if($delivery->order->deliveries()->count() == 1) {
+        if($delivery->id == null) {
             return;
         }
 
@@ -109,36 +109,38 @@ class DeliveryObserver
             $customer = $customerRaw->user_id;
             if ($delivery->status != $delivery->getOriginal('status')) {
                 if(!($delivery->status == DeliveryStatus::DONE && $delivery->order->bonuses()->where('status', OrderBonus::STATUS_ACTIVE)->count() == 0)) {
-                    $notificationService->send(
-                        $customer,
-                        $this->createNotificationType(
-                            $delivery->status,
-                            $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
-                        ),
-                        (function () use ($delivery) {
-                            switch ($delivery->status) {
-                                case DeliveryStatus::DONE:
-                                case DeliveryStatus::RETURNED:
-                                case DeliveryStatus::ON_POINT_IN:
-                                case DeliveryStatus::READY_FOR_RECIPIENT:
-                                    return app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery);
-                            }
+                    if($delivery->order->deliveries()->count() != 1) {
+                        $notificationService->send(
+                            $customer,
+                            $this->createNotificationType(
+                                $delivery->status,
+                                $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
+                            ),
+                            (function () use ($delivery) {
+                                switch ($delivery->status) {
+                                    case DeliveryStatus::DONE:
+                                    case DeliveryStatus::RETURNED:
+                                    case DeliveryStatus::ON_POINT_IN:
+                                    case DeliveryStatus::READY_FOR_RECIPIENT:
+                                        return app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery);
+                                }
 
-                            return [
-                                'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->toDateString(),
-                                'DELIVERY_TIME' => (function () use ($delivery) {
-                                    $time = Carbon::parse($delivery->pdd);
+                                return [
+                                    'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->toDateString(),
+                                    'DELIVERY_TIME' => (function () use ($delivery) {
+                                        $time = Carbon::parse($delivery->pdd);
 
-                                    if($time->isMidnight()) {
-                                        return '';
-                                    }
+                                        if($time->isMidnight()) {
+                                            return '';
+                                        }
 
-                                    return $time->toTimeString();
-                                })(),
-                                'PART_PRICE' => $delivery->cost,
-                            ];
-                        })()
-                    );
+                                        return $time->toTimeString();
+                                    })(),
+                                    'PART_PRICE' => $delivery->cost,
+                                ];
+                            })()
+                        );
+                    }
                 }
             }
 
@@ -147,8 +149,11 @@ class DeliveryObserver
 
             $user = $delivery->order->getUser();
 
-            if (isset($delivery->getChanges()['delivery_address']) && $customer
-                && array_diff($delivery->delivery_address, json_decode($delivery->getOriginal('delivery_address'), true)) != array_diff(json_decode($delivery->getOriginal('delivery_address'), true), $delivery->delivery_address)
+            $oldAddr = json_decode($delivery->getOriginal('delivery_address'))->address_string;
+            $newAddr = json_decode($delivery->getAttributes()['delivery_address'])->address_string;
+
+            if(
+                $oldAddr != $newAddr
             ) {
                 $notificationService->send(
                     $customer,

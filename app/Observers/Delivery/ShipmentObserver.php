@@ -13,7 +13,10 @@ use App\Services\DeliveryService;
 use App\Services\OrderService;
 use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
+use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use MerchantManagement\Dto\OperatorCommunicationMethod;
+use MerchantManagement\Dto\OperatorDto;
 use MerchantManagement\Services\OperatorService\OperatorService;
 
 /**
@@ -472,18 +475,43 @@ class ShipmentObserver
             $operators = $operatorService->operators((new RestQuery)->setFilter('merchant_id', '=',
                 $shipment->merchant_id));
 
+            /** @var OperatorDto $operator */
             foreach ($operators as $operator) {
-                $serviceNotificationService->send($operator->user_id, 'klientoformlen_novyy_zakaz', [
+                $userService = app(UserService::class);
+
+                $user = $userService->users(
+                    $userService->newQuery()
+                        ->setFilter('id', $operator->user_id)
+                )->first();
+
+                $vars = [
                     'QUANTITY_ORDERS' => 1,
-                    'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id),
-                    'CUSTOMER_NAME' => $shipment->delivery->order->getUser()->first_name,
+                    'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
+                    'CUSTOMER_NAME' => $user->first_name,
                     'SUM_ORDERS' => (int) $shipment->cost,
                     'GOODS_NAME' => $shipment->items->first()->basketItem->name,
                     'QUANTITY_GOODS' => (int) $shipment->items->first()->basketItem->qty,
                     'PRISE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                     'ALL_QUANTITY_GOODS' => (int) $shipment->items()->with('basketItem')->get()->sum('basketItem.qty'),
                     'ALL_PRISE_GOODS' => (int) $shipment->cost
-                ]);
+                ];
+
+                switch ($operator->communication_method) {
+                    case OperatorCommunicationMethod::METHOD_PHONE:
+                        return $serviceNotificationService->sendDirect(
+                            'klientoformlen_novyy_zakaz',
+                            $user->phone,
+                            'sms',
+                            $vars
+                        );
+                    case OperatorCommunicationMethod::METHOD_EMAIL:
+                        return $serviceNotificationService->sendDirect(
+                            'klientoformlen_novyy_zakaz',
+                            $user->email,
+                            'email',
+                            $vars
+                        );
+                }
             }
         } catch (\Exception $e) {
             logger($e->getMessage(), $e->getTrace());

@@ -458,7 +458,7 @@ class DeliveryService
     {
         $delivery->loadMissing('shipments');
         /**
-         * Проверяем, что товары по все отправлениям дотавки на комлектации или собраны
+         * Проверяем, что товары по все отправлениям доставки на комплектации или собраны
          */
         foreach ($delivery->shipments as $shipment) {
             $validShipmentStatuses = [
@@ -568,7 +568,7 @@ class DeliveryService
         $deliveryOrderDto->point_out_id = $delivery->point_id;
         $deliveryOrderDto->description = $recipientDto->comment;
 
-        //Информация о стоимосте заказа
+        //Информация о стоимости заказа
         $deliveryOrderCostDto = new DeliveryOrderCostDto();
         $deliveryOrderInputDto->cost = $deliveryOrderCostDto;
         /**
@@ -578,7 +578,12 @@ class DeliveryService
          * round($delivery->order->delivery_price / $delivery->order->deliveries->count(), 2)
          */
         $deliveryOrderCostDto->delivery_cost = 0;
-        $deliveryOrderCostDto->cod_cost = $delivery->shipments->sum('cost');
+
+        $deliveryOrderCostDto->cod_cost = 0;
+        foreach ($delivery->shipments as $shipment) {
+            /** @var Shipment $shipment */
+            $deliveryOrderCostDto->cod_cost += $shipment->basketItems->sum('cost');
+        }
         //todo Удалить поле delivery_cost_pay из DeliveryOrderCostDto
         $deliveryOrderCostDto->delivery_cost_pay = 0;
         $deliveryOrderCostDto->assessed_cost = $deliveryOrderCostDto->cod_cost;
