@@ -2849,16 +2849,16 @@
         },
         {
             "name": "swagger-api/swagger-ui",
-            "version": "v3.35.1",
+            "version": "v3.35.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/swagger-api/swagger-ui.git",
-                "reference": "82fdabf0a916e93a9d20dc91c5a31fb61b8d2e35"
+                "reference": "8fecd98c8bdc9541555155065d477d41d0bf3233"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/82fdabf0a916e93a9d20dc91c5a31fb61b8d2e35",
-                "reference": "82fdabf0a916e93a9d20dc91c5a31fb61b8d2e35",
+                "url": "https://api.github.com/repos/swagger-api/swagger-ui/zipball/8fecd98c8bdc9541555155065d477d41d0bf3233",
+                "reference": "8fecd98c8bdc9541555155065d477d41d0bf3233",
                 "shasum": ""
             },
             "type": "library",
@@ -2902,7 +2902,7 @@
                 "swagger",
                 "ui"
             ],
-            "time": "2020-10-08T23:06:37+00:00"
+            "time": "2020-10-15T21:07:34+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",
@@ -3394,16 +3394,16 @@
         },
         {
             "name": "symfony/http-client-contracts",
-            "version": "v2.2.0",
+            "version": "v2.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/http-client-contracts.git",
-                "reference": "3a5d0fe7908daaa23e3dbf4cee3ba4bfbb19fdd3"
+                "reference": "41db680a15018f9c1d4b23516059633ce280ca33"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/http-client-contracts/zipball/3a5d0fe7908daaa23e3dbf4cee3ba4bfbb19fdd3",
-                "reference": "3a5d0fe7908daaa23e3dbf4cee3ba4bfbb19fdd3",
+                "url": "https://api.github.com/repos/symfony/http-client-contracts/zipball/41db680a15018f9c1d4b23516059633ce280ca33",
+                "reference": "41db680a15018f9c1d4b23516059633ce280ca33",
                 "shasum": ""
             },
             "require": {
@@ -3414,8 +3414,9 @@
             },
             "type": "library",
             "extra": {
+                "branch-version": "2.3",
                 "branch-alias": {
-                    "dev-master": "2.2-dev"
+                    "dev-main": "2.3-dev"
                 },
                 "thanks": {
                     "name": "symfony/contracts",
@@ -3451,7 +3452,7 @@
                 "interoperability",
                 "standards"
             ],
-            "time": "2020-09-07T11:33:47+00:00"
+            "time": "2020-10-14T17:08:19+00:00"
         },
         {
             "name": "symfony/http-foundation",
@@ -4813,16 +4814,16 @@
         },
         {
             "name": "yandex-money/yandex-checkout-sdk-php",
-            "version": "1.6.6",
+            "version": "1.6.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/yandex-money/yandex-checkout-sdk-php.git",
-                "reference": "a00251693a4cc50a9dbaffaf1951a5b94d9bbf2f"
+                "reference": "427c641095b4ff4fa436d6babc8985ba67a02871"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/yandex-money/yandex-checkout-sdk-php/zipball/a00251693a4cc50a9dbaffaf1951a5b94d9bbf2f",
-                "reference": "a00251693a4cc50a9dbaffaf1951a5b94d9bbf2f",
+                "url": "https://api.github.com/repos/yandex-money/yandex-checkout-sdk-php/zipball/427c641095b4ff4fa436d6babc8985ba67a02871",
+                "reference": "427c641095b4ff4fa436d6babc8985ba67a02871",
                 "shasum": ""
             },
             "require": {
@@ -4847,7 +4848,7 @@
             "license": [
                 "MIT"
             ],
-            "time": "2020-09-15T08:42:17+00:00"
+            "time": "2020-10-13T17:28:22+00:00"
         },
         {
             "name": "zendframework/zend-escaper",
