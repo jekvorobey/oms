@@ -498,7 +498,7 @@ class DeliveryObserver
             'text' => $text,
             'button' => [],
             'params' => [
-                'Получатель' => app(OrderObserver::class)->parseName($user, $delivery->order),
+                'Получатель' => $delivery->receiver_name,
                 'Телефон' => OrderObserver::formatNumber($delivery->order->customerPhone()),
                 'Сумма заказа' => sprintf('%s ₽', (int) $delivery->order->cost),
                 'Получение' => DeliveryMethod::methodById($delivery->delivery_method)->name,
