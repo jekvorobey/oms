@@ -130,6 +130,10 @@ class OrderObserver
                 ->first()
                 ->user_id;
 
+            if($order->status != $order->getOriginal('status') && $order->status == OrderStatus::DONE) {
+                $this->sendStatusNotification($notificationService, $order, $user_id);
+            }
+
             $sent_notification = false;
 
             if ($order->payment_status != $order->getOriginal('payment_status')) {
@@ -958,13 +962,13 @@ class OrderObserver
         $order = Order::query()
             ->whereNotNull('customer_id')
             ->where('status', '=', OrderStatus::CREATED)
-            ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
-            ->whereDeliveryType(DeliveryType::TYPE_SPLIT)
+            // ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
+            ->whereDeliveryType(DeliveryType::TYPE_CONSOLIDATION)
             ->whereHas('deliveries', function ($q) {
-                $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
+                $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
             })
             ->whereDoesntHave('deliveries', function ($q) {
-                $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
+                $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
             })
             ->latest()
             ->firstOrFail();
@@ -972,8 +976,8 @@ class OrderObserver
         $st = $order->status;
         $ps = $order->payment_status;
 
-        $order->status = OrderStatus::AWAITING_CONFIRMATION;
-        $order->payment_status = PaymentStatus::WAITING;
+        $order->status = OrderStatus::DONE;
+        $order->payment_status = PaymentStatus::PAID;
 
         $order->save();
 
