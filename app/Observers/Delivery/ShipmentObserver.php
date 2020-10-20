@@ -482,8 +482,10 @@ class ShipmentObserver
             $serviceNotificationService = app(ServiceNotificationService::class);
             $operatorService = app(OperatorService::class);
 
-            $operators = $operatorService->operators((new RestQuery)->setFilter('merchant_id', '=',
-                $shipment->merchant_id));
+            $operators = $operatorService->operators(
+                (new RestQuery)
+                    ->setFilter('merchant_id', '=', $shipment->merchant_id)
+            );
 
             /** @var OperatorDto $operator */
             foreach ($operators as $operator) {
@@ -508,19 +510,21 @@ class ShipmentObserver
 
                 switch ($operator->communication_method) {
                     case OperatorCommunicationMethod::METHOD_PHONE:
-                        return $serviceNotificationService->sendDirect(
+                        $serviceNotificationService->sendDirect(
                             'klientoformlen_novyy_zakaz',
                             $user->phone,
                             'sms',
                             $vars
                         );
+                        break;
                     case OperatorCommunicationMethod::METHOD_EMAIL:
-                        return $serviceNotificationService->sendDirect(
+                        $serviceNotificationService->sendDirect(
                             'klientoformlen_novyy_zakaz',
                             $user->email,
                             'email',
                             $vars
                         );
+                        break;
                 }
             }
         } catch (\Exception $e) {
