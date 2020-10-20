@@ -171,7 +171,7 @@ class OrderObserver
 
             if (
                 $order->status != $order->getOriginal('status')
-                && !in_array($order->status, [OrderStatus::CREATED, OrderStatus::AWAITING_CONFIRMATION])
+                && !in_array($order->status, [OrderStatus::CREATED, OrderStatus::AWAITING_CONFIRMATION, OrderStatus::DONE])
                 && !$sent_notification
             ) {
                 $this->sendStatusNotification($notificationService, $order, $user_id);
