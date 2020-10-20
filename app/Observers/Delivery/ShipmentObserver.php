@@ -25,6 +25,12 @@ use MerchantManagement\Services\OperatorService\OperatorService;
  */
 class ShipmentObserver
 {
+    protected const ELIGIBLE_STATUS = [
+        ShipmentStatus::CREATED,
+        ShipmentStatus::AWAITING_CONFIRMATION,
+        ShipmentStatus::ASSEMBLING
+    ];
+
     /**
      * Автоматическая установка статуса для доставки, если все её отправления получили нужный статус
      */
@@ -464,7 +470,11 @@ class ShipmentObserver
             return;
         }
 
-        if(!in_array($shipment->status, [ShipmentStatus::CREATED, ShipmentStatus::AWAITING_CONFIRMATION])) {
+        if(!in_array($shipment->status, static::ELIGIBLE_STATUS)) {
+            return;
+        }
+
+        if(in_array($shipment->getOriginal('status'), static::ELIGIBLE_STATUS)) {
             return;
         }
 
