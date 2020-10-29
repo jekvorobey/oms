@@ -16,7 +16,7 @@ use Illuminate\Database\Query\JoinClause;
  * @property int        $discount_id
  * @property string     $name
  * @property int        $type
- * @property int        $change
+ * @property float      $change
  * @property int|null   $merchant_id
  * @property bool       $promo_code_only
  * @property bool       $visible_in_catalog

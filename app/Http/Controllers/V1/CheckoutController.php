@@ -73,7 +73,7 @@ class CheckoutController extends Controller
             'discounts.*.discount_id' => ['sometimes', 'integer'],
             'discounts.*.name' => ['sometimes', 'string'],
             'discounts.*.type' => ['sometimes', 'integer'],
-            'discounts.*.change' => ['sometimes', 'integer'],
+            'discounts.*.change' => ['sometimes', 'numeric'],
             'discounts.*.merchant_id' => ['sometimes', 'integer', 'nullable'],
             'discounts.*.visible_in_catalog' => ['sometimes', 'boolean'],
             'discounts.*.promo_code_only' => ['sometimes', 'boolean'],
