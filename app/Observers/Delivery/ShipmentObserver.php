@@ -120,6 +120,7 @@ class ShipmentObserver
         $this->setProblemAt($shipment);
         $this->setCanceledAt($shipment);
         $this->setFsd($shipment);
+        $this->sendCreatedNotification($shipment);
     }
     
     /**
@@ -136,7 +137,6 @@ class ShipmentObserver
         $this->upsertDeliveryOrder($shipment);
         $this->add2Cargo($shipment);
         $this->add2CargoHistory($shipment);
-        $this->sendCreatedNotification($shipment);
     }
     
     /**
