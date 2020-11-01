@@ -49,6 +49,7 @@ class ShipmentObserver
     public function created(Shipment $shipment)
     {
         History::saveEvent(HistoryType::TYPE_CREATE, [$shipment->delivery->order, $shipment], $shipment);
+        $this->sendCreatedNotification($shipment);
     }
     
     /**
@@ -136,7 +137,6 @@ class ShipmentObserver
         $this->upsertDeliveryOrder($shipment);
         $this->add2Cargo($shipment);
         $this->add2CargoHistory($shipment);
-        $this->sendCreatedNotification($shipment);
     }
     
     /**
@@ -466,14 +466,6 @@ class ShipmentObserver
 
     public function sendCreatedNotification(Shipment $shipment)
     {
-        if(!in_array($shipment->status, static::ELIGIBLE_STATUS)) {
-            return true;
-        }
-
-        // if(in_array($shipment->getOriginal('status'), static::ELIGIBLE_STATUS)) {
-        //     return true;
-        // }
-
         try {
             $serviceNotificationService = app(ServiceNotificationService::class);
             $operatorService = app(OperatorService::class);
