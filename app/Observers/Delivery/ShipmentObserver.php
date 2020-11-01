@@ -466,16 +466,12 @@ class ShipmentObserver
 
     public function sendCreatedNotification(Shipment $shipment)
     {
-        if($shipment->status == $shipment->getOriginal('status')) {
-            return;
-        }
-
         if(!in_array($shipment->status, static::ELIGIBLE_STATUS)) {
-            return;
+            return true;
         }
 
         if(in_array($shipment->getOriginal('status'), static::ELIGIBLE_STATUS)) {
-            return;
+            return true;
         }
 
         try {
