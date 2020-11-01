@@ -469,6 +469,10 @@ class ShipmentObserver
             return true;
         }
 
+        if($shipment->status == $shipment->getOriginal('status')) {
+            return true;
+        }
+
         // if(in_array($shipment->getOriginal('status'), static::ELIGIBLE_STATUS)) {
         //     return true;
         // }
