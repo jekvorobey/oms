@@ -130,6 +130,10 @@ class OrderObserver
                 ->first()
                 ->user_id;
 
+            if($order->status != $order->getOriginal('status') && $order->status == OrderStatus::DONE) {
+                $this->sendStatusNotification($notificationService, $order, $user_id);
+            }
+
             $sent_notification = false;
 
             if ($order->payment_status != $order->getOriginal('payment_status')) {
@@ -142,7 +146,7 @@ class OrderObserver
                     $sent_notification = true;
                 }
 
-                if($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::WAITING) {
+                if($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::TIMEOUT) {
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
@@ -152,7 +156,7 @@ class OrderObserver
                         ),
                         $this->generateNotificationVariables($order, (function () use ($order) {
                             switch ($order->payment_status) {
-                                case PaymentStatus::WAITING:
+                                case PaymentStatus::TIMEOUT:
                                     return static::OVERRIDE_AWAITING_PAYMENT;
                                 case PaymentStatus::PAID:
                                 case PaymentStatus::HOLD:
@@ -167,7 +171,7 @@ class OrderObserver
 
             if (
                 $order->status != $order->getOriginal('status')
-                && !in_array($order->status, [OrderStatus::CREATED, OrderStatus::AWAITING_CONFIRMATION])
+                && !in_array($order->status, [OrderStatus::CREATED, OrderStatus::AWAITING_CONFIRMATION, OrderStatus::DONE])
                 && !$sent_notification
             ) {
                 $this->sendStatusNotification($notificationService, $order, $user_id);
@@ -423,7 +427,7 @@ class OrderObserver
     protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat)
     {
         switch ($payment_status) {
-            case PaymentStatus::WAITING:
+            case PaymentStatus::TIMEOUT:
                 return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
             case PaymentStatus::PAID:
                 return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
@@ -958,22 +962,22 @@ class OrderObserver
         $order = Order::query()
             ->whereNotNull('customer_id')
             ->where('status', '=', OrderStatus::CREATED)
-            ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
-            ->whereDeliveryType(DeliveryType::TYPE_SPLIT)
+            // ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
+            ->whereDeliveryType(DeliveryType::TYPE_CONSOLIDATION)
             ->whereHas('deliveries', function ($q) {
+                $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
+            })
+            ->whereDoesntHave('deliveries', function ($q) {
                 $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
             })
-            // ->whereDoesntHave('deliveries', function ($q) {
-            //     $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
-            // })
             ->latest()
             ->firstOrFail();
 
         $st = $order->status;
         $ps = $order->payment_status;
 
-        $order->status = OrderStatus::CREATED;
-        $order->payment_status = PaymentStatus::HOLD;
+        $order->status = OrderStatus::DONE;
+        $order->payment_status = PaymentStatus::PAID;
 
         $order->save();
 

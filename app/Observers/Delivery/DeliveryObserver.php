@@ -498,11 +498,11 @@ class DeliveryObserver
             'text' => $text,
             'button' => [],
             'params' => [
-                'Получатель' => app(OrderObserver::class)->parseName($user, $delivery->order),
+                'Получатель' => $delivery->receiver_name,
                 'Телефон' => OrderObserver::formatNumber($delivery->order->customerPhone()),
                 'Сумма заказа' => sprintf('%s ₽', (int) $delivery->order->cost),
                 'Получение' => DeliveryMethod::methodById($delivery->delivery_method)->name,
-                'Дата доставки' => app(OrderObserver::class)->formatDeliveryDate($delivery),
+                'Дата доставки' => $this->getDeliveryDate($delivery),
                 'Адрес доставки' => (function () use ($delivery) {
                     $points = app(ListsService::class);
                     if($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {

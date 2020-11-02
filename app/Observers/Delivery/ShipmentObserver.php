@@ -25,6 +25,11 @@ use MerchantManagement\Services\OperatorService\OperatorService;
  */
 class ShipmentObserver
 {
+    protected const ELIGIBLE_STATUS = [
+        ShipmentStatus::CREATED,
+        ShipmentStatus::AWAITING_CONFIRMATION,
+    ];
+
     /**
      * Автоматическая установка статуса для доставки, если все её отправления получили нужный статус
      */
@@ -460,20 +465,26 @@ class ShipmentObserver
 
     public function sendCreatedNotification(Shipment $shipment)
     {
-        if($shipment->status == $shipment->getOriginal('status')) {
-            return;
+        if(!in_array($shipment->status, static::ELIGIBLE_STATUS)) {
+            return true;
         }
 
-        if(!in_array($shipment->status, [ShipmentStatus::CREATED, ShipmentStatus::AWAITING_CONFIRMATION])) {
-            return;
+        if($shipment->status == $shipment->getOriginal('status')) {
+            return true;
         }
+
+        // if(in_array($shipment->getOriginal('status'), static::ELIGIBLE_STATUS)) {
+        //     return true;
+        // }
 
         try {
             $serviceNotificationService = app(ServiceNotificationService::class);
             $operatorService = app(OperatorService::class);
 
-            $operators = $operatorService->operators((new RestQuery)->setFilter('merchant_id', '=',
-                $shipment->merchant_id));
+            $operators = $operatorService->operators(
+                (new RestQuery)
+                    ->setFilter('merchant_id', '=', $shipment->merchant_id)
+            );
 
             /** @var OperatorDto $operator */
             foreach ($operators as $operator) {
@@ -498,19 +509,21 @@ class ShipmentObserver
 
                 switch ($operator->communication_method) {
                     case OperatorCommunicationMethod::METHOD_PHONE:
-                        return $serviceNotificationService->sendDirect(
+                        $serviceNotificationService->sendDirect(
                             'klientoformlen_novyy_zakaz',
                             $user->phone,
                             'sms',
                             $vars
                         );
+                        break;
                     case OperatorCommunicationMethod::METHOD_EMAIL:
-                        return $serviceNotificationService->sendDirect(
+                        $serviceNotificationService->sendDirect(
                             'klientoformlen_novyy_zakaz',
                             $user->email,
                             'email',
                             $vars
                         );
+                        break;
                 }
             }
         } catch (\Exception $e) {
