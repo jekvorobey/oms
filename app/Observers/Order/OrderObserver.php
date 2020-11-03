@@ -157,6 +157,7 @@ class OrderObserver
                         $this->generateNotificationVariables($order, (function () use ($order) {
                             switch ($order->payment_status) {
                                 case PaymentStatus::TIMEOUT:
+                                case PaymentStatus::WAITING:
                                     return static::OVERRIDE_AWAITING_PAYMENT;
                                 case PaymentStatus::PAID:
                                 case PaymentStatus::HOLD:
