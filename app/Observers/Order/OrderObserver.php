@@ -203,7 +203,7 @@ class OrderObserver
             $this->createNotificationType(
                 $order->status,
                 $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
-                $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP,
+                (optional($order->deliveries()->first())->delivery_method ?? DeliveryMethod::METHOD_PICKUP) === DeliveryMethod::METHOD_PICKUP,
                 $override
             ),
             $this->generateNotificationVariables($order, $override)
