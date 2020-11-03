@@ -429,6 +429,7 @@ class OrderObserver
     {
         switch ($payment_status) {
             case PaymentStatus::TIMEOUT:
+            case PaymentStatus::WAITING:
                 return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
             case PaymentStatus::PAID:
                 return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
@@ -959,26 +960,31 @@ class OrderObserver
 
     public function testSend()
     {
-        // $order = Order::find(904);
-        $order = Order::query()
-            ->whereNotNull('customer_id')
-            ->where('status', '=', OrderStatus::CREATED)
-            // ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
-            ->whereDeliveryType(DeliveryType::TYPE_CONSOLIDATION)
-            ->whereHas('deliveries', function ($q) {
-                $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
-            })
-            ->whereDoesntHave('deliveries', function ($q) {
-                $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
-            })
-            ->latest()
-            ->firstOrFail();
+        $order = Order::find(1059);
+        // $order = Order::query()
+        //     ->whereNotNull('customer_id')
+        //     ->where('status', '=', OrderStatus::CREATED)
+        //     // ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
+        //     ->whereDeliveryType(DeliveryType::TYPE_CONSOLIDATION)
+        //     ->whereHas('deliveries', function ($q) {
+        //         $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
+        //     })
+        //     ->whereDoesntHave('deliveries', function ($q) {
+        //         $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
+        //     })
+        //     ->latest()
+        //     ->firstOrFail();
 
         $st = $order->status;
         $ps = $order->payment_status;
 
-        $order->status = OrderStatus::DONE;
-        $order->payment_status = PaymentStatus::PAID;
+        $order->status = OrderStatus::CREATED;
+        $order->payment_status = PaymentStatus::NOT_PAID;
+
+        $order->save();
+
+        $order->status = OrderStatus::CREATED;
+        $order->payment_status = PaymentStatus::WAITING;
 
         $order->save();
 
