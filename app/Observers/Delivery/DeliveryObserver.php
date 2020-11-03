@@ -534,4 +534,22 @@ class DeliveryObserver
             sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end)
         );
     }
+
+    public function testSend()
+    {
+        $delivery = Delivery::query()
+            ->where('delivery_method', DeliveryMethod::METHOD_DELIVERY)
+            ->where('status', '!=', DeliveryStatus::DONE)
+            ->first();
+
+        $os = $delivery->status;
+
+        $delivery->status = DeliveryStatus::DONE;
+        $delivery->save();
+
+        dump("IGNORE FROM HERE");
+
+        $delivery->status = $os;
+        $delivery->save();
+    }
 }
