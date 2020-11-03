@@ -783,7 +783,7 @@ class OrderObserver
             'params' => [
                 'Получатель' => $this->parseName($user, $order),
                 'Телефон' => static::formatNumber($order->customerPhone()),
-                'Сумма заказа' => sprintf('%s ₽', (int) $order->cost),
+                'Сумма заказа' => sprintf('%s ₽', (int) $order->price),
                 'Получение' => $deliveryMethod,
                 'Дата доставки' => $deliveryDate,
                 'Адрес доставки' => $deliveryAddress
