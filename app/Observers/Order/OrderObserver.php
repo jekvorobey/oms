@@ -146,7 +146,7 @@ class OrderObserver
                     $sent_notification = true;
                 }
 
-                if($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::TIMEOUT) {
+                if($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::TIMEOUT || $order->payment_status == PaymentStatus::WAITING) {
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
