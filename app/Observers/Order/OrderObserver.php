@@ -30,6 +30,7 @@ use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use GuzzleHttp\Client;
+use Illuminate\Support\Arr;
 
 /**
  * Class OrderObserver
@@ -774,7 +775,20 @@ class OrderObserver
                         })
                         ->toArray()
                 ];
-            });
+            })
+            ->mapToGroups(function ($shipment) {
+                return [$shipment['date'] => $shipment['products']];
+            })
+            ->map(function ($shipment) {
+                return Arr::flatten($shipment, 1);
+            })
+            ->map(function ($products, $date) {
+                return [
+                    'date' => $date,
+                    'products' => $products
+                ];
+            })
+            ->values();
 
         return [
             'title' => sprintf($title, mb_strtoupper($this->parseName($user, $order))),
@@ -960,20 +974,20 @@ class OrderObserver
 
     public function testSend()
     {
-        // $order = Order::find(1059);
-        $order = Order::query()
-            ->whereNotNull('customer_id')
-            ->where('status', '=', OrderStatus::CREATED)
-            // ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
-            ->whereDeliveryType(DeliveryType::TYPE_CONSOLIDATION)
-            ->whereHas('deliveries', function ($q) {
-                $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
-            })
-            ->whereDoesntHave('deliveries', function ($q) {
-                $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
-            })
-            ->latest()
-            ->firstOrFail();
+        $order = Order::find(1014);
+        // $order = Order::query()
+        //     ->whereNotNull('customer_id')
+        //     ->where('status', '=', OrderStatus::CREATED)
+        //     // ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
+        //     ->whereDeliveryType(DeliveryType::TYPE_CONSOLIDATION)
+        //     ->whereHas('deliveries', function ($q) {
+        //         $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
+        //     })
+        //     ->whereDoesntHave('deliveries', function ($q) {
+        //         $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
+        //     })
+        //     ->latest()
+        //     ->firstOrFail();
 
         $st = $order->status;
         $ps = $order->payment_status;
