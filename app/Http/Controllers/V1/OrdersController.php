@@ -401,6 +401,16 @@ class OrdersController extends Controller
             'date_to' => 'nullable|integer',
         ]);
 
+        $builderPaid = Shipment::query()
+            ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID]);
+        if (isset($data['date_from'])) {
+            $builderPaid->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+        }
+        if (isset($data['date_to'])) {
+            $builderPaid->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
+        }
+        $paidShipments = $builderPaid->get();
+/*
         $builderDone = Shipment::query()->where('status', ShipmentStatus::DONE);
         if (isset($data['date_from'])) {
             $builderDone->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
@@ -418,10 +428,11 @@ class OrdersController extends Controller
             $builderCancel->where('is_canceled_at', '<', Carbon::createFromTimestamp($data['date_to']));
         }
         $cancelShipments = $builderCancel->get();
-
+*/
         $shipments = (new Collection())
-            ->merge($doneShipments)
-            ->merge($cancelShipments);
+            //->merge($doneShipments)
+            //->merge($cancelShipments)
+            ->merge($paidShipments);
 
         $shipments->load(['basketItems', 'delivery.order.discounts']);
 
@@ -430,6 +441,7 @@ class OrdersController extends Controller
                 $items = [];
                 foreach ($shipment->basketItems as $item) {
                     $price = $item->cost;
+                    $discount = 0;
                     foreach ($shipment->delivery->order->discounts as $discount) {
                         if (!$discount->merchant_id || $discount->merchant_id != $shipment->merchant_id) {
                             continue;
@@ -442,6 +454,7 @@ class OrdersController extends Controller
                         foreach ($discount->items as $discountItem) {
                             if ($discountItem['offer_id'] == $item->offer_id) {
                                 $price -= $discountItem['change'];
+                                $discount = $discountItem['change'];
                             }
                         }
                     }
@@ -450,6 +463,7 @@ class OrdersController extends Controller
                         'name' => $item->name,
                         'qty' => $item->qty,
                         'price' => $price,
+                        'discount' => $discount
                     ];
                 }
 
