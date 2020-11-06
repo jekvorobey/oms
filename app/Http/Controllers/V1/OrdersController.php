@@ -394,92 +394,61 @@ class OrdersController extends Controller
     /**
      * @return JsonResponse
      */
-    public function doneMerchant(): JsonResponse
+    public function doneMerchant()//: JsonResponse
     {
         $data = $this->validate(request(), [
             'date_from' => 'nullable|integer',
             'date_to' => 'nullable|integer',
         ]);
 
-        $builderPaid = Shipment::query()
-            ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID]);
-        if (isset($data['date_from'])) {
-            $builderPaid->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
-        }
-        if (isset($data['date_to'])) {
-            $builderPaid->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
-        }
-        $paidShipments = $builderPaid->get();
-/*
-        $builderDone = Shipment::query()->where('status', ShipmentStatus::DONE);
-        if (isset($data['date_from'])) {
-            $builderDone->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
-        }
-        if (isset($data['date_to'])) {
-            $builderDone->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
-        }
-        $doneShipments = $builderDone->get();
+        $dateFrom = isset($data['date_from']) ? $data['date_from'] : Carbon::now()->firstOfMonth()->format('Y-m-d');
+        $dateTo = isset($data['date_from']) ? $data['date_from'] : Carbon::now()->format('Y-m-d');
 
-        $builderCancel = Shipment::query()->where('is_canceled', 1);
-        if (isset($data['date_from'])) {
-            $builderCancel->where('is_canceled_at', '>=', Carbon::createFromTimestamp($data['date_from']));
-        }
-        if (isset($data['date_to'])) {
-            $builderCancel->where('is_canceled_at', '<', Carbon::createFromTimestamp($data['date_to']));
-        }
-        $cancelShipments = $builderCancel->get();
-*/
-        $shipments = (new Collection())
-            //->merge($doneShipments)
-            //->merge($cancelShipments)
-            ->merge($paidShipments);
+        $orders = Order::query()
+            ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
+            ->with('basket.items')
+            ->where('payment_status_at', '>=', $dateFrom)
+            ->where('payment_status_at', '<', $dateTo)
+            ->get();
 
-        $shipments->load(['basketItems', 'delivery.order.discounts']);
+        $orders->load(['discounts']);
 
-        return response()->json([
-            'items' => $shipments->map(function (Shipment $shipment) {
-                $items = [];
-                foreach ($shipment->basketItems as $item) {
-                    $price = $item->cost;
-                    $discount = 0;
-                    foreach ($shipment->delivery->order->discounts as $discount) {
-                        if (!$discount->merchant_id || $discount->merchant_id != $shipment->merchant_id) {
-                            continue;
-                        }
+        $items = [];
+        foreach ($orders as $order) {
+            foreach ($order->basket->items as $item) {
+                $merchantId = isset($item->product['merchant_id']) ? $item->product['merchant_id'] : 'n/a';
+                $price = $item->price;
+                $discount = [];
+                foreach ($order->discounts as $orderDiscount) {
+                    if (!$orderDiscount->items) { continue; }
 
-                        if (!$discount->items) {
-                            continue;
-                        }
-
-                        foreach ($discount->items as $discountItem) {
-                            if ($discountItem['offer_id'] == $item->offer_id) {
-                                $price -= $discountItem['change'];
-                                $discount = $discountItem['change'];
-                            }
+                    foreach ($orderDiscount->items as $discountItem) {
+                        if ($discountItem['offer_id'] == $item->offer_id) {
+                            $discount['type'] = $orderDiscount->type;
+                            $discount['change'] = $orderDiscount->change;
                         }
                     }
-                    $items[] = [
-                        'offer_id' => $item->offer_id,
-                        'name' => $item->name,
-                        'qty' => $item->qty,
-                        'price' => $price,
-                        'discount' => $discount
-                    ];
                 }
-
-                return [
-                    'created_at' => $shipment->delivery->order->created_at->format('Y-m-d H:i:s'),
-                    'items' => $items,
-                    'order_id' => $shipment->delivery->order->id,
-                    'shipment_id' => $shipment->id,
-                    'merchant_id' => $shipment->merchant_id,
-                    'status' => $shipment->status,
-                    'is_canceled' => $shipment->is_canceled,
-                    'is_canceled_at' => $shipment->is_canceled_at,
-                    'status_at' => $shipment->status_at,
+                $items[] = [
+                    'order_id' => $order->id,
+                    'offer_id' => $item->offer_id,
+                    'name' => $item->name,
+                    'qty' => $item->qty,
+                    'price' => $price,
+                    'discount' => $discount,
+                    'created_at' => $order->created_at->format('Y-m-d H:i:s'),
+                    'shipment_id' => $order->id,
+                    'merchant_id' => $merchantId,
+                    'status' => $order->status,
+                    'is_canceled' => $order->is_canceled,
+                    'is_canceled_at' => $order->is_canceled_at,
+                    'status_at' => $order->payment_status_at,
                 ];
-            }),
-        ]);
+            }
+        }
+
+        return response()->json($items);
+
     }
 }
 
