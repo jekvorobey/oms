@@ -43,7 +43,7 @@ class PaymentService
                 throw new \Exception('Ошибка при автоматической оплате');
             }
 
-            return null;
+            return $returnUrl;
         }
 
         $paymentSystem = $payment->paymentSystem();
