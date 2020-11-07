@@ -406,37 +406,45 @@ class OrdersController extends Controller
 
         $orders = Order::query()
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
-            ->with('basket.items')
+            //->with('basket.items')
             ->where('payment_status_at', '>=', $dateFrom)
             ->where('payment_status_at', '<', $dateTo)
+            ->where('id', 1061)
             ->get();
 
-        $orders->load(['discounts']);
+        $orders->load(['basket.items', 'discounts']);
 
         $items = [];
         foreach ($orders as $order) {
             foreach ($order->basket->items as $item) {
                 $merchantId = isset($item->product['merchant_id']) ? $item->product['merchant_id'] : 'n/a';
                 $price = $item->price;
-                $discount = [];
+                $cost = $item->cost;
+                $discounts = [];
                 foreach ($order->discounts as $orderDiscount) {
                     if (!$orderDiscount->items) { continue; }
+                    //спонсор скидки: 0 -  маркетплейс, 1 - мерчант
+                    $discount['sponsor'] = $orderDiscount->merchant_id ? 1 : 0;
 
+                    $discount['type'] = $orderDiscount->type;
+                    $discount['discount_id'] = $orderDiscount->discount_id;
+                    $discount['order_change'] = $orderDiscount->change;
                     foreach ($orderDiscount->items as $discountItem) {
+                        $discount['change'] = 0;
                         if ($discountItem['offer_id'] == $item->offer_id) {
-                            $discount['type'] = $orderDiscount->type;
-                            $discount['change'] = $orderDiscount->change;
-                            $discount['discount_id'] = $orderDiscount->discount_id;
+                            $discount['change'] += $orderDiscount->change;
                         }
                     }
+                    $discounts[] = $discount;
                 }
                 $items[] = [
                     'order_id' => $order->id,
                     'offer_id' => $item->offer_id,
                     'name' => $item->name,
                     'qty' => $item->qty,
+                    'cost' => $cost,
                     'price' => $price,
-                    'discount' => $discount,
+                    'discounts' => $discounts,
                     'created_at' => $order->created_at->format('Y-m-d H:i:s'),
                     'shipment_id' => $order->id,
                     'merchant_id' => $merchantId,
@@ -448,7 +456,7 @@ class OrdersController extends Controller
             }
         }
 
-        return response()->json($items);
+        return response()->json(['items' => $items]);
 
     }
 }
