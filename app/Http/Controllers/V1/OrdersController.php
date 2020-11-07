@@ -426,6 +426,7 @@ class OrdersController extends Controller
                         if ($discountItem['offer_id'] == $item->offer_id) {
                             $discount['type'] = $orderDiscount->type;
                             $discount['change'] = $orderDiscount->change;
+                            $discount['discount_id'] = $orderDiscount->discount_id;
                         }
                     }
                 }
