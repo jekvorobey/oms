@@ -406,10 +406,8 @@ class OrdersController extends Controller
 
         $orders = Order::query()
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
-            //->with('basket.items')
             ->where('payment_status_at', '>=', $dateFrom)
             ->where('payment_status_at', '<', $dateTo)
-            ->where('id', 1061)
             ->get();
 
         $orders->load(['basket.items', 'discounts']);
