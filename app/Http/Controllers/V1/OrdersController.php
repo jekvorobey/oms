@@ -421,20 +421,28 @@ class OrdersController extends Controller
                 $discounts = [];
                 foreach ($order->discounts as $orderDiscount) {
                     if (!$orderDiscount->items) { continue; }
-                    //спонсор скидки: 0 -  маркетплейс, 1 - мерчант
-                    $discount['sponsor'] = $orderDiscount->merchant_id ? 1 : 0;
-
+                    //спонсор скидки, null = маркетплэйс
+                    $discount['sponsor'] = $orderDiscount->merchant_id ;
                     $discount['type'] = $orderDiscount->type;
                     $discount['discount_id'] = $orderDiscount->discount_id;
                     $discount['order_change'] = $orderDiscount->change;
+
                     foreach ($orderDiscount->items as $discountItem) {
                         $discount['change'] = 0;
                         if ($discountItem['offer_id'] == $item->offer_id) {
                             $discount['change'] += $orderDiscount->change;
                         }
                     }
-                    $discounts[] = $discount;
+
+                    if ($orderDiscount->merchant_id) {
+                        $discounts['merchant']['discounts'][] = $discount;
+                        $discounts['merchant']['sum'] = array_sum(array_column($discounts['marketplace']['discounts'], 'change'));
+                    } else {
+                        $discounts['marketplace']['discounts'][] = $discount;
+                        $discounts['marketplace']['sum'] = array_sum(array_column($discounts['marketplace']['discounts'], 'change'));
+                    }
                 }
+
                 $items[] = [
                     'order_id' => $order->id,
                     'offer_id' => $item->offer_id,
