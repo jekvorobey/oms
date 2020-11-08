@@ -394,7 +394,7 @@ class OrdersController extends Controller
     /**
      * @return JsonResponse
      */
-    public function doneMerchant()//: JsonResponse
+    public function doneMerchant(): JsonResponse
     {
         $data = $this->validate(request(), [
             'date_from' => 'nullable|integer',
@@ -418,6 +418,8 @@ class OrdersController extends Controller
                 $merchantId = isset($item->product['merchant_id']) ? $item->product['merchant_id'] : 'n/a';
                 $price = $item->price;
                 $cost = $item->cost;
+                $bonusSpent = $item->bonus_spent;
+                $bonusDiscount = $item->bonus_discount;
                 $discounts = [];
                 foreach ($order->discounts as $orderDiscount) {
                     if (!$orderDiscount->items) { continue; }
@@ -451,6 +453,8 @@ class OrdersController extends Controller
                     'cost' => $cost,
                     'price' => $price,
                     'discounts' => $discounts,
+                    'bonus_spent' => $bonusSpent,
+                    'bonus_discount' => $bonusDiscount,
                     'created_at' => $order->created_at->format('Y-m-d H:i:s'),
                     'shipment_id' => $order->id,
                     'merchant_id' => $merchantId,
