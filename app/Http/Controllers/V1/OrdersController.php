@@ -401,8 +401,8 @@ class OrdersController extends Controller
             'date_to' => 'nullable|integer',
         ]);
 
-        $dateFrom = isset($data['date_from']) ? $data['date_from'] : Carbon::now()->firstOfMonth()->format('Y-m-d');
-        $dateTo = isset($data['date_from']) ? $data['date_from'] : Carbon::now()->format('Y-m-d');
+        $dateFrom = isset($data['date_from']) ? Carbon::createFromTimestamp($data['date_from']) : Carbon::now()->firstOfMonth()->format('Y-m-d');
+        $dateTo = isset($data['date_to']) ? Carbon::createFromTimestamp($data['date_to']) : Carbon::now()->format('Y-m-d');
 
         $orders = Order::query()
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
@@ -412,14 +412,18 @@ class OrdersController extends Controller
 
         $orders->load(['basket.items', 'discounts']);
 
-        $items = [];
+        $result = [];
         foreach ($orders as $order) {
+            $items = [];
             foreach ($order->basket->items as $item) {
-                $merchantId = isset($item->product['merchant_id']) ? $item->product['merchant_id'] : 'n/a';
+                if (!isset($item->product['merchant_id'])) { continue; }
+                $merchantId = $item->product['merchant_id'];
                 $price = $item->price;
                 $cost = $item->cost;
-                $bonusSpent = $item->bonus_spent;
-                $bonusDiscount = $item->bonus_discount;
+
+                $bonuses['bonus_spent'] = $item->bonus_spent;
+                $bonuses['bonus_discount'] = $item->bonus_discount;
+
                 $discounts = [];
                 foreach ($order->discounts as $orderDiscount) {
                     if (!$orderDiscount->items) { continue; }
@@ -444,7 +448,6 @@ class OrdersController extends Controller
                         $discounts['marketplace']['sum'] = array_sum(array_column($discounts['marketplace']['discounts'], 'change'));
                     }
                 }
-
                 $items[] = [
                     'order_id' => $order->id,
                     'offer_id' => $item->offer_id,
@@ -453,20 +456,28 @@ class OrdersController extends Controller
                     'cost' => $cost,
                     'price' => $price,
                     'discounts' => $discounts,
-                    'bonus_spent' => $bonusSpent,
-                    'bonus_discount' => $bonusDiscount,
-                    'created_at' => $order->created_at->format('Y-m-d H:i:s'),
-                    'shipment_id' => $order->id,
+                    'bonuses' => $bonuses,
                     'merchant_id' => $merchantId,
-                    'status' => $order->status,
                     'is_canceled' => $order->is_canceled,
                     'is_canceled_at' => $order->is_canceled_at,
                     'status_at' => $order->payment_status_at,
                 ];
+
             }
+            $result[] = [
+                'order_id' => $order->id,
+                'cost' => $order->cost,
+                'price' => $order->price,
+                'items' => $items,
+                'created_at' => $order->created_at->format('Y-m-d H:i:s'),
+                'shipment_id' => null,
+                'merchant_id' => null,
+                'status' => null,
+
+            ];
         }
 
-        return response()->json(['items' => $items]);
+        return response()->json(['items' => $result]);
 
     }
 }
