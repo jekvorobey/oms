@@ -45,7 +45,7 @@ class SetWaitingStatus2Payment extends Command
         /** @var Collection|Payment[] $payments */
         $payments = Payment::query()
             ->where('status', PaymentStatus::NOT_PAID)
-            ->where('created_at', '>=', $dateTimeMinutesAgo->format('Y-m-d H:i:s'))
+            ->where('created_at', '<=', $dateTimeMinutesAgo->format('Y-m-d H:i:s'))
             ->get();
         if ($payments->isNotEmpty()) {
             foreach ($payments as $payment) {
