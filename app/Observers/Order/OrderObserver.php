@@ -199,16 +199,18 @@ class OrderObserver
 
     protected function sendStatusNotification(ServiceNotificationService $notificationService, Order $order, int $user_id, int $override = null)
     {
-        $notificationService->send(
-            $user_id,
-            $this->createNotificationType(
-                $order->status,
-                $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
-                $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP,
-                $override
-            ),
-            $this->generateNotificationVariables($order, $override)
-        );
+        if($order->deliveries()->exists()) {
+            $notificationService->send(
+                $user_id,
+                $this->createNotificationType(
+                    $order->status,
+                    $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                    $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP,
+                    $override
+                ),
+                $this->generateNotificationVariables($order, $override)
+            );
+        }
     }
 
     /**
@@ -816,7 +818,14 @@ class OrderObserver
             'LINK_PAY' => (string) static::shortenLink($link),
             'ORDER_DATE' => $order->created_at->toDateString(),
             'ORDER_TIME' => $order->created_at->toTimeString(),
-            'DELIVERY_TYPE' => DeliveryMethod::methodById($order->deliveries->first()->delivery_method)->name,
+            // 'DELIVERY_TYPE' => optional(DeliveryMethod::methodById(optional($order->deliveries->first())->delivery_method ?? 0))->name ?? '',
+            'DELIVERY_TYPE' => (function () use ($order) {
+                if(!$order->deliveries->first()) {
+                    return '';
+                }
+
+                return DeliveryMethod::methodById($order->deliveries->first()->delivery_method)->name;
+            })(),
             'DELIVERY_ADDRESS' => (function () use ($order) {
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
