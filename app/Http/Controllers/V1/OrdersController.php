@@ -392,6 +392,7 @@ class OrdersController extends Controller
     }
 
     /**
+     * Биллинг по отправлениям
      * @return JsonResponse
      */
     public function doneMerchant(): JsonResponse
@@ -401,84 +402,98 @@ class OrdersController extends Controller
             'date_to' => 'nullable|integer',
         ]);
 
-        $dateFrom = isset($data['date_from']) ? Carbon::createFromTimestamp($data['date_from']) : Carbon::now()->firstOfMonth()->format('Y-m-d');
-        $dateTo = isset($data['date_to']) ? Carbon::createFromTimestamp($data['date_to']) : Carbon::now()->format('Y-m-d');
+        $builderDone = Shipment::query()->where('status', ShipmentStatus::DONE);
+        if (isset($data['date_from'])) {
+            $builderDone->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+        }
+        if (isset($data['date_to'])) {
+            $builderDone->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
+        }
+        $doneShipments = $builderDone->get();
 
-        $orders = Order::query()
-            ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
-            ->where('payment_status_at', '>=', $dateFrom)
-            ->where('payment_status_at', '<', $dateTo)
-            ->get();
+        $builderCancel = Shipment::query()->where('is_canceled', 1);
+        if (isset($data['date_from'])) {
+            $builderCancel->where('is_canceled_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+        }
+        if (isset($data['date_to'])) {
+            $builderCancel->where('is_canceled_at', '<', Carbon::createFromTimestamp($data['date_to']));
+        }
+        $cancelShipments = $builderCancel->get();
 
-        $orders->load(['basket.items', 'discounts']);
+        $shipments = (new Collection())
+            ->merge($doneShipments)
+            ->merge($cancelShipments);
 
-        $result = [];
-        foreach ($orders as $order) {
-            $items = [];
-            foreach ($order->basket->items as $item) {
-                if (!isset($item->product['merchant_id'])) { continue; }
-                $merchantId = $item->product['merchant_id'];
-                $price = $item->price;
-                $cost = $item->cost;
+        $shipments->load(['basketItems', 'delivery.order.discounts']);
 
-                $bonuses['bonus_spent'] = $item->bonus_spent;
-                $bonuses['bonus_discount'] = $item->bonus_discount;
+        return response()->json([
+            'items' => $shipments->map(function (Shipment $shipment) {
+                $items = [];
+                foreach ($shipment->basketItems as $item) {
+                    if (!isset($item->product['merchant_id'])) { continue; }
 
-                $discounts = [];
-                foreach ($order->discounts as $orderDiscount) {
-                    if (!$orderDiscount->items) { continue; }
-                    //спонсор скидки, null = маркетплэйс
-                    $discount['sponsor'] = $orderDiscount->merchant_id ;
-                    $discount['type'] = $orderDiscount->type;
-                    $discount['discount_id'] = $orderDiscount->discount_id;
-                    $discount['order_change'] = $orderDiscount->change;
+                    $price = $item->price;
+                    $cost = $item->cost;
 
-                    foreach ($orderDiscount->items as $discountItem) {
-                        $discount['change'] = 0;
-                        if ($discountItem['offer_id'] == $item->offer_id) {
-                            $discount['change'] += $orderDiscount->change;
+                    $bonuses['bonus_spent'] = $item->bonus_spent;
+                    $bonuses['bonus_discount'] = $item->bonus_discount;
+
+                    $discounts = [];
+                    //$price = $item->cost;
+                    foreach ($shipment->delivery->order->discounts as $orderDiscount) {
+                        if (!$orderDiscount->items) { continue; }
+                        //спонсор скидки, null = маркетплэйс
+                        $discount['sponsor'] = $orderDiscount->merchant_id ;
+
+                        $discount['type'] = $orderDiscount->type;
+                        $discount['discount_id'] = $orderDiscount->discount_id;
+                        $discount['order_change'] = $orderDiscount->change;
+
+                        foreach ($orderDiscount->items as $discountItem) {
+                            $discount['change'] = 0;
+                            if ($discountItem['offer_id'] == $item->offer_id) {
+                                $discount['change'] += $orderDiscount->change;
+                            }
+                        }
+
+                        if ($orderDiscount->merchant_id) {
+                            $discounts['merchant']['discounts'][] = $discount;
+                            $discounts['merchant']['sum'] = array_sum(array_column($discounts['marketplace']['discounts'], 'change'));
+                        } else {
+                            $discounts['marketplace']['discounts'][] = $discount;
+                            $discounts['marketplace']['sum'] = array_sum(array_column($discounts['marketplace']['discounts'], 'change'));
                         }
                     }
-
-                    if ($orderDiscount->merchant_id) {
-                        $discounts['merchant']['discounts'][] = $discount;
-                        $discounts['merchant']['sum'] = array_sum(array_column($discounts['marketplace']['discounts'], 'change'));
-                    } else {
-                        $discounts['marketplace']['discounts'][] = $discount;
-                        $discounts['marketplace']['sum'] = array_sum(array_column($discounts['marketplace']['discounts'], 'change'));
-                    }
+                    $items[] = [
+                        'order_id' => $shipment->delivery->order->id,
+                        'offer_id' => $item->offer_id,
+                        'name' => $item->name,
+                        'qty' => $item->qty,
+                        'cost' => $cost,
+                        'price' => $price,
+                        'discounts' => $discounts,
+                        'bonuses' => $bonuses,
+                        'merchant_id' => $shipment->merchant_id,
+                        'is_canceled' => $shipment->is_canceled,
+                        'is_canceled_at' => $shipment->is_canceled_at,
+                        'status_at' => $shipment->status_at,
+                    ];
                 }
-                $items[] = [
-                    'order_id' => $order->id,
-                    'offer_id' => $item->offer_id,
-                    'name' => $item->name,
-                    'qty' => $item->qty,
-                    'cost' => $cost,
-                    'price' => $price,
-                    'discounts' => $discounts,
-                    'bonuses' => $bonuses,
-                    'merchant_id' => $merchantId,
-                    'is_canceled' => $order->is_canceled,
-                    'is_canceled_at' => $order->is_canceled_at,
-                    'status_at' => $order->payment_status_at,
+
+                return [
+                    'created_at' => $shipment->delivery->order->created_at->format('Y-m-d H:i:s'),
+                    'items' => $items,
+                    'order_id' => $shipment->delivery->order->id,
+                    'shipment_id' => $shipment->id,
+                    'merchant_id' => $shipment->merchant_id,
+                    'status' => $shipment->status,
+                    'is_canceled' => $shipment->is_canceled,
+                    'is_canceled_at' => $shipment->is_canceled_at,
+                    'status_at' => $shipment->status_at,
+
                 ];
-
-            }
-            $result[] = [
-                'order_id' => $order->id,
-                'cost' => $order->cost,
-                'price' => $order->price,
-                'items' => $items,
-                'created_at' => $order->created_at->format('Y-m-d H:i:s'),
-                'shipment_id' => null,
-                'merchant_id' => null,
-                'status' => null,
-
-            ];
-        }
-
-        return response()->json(['items' => $result]);
-
+            }),
+        ]);
     }
 }
 
