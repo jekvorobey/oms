@@ -26,10 +26,12 @@ class Basket extends OmsModel
     public const TYPE_PRODUCT = 1;
     /** @var int - корзина с мастер-классами */
     public const TYPE_MASTER = 2;
-    
+    /** @var int - корзина с подарочными сертификатами */
+    public const TYPE_CERTIFICATE = 3;
+
     /** @var bool */
     protected static $unguarded = true;
-    
+
     /**
      * @return HasOne
      */
@@ -37,7 +39,7 @@ class Basket extends OmsModel
     {
         return $this->hasOne(Order::class);
     }
-    
+
     /**
      * @return HasMany
      */

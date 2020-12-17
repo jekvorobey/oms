@@ -25,6 +25,7 @@ use App\Observers\Delivery\ShipmentPackageObserver;
 use App\Observers\Order\OrderCommentObserver;
 use App\Observers\Order\OrderObserver;
 use App\Observers\Order\OrderReturnObserver;
+use App\Observers\Order\CertificateObserver;
 use App\Observers\Payment\PaymentObserver;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
@@ -72,6 +73,7 @@ class AppServiceProvider extends ServiceProvider
         BasketItem::observe(BasketItemObserver::class);
 
         Order::observe(OrderObserver::class);
+        Order::observe(CertificateObserver::class);
         OrderComment::observe(OrderCommentObserver::class);
 
         OrderReturn::observe(OrderReturnObserver::class);

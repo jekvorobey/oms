@@ -140,6 +140,8 @@ class BasketItem extends OmsModel
                 'ticket_type_id' => $publicEventCartStruct->getIdByOfferId($this->offer_id),
                 'ticket_type_name' => $publicEventCartStruct->getNameByOfferId($this->offer_id),
             ]);
+        } elseif ($this->type == Basket::TYPE_CERTIFICATE) {
+
         } else {
             throw new Exception('Undefined basket type');
         }

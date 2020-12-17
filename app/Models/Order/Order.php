@@ -262,4 +262,13 @@ class Order extends OmsModel
     {
         return $this->type == Basket::TYPE_MASTER;
     }
+
+    /**
+     * Заказ является заказом порадочного сертификата?
+     * @return bool
+     */
+    public function isCertificateOrder(): bool
+    {
+        return $this->type == Basket::TYPE_CERTIFICATE;
+    }
 }
