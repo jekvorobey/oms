@@ -458,7 +458,7 @@ class OrdersController extends Controller
 
                         if ($orderDiscount->merchant_id) {
                             $discounts['merchant']['discounts'][] = $discount;
-                            $discounts['merchant']['sum'] = array_sum(array_column($discounts['marketplace']['discounts'], 'change'));
+                            $discounts['merchant']['sum'] = array_sum(array_column($discounts['merchant']['discounts'], 'change'));
                         } else {
                             $discounts['marketplace']['discounts'][] = $discount;
                             $discounts['marketplace']['sum'] = array_sum(array_column($discounts['marketplace']['discounts'], 'change'));
