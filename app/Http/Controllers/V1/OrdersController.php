@@ -68,6 +68,9 @@ class OrdersController extends Controller
         if ($order->isProductOrder()) {
             $reader = new OrderReader();
             $item = $reader->list((new RestQuery($request))->setFilter('id', $id))->first();
+        } else if ($order->isCertificateOrder()) {
+            $reader = new OrderReader();
+            $item = $reader->list((new RestQuery($request))->setFilter('id', $id))->first();
         } else {
             $item = $orderService->getPublicEventsOrderInfo($order, true);
         }

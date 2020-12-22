@@ -230,7 +230,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 "payment_subject" => "commodity"
             ];
         }
-        if ($order->delivery_price) {
+        if ((float)$order->delivery_price > 0) {
             $items[] = [
                 'description' => 'Доставка',
                 'quantity' => 1,
