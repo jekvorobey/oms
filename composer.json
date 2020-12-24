@@ -10,39 +10,39 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://gitlab.com/greensight/ibt-common-ms-code.git"
+            "url": "https://gitlab.com/iwengo/developers/ibt-common-ms-code.git"
         },
         {
             "type": "vcs",
-            "url": "https://gitlab.com/greensight/ibt-pim-lib"
+            "url": "https://gitlab.com/iwengo/developers/ibt-pim-lib"
         },
         {
             "type": "vcs",
-            "url": "https://gitlab.com/greensight/ibt-message-lib"
+            "url": "https://gitlab.com/iwengo/developers/ibt-message-lib"
         },
         {
             "type": "vcs",
-            "url": "https://gitlab.com/greensight/ibt-marketing-lib"
+            "url": "https://gitlab.com/iwengo/developers/ibt-marketing-lib"
         },
         {
             "type": "vcs",
-            "url": "https://gitlab.com/greensight/ibt-merchant-management-lib"
+            "url": "https://gitlab.com/iwengo/developers/ibt-merchant-management-lib"
         },
         {
             "type": "vcs",
-            "url": "https://gitlab.com/greensight/ibt-store-lib"
+            "url": "https://gitlab.com/iwengo/developers/ibt-store-lib"
         },
         {
             "type": "vcs",
-            "url": "https://gitlab.com/greensight/ibt-logistics-lib"
+            "url": "https://gitlab.com/iwengo/developers/ibt-logistics-lib"
         },
         {
             "type": "vcs",
-            "url": "https://gitlab.com/greensight/ibt-cm-lib"
+            "url": "https://gitlab.com/iwengo/developers/ibt-cm-lib"
         },
         {
             "type": "vcs",
-            "url": "https://gitlab.com/greensight/ibt-cms-lib"
+            "url": "https://gitlab.com/iwengo/developers/ibt-cms-lib"
         }
     ],
     "require": {
@@ -50,15 +50,15 @@
         "ext-json": "*",
         "darkaonline/l5-swagger": "5.8.*",
         "fideloper/proxy": "^4.0",
-        "greensight/ibt-cm-lib": "dev-master",
-        "greensight/ibt-cms-lib": "dev-master",
-        "greensight/ibt-common-lib": "dev-master",
-        "greensight/ibt-logistics-lib": "dev-master",
-        "greensight/ibt-marketing-lib": "dev-master",
-        "greensight/ibt-merchant-management-lib": "dev-master",
-        "greensight/ibt-message-lib": "dev-master",
-        "greensight/ibt-pim-lib": "dev-master",
-        "greensight/ibt-store-lib": "dev-master",
+        "iwengo/ibt-cm-lib": "dev-master",
+        "iwengo/ibt-cms-lib": "dev-master",
+        "iwengo/ibt-common-lib": "dev-master",
+        "iwengo/ibt-logistics-lib": "dev-master",
+        "iwengo/ibt-marketing-lib": "dev-master",
+        "iwengo/ibt-merchant-management-lib": "dev-master",
+        "iwengo/ibt-message-lib": "dev-master",
+        "iwengo/ibt-pim-lib": "dev-master",
+        "iwengo/ibt-store-lib": "dev-master",
         "jenssegers/date": "^4.0",
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",
