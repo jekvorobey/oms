@@ -411,6 +411,15 @@ class OrdersController extends Controller
         }
         $doneShipments = $builderDone->get();
 
+        $builderReturn = Shipment::query()->where('status', ShipmentStatus::RETURNED);
+        if (isset($data['date_from'])) {
+            $builderReturn->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+        }
+        if (isset($data['date_to'])) {
+            $builderReturn->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
+        }
+        $returnShipments = $builderReturn->get();
+
         $builderCancel = Shipment::query()->where('is_canceled', 1);
         if (isset($data['date_from'])) {
             $builderCancel->where('is_canceled_at', '>=', Carbon::createFromTimestamp($data['date_from']));
@@ -422,6 +431,7 @@ class OrdersController extends Controller
 
         $shipments = (new Collection())
             ->merge($doneShipments)
+            ->merge($builderReturn)
             ->merge($cancelShipments);
 
         $shipments->load(['basketItems', 'delivery.order.discounts']);
