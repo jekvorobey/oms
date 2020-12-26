@@ -395,6 +395,7 @@ class OrdersController extends Controller
     }
 
     /**
+     * Биллинг по отправлениям
      * @return JsonResponse
      */
     public function doneMerchant(): JsonResponse
@@ -413,6 +414,15 @@ class OrdersController extends Controller
         }
         $doneShipments = $builderDone->get();
 
+        $builderReturn = Shipment::query()->where('status', ShipmentStatus::RETURNED);
+        if (isset($data['date_from'])) {
+            $builderReturn->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+        }
+        if (isset($data['date_to'])) {
+            $builderReturn->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
+        }
+        $returnShipments = $builderReturn->get();
+
         $builderCancel = Shipment::query()->where('is_canceled', 1);
         if (isset($data['date_from'])) {
             $builderCancel->where('is_canceled_at', '>=', Carbon::createFromTimestamp($data['date_from']));
@@ -424,6 +434,7 @@ class OrdersController extends Controller
 
         $shipments = (new Collection())
             ->merge($doneShipments)
+            ->merge($builderReturn)
             ->merge($cancelShipments);
 
         $shipments->load(['basketItems', 'delivery.order.discounts']);
@@ -432,27 +443,53 @@ class OrdersController extends Controller
             'items' => $shipments->map(function (Shipment $shipment) {
                 $items = [];
                 foreach ($shipment->basketItems as $item) {
-                    $price = $item->cost;
-                    foreach ($shipment->delivery->order->discounts as $discount) {
-                        if (!$discount->merchant_id || $discount->merchant_id != $shipment->merchant_id) {
-                            continue;
-                        }
+                    if (!isset($item->product['merchant_id'])) { continue; }
 
-                        if (!$discount->items) {
-                            continue;
-                        }
+                    $price = $item->price;
+                    $cost = $item->cost;
 
-                        foreach ($discount->items as $discountItem) {
+                    $bonuses['bonus_spent'] = $item->bonus_spent;
+                    $bonuses['bonus_discount'] = $item->bonus_discount;
+
+                    $discounts = [];
+                    //$price = $item->cost;
+                    foreach ($shipment->delivery->order->discounts as $orderDiscount) {
+                        if (!$orderDiscount->items) { continue; }
+                        //спонсор скидки, null = маркетплэйс
+                        $discount['sponsor'] = $orderDiscount->merchant_id ;
+
+                        $discount['type'] = $orderDiscount->type;
+                        $discount['discount_id'] = $orderDiscount->discount_id;
+                        $discount['order_change'] = $orderDiscount->change;
+
+                        foreach ($orderDiscount->items as $discountItem) {
+                            $discount['change'] = 0;
                             if ($discountItem['offer_id'] == $item->offer_id) {
-                                $price -= $discountItem['change'];
+                                $discount['change'] += $orderDiscount->change;
                             }
+                        }
+
+                        if ($orderDiscount->merchant_id) {
+                            $discounts['merchant']['discounts'][] = $discount;
+                            $discounts['merchant']['sum'] = array_sum(array_column($discounts['merchant']['discounts'], 'change'));
+                        } else {
+                            $discounts['marketplace']['discounts'][] = $discount;
+                            $discounts['marketplace']['sum'] = array_sum(array_column($discounts['marketplace']['discounts'], 'change'));
                         }
                     }
                     $items[] = [
+                        'order_id' => $shipment->delivery->order->id,
                         'offer_id' => $item->offer_id,
                         'name' => $item->name,
                         'qty' => $item->qty,
+                        'cost' => $cost,
                         'price' => $price,
+                        'discounts' => $discounts,
+                        'bonuses' => $bonuses,
+                        'merchant_id' => $shipment->merchant_id,
+                        'is_canceled' => $shipment->is_canceled,
+                        'is_canceled_at' => $shipment->is_canceled_at,
+                        'status_at' => $shipment->status_at,
                     ];
                 }
 
@@ -466,6 +503,7 @@ class OrdersController extends Controller
                     'is_canceled' => $shipment->is_canceled,
                     'is_canceled_at' => $shipment->is_canceled_at,
                     'status_at' => $shipment->status_at,
+
                 ];
             }),
         ]);
