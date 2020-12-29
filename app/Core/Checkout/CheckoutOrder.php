@@ -10,6 +10,7 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderBonus;
+use App\Models\Order\OrderCertificate;
 use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderPromoCode;
 use App\Models\Payment\Payment;
@@ -18,6 +19,7 @@ use Carbon\Carbon;
 use Exception;
 use Greensight\Customer\Dto\CustomerBonusDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
+use Greensight\Marketing\Services\Certificate\CardService;
 use Greensight\Store\Dto\StockDto;
 use Greensight\Store\Services\StockService\StockService;
 use Illuminate\Support\Collection;
@@ -57,7 +59,7 @@ class CheckoutOrder
     public $spentBonus;
     /** @var int */
     public $addedBonus;
-    /** @var string[] */
+    /** @var OrderCertificate[] */
     public $certificates;
     /** @var CheckoutItemPrice[] */
     public $prices;
@@ -99,7 +101,7 @@ class CheckoutOrder
             'spentBonus' => $order->spentBonus,
             'addedBonus' => $order->addedBonus,
             'promoCodes' => $promoCodes,
-            'certificates' => $order->certificates,
+            'certificates' => $certificates,
             'prices' => $prices,
             'discounts' => $discounts,
             'bonuses' => $bonuses,
@@ -141,6 +143,13 @@ class CheckoutOrder
             $order->bonuses[] = new OrderBonus($bonus);
         }
 
+        $order->certificates = [];
+        foreach ($certificates as $certificate) {
+            $certificate['card_id'] = $certificate['id'];
+            unset($certificate['id']);
+            $order->certificates[] = new OrderCertificate($certificate);
+        }
+
         return $order;
     }
 
@@ -153,6 +162,7 @@ class CheckoutOrder
         return DB::transaction(function () {
             $this->checkOffersStocks();
             $this->commitPrices();
+
             $order = $this->createOrder();
             $this->debitingBonus($order);
             $this->createShipments($order);
@@ -161,6 +171,7 @@ class CheckoutOrder
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
             $this->createOrderBonuses($order);
+            $this->createOrderCertificates($order);
 
             return [$order->id, $order->number];
         });
@@ -256,6 +267,24 @@ class CheckoutOrder
         }
     }
 
+    private function createOrderCertificates(Order $order): void
+    {
+        if (!count($this->certificates))
+            return;
+
+        $cardService = resolve(CardService::class);
+
+        foreach ($this->certificates as $certificate) {
+            $status = $cardService->pay($certificate->card_id, $certificate->amount);
+            if (!$status->isSuccess())
+                throw new Exception($status->message);
+
+            $certificate->status = OrderCertificate::STATUS_APPLIED;
+            $certificate->order_id = $order->id;
+            $certificate->save();
+        }
+    }
+
     private function createOrder(): Order
     {
         $order = new Order();
@@ -271,7 +300,6 @@ class CheckoutOrder
         $order->price = $this->price;
         $order->spent_bonus = $this->spentBonus;
         $order->added_bonus = $this->addedBonus;
-        $order->certificates = $this->certificates;
 
         $order->delivery_type = $this->deliveryTypeId;
         $order->delivery_cost = $this->deliveryCost;

@@ -59,7 +59,7 @@ class CheckoutController extends Controller
             'promoCodes.*.owner_id' => ['sometimes', 'nullable', 'integer'],
 
             'certificates' => ['present', 'array'],
-            'certificates.*' => ['sometimes', 'string'],
+//            'certificates.*' => ['sometimes', 'string'],
 
             'prices' => ['required', 'array'],
             'prices.*.basketItemId' => ['required', 'integer'],
