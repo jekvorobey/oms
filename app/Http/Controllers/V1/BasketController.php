@@ -97,6 +97,9 @@ class BasketController extends Controller
         $basketService = resolve(BasketService::class);
 
         $data = $request->all();
+        $respondWithItems = boolval($data['items'] ?? false);
+        unset($data['items']);
+
         $validator = Validator::make($data, [
             'referrer_id' => 'nullable|integer',
             'qty' => 'integer',
@@ -112,7 +115,7 @@ class BasketController extends Controller
             throw new HttpException(500, 'unable to save basket item');
         }
         $response = [];
-        if ($request->get('items')) {
+        if ($respondWithItems) {
             $response['items'] = $this->getItems($basketService->getBasket($basketId));
         }
 

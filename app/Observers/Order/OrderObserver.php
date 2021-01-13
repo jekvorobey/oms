@@ -31,6 +31,9 @@ use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
+use Pim\Dto\Certificate\CertificateRequestDto;
+use Pim\Dto\Certificate\CertificateRequestStatusDto;
+use Pim\Services\CertificateService\CertificateService;
 
 /**
  * Class OrderObserver
@@ -74,6 +77,7 @@ class OrderObserver
         $order->basket->save();
 
         $this->sendCreatedNotification($order);
+        $this->setOrderIdToCertificateRequest($order);
     }
 
     /**
@@ -92,6 +96,7 @@ class OrderObserver
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
         $this->sendNotification($order);
+        $this->setPaymentStatusToCertificateRequest($order);
     }
 
     protected function sendCreatedNotification(Order $order)
@@ -461,15 +466,15 @@ class OrderObserver
 
         if($slug) {
             return $this->appendTypeModifiers($slug, $consolidation, $postomat);
-        } 
-        
+        }
+
         return '';
     }
 
     protected function intoStringStatus(int $orderStatus)
     {
         switch ($orderStatus) {
-            case OrderStatus::PRE_ORDER: 
+            case OrderStatus::PRE_ORDER:
                 return 'status_zakazapredzakaz_ozhidaem_postupleniya_tovara';
             // case OrderStatus::CREATED:
             //     return 'status_zakazaoformlen';
@@ -530,9 +535,9 @@ class OrderObserver
                     if($bonus->bonus) {
                         return [
                             sprintf('ВАМ НАЧИСЛЕН: %s ₽ БОНУС ЗА ЗАКАЗ', $bonus->bonus ?? 0),
-                            sprintf('%s, здравствуйте! 
-                            Вам начислен: %s ₽ бонус за заказ %s. Бонусы будут действительны до %s. Потратить их можно на следующую покупку. 
-                            
+                            sprintf('%s, здравствуйте!
+                            Вам начислен: %s ₽ бонус за заказ %s. Бонусы будут действительны до %s. Потратить их можно на следующую покупку.
+
                             Нам важно ваше мнение!
                             Мы будем признательны, если вы поделитесь своим мнением о купленном товаре!
                             Оставить отзыв можно, пройдя по ссылке: %s',
@@ -548,19 +553,19 @@ class OrderObserver
                         sprintf('%s, ВАШ ЗАКАЗ %s ВЫПОЛНЕН', mb_strtoupper($user->first_name), $order->number),
                         sprintf('Спасибо, что выбрали iBT.ru! Надеемся, что процесс покупки доставил вам исключительно положительные эмоции.
 
-                        Нам важно ваше мнение! 
-                        Будем признательны, если поделитесь своим мнением о купленном товаре. 
+                        Нам важно ваше мнение!
+                        Будем признательны, если поделитесь своим мнением о купленном товаре.
                         Оставить отзыв можно по ссылке: %s', config('app.showcase_host'))
                     ];
                 }
-                
+
                 if($override_delivery->status == DeliveryStatus::CANCELLATION_EXPECTED) {
                     return [
                         sprintf('ЗАКАЗ %s ОТМЕНЕН, ВОЗВРАТ ПРОИЗВЕДЕН', $order->number),
                         sprintf('Заказ %s на сумму %s р. отменен.
 
                         Возврат денежных средств на сумму %s р. произведен. Срок зависит от вашего банка.
-                        Если у вас возникли сложности с заказом - сообщите нам. 
+                        Если у вас возникли сложности с заказом - сообщите нам.
                         Мы сделаем все возможное, чтобы вам помочь!',
                         $order->number,
                         $order->orderReturns->first()->price,
@@ -573,8 +578,8 @@ class OrderObserver
                         sprintf('ЗАЯВКА НА ВОЗВРАТ ПО ЗАКАЗУ %s ОФОРМЛЕНА', $order->number),
                         sprintf('Вы успешно оформили заявку на возврат товара из заказа %s %s.
                         Вам необходимо передать возвращаемый товар в курьерскую службу согласно условиям возврата товара %s
-                        
-                        Если у вас возникли сложности с заказом - сообщите нам. 
+
+                        Если у вас возникли сложности с заказом - сообщите нам.
                         Мы сделаем все возможное, чтобы вам помочь!',
                         $order->number,
                         sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
@@ -585,10 +590,10 @@ class OrderObserver
                 if($override_delivery->status == DeliveryStatus::RETURNED) {
                     return [
                         sprintf('ВОЗВРАТ ПО ЗАКАЗУ %s ПРОИЗВЕДЕН', $order->number),
-                        sprintf('Возврат по заказу %s в размере %s р. произведен. 
+                        sprintf('Возврат по заказу %s в размере %s р. произведен.
                         Срок возврата денежных средств зависит от вашего банка.
-                        
-                        Если у вас возникли сложности с заказом - сообщите нам. 
+
+                        Если у вас возникли сложности с заказом - сообщите нам.
                         Мы сделаем все возможное, чтобы вам помочь!',
                         $order->number,
                         (int) $order->price)
@@ -598,7 +603,7 @@ class OrderObserver
                 if($override_delivery->status == DeliveryStatus::ON_POINT_IN) {
                     return [
                         sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. передано в службу доставки. 
+                        sprintf('Заказ №%s на сумму %s р. передано в службу доставки.
                         Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                         $order->number,
                         (int) $order->price,
@@ -609,7 +614,7 @@ class OrderObserver
                 if($override_delivery->status == DeliveryStatus::READY_FOR_RECIPIENT) {
                     return [
                         sprintf('ЗАКАЗ %s ОЖИДАЕТ В ПУНКТЕ ВЫДАЧИ!', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s. 
+                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s.
                         ВНИМАНИЕ! Получить заказ может только контактное лицо, указанное в заказе, с паспортом.',
                         $order->number,
                         (int) $order->price,
@@ -629,7 +634,7 @@ class OrderObserver
                     <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
                 ];
             }
-            
+
             if($override == static::OVERRIDE_AWAITING_PAYMENT) {
                 return [
                     '%s, ВАШ ЗАКАЗ ОЖИДАЕТ ОПЛАТЫ',
@@ -656,7 +661,7 @@ class OrderObserver
                 case OrderStatus::DELIVERING:
                     return [
                         sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки. 
+                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
                         <br>Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                         $order->number,
                         (int) $order->price,
@@ -992,43 +997,58 @@ class OrderObserver
         return $paid && $created;
     }
 
-    public function testSend()
+    protected function getCertificateRequestId(Order $order): ?int
     {
-        $order = Order::find(1014);
-        // $order = Order::query()
-        //     ->whereNotNull('customer_id')
-        //     ->where('status', '=', OrderStatus::CREATED)
-        //     // ->whereNotIn('payment_status', [PaymentStatus::PAID, PaymentStatus::HOLD])
-        //     ->whereDeliveryType(DeliveryType::TYPE_CONSOLIDATION)
-        //     ->whereHas('deliveries', function ($q) {
-        //         $q->where('delivery_method', DeliveryMethod::METHOD_DELIVERY);
-        //     })
-        //     ->whereDoesntHave('deliveries', function ($q) {
-        //         $q->where('delivery_method', DeliveryMethod::METHOD_PICKUP);
-        //     })
-        //     ->latest()
-        //     ->firstOrFail();
+        if (!$order->isCertificateOrder())
+            return null;
 
-        $st = $order->status;
-        $ps = $order->payment_status;
+        /** @var BasketItem $basketItem */
+        $basketItem = $order->basket->items->first();
+        if (!$basketItem || !isset($basketItem->product['request_id']))
+            return null;
 
-        $order->status = OrderStatus::DONE;
-        $order->payment_status = PaymentStatus::PAID;
-
-        $order->save();
-
-        // $this->sendStatusNotification($notificationService, $order, $user_id);
-
-        // $order->status = OrderStatus::TRANSFERRED_TO_DELIVERY;
-        // $order->payment_status = PaymentStatus::PAID;
-
-        // $order->save();
-
-        dump("IGNORE FROM HERE");
-
-        $order->status = $st;
-        $order->payment_status = $ps;
-        
-        $order->save();
+        return (int) $basketItem->product['request_id'];
     }
+
+    /**
+     * Связать заказ сертификата с order
+     * @param  Order  $order
+     */
+    protected function setOrderIdToCertificateRequest(Order $order): void
+    {
+        $certificateRequestId = $this->getCertificateRequestId($order);
+
+        if (!$certificateRequestId)
+            return;
+
+        resolve(CertificateService::class)->updateRequest($certificateRequestId, new CertificateRequestDto([
+            'order_id' => $order->id,
+            'order_number' => $order->number,
+            'status' => CertificateRequestStatusDto::STATUS_CREATED
+        ]));
+    }
+
+    /**
+     * Обновить статус заказа сертификата
+     * @param  Order  $order
+     */
+    protected function setPaymentStatusToCertificateRequest(Order $order): void
+    {
+        // если платежный статус не изменился, то продолжать смысла нет
+        if ($order->payment_status === $order->getOriginal('payment_status'))
+            return;
+
+        $certificateRequestId = $this->getCertificateRequestId($order);
+
+        if (!$certificateRequestId)
+            return;
+
+        if ($order->isPaid()) {
+            $certificateService = resolve(CertificateService::class);
+            $certificateService->updateRequest($certificateRequestId, new CertificateRequestDto([
+                'status' => CertificateRequestStatusDto::STATUS_PAID
+            ]));
+        }
+    }
+
 }

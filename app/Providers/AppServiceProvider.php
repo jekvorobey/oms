@@ -73,7 +73,6 @@ class AppServiceProvider extends ServiceProvider
         BasketItem::observe(BasketItemObserver::class);
 
         Order::observe(OrderObserver::class);
-        Order::observe(CertificateObserver::class);
         OrderComment::observe(OrderCommentObserver::class);
 
         OrderReturn::observe(OrderReturnObserver::class);
