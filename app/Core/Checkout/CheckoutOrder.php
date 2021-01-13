@@ -10,7 +10,6 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderBonus;
-use App\Models\Order\OrderCertificate;
 use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderPromoCode;
 use App\Models\Payment\Payment;
@@ -19,7 +18,6 @@ use Carbon\Carbon;
 use Exception;
 use Greensight\Customer\Dto\CustomerBonusDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
-use Greensight\Marketing\Services\Certificate\CardService;
 use Greensight\Store\Dto\StockDto;
 use Greensight\Store\Services\StockService\StockService;
 use Illuminate\Support\Collection;
@@ -27,6 +25,7 @@ use Illuminate\Support\Facades\DB;
 use Pim\Dto\PublicEvent\PublicEventTicketTypeDto;
 use Pim\Dto\PublicEvent\TicketDto;
 use Pim\Dto\PublicEvent\TicketStatus;
+use Pim\Services\CertificateService\CertificateService;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use Pim\Services\PublicEventTicketTypeService\RestPublicEventTicketTypeService;
 use Spatie\CalendarLinks\Link;
@@ -59,7 +58,7 @@ class CheckoutOrder
     public $spentBonus;
     /** @var int */
     public $addedBonus;
-    /** @var OrderCertificate[] */
+    /** @var array */
     public $certificates;
     /** @var CheckoutItemPrice[] */
     public $prices;
@@ -101,7 +100,7 @@ class CheckoutOrder
             'spentBonus' => $order->spentBonus,
             'addedBonus' => $order->addedBonus,
             'promoCodes' => $promoCodes,
-            'certificates' => $certificates,
+            'certificates' => $order->certificates,
             'prices' => $prices,
             'discounts' => $discounts,
             'bonuses' => $bonuses,
@@ -143,13 +142,6 @@ class CheckoutOrder
             $order->bonuses[] = new OrderBonus($bonus);
         }
 
-        $order->certificates = [];
-        foreach ($certificates as $certificate) {
-            $certificate['card_id'] = $certificate['id'];
-            unset($certificate['id']);
-            $order->certificates[] = new OrderCertificate($certificate);
-        }
-
         return $order;
     }
 
@@ -164,6 +156,7 @@ class CheckoutOrder
             $this->commitPrices();
 
             $order = $this->createOrder();
+            $this->spendCertificates($order);
             $this->debitingBonus($order);
             $this->createShipments($order);
             $this->createTickets($order);
@@ -171,7 +164,7 @@ class CheckoutOrder
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
             $this->createOrderBonuses($order);
-            $this->createOrderCertificates($order);
+
 
             return [$order->id, $order->number];
         });
@@ -267,24 +260,6 @@ class CheckoutOrder
         }
     }
 
-    private function createOrderCertificates(Order $order): void
-    {
-        if (!count($this->certificates))
-            return;
-
-        $cardService = resolve(CardService::class);
-
-        foreach ($this->certificates as $certificate) {
-            $status = $cardService->pay($certificate->card_id, $certificate->amount);
-            if (!$status->isSuccess())
-                throw new Exception($status->message);
-
-            $certificate->status = OrderCertificate::STATUS_APPLIED;
-            $certificate->order_id = $order->id;
-            $certificate->save();
-        }
-    }
-
     private function createOrder(): Order
     {
         $order = new Order();
@@ -300,6 +275,7 @@ class CheckoutOrder
         $order->price = $this->price;
         $order->spent_bonus = $this->spentBonus;
         $order->added_bonus = $this->addedBonus;
+        $order->certificates = $this->certificates;
 
         $order->delivery_type = $this->deliveryTypeId;
         $order->delivery_cost = $this->deliveryCost;
@@ -502,6 +478,21 @@ class CheckoutOrder
 
                 throw new Exception("Ошибка при сохранении билета: {$e->getMessage()}");
             }
+        }
+    }
+
+    /**
+     * @param Order $order
+     */
+    private function spendCertificates(Order $order)
+    {
+        $amount = 0;
+        $certificates = (array) $order->certificates;
+        foreach ($certificates as $certificate) {
+            $amount += $certificate['amount'];
+        }
+        if ($amount > 0) {
+            resolve(CertificateService::class)->spend($amount, $this->customerId, $order->id, $order->number);
         }
     }
 

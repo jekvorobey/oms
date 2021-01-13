@@ -39,6 +39,7 @@ use Illuminate\Support\Collection;
  * @property float $price
  * @property int $spent_bonus
  * @property int $added_bonus
+ * @property array $certificates
  *
  * @property int $delivery_type - тип доставки (см. \App\Models\Delivery\DeliveryType)
  * @property float $delivery_price - стоимость доставки iBT (с учетом скидки)
@@ -65,7 +66,6 @@ use Illuminate\Support\Collection;
  * @property Collection|OrderDiscount[] $discounts - скидки к заказу
  * @property Collection|OrderPromoCode[] $promoCodes - промокоды применённые к заказу
  * @property Collection|OrderBonus[] $bonuses - бонусы применённые к заказу
- * @property Collection|OrderCertificate[] $certificates - сертификаты применённые к заказу
  * @property Collection|OrderReturn[] $orderReturns - возвраты по заказу
  * @property Collection|History[] $history - история изменений
  */
@@ -78,6 +78,11 @@ class Order extends OmsModel
     protected $user;
     /** @var CustomerDto */
     protected $customer;
+
+    /** @var array */
+    protected $casts = [
+        'certificates' => 'array',
+    ];
 
     /**
      * @return integer
@@ -143,15 +148,6 @@ class Order extends OmsModel
     {
         return $this->hasMany(OrderBonus::class, 'order_id');
     }
-
-    /**
-     * @return HasMany
-     */
-    public function certificates(): HasMany
-    {
-        return $this->hasMany(OrderCertificate::class, 'order_id');
-    }
-
 
     /**
      * @return HasMany
