@@ -49,7 +49,7 @@ class ShipmentObserver
     {
         History::saveEvent(HistoryType::TYPE_CREATE, [$shipment->delivery->order, $shipment], $shipment);
     }
-    
+
     /**
      * Handle the shipment "updating" event.
      * @param  Shipment $shipment
@@ -60,7 +60,7 @@ class ShipmentObserver
         if (!$this->checkAllProductsPacked($shipment)) {
             return false;
         }
-        
+
         return true;
     }
 
@@ -79,7 +79,7 @@ class ShipmentObserver
         $this->setTakenStatusToCargo($shipment);
         $this->sendStatusNotification($shipment);
     }
-    
+
     /**
      * Handle the shipment "deleting" event.
      * @param  Shipment $shipment
@@ -88,12 +88,12 @@ class ShipmentObserver
     public function deleting(Shipment $shipment)
     {
         History::saveEvent(HistoryType::TYPE_DELETE, [$shipment->delivery->order, $shipment], $shipment);
-    
+
         foreach ($shipment->packages as $package) {
             $package->delete();
         }
     }
-    
+
     /**
      * Handle the shipment "deleted" event.
      * @param  Shipment $shipment
@@ -120,7 +120,7 @@ class ShipmentObserver
         $this->setCanceledAt($shipment);
         $this->setFsd($shipment);
     }
-    
+
     /**
      * Handle the shipment "saved" event.
      * @param  Shipment $shipment
@@ -137,7 +137,7 @@ class ShipmentObserver
         $this->add2CargoHistory($shipment);
         $this->sendCreatedNotification($shipment);
     }
-    
+
     /**
      * Проверить, что все товары отправления упакованы по коробкам, если статус меняется на "Собрано"
      * @param Shipment $shipment
@@ -153,10 +153,10 @@ class ShipmentObserver
 
             return $deliveryService->checkAllShipmentProductsPacked($shipment);
         }
-        
+
         return true;
     }
-    
+
     /**
      * Пересчитать груз и доставку при сохранении отправления
      * @param Shipment $shipment
@@ -170,16 +170,16 @@ class ShipmentObserver
                 break;
             }
         }
-        
+
         if ($needRecalc) {
             if ($shipment->cargo_id) {
                 $shipment->cargo->recalc();
             }
-    
+
             $shipment->delivery->recalc();
         }
     }
-    
+
     /**
      * Пересчитать старый и новый грузы при сохранении отправления
      * @param Shipment $shipment
@@ -204,7 +204,7 @@ class ShipmentObserver
             }
         }
     }
-    
+
     /**
      * Пометить заказ как проблемный в случае проблемного отправления
      * @param Shipment $shipment
@@ -218,7 +218,7 @@ class ShipmentObserver
             $orderService->markAsProblem($shipment->delivery->order);
         }
     }
-    
+
     /**
      * Пометить заказ как непроблемный, если все его отправления непроблемные
      * @param Shipment $shipment
@@ -231,7 +231,7 @@ class ShipmentObserver
             $orderService->markAsNonProblem($shipment->delivery->order);
         }
     }
-    
+
     /**
      * Создать/обновить заказ на доставку
      * Создание заказа на доставку происходит когда все отправления доставки получают статус "Все товары отправления в наличии"
@@ -254,7 +254,7 @@ class ShipmentObserver
             }
         }
     }
-    
+
     /**
      * Добавить отправление в груз
      * @param Shipment $shipment
@@ -268,7 +268,7 @@ class ShipmentObserver
         } catch (Exception $e) {
         }
     }
-    
+
     /**
      * Добавить информацию о добавлении/удалении отправления в/из груз/а
      * @param  Shipment  $shipment
@@ -279,7 +279,7 @@ class ShipmentObserver
             if ($shipment->getOriginal('cargo_id')) {
                 History::saveEvent(HistoryType::TYPE_DELETE_LINK, Cargo::find($shipment->getOriginal('cargo_id')), $shipment);
             }
-            
+
             if ($shipment->cargo_id) {
                 History::saveEvent(HistoryType::TYPE_CREATE_LINK, Cargo::find($shipment->cargo_id), $shipment);
             }
