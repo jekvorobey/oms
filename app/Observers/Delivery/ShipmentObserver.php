@@ -430,7 +430,7 @@ class ShipmentObserver
     {
         if ($shipment->status == ShipmentStatus::ON_POINT_IN && $shipment->status != $shipment->getOriginal('status')) {
             $cargo = $shipment->cargo;
-            if ($cargo->status == CargoStatus::TAKEN) {
+            if (empty($cargo) || $cargo->status == CargoStatus::TAKEN) {
                 return;
             }
 
