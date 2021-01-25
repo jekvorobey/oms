@@ -7,11 +7,11 @@ use App\Models\Payment\Payment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
-use YandexCheckout\Client;
-use YandexCheckout\Model\Notification\NotificationSucceeded;
-use YandexCheckout\Model\Notification\NotificationWaitingForCapture;
-use YandexCheckout\Model\NotificationEventType;
-use YandexCheckout\Model\PaymentStatus;
+use YooKassa\Client;
+use YooKassa\Model\Notification\NotificationSucceeded;
+use YooKassa\Model\Notification\NotificationWaitingForCapture;
+use YooKassa\Model\NotificationEventType;
+use YooKassa\Model\PaymentStatus;
 
 /**
  * Class YandexPaymentSystem
