@@ -281,7 +281,6 @@ class DeliveryService
         $courierCallInputDto = new CourierCallInputDto();
 
         $senderDto = new SenderDto();
-        $courierCallInputDto->sender = $senderDto;
         $senderDto->address_string = isset($store->address['address_string']) ? $store->address['address_string'] : '';
         $senderDto->post_index = isset($store->address['post_index']) ? $store->address['post_index'] : '';
         $senderDto->country_code = isset($store->address['country_code']) ? $store->address['country_code'] : '';
@@ -297,9 +296,9 @@ class DeliveryService
         $senderDto->contact_name = !is_null($store->storeContact()) ? $store->storeContact()[0]->name : '';
         $senderDto->email = !is_null($store->storeContact()) ? $store->storeContact()[0]->email : '';
         $senderDto->phone = !is_null($store->storeContact()) ? $store->storeContact()[0]->phone : '';
-
+        $courierCallInputDto->sender = $senderDto;
         $deliveryCargoDto = new DeliveryCargoDto();
-        $courierCallInputDto->cargo = $deliveryCargoDto;
+
         $deliveryCargoDto->weight = $cargo->weight;
         $deliveryCargoDto->width = $cargo->width;
         $deliveryCargoDto->height = $cargo->height;
@@ -336,7 +335,9 @@ class DeliveryService
         }
 
         $dayPlus = 0;
-        $date = new \DateTime();
+        // @todo: fix get timezone by store
+        $timezone = new \DateTimeZone('Europe/Moscow');
+        $date = new \DateTime('now', $timezone);
         while ($dayPlus <= 6) {
             $date = $date->modify('+' . $dayPlus . ' day' . ($dayPlus > 1 ?  's': ''));
             //Получаем номер дня недели (1 - понедельник, ..., 7 - воскресенье)
@@ -347,11 +348,17 @@ class DeliveryService
                 continue;
             }
 
+            $deliveryDateTo = new \DateTime($date->format('Y-m-d') . 'T' . $storePickupTimes[$dayOfWeek]->pickup_time_end, $timezone);
+            if ($date > $deliveryDateTo) {
+                continue;
+            }
+
             $deliveryCargoDto->date = $date->format('d.m.Y');
             $deliveryCargoDto->time_code = $storePickupTimes[$dayOfWeek]->pickup_time_code;
             $deliveryCargoDto->time_start = $storePickupTimes[$dayOfWeek]->pickup_time_start;
             $deliveryCargoDto->time_end = $storePickupTimes[$dayOfWeek]->pickup_time_end;
 
+            $courierCallInputDto->cargo = $deliveryCargoDto;
             try {
                 $courierCallOutputDto = $courierCallService->createCourierCall(
                     $cargo->delivery_service,
