@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
+use App\Models\Order\OrderStatus;
 use App\Services\BasketService;
 use App\Services\OrderService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
@@ -216,8 +217,10 @@ class BasketController extends Controller
         ]);
 
         $basketsQty = DB::table(with(new BasketItem())->getTable())
+            ->join('orders', 'orders.basket_id', '=', 'basket_items.id')
             ->select('offer_id', DB::raw('count(*) as total'))
             ->whereIn('offer_id', $data['offer_ids'])
+            ->where('orders.status', '=', OrderStatus::DONE)
             ->groupBy('offer_id')
             ->pluck('total','offer_id')
             ->all();
