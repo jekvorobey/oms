@@ -233,6 +233,7 @@ class OrderObserver
         $this->setAwaitingConfirmationStatus($order);
         $this->sendTicketsEmail($order);
         $this->returnTickets($order);
+        $this->setCanceledCertificates($order);
 
         //Данная команда должна быть в самом низу перед всеми $this->set*Status()
         $this->setStatusAt($order);
@@ -430,6 +431,25 @@ class OrderObserver
             $orderService = resolve(OrderService::class);
             //Не сохраняем данные по заказу внутри метода возврата билетов, иначе будет цикл
             $orderService->returnTickets(collect()->push($order), false);
+        }
+    }
+
+    /**
+     * Возврат сертификатов
+     *
+     * @param Order $order
+     */
+    protected function setCanceledCertificates(Order $order): void
+    {
+        if ($order->is_canceled != $order->getOriginal('is_canceled')) {
+            $amount = 0;
+            $certificates = (array) $order->certificates;
+            foreach ($certificates as $certificate) {
+                $amount += $certificate['amount'];
+            }
+            if ($amount > 0) {
+                resolve(CertificateService::class)->rollback($amount, $order->customer_id, $order->id, $order->number);
+            }
         }
     }
 
