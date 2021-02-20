@@ -220,7 +220,10 @@ class BasketController extends Controller
             ->join('orders', 'orders.basket_id', '=', 'basket_items.id')
             ->select('offer_id', DB::raw('count(*) as total'))
             ->whereIn('offer_id', $data['offer_ids'])
-            ->where('orders.status', '=', OrderStatus::DONE)
+            ->where('orders.is_canceled', false)
+            ->where('orders.is_problem', false)
+            ->whereIn('orders.status', [OrderStatus::IN_PROCESSING, OrderStatus::DELIVERING,
+                OrderStatus::READY_FOR_RECIPIENT, OrderStatus::DONE])
             ->groupBy('offer_id')
             ->pluck('total','offer_id')
             ->all();
