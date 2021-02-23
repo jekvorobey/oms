@@ -468,7 +468,11 @@ class DeliveryService
         /**
          * Проверяем, что товары по все отправлениям доставки на комплектации или собраны
          */
+        $cntShipments = 0;
         foreach ($delivery->shipments as $shipment) {
+            if ($shipment->is_canceled)
+                continue;
+
             $validShipmentStatuses = [
                 ShipmentStatus::ASSEMBLING,
                 ShipmentStatus::ASSEMBLED,
@@ -482,9 +486,16 @@ class DeliveryService
             ])) {
                 $validShipmentStatuses = [ShipmentStatus::ASSEMBLED];
             }
+
             if (!in_array($shipment->status, $validShipmentStatuses)) {
                 throw new Exception('Не все отправления доставки подтверждены/собраны мерчантами');
             }
+
+            $cntShipments++;
+        }
+
+        if (!$cntShipments) {
+            throw new Exception('Не все отправления доставки подтверждены/собраны мерчантами');
         }
 
         $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
@@ -589,6 +600,8 @@ class DeliveryService
 
         $deliveryOrderCostDto->cod_cost = 0;
         foreach ($delivery->shipments as $shipment) {
+            if ($shipment->is_canceled)
+                continue;
             /** @var Shipment $shipment */
             $deliveryOrderCostDto->cod_cost += $shipment->basketItems->sum('cost');
         }
@@ -654,7 +667,6 @@ class DeliveryService
             $senderDto->email = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_EMAIL];
             $senderDto->phone = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_PHONE];
         }
-
         //Для самовывоза указываем адрес ПВЗ
         if (!$delivery->delivery_address && $delivery->point_id) {
             /** @var ListsService $listsService */
@@ -697,6 +709,10 @@ class DeliveryService
         $deliveryOrderInputDto->places = $places;
         $packageNumber = 1;
         foreach ($delivery->shipments as $shipment) {
+            if ($shipment->is_canceled) {
+                continue;
+            }
+
             if ($shipment->packages && $shipment->packages->isNotEmpty()) {
                 foreach ($shipment->packages as $package) {
                     $deliveryOrderPlaceDto = new DeliveryOrderPlaceDto();
@@ -757,7 +773,7 @@ class DeliveryService
                 }
             }
         }
-
+        
         return $deliveryOrderInputDto;
     }
 

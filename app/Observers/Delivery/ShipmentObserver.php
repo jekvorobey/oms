@@ -379,6 +379,8 @@ class ShipmentObserver
 
             $allShipmentsHasStatus = true;
             foreach ($delivery->shipments as $deliveryShipment) {
+                if ($deliveryShipment->is_canceled)
+                    continue;
                 if ($deliveryShipment->status < $shipment->status) {
                     $allShipmentsHasStatus = false;
                     break;
@@ -498,7 +500,7 @@ class ShipmentObserver
                 $vars = [
                     'QUANTITY_ORDERS' => 1,
                     'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
-                    'CUSTOMER_NAME' => $user->first_name,
+                    'CUSTOMER_NAME' => $user ? $user->first_name : '',
                     'SUM_ORDERS' => (int) $shipment->cost,
                     'GOODS_NAME' => $shipment->items->first()->basketItem->name,
                     'QUANTITY_GOODS' => (int) $shipment->items->first()->basketItem->qty,
