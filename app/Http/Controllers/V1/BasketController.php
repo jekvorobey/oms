@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
+use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Services\BasketService;
 use App\Services\OrderService;
@@ -216,10 +217,10 @@ class BasketController extends Controller
             'offer_ids.*' => 'integer',
         ]);
 
-        $basketsQty = DB::table(with(new BasketItem())->getTable())
-            ->join('orders', 'orders.basket_id', '=', 'basket_items.id')
-            ->select('offer_id', DB::raw('count(*) as total'))
-            ->whereIn('offer_id', $data['offer_ids'])
+        $basketsQty = DB::table(with(new Order())->getTable())
+            ->leftJoin('basket_items', 'basket_items.basket_id', '=', 'orders.basket_id')
+            ->select('basket_items.offer_id', DB::raw('count(*) as total'))
+            ->whereIn('basket_items.offer_id', $data['offer_ids'])
             ->where('orders.is_canceled', false)
             ->where('orders.is_problem', false)
             ->whereIn('orders.status', [OrderStatus::IN_PROCESSING, OrderStatus::DELIVERING,
