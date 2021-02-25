@@ -13,6 +13,7 @@ use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Services\ListsService\ListsService;
+use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use MerchantManagement\Services\MerchantService\MerchantService;
@@ -73,6 +74,30 @@ class DocumentService
                         $productsByOffers[$item->basketItem->offer_id]['product'] : [];
                     if ($shipment->delivery->delivery_service == LogisticsDeliveryService::SERVICE_CDEK) {
                         $package->xml_id = $shipment->delivery->xml_id;
+                    }
+
+                    // (ib-74) Если boxberry заказ и не знаем штрих код, то пытаемся его запросить здесь
+                    // запросив статус заказа (в нем может быть additional_provider_number)
+                    // Его изначально нет, и это происходит постоянно, потому что при создании заказа
+                    // additional_provider_number = null, он появляется у apiship позднее (я заметил задержку в минут 5)
+                    if ($shipment->delivery->delivery_service === LogisticsDeliveryService::SERVICE_BOXBERRY && !$package->xml_id)
+                    {
+                        if ($shipment->delivery->xml_id)
+                        {
+                            // делаем это в транзакции - что бы не поломать остальной код
+                            try {
+                                $statuses = resolve(DeliveryOrderService::class)
+                                    ->statusOrders(LogisticsDeliveryService::SERVICE_BOXBERRY, [$shipment->delivery->xml_id]);
+
+                                foreach ($statuses as $status) {
+                                    $package->xml_id = $status->additional_provider_number ?? null;
+                                    if ($package->xml_id) {
+                                        $package->save();
+                                        break;
+                                    }
+                                }
+                            } catch (\Exception $e) {}
+                        }
                     }
 
                     $tableRows[] = [
