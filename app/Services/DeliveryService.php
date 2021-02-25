@@ -297,6 +297,27 @@ class DeliveryService
         $senderDto->email = !is_null($store->storeContact()) ? $store->storeContact()[0]->email : '';
         $senderDto->phone = !is_null($store->storeContact()) ? $store->storeContact()[0]->phone : '';
         $courierCallInputDto->sender = $senderDto;
+
+        if ($store->cdek_address && !empty($store->cdek_address['address_string'])) {
+            $cdekSenderDto = new SenderDto();
+            $cdekSenderDto->address_string = isset($store->cdek_address['address_string']) ? $store->cdek_address['address_string'] : '';
+            $cdekSenderDto->post_index = isset($store->cdek_address['post_index']) ? $store->cdek_address['post_index'] : '';
+            $cdekSenderDto->country_code = isset($store->cdek_address['country_code']) ? $store->cdek_address['country_code'] : '';
+            $cdekSenderDto->region = isset($store->cdek_address['region']) ? $store->cdek_address['region'] : '';
+            $cdekSenderDto->area = isset($store->cdek_address['area']) ? $store->cdek_address['area'] : '';
+            $cdekSenderDto->city = isset($store->cdek_address['city']) ? $store->cdek_address['city'] : '';
+            $cdekSenderDto->city_guid = isset($store->cdek_address['city_guid']) ? $store->cdek_address['city_guid'] : '';
+            $cdekSenderDto->street = isset($store->cdek_address['street']) ? $store->cdek_address['street'] : '';
+            $cdekSenderDto->house = isset($store->cdek_address['house']) ? $store->cdek_address['house'] : '';
+            $cdekSenderDto->block = isset($store->cdek_address['block']) ? $store->cdek_address['block'] : '';
+            $cdekSenderDto->flat = isset($store->cdek_address['flat']) ? $store->cdek_address['flat'] : '';
+            $cdekSenderDto->company_name = $merchant->legal_name;
+            $cdekSenderDto->contact_name = !is_null($store->storeContact()) ? $store->storeContact()[0]->name : '';
+            $cdekSenderDto->email = !is_null($store->storeContact()) ? $store->storeContact()[0]->email : '';
+            $cdekSenderDto->phone = !is_null($store->storeContact()) ? $store->storeContact()[0]->phone : '';
+            $courierCallInputDto->cdekSender = $cdekSenderDto;
+        }
+
         $deliveryCargoDto = new DeliveryCargoDto();
 
         $deliveryCargoDto->weight = $cargo->weight;
@@ -628,6 +649,13 @@ class DeliveryService
             $storeAddress['street'] = $storeAddress['street'] ? : '-'; //у cdek и b2cpl улица обязательна
             $senderDto = new DeliveryOrderInput\SenderDto($storeAddress);
             $deliveryOrderInputDto->sender = $senderDto;
+            // если есть доп адрес для сдэка, то его тоже передаем
+            $cdekSenderAddress = $store->cdek_address;
+            if ($cdekSenderAddress && !empty($cdekSenderAddress['address_string'])) {
+                $cdekSenderAddress['street'] = $cdekSenderAddress['street'] ? : '-';
+                $deliveryOrderInputDto->cdekSender = $cdekSenderAddress;
+            }
+
             $senderDto->is_seller = true;
             $senderDto->company_name = $merchant->legal_name;
             $senderDto->store_id = $shipment->store_id;
@@ -773,7 +801,7 @@ class DeliveryService
                 }
             }
         }
-        
+
         return $deliveryOrderInputDto;
     }
 
