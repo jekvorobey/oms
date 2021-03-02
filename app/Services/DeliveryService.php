@@ -487,7 +487,7 @@ class DeliveryService
     {
         $delivery->loadMissing('shipments');
         /**
-         * Проверяем, что товары по все отправлениям доставки на комплектации или собраны
+         * Проверяем, что товары по все отправлениям доставки собраны
          */
         $cntShipments = 0;
         foreach ($delivery->shipments as $shipment) {
@@ -495,18 +495,8 @@ class DeliveryService
                 continue;
 
             $validShipmentStatuses = [
-                ShipmentStatus::ASSEMBLING,
                 ShipmentStatus::ASSEMBLED,
             ];
-            /**
-             * Не все службы доставки поддерживают обновление заказа на доставку.
-             * Поэтому для тех, кто не поддерживает, создаем заказ только когда все мерчанты соберут свои отправления
-             */
-            if (in_array($delivery->delivery_service, [
-                LogisticsDeliveryService::SERVICE_DOSTAVISTA
-            ])) {
-                $validShipmentStatuses = [ShipmentStatus::ASSEMBLED];
-            }
 
             if (!in_array($shipment->status, $validShipmentStatuses)) {
                 throw new Exception('Не все отправления доставки подтверждены/собраны мерчантами');
