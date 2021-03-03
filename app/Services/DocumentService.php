@@ -80,16 +80,15 @@ class DocumentService
                     // запросив статус заказа (в нем может быть barcode)
                     // Его изначально нет, и это происходит постоянно, потому что при создании заказа
                     // barcode = null, он появляется у apiship позднее (задержка порядка минут 5)
-                    if ($shipment->delivery->delivery_service === LogisticsDeliveryService::SERVICE_BOXBERRY && !$package->xml_id)
+                    if ($shipment->delivery->delivery_service === LogisticsDeliveryService::SERVICE_BOXBERRY)
                     {
-                        if ($shipment->delivery->xml_id)
+                        if ($shipment->delivery->xml_id && !$shipment->delivery->barcode)
                         {
                             // делаем это в транзакции - что бы не поломать остальной код
                             try {
-                                $statuses = resolve(DeliveryOrderService::class)
-                                    ->statusOrders(LogisticsDeliveryService::SERVICE_BOXBERRY, [$shipment->delivery->xml_id]);
-
-                                $status = array_shift($statuses);
+                                $status = resolve(DeliveryOrderService::class)
+                                    ->statusOrders(LogisticsDeliveryService::SERVICE_BOXBERRY, [$shipment->delivery->xml_id])
+                                    ->first();
                                 $isChange = false;
                                 if (!$shipment->delivery->barcode && $status->barcode) {
                                     $shipment->delivery->barcode = $status->barcode;
