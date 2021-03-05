@@ -240,8 +240,11 @@ class ShipmentObserver
      */
     protected function upsertDeliveryOrder(Shipment $shipment): void
     {
-        if ($shipment->status != $shipment->getOriginal('status') &&
-            in_array($shipment->status, [ShipmentStatus::ASSEMBLING, ShipmentStatus::ASSEMBLED])
+        if (
+            ($shipment->is_canceled != $shipment->getOriginal('is_canceled')) ||
+            ($shipment->status != $shipment->getOriginal('status') &&
+                in_array($shipment->status, [ShipmentStatus::ASSEMBLING, ShipmentStatus::ASSEMBLED])
+            )
         ) {
             try {
                 $shipment->loadMissing('delivery.shipments');
@@ -251,6 +254,7 @@ class ShipmentObserver
                 $deliveryService = resolve(DeliveryService::class);
                 $deliveryService->saveDeliveryOrder($delivery);
             } catch (Exception $e) {
+                logger(['upsertDeliveryOrder error' => $e->getMessage()]);
             }
         }
     }
