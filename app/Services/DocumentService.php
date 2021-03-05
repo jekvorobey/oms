@@ -77,24 +77,29 @@ class DocumentService
                     }
 
                     // (ib-74) Если boxberry заказ и не знаем штрих код, то пытаемся его запросить здесь
-                    // запросив статус заказа (в нем может быть additional_provider_number)
+                    // запросив статус заказа (в нем может быть barcode)
                     // Его изначально нет, и это происходит постоянно, потому что при создании заказа
-                    // additional_provider_number = null, он появляется у apiship позднее (я заметил задержку в минут 5)
-                    if ($shipment->delivery->delivery_service === LogisticsDeliveryService::SERVICE_BOXBERRY && !$package->xml_id)
+                    // barcode = null, он появляется у apiship позднее (задержка порядка минут 5)
+                    if ($shipment->delivery->delivery_service === LogisticsDeliveryService::SERVICE_BOXBERRY)
                     {
-                        if ($shipment->delivery->xml_id)
+                        if ($shipment->delivery->xml_id && !$shipment->delivery->barcode)
                         {
                             // делаем это в транзакции - что бы не поломать остальной код
                             try {
-                                $statuses = resolve(DeliveryOrderService::class)
-                                    ->statusOrders(LogisticsDeliveryService::SERVICE_BOXBERRY, [$shipment->delivery->xml_id]);
-
-                                foreach ($statuses as $status) {
-                                    $package->xml_id = $status->additional_provider_number ?? null;
-                                    if ($package->xml_id) {
-                                        $package->save();
-                                        break;
-                                    }
+                                $status = resolve(DeliveryOrderService::class)
+                                    ->statusOrders(LogisticsDeliveryService::SERVICE_BOXBERRY, [$shipment->delivery->xml_id])
+                                    ->first();
+                                $isChange = false;
+                                if (!$shipment->delivery->barcode && $status->barcode) {
+                                    $shipment->delivery->barcode = $status->barcode;
+                                    $isChange = true;
+                                }
+                                if (!$shipment->delivery->tracknumber && $status->tracknumber) {
+                                    $shipment->delivery->tracknumber = $status->tracknumber;
+                                    $isChange = true;
+                                }
+                                if ($isChange) {
+                                    $shipment->delivery->save();
                                 }
                             } catch (\Exception $e) {}
                         }
@@ -103,7 +108,7 @@ class DocumentService
                     $tableRows[] = [
                         'table.row' => $packageNum == 0 ? 1 : '',
                         'table.shipment_number' => $packageNum == 0 ? $shipment->number : '',
-                        'table.package_barcode' => $itemNum == 0 ? $package->xml_id : '',
+                        'table.package_barcode' => $itemNum == 0 ? ($package->xml_id ?? $shipment->delivery->barcode) : '',
                         'table.shipment_cost' => $itemNum == 0 ? price_format(
                             $package->items->sum(function (ShipmentPackageItem $item) {
                                 return $item->qty * ($item->basketItem->price / $item->basketItem->qty);

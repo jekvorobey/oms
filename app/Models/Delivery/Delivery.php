@@ -22,6 +22,8 @@ use Illuminate\Support\Collection;
  * @property int $delivery_method
  * @property int $delivery_service
  * @property string $xml_id - идентификатор заказа на доставку в службе доставки
+ * @property string $tracknumber - трекинг код (соответствует providerNumber в apiship)
+ * @property string $barcode - штрихкод (соответствует additionalProviderNumber в apiship)
  * @property string $error_xml_id - текст последней ошибки при создании/обновлении заказа на доставку в службе доставки
  * @property string $status_xml_id - статус заказа на доставку в службе доставки
  * @property int $payment_status - статус оплаты
@@ -67,6 +69,8 @@ class Delivery extends OmsModel
         'delivery_method',
         'delivery_service',
         'xml_id',
+        'tracknumber',
+        'barcode',
         'tariff_id',
         'point_id',
         'number',

@@ -518,6 +518,12 @@ class DeliveryService
                     $deliveryOrderInputDto);
                 if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->xml_id) {
                     $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
+                    if ($deliveryOrderOutputDto->tracknumber) {
+                        $delivery->tracknumber = $deliveryOrderOutputDto->tracknumber;
+                    }
+                    if ($deliveryOrderOutputDto->barcode) {
+                        $delivery->barcode = $deliveryOrderOutputDto->barcode;
+                    }
                     $delivery->error_xml_id = '';
                 } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
@@ -584,6 +590,8 @@ class DeliveryService
         $deliveryOrderDto = new DeliveryOrderDto();
         $deliveryOrderInputDto->order = $deliveryOrderDto;
         $deliveryOrderDto->number = $delivery->number;
+        $deliveryOrderDto->tracknumber = $delivery->tracknumber;
+        $deliveryOrderDto->barcode = $delivery->barcode;
         $deliveryOrderDto->height = $delivery->height;
         $deliveryOrderDto->length = $delivery->length;
         $deliveryOrderDto->width = $delivery->width;
