@@ -288,6 +288,7 @@ class DeliveryService
         $senderDto->area = isset($store->address['area']) ? $store->address['area'] : '';
         $senderDto->city = isset($store->address['city']) ? $store->address['city'] : '';
         $senderDto->city_guid = isset($store->address['city_guid']) ? $store->address['city_guid'] : '';
+        $senderDto->region_guid = isset($store->address['region_guid']) ? $store->address['region_guid'] : '';
         $senderDto->street = isset($store->address['street']) ? $store->address['street'] : '';
         $senderDto->house = isset($store->address['house']) ? $store->address['house'] : '';
         $senderDto->block = isset($store->address['block']) ? $store->address['block'] : '';
