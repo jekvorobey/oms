@@ -928,16 +928,7 @@ class OrderObserver
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'RETURN_REPRICE' => (int) $order->price,
-            'NUMBER_BAL' => (function () use ($order) {
-                return $order
-                    ->bonuses
-                    ->filter(function (OrderBonus $bonus) {
-                        $bonus->status == OrderBonus::STATUS_ACTIVE;
-                    })
-                    ->sum(function (OrderBonus $bonus) {
-                        return $bonus->bonus;
-                    });
-            })(),
+            'NUMBER_BAL' => (int) $order->added_bonus,
             'DEADLINE_BAL' => (function () use ($order) {
                 return optional($order
                     ->bonuses()

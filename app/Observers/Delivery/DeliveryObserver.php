@@ -464,17 +464,7 @@ class DeliveryObserver
             });
 
         return [
-            'NUMBER_BAL' => (function () use ($delivery) {
-                return $delivery
-                    ->order
-                    ->bonuses
-                    ->filter(function (OrderBonus $bonus) {
-                        $bonus->status == OrderBonus::STATUS_ACTIVE;
-                    })
-                    ->sum(function (OrderBonus $bonus) {
-                        return $bonus->bonus;
-                    });
-            })(),
+            'NUMBER_BAL' => (int) $delivery->order->added_bonus,
             'DEADLINE_BAL' => (function () use ($delivery) {
                 return optional($delivery
                     ->order
