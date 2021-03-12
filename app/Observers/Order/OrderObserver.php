@@ -841,7 +841,15 @@ class OrderObserver
                 'Адрес доставки' => $deliveryAddress
             ],
             'shipments' => $shipments->toArray(),
-            'delivery_price' => (int) $order->delivery_cost,
+            'delivery_price' => (function () use ($order) {
+                $price = (int) $order->delivery_price;
+
+                if ($price == 0) {
+                    return 'Бесплатно';
+                }
+
+                return $price;
+            })(),
             'delivery_method' => $deliveryMethod,
             'total_price' => (int) $order->price,
             'finisher_text' => sprintf(
