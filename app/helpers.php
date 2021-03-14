@@ -76,3 +76,17 @@ if (! function_exists('short_day_of_week')) {
         return isset($days[$dayNumber]) ? $days[$dayNumber] : '';
     }
 }
+
+if (! function_exists('phoneNumberFormat')) {
+    /**
+     * Приведение номера телефона к формату, принимаемому  API ЛО
+     * @param string|null $phoneNumber
+     * @return string
+     */
+    function phoneNumberFormat(string $phoneNumber = null): string
+    {
+        return ($phoneNumber)
+            ? preg_replace('/[^\d+]+/', '', $phoneNumber)
+            : '';
+    }
+}

@@ -296,7 +296,7 @@ class DeliveryService
         $senderDto->company_name = $merchant->legal_name;
         $senderDto->contact_name = !is_null($store->storeContact()) ? $store->storeContact()[0]->name : '';
         $senderDto->email = !is_null($store->storeContact()) ? $store->storeContact()[0]->email : '';
-        $senderDto->phone = !is_null($store->storeContact()) ? $store->storeContact()[0]->phone : '';
+        $senderDto->phone = !is_null($store->storeContact()) ? phoneNumberFormat($store->storeContact()[0]->phone) : '';
         $courierCallInputDto->sender = $senderDto;
 
         if ($store->cdek_address && !empty($store->cdek_address['address_string'])) {
@@ -315,7 +315,7 @@ class DeliveryService
             $cdekSenderDto->company_name = $merchant->legal_name;
             $cdekSenderDto->contact_name = !is_null($store->storeContact()) ? $store->storeContact()[0]->name : '';
             $cdekSenderDto->email = !is_null($store->storeContact()) ? $store->storeContact()[0]->email : '';
-            $cdekSenderDto->phone = !is_null($store->storeContact()) ? $store->storeContact()[0]->phone : '';
+            $cdekSenderDto->phone = !is_null($store->storeContact()) ? phoneNumberFormat($store->storeContact()[0]->phone) : '';
             $courierCallInputDto->cdekSender = $cdekSenderDto;
         }
 
@@ -662,7 +662,7 @@ class DeliveryService
             $storeContact = $store->storeContact[0];
             $senderDto->contact_name = $storeContact->name;
             $senderDto->email = $storeContact->email;
-            $senderDto->phone = $storeContact->phone;
+            $senderDto->phone = phoneNumberFormat($storeContact->phone);
         } else {
             /**
              * Иначе указываем данные маркетплейса
@@ -729,7 +729,7 @@ class DeliveryService
         $recipientDto->street = $recipientDto->street ? : 'нет'; //у cdek и b2cpl улица обязательна
         $recipientDto->contact_name = $delivery->receiver_name;
         $recipientDto->email = $delivery->receiver_email;
-        $recipientDto->phone = $delivery->receiver_phone;
+        $recipientDto->phone = phoneNumberFormat($delivery->receiver_phone);
 
         //Информация о местах (коробках) заказа
         $places = collect();
