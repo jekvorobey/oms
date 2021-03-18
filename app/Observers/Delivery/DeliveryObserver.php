@@ -149,12 +149,30 @@ class DeliveryObserver
 
             $user = $delivery->order->getUser();
 
-            $oldAddr = json_decode($delivery->getOriginal('delivery_address'))->address_string;
-            $newAddr = json_decode($delivery->getAttributes()['delivery_address'])->address_string;
+            if($delivery->getOriginal('delivery_address') != '[]' && $delivery->getAttributes()['delivery_address']) {
+                $oldAddr = json_decode($delivery->getOriginal('delivery_address'))->address_string;
+                $newAddr = json_decode($delivery->getAttributes()['delivery_address'])->address_string;
 
-            if(
-                $oldAddr != $newAddr
-            ) {
+                if(
+                    $oldAddr != $newAddr
+                ) {
+                    $notificationService->send(
+                        $customer,
+                        'servisnyeizmenenie_zakaza_adres_dostavki',
+                        $this->makeArray($delivery, sprintf('
+                        %s, здравствуйте.
+                        Ваш заказ №%s изменен.
+
+                        Адрес доставки изменен на %s
+                        ',
+                        app(OrderObserver::class)->parseName($user, $delivery->order),
+                        $delivery->order->number,
+                        $delivery->formDeliveryAddressString($delivery->delivery_address)))
+                    );
+                }
+            }
+
+            if($delivery->getOriginal('point_id') != $delivery->point_id) {
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_adres_dostavki',
@@ -166,7 +184,7 @@ class DeliveryObserver
                     ',
                     app(OrderObserver::class)->parseName($user, $delivery->order),
                     $delivery->order->number,
-                    $delivery->formDeliveryAddressString($delivery->delivery_address)))
+                    $delivery->getDeliveryAddressString()))
                 );
             }
 
