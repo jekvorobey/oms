@@ -8,6 +8,7 @@ use App\Observers\Order\OrderObserver;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Services\FileService\FileService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Support\Collection;
 use Pim\Dto\PublicEvent\MediaDto;
 use Pim\Dto\PublicEvent\OrganizerDto;
@@ -19,6 +20,7 @@ use Pim\Services\PublicEventOrganizerService\PublicEventOrganizerService;
 use Pim\Services\PublicEventPlaceService\PublicEventPlaceService;
 use Pim\Services\PublicEventService\PublicEventService;
 use Pim\Services\PublicEventSpeakerService\PublicEventSpeakerService;
+use Pim\Services\PublicEventProfessionService\PublicEventProfessionService;
 use Pim\Services\PublicEventSprintService\PublicEventSprintService;
 use Pim\Services\PublicEventSprintStageService\PublicEventSprintStageService;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
@@ -45,6 +47,9 @@ class TicketNotifierService
     /** @var PublicEventSpeakerService */
     protected $publicEventSpeakerService;
 
+    /** @var PublicEventProfessionService */
+    protected $publicEventProfessionService;
+
     /** @var PublicEventPlaceService */
     protected $publicEventPlaceService;
 
@@ -70,12 +75,14 @@ class TicketNotifierService
         PublicEventOrganizerService $publicEventOrganizerService,
         PublicEventSprintStageService $publicEventSprintStageService,
         PublicEventSpeakerService $publicEventSpeakerService,
+        PublicEventProfessionService $publicEventProfessionService,
         PublicEventPlaceService $publicEventPlaceService,
         PublicEventTicketService $publicEventTicketService,
         PublicEventTypeService $publicEventTypeService,
         FileService $fileService,
         ServiceNotificationService $serviceNotificationService,
-        DocumentService $documentService
+        DocumentService $documentService,
+        CustomerService $customerService
     ) {
         $this->publicEventService = $publicEventService;
         $this->publicEventSprintService = $publicEventSprintService;
@@ -83,12 +90,14 @@ class TicketNotifierService
         $this->publicEventOrganizerService = $publicEventOrganizerService;
         $this->publicEventSprintStageService = $publicEventSprintStageService;
         $this->publicEventSpeakerService = $publicEventSpeakerService;
+        $this->publicEventProfessionService = $publicEventProfessionService;
         $this->publicEventPlaceService = $publicEventPlaceService;
         $this->publicEventTicketService = $publicEventTicketService;
         $this->publicEventTypeService = $publicEventTypeService;
         $this->fileService = $fileService;
         $this->serviceNotificationService = $serviceNotificationService;
         $this->documentService = $documentService;
+        $this->customerService = $customerService;
     }
 
     public function notify(Order $order)
@@ -194,18 +203,57 @@ class TicketNotifierService
                 ->first()
                 ->absoluteUrl();
 
+            $event_desc = strip_tags($event->description);
+            preg_match('/([^.!?]+[.!?]+){3}/', $event_desc, $event_desc_short, PREG_OFFSET_CAPTURE, 0);
+
             $link = Link::create(
                 $event->name,
                 Carbon::createFromDate($stages->first()[4]['date'])->setTimeFromTimeString($stages->first()[4]['from']),
                 Carbon::createFromDate($stages->first()[4]['date'])->setTimeFromTimeString($stages->first()[4]['to']),
             )
-            ->description($event->description)
+            ->description($event_desc_short[0][0] ?? '')
             ->address($stages->first()[0]);
+
+            $programs = $stages->map(function ($el) {
+                return [
+                    'title' => $el[4]['title'],
+                    'date' => sprintf('%s, %s-%s', $el[1], $el[2], $el[3]),
+                    'adress' => $el[0],
+                    'text' => $el[4]['text'],
+                    'kit' => $el[4]['kit'],
+                    'speakers' => ($el[4]['speakers'])->map(function ($speaker) {
+                        $activity = $this->customerService->activities()->setIds([
+                            $speaker['profession_id']
+                        ])->load()->first();
+
+                        return [
+                            'name' => sprintf('%s %s', $speaker['first_name'], $speaker['last_name']),
+                            'profession' => $activity->name,
+                            'about' => $speaker['description'],
+                            'avatar' => $this
+                                ->fileService
+                                ->getFiles([$speaker['file_id']])
+                                ->first()
+                                ->absoluteUrl()
+                        ];
+                    })->all()
+                ];
+            })->all();
 
             $classes[] = [
                 'name' => $event->name,
                 'info' => $event->description,
+                'speaker_info' => $programs[0]['speakers'][0]['name'] . ', ' . $programs[0]['speakers'][0]['profession'],
+                'ticket_type' => '(' . $basketItem->product['ticket_type_name'] . ')',
                 'price' => (int) $basketItem->price,
+                'nearest_date' => $stages->map(function ($el) {
+                    return sprintf(
+                        "%s, %s-%s",
+                        $el[1],
+                        $el[2],
+                        $el[3]
+                    );
+                })->first(),
                 'count' => sprintf('%s %s', (int) $basketItem->qty, $this->generateTicketWord((int) $basketItem->qty)),
                 'image' => $url,
                 'manager' => [
@@ -233,10 +281,11 @@ class TicketNotifierService
                     'RECEIVER_EMAIL' => $ticket->email,
                     'RECEIVER_NAME' => $ticket->first_name,
                     'MESSAGE_FILENAME' => sprintf('order-tickets-%s', $ticket->code),
-                    'name' => sprintf('%s (%s)', $event->name, $basketItem->product['ticket_type_name']),
+                    'name' => $event->name,
+                    'ticket_type' => '(' . $basketItem->product['ticket_type_name'] . ')',
                     'id' => $ticket->code,
                     'cost' => (int) $basketItem->price,
-                    'order_num' => $order->id,
+                    'order_num' => $order->number,
                     'bought_at' => $order->created_at->locale('ru')->isoFormat('D MMMM, HH:mm'),
                     'time' => $stages->map(function ($el) {
                         return sprintf(
@@ -248,9 +297,10 @@ class TicketNotifierService
                     })->all(),
                     'adress' => $stages->map(function ($el) {
                         return $el[0];
-                    })->all(),
+                    })->unique()->all(),
                     'participant' => [
                         'name' => sprintf('%s %s', $ticket->first_name, $ticket->last_name),
+                        'short_name' => mb_substr($ticket->first_name, 0, 1) . mb_substr($ticket->last_name, 0, 1),
                         'email' => $ticket->email,
                         'phone' => OrderObserver::formatNumber($ticket->phone)
                     ],
@@ -273,27 +323,8 @@ class TicketNotifierService
                             'text' => $stage[5]->description,
                             'images' => $stage[6]
                         ];
-                    })->all(),
-                    'programs' => $stages->map(function ($el) {
-                        return [
-                            'title' => $el[4]['title'],
-                            'date' => sprintf('%s, %s-%s', $el[1], $el[2], $el[3]),
-                            'adress' => $el[0],
-                            'text' => $el[4]['text'],
-                            'kit' => $el[4]['kit'],
-                            'speakers' => ($el[4]['speakers'])->map(function ($speaker) {
-                                return [
-                                    'name' => sprintf('%s %s', $speaker['first_name'], $speaker['last_name']),
-                                    'about' => $speaker['description'],
-                                    'avatar' => $this
-                                        ->fileService
-                                        ->getFiles([$speaker['file_id']])
-                                        ->first()
-                                        ->absoluteUrl()
-                                ];
-                            })->all()
-                        ];
-                    })->all()
+                    })->unique('title')->all(),
+                    'programs' => $programs
                 ];
             }
         }
@@ -319,7 +350,7 @@ class TicketNotifierService
                 mb_strtoupper($user->first_name)
             ),
             'text' => sprintf('Заказ <u>%s</u> успешно оплачен,
-            <br>Билеты находятся в прикрепленном PDF файле', $order->number),
+            <br>Билеты находятся в прикрепленном pdf файле', $order->number),
             'params' => [
                 'Получатель' => $order->receiver_name,
                 'Телефон' => OrderObserver::formatNumber($order->receiver_phone),

@@ -152,7 +152,7 @@ class OrderObserver
                     $sent_notification = true;
                 }
 
-                if($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::TIMEOUT || $order->payment_status == PaymentStatus::WAITING) {
+                if($order->type !== Basket::TYPE_MASTER && ($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::TIMEOUT || $order->payment_status == PaymentStatus::WAITING)) {
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
@@ -1012,6 +1012,11 @@ class OrderObserver
         );
 
         $created = ($order->status == OrderStatus::CREATED) || ($order->status == OrderStatus::AWAITING_CONFIRMATION);
+
+        if ($order->type == Basket::TYPE_MASTER) {
+            $paid = $order->payment_status == PaymentStatus::PAID;
+            $created = $order->status == OrderStatus::DONE;
+        }
 
         return $paid && $created;
     }
