@@ -434,7 +434,7 @@ class OrdersController extends Controller
 
         $shipments = (new Collection())
             ->merge($doneShipments)
-            ->merge($builderReturn)
+            ->merge($returnShipments)
             ->merge($cancelShipments);
 
         $shipments->load(['basketItems', 'delivery.order.discounts']);
