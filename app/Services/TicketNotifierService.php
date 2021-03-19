@@ -390,18 +390,6 @@ class TicketNotifierService
                 ['pdfs' => ['pdf.ticket' => $pdfs]]
             );
         }
-
-        foreach($pdfs as $pdf) {
-            if($pdf['RECEIVER_EMAIL'] != $user->email) {
-                $this->serviceNotificationService->sendFile(
-                    'Билеты на мастер-класс',
-                    $pdf['RECEIVER_EMAIL'],
-                    $pdf['RECEIVER_NAME'],
-                    'pdf.ticket',
-                    $pdf
-                );
-            }
-        }
     }
 
     private function generateMapImage(Collection $points)
