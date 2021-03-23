@@ -108,7 +108,7 @@ class DeliveryObserver
 
             $customer = $customerRaw->user_id;
             if ($delivery->status != $delivery->getOriginal('status')) {
-                if(!($delivery->status == DeliveryStatus::DONE && $delivery->order->bonuses()->where('status', OrderBonus::STATUS_ACTIVE)->count() == 0)) {
+                if(!($delivery->status == DeliveryStatus::DONE && $delivery->order->added_bonus == 0)) {
                     if($delivery->order->deliveries()->count() != 1) {
                         $notificationService->send(
                             $customer,
