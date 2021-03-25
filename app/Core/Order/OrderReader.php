@@ -326,6 +326,26 @@ class OrderReader
             $modifiedRestQuery->removeFilter('offer_id');
         }
 
+        // Фильтр по ids спринта
+        $sprintIdFilter = $restQuery->getFilter('sprint_id');
+
+        if ($sprintIdFilter) {
+            [$op, $value] = $sprintIdFilter[0];
+            $value = (array)$value;
+            foreach ($value as $i_1 => $v_1)
+                $value[$i_1] = (int) $v_1;
+            $value = array_unique($value);
+
+            if (count($value)) {
+                $query->whereHas('basket', function (Builder $query) use ($value) {
+                    $query->whereHas('items', function (Builder $query) use ($value) {
+                        $query->whereRaw("JSON_EXTRACT(product, '$.sprint_id') IN (" . join(',', $value) . ")");
+                    });
+                });
+            }
+            $modifiedRestQuery->removeFilter('sprint_id');
+        }
+
         // Фильтр по id скидки и суммы заказа с учетом данной скидки
         $discountIdFilter = $restQuery->getFilter('discount_id');
         if ($discountIdFilter) {
