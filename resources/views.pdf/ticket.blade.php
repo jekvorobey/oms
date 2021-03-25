@@ -309,7 +309,11 @@
     @foreach($order->publicEvents as $publicEvent)
         @foreach($publicEvent->ticketsInfo as $ticketsInfo)
             @foreach($ticketsInfo->tickets as $ticket)
-                <div class="wrapper">
+                @if ($loop->index > 0)
+                    <div class="wrapper page-break">
+                @else
+                    <div class="wrapper">
+                @endif
                     <div class="head">
                         <div class="head-body">
                             <img class="logo" src="{{ public_path() }}/img/logo.svg">

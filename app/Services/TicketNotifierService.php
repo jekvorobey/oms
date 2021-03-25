@@ -337,6 +337,11 @@ class TicketNotifierService
         $firstItem = $basketItems->first()->id;
         $document = $this->documentService->getOrderPdfTickets($order, $firstItem);
 
+        $ticketFiles = $this->fileService
+        ->getFiles([$document->file_id]);
+
+        logger('ticketFiles', [$ticketFiles]);
+
         $data = [
             'menu' => [
                 'НОВИНКИ' => sprintf('%s/new', config('app.showcase_host')),
