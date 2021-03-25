@@ -117,12 +117,11 @@
         }
         .head-body
         {
-            width: 73%;
-            padding-right: 51px;
+            width: 79%;
         }
         .head-sidebar
         {
-            width: 21%;
+            width: 20%;
         }
 
         /* head->sidebar */
