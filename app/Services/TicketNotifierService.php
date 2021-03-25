@@ -153,8 +153,8 @@ class TicketNotifierService
                 return [
                     sprintf("%s, %s", $place->name, $place->address),
                     Carbon::parse($stage->date)->locale('ru')->isoFormat('D MMMM (dd)'),
-                    Carbon::parse($stage->time_from)->format('H:m'),
-                    Carbon::parse($stage->time_to)->format('H:m'),
+                    Carbon::parse($stage->time_from)->format('H:i'),
+                    Carbon::parse($stage->time_to)->format('H:i'),
                     [
                         'title' => $stage->name,
                         'text' => $stage->description,
@@ -245,7 +245,7 @@ class TicketNotifierService
                 'info' => $event->description,
                 'speaker_info' => $programs[0]['speakers'][0]['name'] . ', ' . $programs[0]['speakers'][0]['profession'],
                 'ticket_type' => '(' . $basketItem->product['ticket_type_name'] . ')',
-                'price' => (int) $basketItem->price,
+                'price' => price_format((int) $basketItem->price),
                 'nearest_date' => $stages->map(function ($el) {
                     return sprintf(
                         "%s, %s-%s",
@@ -284,7 +284,7 @@ class TicketNotifierService
                     'name' => $event->name,
                     'ticket_type' => '(' . $basketItem->product['ticket_type_name'] . ')',
                     'id' => $ticket->code,
-                    'cost' => (int) $basketItem->price,
+                    'cost' => price_format((int) $basketItem->price),
                     'order_num' => $order->number,
                     'bought_at' => $order->created_at->locale('ru')->isoFormat('D MMMM, HH:mm'),
                     'time' => $stages->map(function ($el) {
@@ -299,7 +299,7 @@ class TicketNotifierService
                         return $el[0];
                     })->unique()->all(),
                     'participant' => [
-                        'name' => sprintf('%s %s', $ticket->first_name, $ticket->last_name),
+                        'name' => sprintf('%s %s', $ticket->last_name, $ticket->first_name),
                         'short_name' => mb_substr($ticket->first_name, 0, 1) . mb_substr($ticket->last_name, 0, 1),
                         'email' => $ticket->email,
                         'phone' => OrderObserver::formatNumber($ticket->phone)

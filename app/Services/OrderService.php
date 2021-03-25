@@ -20,6 +20,7 @@ use Greensight\Message\Dto\Mail\PublicEvent\Ticket\TicketEmailDto;
 use Greensight\Message\Services\MailService\MailService;
 use Illuminate\Support\Collection;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
+use App\Observers\Order\OrderObserver;
 
 /**
  * Класс-бизнес логики по работе с заказами (без чекаута и доставки)
@@ -301,10 +302,10 @@ class OrderService
             $publicEventInfoDto->organizer = $organizerInfoDto;
             $organizerInfoDto->name = $cardStruct->organizer['name'];
             $organizerInfoDto->description = $cardStruct->organizer['description'];
-            $organizerInfoDto->phone = $cardStruct->organizer['phone'];
+            $organizerInfoDto->phone = OrderObserver::formatNumber($cardStruct->organizer['phone']);
             $organizerInfoDto->email = $cardStruct->organizer['email'];
             $organizerInfoDto->site = $cardStruct->organizer['site'];
-            $organizerInfoDto->messengerPhone = $cardStruct->organizer['messenger_phone'];
+            $organizerInfoDto->messengerPhone = OrderObserver::formatNumber($cardStruct->organizer['messenger_phone'] ? $cardStruct->organizer['messenger_phone'] : $cardStruct->organizer['phone']);
             foreach ($basketItems as $item) {
                 if ($cardStruct->sprintId == $item->getSprintId()) {
                     $ticketsInfoDto = new PublicEventOrder\TicketsInfoDto();
@@ -332,7 +333,7 @@ class OrderService
                                 $ticketDto->firstName = $ticket->first_name;
                                 $ticketDto->middleName = $ticket->middle_name;
                                 $ticketDto->lastName = $ticket->last_name;
-                                $ticketDto->phone = $ticket->phone;
+                                $ticketDto->phone = OrderObserver::formatNumber($ticket->phone);
                                 $ticketDto->email = $ticket->email;
                             }
                         }
