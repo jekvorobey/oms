@@ -112,6 +112,7 @@ class OrderStatus
                 [
                     Basket::TYPE_PRODUCT,
                     Basket::TYPE_MASTER,
+                    Basket::TYPE_CERTIFICATE,
                 ]
             ),
             self::RETURNED => new self(
