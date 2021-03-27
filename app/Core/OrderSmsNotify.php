@@ -22,8 +22,10 @@ class OrderSmsNotify
     public static function deliveryShipped(Delivery $delivery)
     {
         $delivery_at = $delivery->delivery_at->format('d.m.Y');
+        $delivery_time_start = substr($delivery->delivery_time_start, 0, -3);
+        $delivery_time_end = substr($delivery->delivery_time_end, 0, -3);
         $cost = $delivery->shipments->sum('cost');
-        static::send($delivery->order, "Заказ №{$delivery->number} на сумму {$cost} р. передан в службу доставки. Ожидайте доставку {$delivery_at}.");
+        static::send($delivery->order, "Заказ №{$delivery->number} на сумму {$cost} р. передан в службу доставки. Ожидайте доставку {$delivery_at} с {$delivery_time_start} до {$delivery_time_end}.");
     }
 
     public static function deliveryReadyForRecipient(Delivery $delivery)
