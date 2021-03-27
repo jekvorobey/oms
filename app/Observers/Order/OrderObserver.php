@@ -670,7 +670,7 @@ class OrderObserver
                     Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                     $user->first_name,
                     $order->number,
-                    sprintf('%s/profile', config('app.showcase_host')))
+                    sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
                 ];
             }
 
@@ -685,7 +685,7 @@ class OrderObserver
                         <br>Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                         $order->number,
                         (int) $order->price,
-                        sprintf('%s/profile', config('app.showcase_host')))
+                        sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
                     ];
                 case OrderStatus::READY_FOR_RECIPIENT:
                     return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
@@ -900,6 +900,7 @@ class OrderObserver
 
                 return $delivery->delivery_at->toTimeString();
             })(),
+            'DELIVERY_DATE_TIME' => $deliveryDate,
             'OPER_MODE' => (function () use ($order, $points) {
                 $point_id = optional($order->deliveries->first())->point_id;
 
@@ -959,7 +960,7 @@ class OrderObserver
     {
         $date = $delivery->delivery_at->locale('ru')->isoFormat('D MMMM, dddd');
         if($delivery->delivery_time_start) {
-            $date .= sprintf(", с %s до %s", $delivery->delivery_time_start, $delivery->delivery_time_end);
+            $date .= sprintf(", с %s до %s", substr($delivery->delivery_time_start, 0, -3), substr($delivery->delivery_time_end, 0, -3));
         }
         return $date;
     }
