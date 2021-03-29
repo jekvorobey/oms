@@ -152,13 +152,16 @@ class OrderObserver
                     $sent_notification = true;
                 }
 
-                if($order->type !== Basket::TYPE_MASTER && ($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::TIMEOUT || $order->payment_status == PaymentStatus::WAITING)) {
+                if($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::TIMEOUT || $order->payment_status == PaymentStatus::WAITING) {
+                    $delivery_method = !empty($order->deliveries()->first()->delivery_method)
+                        ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        : false;
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
                             $order->payment_status,
                             $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
-                            $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                            $delivery_method
                         ),
                         $this->generateNotificationVariables($order, (function () use ($order) {
                             switch ($order->payment_status) {
@@ -627,7 +630,7 @@ class OrderObserver
                         Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                         $order->number,
                         (int) $order->price,
-                        sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id))
+                        sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
                     ];
                 }
 
