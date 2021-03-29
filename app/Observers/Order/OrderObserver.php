@@ -853,7 +853,7 @@ class OrderObserver
 
                 return $price;
             })(),
-            'delivery_method' => $deliveryMethod,
+            'delivery_method' => empty($deliveryMethod) ? 'Доставка' : $deliveryMethod,
             'total_price' => (int) $order->price,
             'finisher_text' => sprintf(
                 'Узнать статус выполнения заказа можно в <a href="%s">Личном кабинете</a>',
