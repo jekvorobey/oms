@@ -153,12 +153,15 @@ class OrderObserver
                 }
 
                 if($order->type !== Basket::TYPE_MASTER && ($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::TIMEOUT || $order->payment_status == PaymentStatus::WAITING)) {
+                    $delivery_method = !empty($order->deliveries()->first()->delivery_method)
+                        ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        : false;
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
                             $order->payment_status,
                             $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
-                            $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                            $delivery_method
                         ),
                         $this->generateNotificationVariables($order, (function () use ($order) {
                             switch ($order->payment_status) {
