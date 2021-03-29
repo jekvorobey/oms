@@ -627,7 +627,7 @@ class OrderObserver
                         Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                         $order->number,
                         (int) $order->price,
-                        sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id))
+                        sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
                     ];
                 }
 
