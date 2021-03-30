@@ -271,4 +271,13 @@ class Order extends OmsModel
     {
         return $this->type == Basket::TYPE_CERTIFICATE;
     }
+
+    /**
+     * Заказ является консолидированным?
+     * @return bool
+     */
+    public function isConsolidatedDelivery(): bool
+    {
+        return $this->deliveries()->count() == 1;
+    }
 }

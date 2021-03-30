@@ -160,7 +160,7 @@ class OrderObserver
                         $user_id,
                         $this->createPaymentNotificationType(
                             $order->payment_status,
-                            $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                            $order->isConsolidatedDelivery(),
                             $delivery_method
                         ),
                         $this->generateNotificationVariables($order, (function () use ($order) {
@@ -191,7 +191,7 @@ class OrderObserver
                 $notificationService->send(
                     $user_id,
                     $this->createCancelledNotificationType(
-                        $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                        $order->isConsolidatedDelivery(),
                         $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
                     ),
                     $this->generateNotificationVariables($order, static::OVERRIDE_CANCEL)
@@ -212,7 +212,7 @@ class OrderObserver
                 $user_id,
                 $this->createNotificationType(
                     $order->status,
-                    $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                    $order->isConsolidatedDelivery(),
                     $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP,
                     $override
                 ),
@@ -853,7 +853,7 @@ class OrderObserver
 
                 return $price;
             })(),
-            'delivery_method' => $deliveryMethod,
+            'delivery_method' => empty($deliveryMethod) ? 'Доставка' : $deliveryMethod,
             'total_price' => (int) $order->price,
             'finisher_text' => sprintf(
                 'Узнать статус выполнения заказа можно в <a href="%s">Личном кабинете</a>',

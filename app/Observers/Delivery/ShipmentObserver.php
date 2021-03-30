@@ -547,26 +547,65 @@ class ShipmentObserver
                 $shipment->merchant_id));
 
             foreach ($operators as $operator) {
+                $userService = app(UserService::class);
+
+                $user = $userService->users(
+                    $userService->newQuery()
+                        ->setFilter('id', $operator->user_id)
+                )->first();
+
                 if (($shipment->is_canceled != $shipment->getOriginal('is_canceled')) && $shipment->is_canceled) {
-                    $serviceNotificationService->send(
-                        $operator->user_id,
-                        'klientstatus_zakaza_otmenen',
-                        [
-                            'QUANTITY_ORDERS' => 1,
-                            'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
-                        ]
-                    );
+                    switch ($operator->communication_method) {
+                        case OperatorCommunicationMethod::METHOD_PHONE:
+                            $serviceNotificationService->sendDirect(
+                                'klientstatus_zakaza_otmenen',
+                                $user->phone,
+                                'sms',
+                                [
+                                    'QUANTITY_ORDERS' => 1,
+                                    'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                                ]
+                            );
+                            break;
+                        case OperatorCommunicationMethod::METHOD_EMAIL:
+                            $serviceNotificationService->sendDirect(
+                                'klientstatus_zakaza_otmenen',
+                                $user->email,
+                                'email',
+                                [
+                                    'QUANTITY_ORDERS' => 1,
+                                    'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                                ]
+                            );
+                            break;
+                    }
                 }
 
                 if (($shipment->is_problem != $shipment->getOriginal('is_problem')) && $shipment->is_problem) {
-                    $serviceNotificationService->send(
-                        $operator->user_id,
-                        'klientstatus_zakaza_problemnyy',
-                        [
-                            'QUANTITY_ORDERS' => 1,
-                            'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
-                        ]
-                    );
+                    switch ($operator->communication_method) {
+                        case OperatorCommunicationMethod::METHOD_PHONE:
+                            $serviceNotificationService->sendDirect(
+                                'klientstatus_zakaza_problemnyy',
+                                $user->phone,
+                                'sms',
+                                [
+                                    'QUANTITY_ORDERS' => 1,
+                                    'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                                ]
+                            );
+                            break;
+                        case OperatorCommunicationMethod::METHOD_EMAIL:
+                            $serviceNotificationService->sendDirect(
+                                'klientstatus_zakaza_problemnyy',
+                                $user->email,
+                                'email',
+                                [
+                                    'QUANTITY_ORDERS' => 1,
+                                    'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                                ]
+                            );
+                            break;
+                    }
                 }
             }
         } catch (\Exception $e) {
