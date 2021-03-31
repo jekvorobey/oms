@@ -160,7 +160,7 @@ class OrderObserver
                         $user_id,
                         $this->createPaymentNotificationType(
                             $order->payment_status,
-                            $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                            $order->isConsolidatedDelivery(),
                             $delivery_method
                         ),
                         $this->generateNotificationVariables($order, (function () use ($order) {
@@ -191,7 +191,7 @@ class OrderObserver
                 $notificationService->send(
                     $user_id,
                     $this->createCancelledNotificationType(
-                        $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                        $order->isConsolidatedDelivery(),
                         $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
                     ),
                     $this->generateNotificationVariables($order, static::OVERRIDE_CANCEL)
@@ -212,7 +212,7 @@ class OrderObserver
                 $user_id,
                 $this->createNotificationType(
                     $order->status,
-                    $order->delivery_type === DeliveryType::TYPE_CONSOLIDATION,
+                    $order->isConsolidatedDelivery(),
                     $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP,
                     $override
                 ),
@@ -626,7 +626,7 @@ class OrderObserver
                 if($override_delivery->status == DeliveryStatus::ON_POINT_IN) {
                     return [
                         sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
+                        sprintf('Заказ №%s на сумму %s р. передано в службу доставки.
                         Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                         $order->number,
                         (int) $order->price,
@@ -876,12 +876,22 @@ class OrderObserver
             'DELIVERY_ADDRESS' => (function () use ($order) {
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
+
+                if (!empty($easyDelivery = $delivery->getDeliveryAddressString())) {
+                    return $easyDelivery;
+                }
+
                 return optional($delivery)
                     ->formDeliveryAddressString($delivery->delivery_address ?? []) ?? '';
             })(),
             'DELIVIRY_ADDRESS' => (function () use ($order) {
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
+
+                if (!empty($easyDelivery = $delivery->getDeliveryAddressString())) {
+                    return $easyDelivery;
+                }
+
                 return optional($delivery)
                     ->formDeliveryAddressString($delivery->delivery_address ?? []) ?? '';
             })(),
