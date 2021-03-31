@@ -876,12 +876,22 @@ class OrderObserver
             'DELIVERY_ADDRESS' => (function () use ($order) {
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
+
+                if (!empty($easyDelivery = $delivery->getDeliveryAddressString())) {
+                    return $easyDelivery;
+                }
+
                 return optional($delivery)
                     ->formDeliveryAddressString($delivery->delivery_address ?? []) ?? '';
             })(),
             'DELIVIRY_ADDRESS' => (function () use ($order) {
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
+
+                if (!empty($easyDelivery = $delivery->getDeliveryAddressString())) {
+                    return $easyDelivery;
+                }
+
                 return optional($delivery)
                     ->formDeliveryAddressString($delivery->delivery_address ?? []) ?? '';
             })(),
