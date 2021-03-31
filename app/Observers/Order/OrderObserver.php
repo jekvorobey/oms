@@ -626,7 +626,7 @@ class OrderObserver
                 if($override_delivery->status == DeliveryStatus::ON_POINT_IN) {
                     return [
                         sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. передано в службу доставки.
+                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
                         Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                         $order->number,
                         (int) $order->price,
