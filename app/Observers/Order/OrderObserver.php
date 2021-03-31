@@ -877,7 +877,7 @@ class OrderObserver
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
 
-                if (!empty($easyDelivery = $delivery->getDeliveryAddressString())) {
+                if (!empty($delivery) && !empty($easyDelivery = $delivery->getDeliveryAddressString())) {
                     return $easyDelivery;
                 }
 
@@ -888,7 +888,7 @@ class OrderObserver
                 /** @var Delivery */
                 $delivery = $order->deliveries->first();
 
-                if (!empty($easyDelivery = $delivery->getDeliveryAddressString())) {
+                if (!empty($delivery) && !empty($easyDelivery = $delivery->getDeliveryAddressString())) {
                     return $easyDelivery;
                 }
 
