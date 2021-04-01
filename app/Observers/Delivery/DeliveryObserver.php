@@ -536,11 +536,15 @@ class DeliveryObserver
 
     protected function getDeliveryDate(Delivery $delivery)
     {
-        return sprintf(
-            '%s %s',
-            Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
-            sprintf('с %s до %s', $delivery->delivery_time_start, $delivery->delivery_time_end)
-        );
+        if (!empty($delivery->delivery_time_start) && !empty($delivery->delivery_time_end)) {
+            return sprintf(
+                '%s %s',
+                Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd'),
+                sprintf('с %s до %s', substr($delivery->delivery_time_start, 0, -3), substr($delivery->delivery_time_end, 0, -3))
+            );
+        }
+
+        return Carbon::parse($delivery->pdd)->locale('ru')->isoFormat('D MMMM, dddd');
     }
 
     public function testSend()

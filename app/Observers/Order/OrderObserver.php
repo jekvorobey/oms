@@ -972,7 +972,7 @@ class OrderObserver
     public function formatDeliveryDate(Delivery $delivery)
     {
         $date = $delivery->delivery_at->locale('ru')->isoFormat('D MMMM, dddd');
-        if($delivery->delivery_time_start) {
+        if($delivery->delivery_time_start && $delivery->delivery_time_end) {
             $date .= sprintf(", с %s до %s", substr($delivery->delivery_time_start, 0, -3), substr($delivery->delivery_time_end, 0, -3));
         }
         return $date;
