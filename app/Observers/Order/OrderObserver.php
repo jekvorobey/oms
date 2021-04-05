@@ -833,6 +833,12 @@ class OrderObserver
             })
             ->values();
 
+        $products = $shipments->toArray()[0]['products'];
+        $part_price = 0;
+        foreach ($products as $product) {
+            $part_price += $product['price'];
+        }
+
         return [
             'title' => sprintf($title, mb_strtoupper($this->parseName($user, $order))),
             'text' => $text,
@@ -952,7 +958,8 @@ class OrderObserver
                     ->first())
                     ->getExpirationDate() ?? 'неопределенного срока';
             })(),
-            'goods' => $goods->all()
+            'goods' => $goods->all(),
+            'PART_PRICE' => $part_price
         ];
     }
 
