@@ -95,7 +95,9 @@ class OrderObserver
         // $this->notifyIfOrderPaid($order);
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
-        $this->sendNotification($order);
+        if ($order->type != Basket::TYPE_CERTIFICATE) {
+            $this->sendNotification($order);
+        }
         $this->setPaymentStatusToCertificateRequest($order);
     }
 
@@ -732,7 +734,6 @@ class OrderObserver
 
         $deliveryAddress = $order
             ->deliveries
-            ->unique('delivery_address')
             ->map(function (Delivery $delivery) use ($points) {
                 if($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
                     return $delivery->formDeliveryAddressString($points->points(
@@ -743,6 +744,7 @@ class OrderObserver
 
                 return $delivery->formDeliveryAddressString($delivery->delivery_address ?? []);
             })
+            ->unique('delivery_address')
             ->join('<br>');
 
         if(empty($deliveryAddress)) {
