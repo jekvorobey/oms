@@ -221,6 +221,22 @@ class DeliveryObserver
                     $this->getDeliveryDate($delivery)))
                 );
             }
+
+            if($delivery->getOriginal('is_canceled') != $delivery->is_canceled && $delivery->is_canceled) {
+                if(!$delivery->order->isConsolidatedDelivery()) {
+                    $notificationService->send(
+                        $customer,
+                        (function () use ($delivery) {
+                            if ($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
+                                return 'status_dostavkiotmenena_bez_konsolidatsii_pvzpostamat';
+                            }
+
+                            return 'status_dostavkiotmenena_bez_konsolidatsii_kurer';
+                        })(),
+                        app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery, true)
+                    );
+                }
+            }
         } catch (\Exception $e) {
             logger($e->getMessage(), $e->getTrace());
         }

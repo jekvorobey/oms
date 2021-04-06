@@ -540,7 +540,7 @@ class OrderObserver
         return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
     }
 
-    public function generateNotificationVariables(Order $order, int $override = null, Delivery $override_delivery = null)
+    public function generateNotificationVariables(Order $order, int $override = null, Delivery $override_delivery = null, bool $delivery_canceled = false)
     {
         $customerService = app(CustomerService::class);
         $userService = app(UserService::class);
@@ -552,7 +552,7 @@ class OrderObserver
         $payment = $order->payments->first();
 
         $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
-        [$title, $text] = (function () use ($order, $override, $user, $override_delivery) {
+        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled) {
             if($override_delivery) {
                 $bonus = optional($order->bonuses->first());
 
@@ -584,7 +584,7 @@ class OrderObserver
                     ];
                 }
 
-                if($override_delivery->status == DeliveryStatus::CANCELLATION_EXPECTED) {
+                if($override_delivery->status == DeliveryStatus::CANCELLATION_EXPECTED || $delivery_canceled) {
                     return [
                         sprintf('ЗАКАЗ %s ОТМЕНЕН, ВОЗВРАТ ПРОИЗВЕДЕН', $order->number),
                         sprintf('Заказ %s на сумму %s р. отменен.
@@ -593,8 +593,8 @@ class OrderObserver
                         Если у вас возникли сложности с заказом - сообщите нам.
                         Мы сделаем все возможное, чтобы вам помочь!',
                         $order->number,
-                        $order->orderReturns->first()->price,
-                        $order->orderReturns->first()->price)
+                        $delivery_canceled ? (int) $override_delivery->order->price : $order->orderReturns->first()->price,
+                        $delivery_canceled ? (int) $override_delivery->order->price : $order->orderReturns->first()->price)
                     ];
                 }
 
