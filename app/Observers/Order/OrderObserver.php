@@ -92,6 +92,7 @@ class OrderObserver
 
         $this->setPaymentStatusToChildren($order);
         $this->setIsCanceledToChildren($order);
+        $this->setIsProblemToChildren($order);
         // $this->notifyIfOrderPaid($order);
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
@@ -320,6 +321,25 @@ class OrderObserver
 
                 foreach ($delivery->shipments as $shipment) {
                     $deliveryService->cancelShipment($shipment);
+                }
+            }
+        }
+    }
+
+    /**
+     * Установить флаг проблемы всем доставкам и отправлениями заказа
+     * @param  Order  $order
+     * @throws \Exception
+     */
+    protected function setIsProblemToChildren(Order $order): void
+    {
+        if ($order->is_problem && $order->is_problem != $order->getOriginal('is_problem')) {
+            $order->loadMissing('deliveries.shipments');
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+            foreach ($order->deliveries as $delivery) {
+                foreach ($delivery->shipments as $shipment) {
+                    $deliveryService->markAsProblemShipment($shipment);
                 }
             }
         }
