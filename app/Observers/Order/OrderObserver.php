@@ -703,7 +703,7 @@ class OrderObserver
 
         $bonusInfo = $customerService->getBonusInfo($order->customer_id);
 
-        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $part_price) {
+        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled, $part_price) {
             if($override_delivery) {
                 $bonus = optional($order->bonuses->first());
 
@@ -846,12 +846,17 @@ class OrderObserver
                 case OrderStatus::READY_FOR_RECIPIENT:
                     return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
                 case OrderStatus::DONE:
+                    $bonus = optional($order->bonuses->first());
+                    $bonusString = '';
+                    if (!empty($bonus->bonus)) {
+                        $bonusString = sprintf('Вам начислен: %s ₽ бонус. Бонусы будут действительны до %s. Потратить их можно на следующую покупку.<br><br>', $bonus->bonus, $bonus->getExpirationDate() ?? 'не указано');
+                    }
                     return [
                         '%s, ' . sprintf("ВАШ ЗАКАЗ %s ВЫПОЛНЕН", $order->number),
-                        'Спасибо что выбрали нас! Надеемся что процесс покупки доставил
+                        sprintf('%sСпасибо что выбрали нас! Надеемся что процесс покупки доставил
                         <br>вам исключительно положительные эмоции.
                         <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
-                        <br>еще лучше и удобнее'
+                        <br>еще лучше и удобнее', $bonusString)
                     ];
                 // case OrderStatus::RETURNED:
                 //     return [
