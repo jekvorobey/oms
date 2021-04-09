@@ -703,7 +703,7 @@ class OrderObserver
 
         $bonusInfo = $customerService->getBonusInfo($order->customer_id);
 
-        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $part_price) {
+        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled, $part_price) {
             if($override_delivery) {
                 $bonus = optional($order->bonuses->first());
 
