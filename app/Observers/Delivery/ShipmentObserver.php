@@ -566,7 +566,7 @@ class ShipmentObserver
                                     'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
                                     'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
-                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
+                                    'PRICE_GOODS' => (int) $shipment->delivery->order->price ?? 0,
                                 ]
                             );
                             break;
@@ -580,7 +580,7 @@ class ShipmentObserver
                                     'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
                                     'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
-                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
+                                    'PRICE_GOODS' => (int) $shipment->delivery->order->price ?? 0,
                                 ]
                             );
                             break;
