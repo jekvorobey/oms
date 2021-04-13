@@ -28,6 +28,7 @@ yarn-error.log
 *.xlsx
 *.xml
 *.yml
+!.gitlab-ci.yml
 *.txt
 !robots.txt
 !robots_*.txt
