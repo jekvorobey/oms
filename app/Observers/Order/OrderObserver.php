@@ -572,164 +572,6 @@ class OrderObserver
         $payment = $order->payments->first();
 
         $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
-        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled) {
-            if($override_delivery) {
-                $bonus = optional($order->bonuses->first());
-
-                if($override_delivery->status == DeliveryStatus::DONE) {
-                    if($bonus->bonus) {
-                        return [
-                            sprintf('ВАМ НАЧИСЛЕН: %s ₽ БОНУС ЗА ЗАКАЗ', $bonus->bonus ?? 0),
-                            sprintf('%s, здравствуйте!
-                            Вам начислен: %s ₽ бонус за заказ %s. Бонусы будут действительны до %s. Потратить их можно на следующую покупку.
-
-                            Нам важно ваше мнение!
-                            Мы будем признательны, если вы поделитесь своим мнением о купленном товаре!
-                            Оставить отзыв можно, пройдя по ссылке: %s',
-                            $user->first_name,
-                            $bonus->bonus ?? 0,
-                            $order->number,
-                            $bonus->getExpirationDate() ?? 'не указано',
-                            config('app.showcase_host'))
-                        ];
-                    }
-
-                    return [
-                        sprintf('%s, ВАШ ЗАКАЗ %s ВЫПОЛНЕН', mb_strtoupper($user->first_name), $order->number),
-                        sprintf('Спасибо, что выбрали iBT.ru! Надеемся, что процесс покупки доставил вам исключительно положительные эмоции.
-
-                        Нам важно ваше мнение!
-                        Будем признательны, если поделитесь своим мнением о купленном товаре.
-                        Оставить отзыв можно по ссылке: %s', config('app.showcase_host'))
-                    ];
-                }
-
-                if($override_delivery->status == DeliveryStatus::CANCELLATION_EXPECTED || $delivery_canceled) {
-                    return [
-                        sprintf('ЗАКАЗ %s ОТМЕНЕН, ВОЗВРАТ ПРОИЗВЕДЕН', $order->number),
-                        sprintf('Заказ %s на сумму %s р. отменен.
-
-                        Возврат денежных средств на сумму %s р. произведен. Срок зависит от вашего банка.
-                        Если у вас возникли сложности с заказом - сообщите нам.
-                        Мы сделаем все возможное, чтобы вам помочь!',
-                        $order->number,
-                        $delivery_canceled ? (int) $override_delivery->order->price : $order->orderReturns->first()->price,
-                        $delivery_canceled ? (int) $override_delivery->order->price : $order->orderReturns->first()->price)
-                    ];
-                }
-
-                if($override_delivery->status == DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER) {
-                    return [
-                        sprintf('ЗАЯВКА НА ВОЗВРАТ ПО ЗАКАЗУ %s ОФОРМЛЕНА', $order->number),
-                        sprintf('Вы успешно оформили заявку на возврат товара из заказа %s %s.
-                        Вам необходимо передать возвращаемый товар в курьерскую службу согласно условиям возврата товара %s
-
-                        Если у вас возникли сложности с заказом - сообщите нам.
-                        Мы сделаем все возможное, чтобы вам помочь!',
-                        $order->number,
-                        sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
-                        sprintf('%s/purchase-returns', config('app.showcase_host')))
-                    ];
-                }
-
-                if($override_delivery->status == DeliveryStatus::RETURNED) {
-                    return [
-                        sprintf('ВОЗВРАТ ПО ЗАКАЗУ %s ПРОИЗВЕДЕН', $order->number),
-                        sprintf('Возврат по заказу %s в размере %s р. произведен.
-                        Срок возврата денежных средств зависит от вашего банка.
-
-                        Если у вас возникли сложности с заказом - сообщите нам.
-                        Мы сделаем все возможное, чтобы вам помочь!',
-                        $order->number,
-                        (int) $order->price)
-                    ];
-                }
-
-                if($override_delivery->status == DeliveryStatus::ON_POINT_IN) {
-                    return [
-                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. передано в службу доставки.
-                        Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
-                        $order->number,
-                        (int) $order->price,
-                        sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
-                    ];
-                }
-
-                if($override_delivery->status == DeliveryStatus::READY_FOR_RECIPIENT) {
-                    return [
-                        sprintf('ЗАКАЗ %s ОЖИДАЕТ В ПУНКТЕ ВЫДАЧИ!', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s.
-                        ВНИМАНИЕ! Получить заказ может только контактное лицо, указанное в заказе, с паспортом.',
-                        $order->number,
-                        (int) $order->price,
-                        $override_delivery->getDeliveryAddressString())
-                    ];
-                }
-            }
-
-            if($override == static::OVERRIDE_SUCCESS) {
-                return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
-            }
-
-            if($override == static::OVERRIDE_CANCEL) {
-                return [
-                    '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
-                    sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
-                    <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
-                ];
-            }
-
-            if($override == static::OVERRIDE_AWAITING_PAYMENT) {
-                return [
-                    '%s, ВАШ ЗАКАЗ ОЖИДАЕТ ОПЛАТЫ',
-                    sprintf('Ваш заказ %s ожидает оплаты. Чтобы перейти
-                    <br>к оплате нажмите на кнопку "Оплатить заказ"', $order->number)
-                ];
-            }
-
-            if($override == static::OVERRIDE_SUCCESSFUL_PAYMENT) {
-                return [
-                    sprintf('ЗАКАЗ %s ОПЛАЧЕН И ПРИНЯТ В ОБРАБОТКУ!', $order->number),
-                    sprintf('%s, заказ %s оплачен и принят в обработку.
-                    Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
-                    $user->first_name,
-                    $order->number,
-                    sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
-                ];
-            }
-
-            switch ($order->status) {
-                case OrderStatus::CREATED:
-                case OrderStatus::AWAITING_CONFIRMATION:
-                    return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
-                case OrderStatus::DELIVERING:
-                    return [
-                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
-                        <br>Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
-                        $order->number,
-                        (int) $order->price,
-                        sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
-                    ];
-                case OrderStatus::READY_FOR_RECIPIENT:
-                    return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
-                case OrderStatus::DONE:
-                    return [
-                        '%s, ' . sprintf("ВАШ ЗАКАЗ %s ВЫПОЛНЕН", $order->number),
-                        'Спасибо что выбрали нас! Надеемся что процесс покупки доставил
-                        <br>вам исключительно положительные эмоции.
-                        <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
-                        <br>еще лучше и удобнее'
-                    ];
-                // case OrderStatus::RETURNED:
-                //     return [
-                //         '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
-                //         sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
-                //         <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
-                //     ];
-            }
-        })();
 
         $button = (function () use ($link, $override) {
             if($override == static::OVERRIDE_AWAITING_PAYMENT) {
@@ -859,6 +701,172 @@ class OrderObserver
             $part_price += $product['price'];
         }
 
+        $bonusInfo = $customerService->getBonusInfo($order->customer_id);
+
+        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled, $part_price) {
+            if($override_delivery) {
+                $bonus = optional($order->bonuses->first());
+
+                if($override_delivery->status == DeliveryStatus::DONE) {
+                    if($bonus->bonus) {
+                        return [
+                            sprintf('ВАМ НАЧИСЛЕН: %s ₽ БОНУС ЗА ЗАКАЗ', $bonus->bonus ?? 0),
+                            sprintf('%s, здравствуйте!
+                            Вам начислен: %s ₽ бонус за заказ %s. Бонусы будут действительны до %s. Потратить их можно на следующую покупку.
+
+                            Нам важно ваше мнение!
+                            Мы будем признательны, если вы поделитесь своим мнением о купленном товаре!
+                            Оставить отзыв можно, пройдя по ссылке: %s',
+                            $user->first_name,
+                            $bonus->bonus ?? 0,
+                            $order->number,
+                            $bonus->getExpirationDate() ?? 'не указано',
+                            config('app.showcase_host'))
+                        ];
+                    }
+
+                    return [
+                        sprintf('%s, ВАШ ЗАКАЗ %s ВЫПОЛНЕН', mb_strtoupper($user->first_name), $order->number),
+                        sprintf('Спасибо, что выбрали iBT.ru! Надеемся, что процесс покупки доставил вам исключительно положительные эмоции.
+
+                        Нам важно ваше мнение!
+                        Будем признательны, если поделитесь своим мнением о купленном товаре.
+                        Оставить отзыв можно по ссылке: %s', config('app.showcase_host'))
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::CANCELLATION_EXPECTED || $delivery_canceled) {
+                    return [
+                        sprintf('ЗАКАЗ %s ОТМЕНЕН, ВОЗВРАТ ПРОИЗВЕДЕН', $order->number),
+                        sprintf('Заказ %s на сумму %s р. отменен.
+
+                        Возврат денежных средств на сумму %s р. произведен. Срок зависит от вашего банка.
+                        Если у вас возникли сложности с заказом - сообщите нам.
+                        Мы сделаем все возможное, чтобы вам помочь!',
+                        $order->number,
+                        $delivery_canceled ? (int) $override_delivery->order->price : $order->orderReturns->first()->price,
+                        $delivery_canceled ? (int) $override_delivery->order->price : $order->orderReturns->first()->price)
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER) {
+                    return [
+                        sprintf('ЗАЯВКА НА ВОЗВРАТ ПО ЗАКАЗУ %s ОФОРМЛЕНА', $order->number),
+                        sprintf('Вы успешно оформили заявку на возврат товара из заказа %s %s.
+                        Вам необходимо передать возвращаемый товар в курьерскую службу согласно условиям возврата товара %s
+
+                        Если у вас возникли сложности с заказом - сообщите нам.
+                        Мы сделаем все возможное, чтобы вам помочь!',
+                        $order->number,
+                        sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
+                        sprintf('%s/purchase-returns', config('app.showcase_host')))
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::RETURNED) {
+                    return [
+                        sprintf('ВОЗВРАТ ПО ЗАКАЗУ %s ПРОИЗВЕДЕН', $order->number),
+                        sprintf('Возврат по заказу %s в размере %s р. произведен.
+                        Срок возврата денежных средств зависит от вашего банка.
+
+                        Если у вас возникли сложности с заказом - сообщите нам.
+                        Мы сделаем все возможное, чтобы вам помочь!',
+                        $order->number,
+                        (int) $order->price)
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::ON_POINT_IN) {
+                    return [
+                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
+                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
+                        Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
+                        $order->number,
+                        $part_price,
+                        sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
+                    ];
+                }
+
+                if($override_delivery->status == DeliveryStatus::READY_FOR_RECIPIENT) {
+                    return [
+                        sprintf('ЗАКАЗ %s ОЖИДАЕТ В ПУНКТЕ ВЫДАЧИ!', $order->number),
+                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s.
+                        ВНИМАНИЕ! Получить заказ может только контактное лицо, указанное в заказе, с паспортом.',
+                        $order->number,
+                        $part_price,
+                        $override_delivery->getDeliveryAddressString())
+                    ];
+                }
+            }
+
+            if($override == static::OVERRIDE_SUCCESS) {
+                return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
+            }
+
+            if($override == static::OVERRIDE_CANCEL) {
+                return [
+                    '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
+                    sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
+                    <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
+                ];
+            }
+
+            if($override == static::OVERRIDE_AWAITING_PAYMENT) {
+                return [
+                    '%s, ВАШ ЗАКАЗ ОЖИДАЕТ ОПЛАТЫ',
+                    sprintf('Ваш заказ %s ожидает оплаты. Чтобы перейти
+                    <br>к оплате нажмите на кнопку "Оплатить заказ"', $order->number)
+                ];
+            }
+
+            if($override == static::OVERRIDE_SUCCESSFUL_PAYMENT) {
+                return [
+                    sprintf('ЗАКАЗ %s ОПЛАЧЕН И ПРИНЯТ В ОБРАБОТКУ!', $order->number),
+                    sprintf('%s, заказ %s оплачен и принят в обработку.
+                    Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
+                    $user->first_name,
+                    $order->number,
+                    sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
+                ];
+            }
+
+            switch ($order->status) {
+                case OrderStatus::CREATED:
+                case OrderStatus::AWAITING_CONFIRMATION:
+                    return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
+                case OrderStatus::DELIVERING:
+                    return [
+                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
+                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
+                        <br>Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
+                        $order->number,
+                        (int) $order->price,
+                        sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
+                    ];
+                case OrderStatus::READY_FOR_RECIPIENT:
+                    return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
+                case OrderStatus::DONE:
+                    $bonus = optional($order->bonuses->first());
+                    $bonusString = '';
+                    if (!empty($bonus->bonus)) {
+                        $bonusString = sprintf('Вам начислен: %s ₽ бонус. Бонусы будут действительны до %s. Потратить их можно на следующую покупку.<br><br>', $bonus->bonus, $bonus->getExpirationDate() ?? 'не указано');
+                    }
+                    return [
+                        '%s, ' . sprintf("ВАШ ЗАКАЗ %s ВЫПОЛНЕН", $order->number),
+                        sprintf('%sСпасибо что выбрали нас! Надеемся что процесс покупки доставил
+                        <br>вам исключительно положительные эмоции.
+                        <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
+                        <br>еще лучше и удобнее', $bonusString)
+                    ];
+                // case OrderStatus::RETURNED:
+                //     return [
+                //         '%s, ВАШ ЗАКАЗ ОТМЕНЕН',
+                //         sprintf('Вы отменили ваш заказ %s. Товар вернулся на склад.
+                //         <br>Пожалуйста, напишите нам, почему вы не смогли забрать заказ.', $order->number)
+                //     ];
+            }
+        })();
+
         return [
             'title' => sprintf($title, mb_strtoupper($this->parseName($user, $order))),
             'text' => $text,
@@ -978,6 +986,7 @@ class OrderObserver
                     ->first())
                     ->getExpirationDate() ?? 'неопределенного срока';
             })(),
+            'AVAILABLE_BAL' => $bonusInfo->available,
             'goods' => $goods->all(),
             'PART_PRICE' => $part_price
         ];
