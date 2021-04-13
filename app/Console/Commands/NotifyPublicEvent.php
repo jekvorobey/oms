@@ -174,7 +174,7 @@ class NotifyPublicEvent extends Command
                         'SPEAKERS' => $items['speakers'],
                         'CALL_ORG' => $organizer['phone'],
                         'MAIL_ORG' => $organizer['email'],
-                        'CLASS_ORDER_TEXT' => $items['event']->description
+                        'CLASS_ORDER_TEXT' => strip_tags($items['event']->description)
                     ]
                 );
             });
