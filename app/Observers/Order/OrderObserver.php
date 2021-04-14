@@ -661,6 +661,8 @@ class OrderObserver
                 ->flatten();
         }
 
+        $saved_shipments = $shipments;
+
         $shipments = $shipments
             ->map(function (Shipment $shipment) {
                 return [
@@ -703,7 +705,7 @@ class OrderObserver
 
         $bonusInfo = $customerService->getBonusInfo($order->customer_id);
 
-        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled, $part_price) {
+        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled, $part_price, $saved_shipments) {
             if($override_delivery) {
                 $bonus = optional($order->bonuses->first());
 
@@ -777,8 +779,15 @@ class OrderObserver
                 }
 
                 if($override_delivery->status == DeliveryStatus::ON_POINT_IN) {
+                    $track_number = $saved_shipments->first()->delivery->xml_id;
+                    $track_string = '';
+
+                    if (!empty($track_number)) {
+                        $track_string = sprintf(' ПО НОМЕРУ %s', $track_number);
+                    }
+
                     return [
-                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
+                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ%s', $order->number, $track_string),
                         sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
                         Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                         $order->number,
@@ -835,8 +844,15 @@ class OrderObserver
                 case OrderStatus::AWAITING_CONFIRMATION:
                     return ['%s, СПАСИБО ЗА ЗАКАЗ', sprintf('Ваш заказ %s успешно оформлен и принят в обработку', $order->number)];
                 case OrderStatus::DELIVERING:
+                    $track_number = $saved_shipments->first()->delivery->xml_id;
+                    $track_string = '';
+
+                    if (!empty($track_number)) {
+                        $track_string = sprintf(' ПО НОМЕРУ %s', $track_number);
+                    }
+
                     return [
-                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ', $order->number),
+                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ%s', $order->number, $track_string),
                         sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
                         <br>Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                         $order->number,
