@@ -124,7 +124,7 @@ class TicketNotifierService
                 $this->publicEventSprintStageService
                     ->query()
                     ->setFilter('sprint_id', $sprint->id)
-                    ->addSort('time_from')
+                    ->addSort('date')
             )->map(function ($stage) {
                 $place = $this->publicEventPlaceService->find(
                     $this->publicEventPlaceService->query()
@@ -240,10 +240,12 @@ class TicketNotifierService
                 ];
             })->all();
 
+            $speakerIdx = empty($programs[0]['speakers']) ? 1 : 0;
+
             $classes[] = [
                 'name' => $event->name,
                 'info' => $event->description,
-                'speaker_info' => $programs[0]['speakers'][0]['name'] . ', ' . $programs[0]['speakers'][0]['profession'],
+                'speaker_info' => $programs[$speakerIdx]['speakers'][0]['name'] . ', ' . $programs[$speakerIdx]['speakers'][0]['profession'],
                 'ticket_type' => '(' . $basketItem->product['ticket_type_name'] . ')',
                 'price' => price_format((int) $basketItem->price),
                 'nearest_date' => $stages->map(function ($el) {
@@ -259,7 +261,7 @@ class TicketNotifierService
                 'manager' => [
                     'name' => $organizer->name,
                     'about' => $organizer->description,
-                    'phone' => OrderObserver::formatNumber($organizer->phone),
+                    'phone' => $organizer->phone,
                     'messagers' => false,
                     'email' => $organizer->email,
                     'site' => $organizer->site
@@ -307,7 +309,7 @@ class TicketNotifierService
                     'manager' => [
                         'name' => $organizer->name,
                         'about' => $organizer->description,
-                        'phone' => OrderObserver::formatNumber($organizer->phone),
+                        'phone' => $organizer->phone,
                         'messangers' => false,
                         'email' => $organizer->email,
                         'site' => $organizer->site
@@ -339,8 +341,6 @@ class TicketNotifierService
 
         $ticketFiles = $this->fileService
         ->getFiles([$document->file_id]);
-
-        logger('ticketFiles', [$ticketFiles]);
 
         $data = [
             'menu' => [

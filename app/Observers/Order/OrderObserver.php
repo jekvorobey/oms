@@ -697,11 +697,13 @@ class OrderObserver
             })
             ->values();
 
-        $products = $shipments->toArray()[0]['products'];
-        $part_price = 0;
-        foreach ($products as $product) {
-            $part_price += $product['price'];
-        }
+            $part_price = 0;
+            if (!empty($shipments)) {
+                $products = $shipments->toArray()[0]['products'];
+                foreach ($products as $product) {
+                    $part_price += $product['price'];
+                }
+            }
 
         $bonusInfo = $customerService->getBonusInfo($order->customer_id);
 
