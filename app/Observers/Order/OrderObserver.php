@@ -1006,7 +1006,8 @@ class OrderObserver
             })(),
             'AVAILABLE_BAL' => $bonusInfo->available,
             'goods' => $goods->all(),
-            'PART_PRICE' => $part_price
+            'PART_PRICE' => $part_price,
+            'TRACK_NUMBER' => $saved_shipments->first()->delivery->xml_id
         ];
     }
 
