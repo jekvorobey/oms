@@ -43,7 +43,12 @@ class Kernel extends ConsoleKernel
         $schedule->command(ApproveBonus::class)->dailyAt('00:00');
         $schedule->command(NotifyPublicEvent::class)->dailyAt('00:00');
         $schedule->command(CheckCourierCallsForCDEK::class)->everyFiveMinutes();
-        $this->cargoExportByStores($schedule);
+
+        try {
+            $this->cargoExportByStores($schedule);
+        } catch (\Exception $e) {
+            report($e);
+        }
     }
 
     /**
