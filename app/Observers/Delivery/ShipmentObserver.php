@@ -47,7 +47,7 @@ class ShipmentObserver
      */
     public function created(Shipment $shipment)
     {
-        History::saveEvent(HistoryType::TYPE_CREATE, [$shipment->delivery->order, $shipment], $shipment);
+        History::saveEvent(HistoryType::TYPE_CREATE, $shipment->delivery->order, $shipment);
     }
 
     /**
