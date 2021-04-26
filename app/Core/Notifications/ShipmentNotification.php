@@ -23,7 +23,7 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
     public static function notify(int $type, OmsModel $mainModel, OmsModel $model): void
     {
         /** @var Shipment $mainModel */
-        self::notifyMerchants($type, $mainModel);
+        // self::notifyMerchants($type, $mainModel);
         self::notifyAdmins($type, $mainModel);
     }
 

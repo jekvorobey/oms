@@ -532,6 +532,12 @@ class ShipmentObserver
                         break;
                 }
             }
+
+            $serviceNotificationService->send(
+                $operators[0]->user_id,
+                'klientoformlen_novyy_zakaz',
+                $vars
+            );
         } catch (\Exception $e) {
             logger($e->getMessage(), $e->getTrace());
         }
