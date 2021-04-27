@@ -707,7 +707,9 @@ class OrderObserver
 
         $bonusInfo = $customerService->getBonusInfo($order->customer_id);
 
-        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled, $part_price, $saved_shipments) {
+        $params = [];
+
+        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled, $part_price, $saved_shipments, &$params, $points) {
             if($override_delivery) {
                 $bonus = optional($order->bonuses->first());
 
@@ -799,10 +801,21 @@ class OrderObserver
                 }
 
                 if($override_delivery->status == DeliveryStatus::READY_FOR_RECIPIENT) {
+                    $delivery = $order->deliveries->first();
+
+                    if (!empty($delivery) && !empty($delivery->point_id)) {
+                        $point = $points->points(
+                            $points->newQuery()
+                                ->setFilter('id', $delivery->point_id)
+                        )->first();
+
+                        $params['Режим работы'] = $point->timetable;
+                        $params['Телефон пункта выдачи'] = $point->phone;
+                    }
+
                     return [
                         sprintf('ЗАКАЗ %s ОЖИДАЕТ В ПУНКТЕ ВЫДАЧИ!', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s.
-                        ВНИМАНИЕ! Получить заказ может только контактное лицо, указанное в заказе, с паспортом.',
+                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s в течение семи дней.',
                         $order->number,
                         $part_price,
                         $override_delivery->getDeliveryAddressString())
@@ -862,7 +875,26 @@ class OrderObserver
                         sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host')))
                     ];
                 case OrderStatus::READY_FOR_RECIPIENT:
-                    return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
+                    $delivery = $order->deliveries->first();
+
+                    if (!empty($delivery) && !empty($delivery->point_id)) {
+                        $point = $points->points(
+                            $points->newQuery()
+                                ->setFilter('id', $delivery->point_id)
+                        )->first();
+
+                        $params['Режим работы'] = $point->timetable;
+                        $params['Телефон пункта выдачи'] = $point->phone;
+                    }
+
+                    return [
+                        sprintf('ЗАКАЗ %s ОЖИДАЕТ В ПУНКТЕ ВЫДАЧИ!', $order->number),
+                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s в течение семи дней.',
+                        $order->number,
+                        $order->price,
+                        $delivery ? $delivery->getDeliveryAddressString() : '')
+                    ];
+                    // return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
                 case OrderStatus::DONE:
                     $bonus = optional($order->bonuses->first());
                     $bonusString = '';
@@ -885,18 +917,18 @@ class OrderObserver
             }
         })();
 
+        $params['Получатель'] = $this->parseName($user, $order);
+        $params['Телефон'] = static::formatNumber($order->customerPhone());
+        $params['Сумма заказа'] = sprintf('%s ₽', (int) $order->price);
+        $params['Получение'] = $deliveryMethod;
+        $params['Дата доставки'] = $deliveryDate;
+        $params['Адрес доставки'] = $deliveryAddress;
+
         return [
             'title' => sprintf($title, mb_strtoupper($this->parseName($user, $order))),
             'text' => $text,
             'button' => $button,
-            'params' => [
-                'Получатель' => $this->parseName($user, $order),
-                'Телефон' => static::formatNumber($order->customerPhone()),
-                'Сумма заказа' => sprintf('%s ₽', (int) $order->price),
-                'Получение' => $deliveryMethod,
-                'Дата доставки' => $deliveryDate,
-                'Адрес доставки' => $deliveryAddress
-            ],
+            'params' => $params,
             'shipments' => $shipments->toArray(),
             'delivery_price' => (function () use ($order) {
                 $price = (int) $order->delivery_price;
