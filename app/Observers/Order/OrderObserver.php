@@ -791,7 +791,7 @@ class OrderObserver
                     }
 
                     return [
-                        sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ%s', $order->number, $track_string),
+                        sprintf('ЧАСТЬ ЗАКАЗА %s ПЕРЕДАНА В СЛУЖБУ ДОСТАВКИ%s', $order->number, $track_string),
                         sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
                         Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                         $order->number,
