@@ -525,7 +525,7 @@ class DeliveryObserver
             'button' => [],
             'params' => [
                 'Получатель' => $delivery->receiver_name,
-                'Телефон' => OrderObserver::formatNumber($delivery->order->customerPhone()),
+                'Телефон' => !empty($delivery->receiver_phone) ? $delivery->receiver_phone : OrderObserver::formatNumber($delivery->order->customerPhone()),
                 'Сумма заказа' => sprintf('%s ₽', (int) $delivery->order->cost),
                 'Получение' => DeliveryMethod::methodById($delivery->delivery_method)->name,
                 'Дата доставки' => $this->getDeliveryDate($delivery),
