@@ -44,7 +44,10 @@ class DeliveryObserver
          * сейчас клиент может отказаться только от всей доставки целеком, а не от какой-то её части
          */
         DeliveryStatus::CANCELLATION_EXPECTED => ShipmentStatus::CANCELLATION_EXPECTED,
-        DeliveryStatus::RETURNED => ShipmentStatus::RETURNED,
+        DeliveryStatus::RETURNED   => ShipmentStatus::RETURNED,
+
+        DeliveryStatus::ASSEMBLING => ShipmentStatus::ASSEMBLING,
+        DeliveryStatus::ASSEMBLED  => ShipmentStatus::ASSEMBLED,
     ];
 
     /**
@@ -81,7 +84,6 @@ class DeliveryObserver
     public function updated(Delivery $delivery)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, $delivery->order, $delivery);
-
         $this->setStatusToShipments($delivery);
         $this->setIsCanceledToShipments($delivery);
         $this->setStatusToOrder($delivery);
@@ -317,6 +319,9 @@ class DeliveryObserver
         if (isset(self::STATUS_TO_SHIPMENTS[$delivery->status]) && $delivery->status != $delivery->getOriginal('status')) {
             $delivery->loadMissing('shipments');
             foreach ($delivery->shipments as $shipment) {
+                if ($shipment->status == self::STATUS_TO_SHIPMENTS[$delivery->status])
+                    continue;
+
                 $shipment->status = self::STATUS_TO_SHIPMENTS[$delivery->status];
                 $shipment->save();
             }

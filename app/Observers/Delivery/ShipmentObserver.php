@@ -385,6 +385,7 @@ class ShipmentObserver
             foreach ($delivery->shipments as $deliveryShipment) {
                 if ($deliveryShipment->is_canceled)
                     continue;
+
                 if ($deliveryShipment->status < $shipment->status) {
                     $allShipmentsHasStatus = false;
                     break;
@@ -513,23 +514,25 @@ class ShipmentObserver
                     'ALL_PRISE_GOODS' => (int) $shipment->cost
                 ];
 
-                switch ($operator->communication_method) {
-                    case OperatorCommunicationMethod::METHOD_PHONE:
-                        $serviceNotificationService->sendDirect(
-                            'klientoformlen_novyy_zakaz',
-                            $user->phone,
-                            'sms',
-                            $vars
-                        );
-                        break;
-                    case OperatorCommunicationMethod::METHOD_EMAIL:
-                        $serviceNotificationService->sendDirect(
-                            'klientoformlen_novyy_zakaz',
-                            $user->email,
-                            'email',
-                            $vars
-                        );
-                        break;
+                if ($user) {
+                    switch ($operator->communication_method) {
+                        case OperatorCommunicationMethod::METHOD_PHONE:
+                            $serviceNotificationService->sendDirect(
+                                'klientoformlen_novyy_zakaz',
+                                $user->phone,
+                                'sms',
+                                $vars
+                            );
+                            break;
+                        case OperatorCommunicationMethod::METHOD_EMAIL:
+                            $serviceNotificationService->sendDirect(
+                                'klientoformlen_novyy_zakaz',
+                                $user->email,
+                                'email',
+                                $vars
+                            );
+                            break;
+                    }
                 }
             }
 
