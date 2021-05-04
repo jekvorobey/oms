@@ -218,12 +218,31 @@ class YandexPaymentSystem implements PaymentSystemInterface
     protected function generateItems(Order $order)
     {
         $items = [];
+        $certificatesDiscount = 0;
+        if (!empty($order->certificates)) {
+            foreach ($order->certificates as $certificate) {
+                $certificatesDiscount += $certificate['amount'];
+            }
+        }
         foreach ($order->basket->items as $item) {
+            $itemValue = $item->price / $item->qty;
+            if (($certificatesDiscount > 0) && ($itemValue > 1)) {
+                $discountPrice = $itemValue - 1;
+                if ($discountPrice > $certificatesDiscount) {
+                    $itemValue = $itemValue - $certificatesDiscount;
+                    $certificatesDiscount = 0;
+                }
+                else {
+                    $itemValue = $itemValue - $discountPrice;
+                    $certificatesDiscount -= $discountPrice;
+                }
+            }
+
             $items[] = [
                 'description' => $item->name,
                 'quantity' => $item->qty,
                 'amount' => [
-                    'value' => number_format($item->price / $item->qty, 2, '.', ''),
+                    'value' => number_format($itemValue, 2, '.', ''),
                     'currency' => self::CURRENCY_RUB,
                 ],
                 'vat_code' => 1,
@@ -232,11 +251,15 @@ class YandexPaymentSystem implements PaymentSystemInterface
             ];
         }
         if ((float)$order->delivery_price > 0) {
+            $deliveryPrice = $order->delivery_price;
+            if (($certificatesDiscount > 0) && ($deliveryPrice >= $certificatesDiscount)) {
+                $deliveryPrice -= $certificatesDiscount;
+            }
             $items[] = [
                 'description' => 'Доставка',
                 'quantity' => 1,
                 'amount' => [
-                    'value' => number_format($order->delivery_price, 2, '.', ''),
+                    'value' => number_format($deliveryPrice, 2, '.', ''),
                     'currency' => self::CURRENCY_RUB,
                 ],
                 'vat_code' => 1,
@@ -244,7 +267,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 "payment_subject" => "service"
             ];
         }
-
         return $items;
     }
 }
