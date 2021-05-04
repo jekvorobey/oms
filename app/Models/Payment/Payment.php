@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float $sum
  * @property Carbon $payed_at
  * @property Carbon $expires_at
+ * @property Carbon $yandex_expires_at - Дата и время до которого в яндексе отменить или подтвердить платеж
  * @property int $status
  * @property int $payment_method
  * @property int $payment_system
@@ -33,7 +34,7 @@ class Payment extends OmsModel
     protected static $unguarded = true;
 
     /** @var array */
-    protected $dates = ['created_at', 'payed_at', 'expires_at'];
+    protected $dates = ['created_at', 'payed_at', 'expires_at', 'yandex_expires_at'];
     /** @var array */
     protected $casts = ['data' => 'array'];
 

@@ -149,6 +149,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 case PaymentStatus::WAITING_FOR_CAPTURE:
                     $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
                     $localPayment->status = \App\Models\Payment\PaymentStatus::HOLD;
+                    $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
                     $localPayment->save();
                     break;
                 case PaymentStatus::SUCCEEDED:
