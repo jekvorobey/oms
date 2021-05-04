@@ -19,17 +19,29 @@ class CommitPayments extends Command
             ->where('status', PaymentStatus::HOLD)
             ->get();
         $threeDaysAgo = now()->subDays(3);
+        $today = now();
         foreach ($payments as $payment) {
-            if ($threeDaysAgo->greaterThan($payment->created_at)) {
-                logger()->info('Commit holded payment', ['paymentId' => $payment->id]);
-                try {
-                    $payment->commitHolded();
-                } catch (\Exception $e) {
-                    $payment->status = PaymentStatus::ERROR;
-                    $payment->save();
-                    logger()->error('unable to commit payment', ['exception' => $e]);
+            if ($payment->yandex_expires_at) {
+                if ($payment->yandex_expires_at->diff($today)->days < 1) {
+                    $this->commitHolded($payment);
                 }
+
+                continue;
             }
+            if ($threeDaysAgo->greaterThan($payment->created_at)) {
+                $this->commitHolded($payment);
+            }
+        }
+    }
+
+    private function commitHolded(Payment $payment): void {
+        logger()->info('Commit holded payment', ['paymentId' => $payment->id]);
+        try {
+            $payment->commitHolded();
+        } catch (\Exception $e) {
+            $payment->status = PaymentStatus::ERROR;
+            $payment->save();
+            logger()->error('unable to commit payment', ['exception' => $e]);
         }
     }
 }
