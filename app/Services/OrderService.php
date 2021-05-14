@@ -302,10 +302,10 @@ class OrderService
             $publicEventInfoDto->organizer = $organizerInfoDto;
             $organizerInfoDto->name = $cardStruct->organizer['name'];
             $organizerInfoDto->description = $cardStruct->organizer['description'];
-            $organizerInfoDto->phone = OrderObserver::formatNumber($cardStruct->organizer['phone']);
+            $organizerInfoDto->phone = $cardStruct->organizer['phone'];
             $organizerInfoDto->email = $cardStruct->organizer['email'];
             $organizerInfoDto->site = $cardStruct->organizer['site'];
-            $organizerInfoDto->messengerPhone = OrderObserver::formatNumber($cardStruct->organizer['messenger_phone'] ? $cardStruct->organizer['messenger_phone'] : $cardStruct->organizer['phone']);
+            $organizerInfoDto->messengerPhone = $cardStruct->organizer['messenger_phone'] ? $cardStruct->organizer['messenger_phone'] : $cardStruct->organizer['phone'];
             foreach ($basketItems as $item) {
                 if ($cardStruct->sprintId == $item->getSprintId()) {
                     $ticketsInfoDto = new PublicEventOrder\TicketsInfoDto();

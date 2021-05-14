@@ -470,8 +470,8 @@
                             </div>
                             <div class="program-layout">
                                 <div class="speakers">
-                                    <div class="sub-title space" style="margin-bottom: 23px">СПИКЕРЫ</div>
                                     @if($stage->speakerIds)
+                                    <div class="sub-title space" style="margin-bottom: 23px">СПИКЕРЫ</div>
                                         @foreach($stage->speakerIds as $speakerId)
                                             @if($publicEvent->speakers->has($speakerId))
                                                 @php
