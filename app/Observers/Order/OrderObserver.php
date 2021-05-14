@@ -34,6 +34,9 @@ use Illuminate\Support\Arr;
 use Pim\Dto\Certificate\CertificateRequestDto;
 use Pim\Dto\Certificate\CertificateRequestStatusDto;
 use Pim\Services\CertificateService\CertificateService;
+use Pim\Services\OfferService\OfferService;
+use Pim\Services\ProductService\ProductService;
+use Pim\Services\CategoryService\CategoryService;
 
 /**
  * Class OrderObserver
@@ -650,7 +653,7 @@ class OrderObserver
         }
 
         $shipments = null;
-        if($override_delivery) {
+        if($override_delivery && $override_delivery->status !== DeliveryStatus::DONE) {
             $shipments = $override_delivery->shipments;
         } else {
             $shipments = $order
@@ -663,8 +666,15 @@ class OrderObserver
 
         $saved_shipments = $shipments;
 
+        /** @var OfferService */
+        $offerService = app(OfferService::class);
+        /** @var ProductService */
+        $productService = app(ProductService::class);
+        /** @var CategoryService */
+        $categoryService = app(CategoryService::class);
+
         $shipments = $shipments
-            ->map(function (Shipment $shipment) {
+            ->map(function (Shipment $shipment) use ($order, $offerService, $productService, $categoryService) {
                 return [
                     'date' => $this->formatDeliveryDate($shipment->delivery),
                     'products' => $shipment
@@ -672,13 +682,40 @@ class OrderObserver
                         ->map(function (ShipmentItem $item) {
                             return $item->basketItem;
                         })
-                        ->map(function (BasketItem $item) {
-                            return [
+                        ->map(function (BasketItem $item) use ($order, $offerService, $productService, $categoryService) {
+                            $productItem = [
                                 'name' => $item->name,
                                 'count' => (int) $item->qty,
                                 'price' => (int) $item->price,
                                 'image' => $item->getItemMedia()[0] ?? ''
                             ];
+
+                            if ($order->status === OrderStatus::DONE) {
+                               /** @var OfferDto */
+                                $offer = $offerService->offers(
+                                    $offerService->newQuery()
+                                        ->setFilter('id', $item->offer_id)
+                                )->first();
+
+                                /** @var ProductDto */
+                                $product = $productService->products(
+                                    $productService->newQuery()
+                                        ->setFilter('id', $offer->product_id)
+                                )->first();
+
+                                /** @var CategoryDto */
+                                $category = $categoryService->categories(
+                                    $categoryService->newQuery()
+                                        ->setFilter('id', $product->category_id)
+                                )->first();
+
+                                $productItem['button'] = [
+                                    'link' => sprintf('%s/catalog/%s/%s#characteristics', config('app.showcase_host'), $category->code, $product->code),
+                                    'text' => 'ОСТАВИТЬ ОТЗЫВ'
+                                ];
+                            }
+
+                            return $productItem;
                         })
                         ->toArray()
                 ];
@@ -708,36 +745,40 @@ class OrderObserver
         $bonusInfo = $customerService->getBonusInfo($order->customer_id);
 
         $params = [];
+        $withoutParams = false;
+        $hideShipmentsDate = false;
 
-        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled, $part_price, $saved_shipments, &$params, $points) {
+        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled, $part_price, $saved_shipments, &$params, $points, &$deliveryAddress, &$deliveryDate, &$withoutParams, &$hideShipmentsDate) {
             if($override_delivery) {
-                $bonus = optional($order->bonuses->first());
+                // $bonus = optional($order->bonuses->first());
 
                 if($override_delivery->status == DeliveryStatus::DONE) {
-                    if($bonus->bonus) {
-                        return [
-                            sprintf('ВАМ НАЧИСЛЕН: %s ₽ БОНУС ЗА ЗАКАЗ', $bonus->bonus ?? 0),
-                            sprintf('%s, здравствуйте!
-                            Вам начислен: %s ₽ бонус за заказ %s. Бонусы будут действительны до %s. Потратить их можно на следующую покупку.
+                    // if($bonus->bonus) {
+                    //     return [
+                    //         sprintf('ВАМ НАЧИСЛЕН: %s ₽ БОНУС ЗА ЗАКАЗ', $bonus->bonus ?? 0),
+                    //         sprintf('%s, здравствуйте!
+                    //         Вам начислен: %s ₽ бонус за заказ %s. Бонусы будут действительны до %s. Потратить их можно на следующую покупку.
 
-                            Нам важно ваше мнение!
-                            Мы будем признательны, если вы поделитесь своим мнением о купленном товаре!
-                            Оставить отзыв можно, пройдя по ссылке: %s',
-                            $user->first_name,
-                            $bonus->bonus ?? 0,
-                            $order->number,
-                            $bonus->getExpirationDate() ?? 'не указано',
-                            config('app.showcase_host'))
-                        ];
-                    }
+                    //         Нам важно ваше мнение!
+                    //         Мы будем признательны, если вы поделитесь своим мнением о купленном товаре!
+                    //         Оставить отзыв можно, пройдя по ссылке: %s',
+                    //         $user->first_name,
+                    //         $bonus->bonus ?? 0,
+                    //         $order->number,
+                    //         $bonus->getExpirationDate() ?? 'не указано',
+                    //         config('app.showcase_host'))
+                    //     ];
+                    // }
+
+                    $withoutParams = true;
+                    $hideShipmentsDate = true;
 
                     return [
                         sprintf('%s, ВАШ ЗАКАЗ %s ВЫПОЛНЕН', mb_strtoupper($user->first_name), $order->number),
-                        sprintf('Спасибо, что выбрали iBT.ru! Надеемся, что процесс покупки доставил вам исключительно положительные эмоции.
-
-                        Нам важно ваше мнение!
-                        Будем признательны, если поделитесь своим мнением о купленном товаре.
-                        Оставить отзыв можно по ссылке: %s', config('app.showcase_host'))
+                        'Спасибо что выбрали нас! Надеемся что процесс покупки доставил
+                        <br>вам исключительно положительные эмоции.
+                        <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
+                        <br>еще лучше и удобнее'
                     ];
                 }
 
@@ -813,12 +854,15 @@ class OrderObserver
                         $params['Телефон пункта выдачи'] = $point->phone;
                     }
 
+                    $deliveryAddress = $override_delivery->getDeliveryAddressString();
+                    $deliveryDate = null;
+
                     return [
                         sprintf('ЗАКАЗ %s ОЖИДАЕТ В ПУНКТЕ ВЫДАЧИ!', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s в течение семи дней.',
+                        sprintf('Заказ №%s на сумму %d р. ожидает вас в пункте выдачи по адресу: %s в течение семи дней.',
                         $order->number,
                         $part_price,
-                        $override_delivery->getDeliveryAddressString())
+                        $deliveryAddress)
                     ];
                 }
             }
@@ -887,26 +931,30 @@ class OrderObserver
                         $params['Телефон пункта выдачи'] = $point->phone;
                     }
 
+                    $deliveryAddress = $delivery ? $delivery->getDeliveryAddressString() : '';
+                    $deliveryDate = null;
+
                     return [
                         sprintf('ЗАКАЗ %s ОЖИДАЕТ В ПУНКТЕ ВЫДАЧИ!', $order->number),
-                        sprintf('Заказ №%s на сумму %s р. ожидает вас в пункте выдачи по адресу: %s в течение семи дней.',
+                        sprintf('Заказ №%s на сумму %d р. ожидает вас в пункте выдачи по адресу: %s в течение семи дней.',
                         $order->number,
                         $order->price,
-                        $delivery ? $delivery->getDeliveryAddressString() : '')
+                        $deliveryAddress)
                     ];
                     // return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
                 case OrderStatus::DONE:
-                    $bonus = optional($order->bonuses->first());
-                    $bonusString = '';
-                    if (!empty($bonus->bonus)) {
-                        $bonusString = sprintf('Вам начислен: %s ₽ бонус. Бонусы будут действительны до %s. Потратить их можно на следующую покупку.<br><br>', $bonus->bonus, $bonus->getExpirationDate() ?? 'не указано');
-                    }
+                    // $bonus = optional($order->bonuses->first());
+                    // $bonusString = '';
+                    // if (!empty($bonus->bonus)) {
+                    //     $bonusString = sprintf('Вам начислен: %s ₽ бонус. Бонусы будут действительны до %s. Потратить их можно на следующую покупку.<br><br>', $bonus->bonus, $bonus->getExpirationDate() ?? 'не указано');
+                    // }
+                    $withoutParams = true;
                     return [
                         '%s, ' . sprintf("ВАШ ЗАКАЗ %s ВЫПОЛНЕН", $order->number),
-                        sprintf('%sСпасибо что выбрали нас! Надеемся что процесс покупки доставил
+                        'Спасибо что выбрали нас! Надеемся что процесс покупки доставил
                         <br>вам исключительно положительные эмоции.
                         <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
-                        <br>еще лучше и удобнее', $bonusString)
+                        <br>еще лучше и удобнее'
                     ];
                 // case OrderStatus::RETURNED:
                 //     return [
@@ -917,12 +965,16 @@ class OrderObserver
             }
         })();
 
-        $params['Получатель'] = $this->parseName($user, $order);
-        $params['Телефон'] = static::formatNumber($order->customerPhone());
-        $params['Сумма заказа'] = sprintf('%s ₽', (int) $order->price);
-        $params['Получение'] = $deliveryMethod;
-        $params['Дата доставки'] = $deliveryDate;
-        $params['Адрес доставки'] = $deliveryAddress;
+        if (!$withoutParams) {
+            $params['Получатель'] = $this->parseName($user, $order);
+            $params['Телефон'] = static::formatNumber($order->customerPhone());
+            $params['Сумма заказа'] = sprintf('%s ₽', (int) $order->price);
+            $params['Получение'] = $deliveryMethod;
+            if ($deliveryDate !== null) {
+                $params['Дата доставки'] = $deliveryDate;
+            }
+            $params['Адрес доставки'] = $deliveryAddress;
+        }
 
         return [
             'title' => sprintf($title, mb_strtoupper($this->parseName($user, $order))),
@@ -930,6 +982,7 @@ class OrderObserver
             'button' => $button,
             'params' => $params,
             'shipments' => $shipments->toArray(),
+            'hide_shipments_date' => $hideShipmentsDate,
             'delivery_price' => (function () use ($order) {
                 $price = (int) $order->delivery_price;
 
