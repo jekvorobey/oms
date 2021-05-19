@@ -1,0 +1,36 @@
+before_script:
+  - apt-get update -qq
+  - apt-get install -qq git
+  # Setup SSH deploy keys
+  - 'which ssh-agent || ( apt-get install -qq openssh-client )'
+  - eval $(ssh-agent -s)
+  - ssh-add <(echo "$GITLAB_SSH_KEY")
+  - mkdir -p ~/.ssh
+  - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+    
+deploy_staging:
+  type: deploy
+  environment:
+    name: staging
+    url: $STAGE_URL
+  script:
+    - ssh -T $STAGE_USER@$STAGE_URL 'bash -s' -- < deploy_stage.sh $STAGE_REPO_PATH $CI_COMMIT_REF_NAME
+  only:
+    - dev
+    
+deploy_production:
+  type: deploy
+  environment:
+    name: production
+    url: $PROD_URL
+  script:
+    - ssh -T $PROD_USER@$PROD_URL 'bash -s' -- < deploy_prod.sh $PROD_REPO_PATH $CI_COMMIT_REF_NAME
+  only:
+    - release
+
+mr_test:
+  stage: test
+  script:
+    - echo "Fake test"
+  only:
+    - merge_requests
