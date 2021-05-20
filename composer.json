@@ -117,6 +117,9 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
-        ]
+        ],
+        "phpunit": "./vendor/bin/phpunit",
+        "phpcs": "./vendor/bin/phpcs --standard=phpcs.xml",
+        "phpcbf": "./vendor/bin/phpcbf --standard=phpcs.xml"
     }
 }
