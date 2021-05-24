@@ -735,7 +735,7 @@ class OrderObserver
             ->values();
 
             $part_price = 0;
-            if (!empty($shipments)) {
+            if (!empty($shipments) && !empty($shipments->toArray()[0])) {
                 $products = $shipments->toArray()[0]['products'];
                 foreach ($products as $product) {
                     $part_price += $product['price'];
@@ -1092,7 +1092,7 @@ class OrderObserver
             'AVAILABLE_BAL' => $bonusInfo->available,
             'goods' => $goods->all(),
             'PART_PRICE' => $part_price,
-            'TRACK_NUMBER' => $saved_shipments->first()->delivery->xml_id
+            'TRACK_NUMBER' => $saved_shipments->first() ? $saved_shipments->first()->delivery->xml_id : null
         ];
     }
 
