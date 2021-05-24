@@ -11,8 +11,6 @@ class OrderWriter
     /**
      * Задать список оплат для заказа.
      *
-     * @param Order $order
-     * @param Collection $payments
      * @throws \Exception
      */
     public function setPayments(Order $order, Collection $payments): void

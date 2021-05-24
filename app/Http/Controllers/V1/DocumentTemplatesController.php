@@ -15,7 +15,6 @@ class DocumentTemplatesController extends Controller
 {
     /**
      * Получить шаблон "Акт-претензия по отправлению"
-     * @return JsonResponse
      */
     public function claimAct(): JsonResponse
     {
@@ -24,7 +23,6 @@ class DocumentTemplatesController extends Controller
 
     /**
      * Получить шаблон "Акт приема-передачи по отправлению/грузу"
-     * @return JsonResponse
      */
     public function acceptanceAct(): JsonResponse
     {
@@ -33,7 +31,6 @@ class DocumentTemplatesController extends Controller
 
     /**
      * Получить шаблон "Опись отправления заказа"
-     * @return JsonResponse
      */
     public function inventory(): JsonResponse
     {
@@ -42,17 +39,12 @@ class DocumentTemplatesController extends Controller
 
     /**
      * Получить шаблон "Карточка сборки отправления"
-     * @return JsonResponse
      */
     public function assemblingCard(): JsonResponse
     {
         return $this->getResponse(DocumentService::ASSEMBLING_CARD);
     }
 
-    /**
-     * @param  string  $template
-     * @return JsonResponse
-     */
     protected function getResponse(string $template): JsonResponse
     {
         return response()->json([

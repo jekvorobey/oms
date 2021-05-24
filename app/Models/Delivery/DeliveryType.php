@@ -9,16 +9,25 @@ namespace App\Models\Delivery;
  */
 class DeliveryType
 {
-    /** @var int - несколькими доставками */
+    /** несколькими доставками */
     const TYPE_SPLIT = 1;
-    /** @var int - одной доставкой */
+    /** одной доставкой */
     const TYPE_CONSOLIDATION = 2;
-    
+
     /** @var int */
     public $id;
     /** @var string */
     public $name;
-    
+
+    /**
+     * DeliveryType constructor.
+     */
+    public function __construct(int $id, string $name)
+    {
+        $this->id = $id;
+        $this->name = $name;
+    }
+
     /**
      * @return array|self[]
      */
@@ -29,6 +38,7 @@ class DeliveryType
             self::TYPE_CONSOLIDATION => new self(self::TYPE_CONSOLIDATION, 'Одной доставкой'),
         ];
     }
+
     /**
      * @return array
      */
@@ -38,16 +48,5 @@ class DeliveryType
             self::TYPE_SPLIT,
             self::TYPE_CONSOLIDATION,
         ];
-    }
-    
-    /**
-     * DeliveryType constructor.
-     * @param  int  $id
-     * @param  string  $name
-     */
-    public function __construct(int $id, string $name)
-    {
-        $this->id = $id;
-        $this->name = $name;
     }
 }

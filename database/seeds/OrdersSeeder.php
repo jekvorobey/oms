@@ -24,11 +24,9 @@ use Pim\Services\ProductService\ProductService;
  */
 class OrdersSeeder extends Seeder
 {
-    /** @var int */
-    const FAKER_SEED = 123456;
+    public const FAKER_SEED = 123456;
 
-    /** @var int */
-    const ORDERS_COUNT = 100;
+    public const ORDERS_COUNT = 100;
 
     /**
      * @throws PimException
@@ -156,7 +154,7 @@ class OrdersSeeder extends Seeder
             if ($faker->boolean()) {
                 try {
                     $orderService->cancel($order);
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                 }
             }
 

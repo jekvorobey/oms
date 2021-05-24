@@ -19,7 +19,6 @@ class PublicEventCartStruct
 
     /**
      * Получить поле типа билета
-     * @param  int  $offerId
      * @return mixed
      */
     protected function getFieldByOfferId(int $offerId, string $field)
@@ -31,21 +30,17 @@ class PublicEventCartStruct
 
     /**
      * Получить название типа билета
-     * @param  int  $offerId
-     * @return string
      */
     public function getNameByOfferId(int $offerId): string
     {
-        return (string)$this->getFieldByOfferId($offerId, 'name');
+        return (string) $this->getFieldByOfferId($offerId, 'name');
     }
 
     /**
      * Получить id типа билета
-     * @param  int  $offerId
-     * @return int
      */
     public function getIdByOfferId(int $offerId): int
     {
-        return (int)$this->getFieldByOfferId($offerId, 'id');
+        return (int) $this->getFieldByOfferId($offerId, 'id');
     }
 }

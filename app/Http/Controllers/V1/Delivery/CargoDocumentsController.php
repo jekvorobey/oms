@@ -20,10 +20,6 @@ class CargoDocumentsController extends Controller
 {
     /**
      * Сформировать "Акт приема-передачи по грузу"
-     * @param  int  $cargoId
-     * @param DeliveryService $deliveryService
-     * @param DocumentService $documentService
-     * @return JsonResponse
      */
     public function acceptanceAct(
         int $cargoId,
@@ -40,10 +36,6 @@ class CargoDocumentsController extends Controller
         return $this->getResponse($documentDto);
     }
 
-    /**
-     * @param  DocumentDto  $documentDto
-     * @return JsonResponse
-     */
     protected function getResponse(DocumentDto $documentDto): JsonResponse
     {
         if ($documentDto->success && $documentDto->file_id) {

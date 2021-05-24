@@ -1,8 +1,6 @@
 <?php
 
-
 namespace App\Core;
-
 
 use App\Models\Delivery\Delivery;
 use App\Models\Order\Order;
@@ -25,7 +23,10 @@ class OrderSmsNotify
         $delivery_time_start = substr($delivery->delivery_time_start, 0, -3);
         $delivery_time_end = substr($delivery->delivery_time_end, 0, -3);
         $cost = $delivery->shipments->sum('cost');
-        static::send($delivery->order, "Заказ №{$delivery->number} на сумму {$cost} р. передан в службу доставки. Ожидайте доставку {$delivery_at} с {$delivery_time_start} до {$delivery_time_end}.");
+        static::send(
+            $delivery->order,
+            "Заказ №{$delivery->number} на сумму {$cost} р. передан в службу доставки. Ожидайте доставку {$delivery_at} с {$delivery_time_start} до {$delivery_time_end}."
+        );
     }
 
     public static function deliveryReadyForRecipient(Delivery $delivery)
@@ -58,7 +59,7 @@ class OrderSmsNotify
 
         $smsService->send([$order->getUser()->phone], join("\n", [
             $text,
-            "www.iBT.studio тел. 8(800)000-00-00"
+            'www.iBT.studio тел. 8(800)000-00-00',
         ]));
     }
 }

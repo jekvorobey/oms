@@ -4,7 +4,6 @@ namespace App\Models\Order;
 
 use App\Models\OmsModel;
 use Carbon\Carbon;
-use Greensight\Customer\Dto\CustomerBonusDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,26 +12,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Class OrderBonus
  * @package App\Models\Order
  *
- * @property int        $order_id
- * @property int        $bonus_id
- * @property int        $customer_bonus_id
- * @property string     $name
- * @property int        $type
- * @property int        $status
- * @property int        $bonus
- * @property int        $valid_period (период действия бонуса в днях)
+ * @property int $order_id
+ * @property int $bonus_id
+ * @property int $customer_bonus_id
+ * @property string $name
+ * @property int $type
+ * @property int $status
+ * @property int $bonus
+ * @property int $valid_period (период действия бонуса в днях)
  * @property array|null $items
  */
 class OrderBonus extends OmsModel
 {
-    const STATUS_ON_HOLD = 1; // На удержании
-    const STATUS_ACTIVE = 2; // Активные
-    const STATUS_CANCEL = 3; // Отменены
+    public const STATUS_ON_HOLD = 1; // На удержании
+    public const STATUS_ACTIVE = 2; // Активные
+    public const STATUS_CANCEL = 3; // Отменены
 
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = [
+    public const FILLABLE = [
         'order_id',
         'bonus_id',
         'customer_bonus_id',
@@ -44,9 +43,7 @@ class OrderBonus extends OmsModel
         'items',
     ];
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $fillable = self::FILLABLE;
 
     /** @var array */
@@ -69,7 +66,7 @@ class OrderBonus extends OmsModel
             $this->status = self::STATUS_ACTIVE;
             $this->save();
             return true;
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             return false;
         }
     }
@@ -82,9 +79,6 @@ class OrderBonus extends OmsModel
         return $this->valid_period ? Carbon::now()->addDays($this->valid_period + 1) : null;
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

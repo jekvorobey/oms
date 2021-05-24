@@ -8,23 +8,32 @@ namespace App\Models\Payment;
  */
 class PaymentStatus
 {
-    /** @var int - не оплачена */
+    /** не оплачена */
     public const NOT_PAID = 1;
-    /** @var int - оплачена */
+    /** оплачена */
     public const PAID = 2;
-    /** @var int - просрочена */
+    /** просрочена */
     public const TIMEOUT = 3;
-    /** @var int - средства захолдированы */
+    /** средства захолдированы */
     public const HOLD = 4;
-    /** @var int - ошибка */
+    /** ошибка */
     public const ERROR = 5;
-    /** @var int - ожидает оплаты */
+    /** ожидает оплаты */
     public const WAITING = 6;
 
     /** @var int */
     public $id;
     /** @var string */
     public $name;
+
+    /**
+     * PaymentStatus constructor.
+     */
+    public function __construct(int $id, string $name)
+    {
+        $this->id = $id;
+        $this->name = $name;
+    }
 
     /**
      * @return array
@@ -54,16 +63,5 @@ class PaymentStatus
             self::ERROR,
             self::WAITING,
         ];
-    }
-
-    /**
-     * PaymentStatus constructor.
-     * @param  int  $id
-     * @param  string  $name
-     */
-    public function __construct(int $id, string $name)
-    {
-        $this->id = $id;
-        $this->name = $name;
     }
 }

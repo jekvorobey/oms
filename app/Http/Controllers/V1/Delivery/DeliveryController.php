@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\V1\Delivery;
 
 use App\Http\Controllers\Controller;
@@ -26,21 +27,18 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-
 /**
  * Class DeliveryController
  * @package App\Http\Controllers\V1\Delivery
  */
+
 class DeliveryController extends Controller
 {
     use CountAction;
     use ReadAction;
     use UpdateAction;
     use DeleteAction;
-    
-    /**
-     * @inheritDoc
-     */
+
     public function modelClass(): string
     {
         return Delivery::class;
@@ -53,7 +51,7 @@ class DeliveryController extends Controller
     {
         return Delivery::FILLABLE;
     }
-    
+
     /**
      * @return array
      */
@@ -88,41 +86,35 @@ class DeliveryController extends Controller
             'delivery_address.comment' => ['sometimes', 'string', 'nullable'],
         ];
     }
-    
+
     /**
      * Подсчитать кол-во доставок заказа
-     * @param int $orderId
-     * @param  Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function countByOrder(int $orderId, Request $request): JsonResponse
     {
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelClass();
         $restQuery = new RestQuery($request);
-        
-        
+
+
         $pagination = $restQuery->getPage();
         $pageSize = $pagination ? $pagination['limit'] : ReadAction::$PAGE_SIZE;
         $baseQuery = $modelClass::query();
-        
+
         $query = $modelClass::modifyQuery($baseQuery->where('order_id', $orderId), $restQuery);
         $total = $query->count();
-        
+
         $pages = ceil($total / $pageSize);
-        
+
         return response()->json([
             'total' => $total,
             'pages' => $pages,
             'pageSize' => $pageSize,
         ]);
     }
-    
+
     /**
      * Создать доставку
-     * @param  int  $orderId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function create(int $orderId, Request $request): JsonResponse
     {
@@ -131,59 +123,53 @@ class DeliveryController extends Controller
         if (!$order) {
             throw new NotFoundHttpException('order not found');
         }
-        
+
         $data = $request->all();
         $validator = Validator::make($data, $this->inputValidators());
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
         }
         $data['order_id'] = $orderId;
-    
+
         $delivery = new Delivery($data);
         $ok = $delivery->save();
         if (!$ok) {
             throw new HttpException(500, 'unable to save delivery');
         }
-    
+
         return response()->json([
-            'id' => $delivery->id
+            'id' => $delivery->id,
         ], 201);
     }
-    
+
     /**
      * Список доставок заказа
-     * @param  int  $orderId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function readByOrder(int $orderId, Request $request): JsonResponse
     {
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelClass();
         $restQuery = new RestQuery($request);
-    
+
         $pagination = $restQuery->getPage();
         $baseQuery = $modelClass::query();
         if ($pagination) {
             $baseQuery->offset($pagination['offset'])->limit($pagination['limit']);
         }
         $query = $modelClass::modifyQuery($baseQuery->where('order_id', $orderId), $restQuery);
-    
+
         $items = $query->get()
             ->map(function (RestSerializable $model) use ($restQuery) {
                 return $model->toRest($restQuery);
             });
-    
+
         return response()->json([
-            'items' => $items
+            'items' => $items,
         ]);
     }
 
     /**
      * Отменить доставку
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      * @throws \Exception
      */
     public function cancel(int $id, OmsDeliveryService $deliveryService): Response
@@ -201,9 +187,6 @@ class DeliveryController extends Controller
 
     /**
      * Создать/обновить заказ на доставку у службы доставки
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      * @throws \Exception
      */
     public function saveDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
@@ -219,9 +202,6 @@ class DeliveryController extends Controller
 
     /**
      * Отменить заказ на доставку у службы доставки
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      */
     public function cancelDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
     {
@@ -236,7 +216,6 @@ class DeliveryController extends Controller
 
     /**
      * Получить кол-во доставок по каждой службе доставки за сегодня
-     * @return JsonResponse
      */
     public function countTodayByDeliveryServices(): JsonResponse
     {
@@ -252,7 +231,7 @@ class DeliveryController extends Controller
                     'delivery_service_id' => $delivery->delivery_service,
                     'qty_today' => $delivery['total'],
                 ];
-            })
+            }),
         ]);
     }
 }

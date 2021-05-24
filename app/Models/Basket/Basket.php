@@ -22,27 +22,23 @@ use Illuminate\Support\Collection;
  */
 class Basket extends OmsModel
 {
-    /** @var int - корзина с товарами */
+    /** корзина с товарами */
     public const TYPE_PRODUCT = 1;
-    /** @var int - корзина с мастер-классами */
+
+    /** корзина с мастер-классами */
     public const TYPE_MASTER = 2;
-    /** @var int - корзина с подарочными сертификатами */
+
+    /** корзина с подарочными сертификатами */
     public const TYPE_CERTIFICATE = 3;
 
     /** @var bool */
     protected static $unguarded = true;
 
-    /**
-     * @return HasOne
-     */
     public function order(): HasOne
     {
         return $this->hasOne(Order::class);
     }
 
-    /**
-     * @return HasMany
-     */
     public function items(): HasMany
     {
         return $this->hasMany(BasketItem::class);
@@ -50,7 +46,6 @@ class Basket extends OmsModel
 
     /**
      * Корзина является корзиной с товарами?
-     * @return bool
      */
     public function isProductBasket(): bool
     {
@@ -59,7 +54,6 @@ class Basket extends OmsModel
 
     /**
      * Корзина является корзиной с мастер-классами?
-     * @return bool
      */
     public function isPublicEventBasket(): bool
     {

@@ -28,6 +28,5 @@ class AddOrderPromoCodesIndex extends Migration
         Schema::table('order_promo_codes', function (Blueprint $table) {
             $table->dropForeign('order_promo_codes_order_id_foreign');
         });
-
     }
 }

@@ -51,7 +51,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => env('APP_URL') . '/storage',
             'visibility' => 'public',
         ],
 
@@ -67,7 +67,7 @@ return [
         'document-templates' => [
             'driver' => 'local',
             'root' => storage_path('app/document-templates'),
-            'url' => env('APP_URL').'/document-templates',
+            'url' => env('APP_URL') . '/document-templates',
             'visibility' => 'public',
         ],
 

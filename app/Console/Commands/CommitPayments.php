@@ -24,7 +24,7 @@ class CommitPayments extends Command
                 logger()->info('Commit holded payment', ['paymentId' => $payment->id]);
                 try {
                     $payment->commitHolded();
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     $payment->status = PaymentStatus::ERROR;
                     $payment->save();
                     logger()->error('unable to commit payment', ['exception' => $e]);

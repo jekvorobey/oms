@@ -12,7 +12,6 @@ class BasketObserver
 {
     /**
      * Handle the basket "deleting" event.
-     * @param  Basket $basket
      * @throws \Exception
      */
     public function deleting(Basket $basket)

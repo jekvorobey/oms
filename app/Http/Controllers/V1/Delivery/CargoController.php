@@ -32,9 +32,6 @@ class CargoController extends Controller
     use UpdateAction;
     use DeleteAction;
 
-    /**
-     * @inheritDoc
-     */
     public function modelClass(): string
     {
         return Cargo::class;
@@ -64,9 +61,6 @@ class CargoController extends Controller
 
     /**
      * Отменить груз
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      * @throws \Exception
      */
     public function cancel(int $id, OmsDeliveryService $deliveryService): Response
@@ -84,9 +78,6 @@ class CargoController extends Controller
 
     /**
      * Создать заявку на вызов курьера для забора груза
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      * @throws \Exception
      */
     public function createCourierCall(int $id, OmsDeliveryService $deliveryService): Response
@@ -102,9 +93,6 @@ class CargoController extends Controller
 
     /**
      * Отменить заявку на вызов курьера для забора груза
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      */
     public function cancelCourierCall(int $id, OmsDeliveryService $deliveryService): Response
     {
@@ -119,8 +107,6 @@ class CargoController extends Controller
 
     /**
      * Проверить наличие ошибок в заявке на вызов курьера во внешнем сервисе
-     * @param int $id
-     * @param OmsDeliveryService $deliveryService
      * @return Application|ResponseFactory|Response
      */
     public function checkExternalStatus(int $id, OmsDeliveryService $deliveryService)

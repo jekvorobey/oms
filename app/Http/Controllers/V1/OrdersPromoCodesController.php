@@ -8,19 +8,15 @@ use App\Models\Order\OrderPromoCode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 
-
 /**
  * Class OrdersPromoCodesController
  * @package App\Http\Controllers\V1
  */
+
 class OrdersPromoCodesController extends Controller
 {
     /**
      * Возвращает сколько раз был применен промокод
-     *
-     * @param int $promoCodeId
-     *
-     * @return JsonResponse
      */
     public function count(int $promoCodeId): JsonResponse
     {
@@ -33,7 +29,7 @@ class OrdersPromoCodesController extends Controller
         } else {
             $count = Order::query()
                 ->where('customer_id', $data['customer_id'])
-                ->whereHas('promoCodes',  function (Builder $query) use ($promoCodeId) {
+                ->whereHas('promoCodes', function (Builder $query) use ($promoCodeId) {
                     $query->where('promo_code_id', $promoCodeId);
                 })
                 ->count();
@@ -41,7 +37,7 @@ class OrdersPromoCodesController extends Controller
 
         return response()->json([
             'promo_code_id' => $promoCodeId,
-            'count'         => $count
+            'count' => $count,
         ]);
     }
 }

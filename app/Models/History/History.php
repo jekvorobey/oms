@@ -26,21 +26,17 @@ class History extends OmsModel
     protected $table = 'history';
     /** @var array */
     protected $casts = [
-        'data' => 'array'
+        'data' => 'array',
     ];
-    
-    /**
-     * @return HasMany
-     */
+
     public function historyMainEntities(): HasMany
     {
         return $this->hasMany(HistoryMainEntity::class);
     }
-    
+
     /**
-     * @param  int  $type
-     * @param  OmsModel|array  $mainModels
-     * @param  OmsModel|null  $model
+     * @param OmsModel|array $mainModels
+     * @param OmsModel|null $model
      */
     public static function saveEvent(int $type, $mainModels, OmsModel $model): void
     {
@@ -51,12 +47,12 @@ class History extends OmsModel
         $event = new self();
         $event->type = $type;
         $event->user_id = $user->userId();
-        
+
         $event->entity_id = $model->id;
         $event->entity_type = end($modelClass);
         $event->data = $type != HistoryType::TYPE_DELETE ? $model->getDirty() : $model->toArray();
         $event->save();
-    
+
         //Привязываем событие к основным сущностям, деталке которых оно будет выводится в истории изменения
         if (!is_array($mainModels)) {
             $mainModels = [$mainModels];
@@ -68,7 +64,7 @@ class History extends OmsModel
             $historyMainEntity->main_entity_type = end($mainModelClass);
             $historyMainEntity->main_entity_id = $mainModel->id;
             $historyMainEntity->save();
-            
+
             if ($mainModel->notificator) {
                 $mainModel->notificator::notify($type, $mainModel, $model);
             }

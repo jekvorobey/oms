@@ -38,8 +38,6 @@ class OrdersController extends Controller
 {
     /**
      * Получить список заказов
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function read(Request $request): JsonResponse
     {
@@ -52,10 +50,6 @@ class OrdersController extends Controller
 
     /**
      * Получить детальную информацию о заказе в зависимости от его типа
-     * @param  int  $id
-     * @param  Request  $request
-     * @param  OrderService  $orderService
-     * @return JsonResponse
      * @throws \Pim\Core\PimException
      */
     public function readOne(int $id, Request $request, OrderService $orderService): JsonResponse
@@ -68,7 +62,7 @@ class OrdersController extends Controller
         if ($order->isProductOrder()) {
             $reader = new OrderReader();
             $item = $reader->list((new RestQuery($request))->setFilter('id', $id))->first();
-        } else if ($order->isCertificateOrder()) {
+        } elseif ($order->isCertificateOrder()) {
             $reader = new OrderReader();
             $item = $reader->list((new RestQuery($request))->setFilter('id', $id))->first();
         } else {
@@ -81,10 +75,6 @@ class OrdersController extends Controller
     }
 
     /**
-     * @param  int  $id
-     * @param  Request  $request
-     * @param  DocumentService  $documentService
-     * @return JsonResponse
      * @throws \Throwable
      */
     public function tickets(int $id, Request $request, DocumentService $documentService): JsonResponse
@@ -101,18 +91,16 @@ class OrdersController extends Controller
 
         $documentDto = $documentService->getOrderPdfTickets($order, $data['basket_item_id'] ?? null);
         if (!$documentDto->success) {
-            throw new \Exception("Tickets not formed");
+            throw new \Exception('Tickets not formed');
         }
 
         return response()->json([
-            'file_id' => $documentDto->file_id
+            'file_id' => $documentDto->file_id,
         ]);
     }
 
     /**
      * Получить количество заказов по заданому фильтру
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function count(Request $request): JsonResponse
     {
@@ -131,7 +119,7 @@ class OrdersController extends Controller
         $offersIds = $data['offersIds'];
         $perPage = $data['perPage'] ?? 5;
         $page = $data['page'] ?? 1;
-        $offset = ($page-1) * $perPage;
+        $offset = ($page - 1) * $perPage;
         $basketIds = BasketItem::whereIn('offer_id', $offersIds)->select('basket_id');
         $basketItemsIds = BasketItem::whereIn('offer_id', $offersIds)->select('id');
         $shipmentIds = ShipmentItem::whereIn('basket_item_id', $basketItemsIds)->select('shipment_id');
@@ -139,7 +127,14 @@ class OrdersController extends Controller
         $orders = Order::whereIn('basket_id', $basketIds)
             ->join('delivery', 'orders.id', '=', 'delivery.order_id')
             ->whereIn('delivery.id', $deliveryIds)
-            ->select('orders.*', 'delivery.delivery_at', 'delivery.number as delivery_number', 'delivery.receiver_name as receiver_name', 'delivery.delivery_address as delivery_address', 'delivery.status_xml_id as status_xml_id')
+            ->select(
+                'orders.*',
+                'delivery.delivery_at',
+                'delivery.number as delivery_number',
+                'delivery.receiver_name as receiver_name',
+                'delivery.delivery_address as delivery_address',
+                'delivery.status_xml_id as status_xml_id'
+            )
             ->offset($offset)
             ->limit($perPage);
 
@@ -148,9 +143,6 @@ class OrdersController extends Controller
 
     /**
      * Задать список оплат заказа
-     * @param  int  $id
-     * @param  Request  $request
-     * @return Response
      * @throws \Exception
      */
     public function setPayments(int $id, Request $request): Response
@@ -170,8 +162,8 @@ class OrdersController extends Controller
             'payments.*.sum' => 'nullable|numeric',
             'payments.*.status' => 'nullable|integer',
             'payments.*.type' => 'nullable|integer',
-            'payments.*.payment_system'=> 'nullable|integer',
-            'payments.*.data' => 'nullable|array'
+            'payments.*.payment_system' => 'nullable|integer',
+            'payments.*.data' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -188,10 +180,6 @@ class OrdersController extends Controller
 
     /**
      * Обновить заказ
-     * @param  int  $id
-     * @param  Request  $request
-     * @param  OrderService  $orderService
-     * @return Response
      */
     public function update(int $id, Request $request, OrderService $orderService): Response
     {
@@ -231,9 +219,6 @@ class OrdersController extends Controller
 
     /**
      * Удалить заказ
-     * @param  int  $id
-     * @param  OrderService  $orderService
-     * @return Response
      * @throws \Exception
      */
     public function delete(int $id, OrderService $orderService): Response
@@ -253,9 +238,6 @@ class OrdersController extends Controller
     /**
      * Вручную оплатить заказ
      * Примечание: оплата по заказам автоматически должна поступать от платежной системы!
-     * @param  int  $id
-     * @param  OrderService  $orderService
-     * @return Response
      * @throws \Exception
      */
     public function pay(int $id, OrderService $orderService): Response
@@ -273,9 +255,6 @@ class OrdersController extends Controller
 
     /**
      * Отменить заказ
-     * @param  int  $id
-     * @param  OrderService  $orderService
-     * @return Response
      * @throws \Exception
      */
     public function cancel(int $id, OrderService $orderService): Response
@@ -291,11 +270,8 @@ class OrdersController extends Controller
         return response('', 204);
     }
 
-
     /**
      * Добавить комментарий к заказу
-     * @param int $id
-     * @param Request $request
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
     public function setComment(int $id, Request $request): Response
@@ -326,9 +302,6 @@ class OrdersController extends Controller
         return response('', 204);
     }
 
-    /**
-     * @return JsonResponse
-     */
     public function doneReferral(): JsonResponse
     {
         $data = $this->validate(request(), [
@@ -372,7 +345,7 @@ class OrdersController extends Controller
                 }
 
                 $discounts = [];
-                foreach($order->discounts as $discount) {
+                foreach ($order->discounts as $discount) {
                     $discounts[] = [
                         'discount_id' => $discount->discount_id,
                         'type' => $discount->type,
@@ -396,7 +369,6 @@ class OrdersController extends Controller
 
     /**
      * Биллинг по отправлениям
-     * @return JsonResponse
      */
     public function doneMerchant(): JsonResponse
     {
@@ -443,7 +415,9 @@ class OrdersController extends Controller
             'items' => $shipments->map(function (Shipment $shipment) {
                 $items = [];
                 foreach ($shipment->basketItems as $item) {
-                    if (!isset($item->product['merchant_id'])) { continue; }
+                    if (!isset($item->product['merchant_id'])) {
+                        continue;
+                    }
 
                     $price = $item->price;
                     $cost = $item->cost;
@@ -454,7 +428,9 @@ class OrdersController extends Controller
                     $discounts = [];
                     //$price = $item->cost;
                     foreach ($shipment->delivery->order->discounts as $orderDiscount) {
-                        if (!$orderDiscount->items) { continue; }
+                        if (!$orderDiscount->items) {
+                            continue;
+                        }
                         //спонсор скидки, null = маркетплэйс
                         $discount['sponsor'] = $orderDiscount->merchant_id ;
 
@@ -509,4 +485,3 @@ class OrdersController extends Controller
         ]);
     }
 }
-

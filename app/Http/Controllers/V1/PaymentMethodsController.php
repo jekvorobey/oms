@@ -19,7 +19,7 @@ class PaymentMethodsController extends Controller
     public function read()
     {
         $data = $this->validate(request(), [
-            'id' => 'integer|nullable'
+            'id' => 'integer|nullable',
         ]);
         $query = PaymentMethod::query();
         if (isset($data['id'])) {
@@ -27,13 +27,12 @@ class PaymentMethodsController extends Controller
         }
 
         return response()->json([
-            'payment_methods' => $query->get()
+            'payment_methods' => $query->get(),
         ], 200);
     }
 
     /**
      * Обновить параметры для способа оплаты
-     * @param int $id
      * @return Application|ResponseFactory|Response
      */
     public function update(int $id)
@@ -51,7 +50,7 @@ class PaymentMethodsController extends Controller
             'excluded_delivery_services' => 'nullable|json',
             'excluded_offer_statuses' => 'nullable|json',
             'excluded_customers' => 'nullable|json',
-            'active' => 'required|boolean'
+            'active' => 'required|boolean',
         ]);
 
         /** @var PaymentMethod $paymentMethod */

@@ -20,8 +20,8 @@ class AbstractNotification
             'status' => 0,
             'payload' => [
                 'title' => '',
-                'body' => ''
-            ]
+                'body' => '',
+            ],
         ]);
     }
 }

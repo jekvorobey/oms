@@ -34,9 +34,6 @@ class OrdersExportController extends Controller
     use DeleteAction;
     use UpdateAction;
 
-    /**
-     * @inheritDoc
-     */
     public function modelClass(): string
     {
         return OrderExport::class;
@@ -61,34 +58,33 @@ class OrdersExportController extends Controller
             'order_xml_id' => [new RequiredOnPost(), 'string'],
         ];
     }
-    
+
     /**
-     * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return \Illuminate\Http\JsonResponse
      */
     public function read(Request $request, RequestInitiator $client)
     {
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelClass();
-        
+
         $restQuery = new RestQuery($request);
         $orderId = $request->route('id');
         $exportId = $request->route('exportId');
         if ($orderId) {
             if ($exportId) {
-                $query = $modelClass::modifyQuery($modelClass::query()
+                $query = $modelClass::modifyQuery(
+                    $modelClass::query()
                     ->where('order_id', $orderId)
                     ->where('id', $exportId),
                     $restQuery
                 );
-                
+
                 /** @var RestSerializable $model */
                 $model = $query->first();
                 if (!$model) {
                     throw new NotFoundHttpException();
                 }
-                
+
                 $items = [
                     $model->toRest($restQuery),
                 ];
@@ -99,24 +95,22 @@ class OrdersExportController extends Controller
                     $baseQuery->offset($pagination['offset'])->limit($pagination['limit']);
                 }
                 $query = $modelClass::modifyQuery($baseQuery->where('order_id', $orderId), $restQuery);
-                
+
                 $items = $query->get()
                     ->map(function (RestSerializable $model) use ($restQuery) {
                         return $model->toRest($restQuery);
                     });
             }
-    
+
             return response()->json([
-                'items' => $items
+                'items' => $items,
             ]);
         } else {
             return $this->readTrait($request, $client);
         }
     }
-    
+
     /**
-     * @param Request $request
-     * @param RequestInitiator $client
      * @return \Illuminate\Http\JsonResponse
      */
     public function count(Request $request, RequestInitiator $client)
@@ -126,15 +120,15 @@ class OrdersExportController extends Controller
             /** @var Model|RestSerializable $modelClass */
             $modelClass = $this->modelClass();
             $restQuery = new RestQuery($request);
-    
+
             $pagination = $restQuery->getPage();
             $pageSize = $pagination ? $pagination['limit'] : ReadAction::$PAGE_SIZE;
-    
+
             $query = $modelClass::modifyQuery($modelClass::query()->where('order_id', $orderId), $restQuery);
             $total = $query->count();
-    
+
             $pages = ceil($total / $pageSize);
-    
+
             return response()->json([
                 'total' => $total,
                 'pages' => $pages,
@@ -144,12 +138,7 @@ class OrdersExportController extends Controller
             return $this->countTrait($request, $client);
         }
     }
-    
-    /**
-     * @param  int  $orderId
-     * @param  Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
+
     public function create(int $orderId, Request $request): JsonResponse
     {
         /** @var Model $modelClass */
@@ -162,13 +151,13 @@ class OrdersExportController extends Controller
         /** @var OrderExport $model */
         $model = new $modelClass($data);
         $ok = $model->save();
-        
+
         if (!$ok) {
             throw new HttpException(500);
         }
-        
+
         return response()->json([
-            'id' => $model->id
+            'id' => $model->id,
         ], 201);
     }
 }

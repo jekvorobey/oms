@@ -31,8 +31,6 @@ class FullCancelOrders extends Command
 
     /**
      * Execute the console command.
-     * @param  OrderService  $orderService
-     * @param  DeliveryService  $deliveryService
      */
     public function handle(OrderService $orderService, DeliveryService $deliveryService)
     {
@@ -44,19 +42,19 @@ class FullCancelOrders extends Command
         foreach ($orders as $order) {
             try {
                 $orderService->cancel($order);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
             }
 
             foreach ($order->deliveries as $delivery) {
                 try {
                     $deliveryService->cancelDelivery($delivery);
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                 }
 
                 foreach ($delivery->shipments as $shipment) {
                     try {
                         $deliveryService->cancelShipment($shipment);
-                    } catch (\Exception $e) {
+                    } catch (\Throwable $e) {
                     }
                 }
             }
@@ -70,13 +68,13 @@ class FullCancelOrders extends Command
         foreach ($deliveries as $delivery) {
             try {
                 $deliveryService->cancelDelivery($delivery);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
             }
 
             foreach ($delivery->shipments as $shipment) {
                 try {
                     $deliveryService->cancelShipment($shipment);
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                 }
             }
         }

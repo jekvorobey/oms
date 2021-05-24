@@ -21,9 +21,9 @@ class CargoObserver
         CargoStatus::SHIPPED => ShipmentStatus::SHIPPED,
         CargoStatus::TAKEN => ShipmentStatus::ON_POINT_IN,
     ];
+
     /**
      * Handle the cargo "created" event.
-     * @param  Cargo $cargo
      * @return void
      */
     public function created(Cargo $cargo)
@@ -33,8 +33,6 @@ class CargoObserver
 
     /**
      * Handle the cargo "updating" event.
-     * @param  Cargo $cargo
-     * @return bool
      */
     public function updating(Cargo $cargo): bool
     {
@@ -47,7 +45,6 @@ class CargoObserver
 
     /**
      * Handle the cargo "updated" event.
-     * @param  Cargo $cargo
      * @return void
      */
     public function updated(Cargo $cargo)
@@ -59,7 +56,6 @@ class CargoObserver
 
     /**
      * Handle the cargo "deleting" event.
-     * @param  Cargo $cargo
      * @throws \Exception
      */
     public function deleting(Cargo $cargo)
@@ -69,7 +65,6 @@ class CargoObserver
 
     /**
      * Handle the order "saving" event.
-     * @param  Cargo $cargo
      * @return void
      */
     public function saving(Cargo $cargo)
@@ -81,12 +76,11 @@ class CargoObserver
 
     /**
      * Проверить, что в грузе есть отправления, если статус меняется на "Груз передан курьеру"
-     * @param Cargo $cargo
-     * @return bool
      */
     protected function checkHasShipments(Cargo $cargo): bool
     {
-        if ($cargo->status != $cargo->getOriginal('status') &&
+        if (
+            $cargo->status != $cargo->getOriginal('status') &&
             $cargo->status == CargoStatus::SHIPPED
         ) {
             $cargo->loadMissing('shipments');
@@ -99,7 +93,6 @@ class CargoObserver
 
     /**
      * Установить дату изменения статуса груза
-     * @param  Cargo $cargo
      */
     protected function setStatusAt(Cargo $cargo): void
     {
@@ -110,7 +103,6 @@ class CargoObserver
 
     /**
      * Установить дату установки флага проблемного груза
-     * @param  Cargo $cargo
      */
     protected function setProblemAt(Cargo $cargo): void
     {
@@ -121,7 +113,6 @@ class CargoObserver
 
     /**
      * Установить дату отмены груза
-     * @param  Cargo $cargo
      */
     protected function setCanceledAt(Cargo $cargo): void
     {
@@ -132,7 +123,6 @@ class CargoObserver
 
     /**
      * Установить статус груза всем его отправлениям
-     * @param  Cargo $cargo
      */
     protected function setStatusToShipments(Cargo $cargo): void
     {

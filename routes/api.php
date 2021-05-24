@@ -81,8 +81,8 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 
             Route::get('', 'OrdersController@readOne');
             Route::put('', 'OrdersController@update');
-            Route::put('cancel','OrdersController@cancel');
-            Route::put('pay','OrdersController@pay');
+            Route::put('cancel', 'OrdersController@cancel');
+            Route::put('pay', 'OrdersController@pay');
             Route::delete('', 'OrdersController@delete');
             Route::get('tickets', 'OrdersController@tickets');
         });
@@ -152,9 +152,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                     Route::put('cancel', 'DeliveryController@cancelDeliveryOrder');
                 });
 
-                Route::put('','DeliveryController@update');
-                Route::put('cancel','DeliveryController@cancel');
-                Route::delete('','DeliveryController@delete');
+                Route::put('', 'DeliveryController@update');
+                Route::put('cancel', 'DeliveryController@cancel');
+                Route::delete('', 'DeliveryController@delete');
             });
         });
 
@@ -165,7 +165,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('', 'ShipmentsController@read');
             Route::get('similar-unshipped-shipments', 'ShipmentsController@similarUnshippedShipments');
 
-            Route::prefix('exports')->group(function() {
+            Route::prefix('exports')->group(function () {
                 Route::get('new', 'ShipmentsController@readNew');
                 Route::post('', 'ShipmentsController@createShipmentExport');
             });
@@ -196,11 +196,11 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                     Route::get('assembling-card', 'ShipmentDocumentsController@assemblingCard');
                 });
 
-                Route::put('','ShipmentsController@update');
-                Route::put('mark-as-problem','ShipmentsController@markAsProblem');
-                Route::put('mark-as-non-problem','ShipmentsController@markAsNonProblem');
-                Route::put('cancel','ShipmentsController@cancel');
-                Route::delete('','ShipmentsController@delete');
+                Route::put('', 'ShipmentsController@update');
+                Route::put('mark-as-problem', 'ShipmentsController@markAsProblem');
+                Route::put('mark-as-non-problem', 'ShipmentsController@markAsNonProblem');
+                Route::put('cancel', 'ShipmentsController@cancel');
+                Route::delete('', 'ShipmentsController@delete');
                 Route::get('barcodes', 'ShipmentsController@barcodes');
                 Route::get('cdek-receipt', 'ShipmentsController@cdekReceipt');
             });
@@ -234,9 +234,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 
             Route::prefix('{id}')->group(function () {
                 Route::get('', 'CargoController@read');
-                Route::put('','CargoController@update');
-                Route::put('cancel','CargoController@cancel');
-                Route::delete('','CargoController@delete');
+                Route::put('', 'CargoController@update');
+                Route::put('cancel', 'CargoController@cancel');
+                Route::delete('', 'CargoController@delete');
 
                 Route::prefix('courier-call')->group(function () {
                     Route::get('check', 'CargoController@checkExternalStatus');

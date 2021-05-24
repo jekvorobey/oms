@@ -14,10 +14,10 @@ return [
      */
     'token' => [
         'privateKey' => env('TOKEN_PRIVATE_KEY', 'file:///var/www/jwt_key/id_rsa'),
-        'publicKey' => env('TOKEN_PUBLIC_KEY','file:///var/www/jwt_key/id_rsa.pem'),
+        'publicKey' => env('TOKEN_PUBLIC_KEY', 'file:///var/www/jwt_key/id_rsa.pem'),
         'tokenTTL' => 120,
         'refreshTTL' => 60 * 24 * 7 * 2,
-        'deadline' => 10
+        'deadline' => 10,
     ],
 
     /*

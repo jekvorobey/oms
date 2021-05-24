@@ -43,9 +43,6 @@ class TicketsInfoDto implements Arrayable
         $this->tickets = collect();
     }
 
-    /**
-     * @param  TicketInfoDto  $ticketDto
-     */
     public function addTicket(TicketInfoDto $ticketDto): void
     {
         $this->tickets->push($ticketDto);

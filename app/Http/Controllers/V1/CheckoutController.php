@@ -17,10 +17,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class CheckoutController extends Controller
 {
-    /**
-     * @param  Request  $request
-     * @return JsonResponse
-     */
     public function commit(Request $request): JsonResponse
     {
         $basketId = $request->get('basketId');
@@ -126,7 +122,7 @@ class CheckoutController extends Controller
         $checkoutOrder = CheckoutOrder::fromArray($data);
         try {
             [$orderId, $orderNumber] = $checkoutOrder->save();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             throw new HttpException($e->getCode() ? : 500, $e->getMessage());
         }
 

@@ -21,12 +21,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class PaymentsController extends Controller
 {
-    /**
-     * @param  int  $id
-     * @param  Request  $request
-     * @param  PaymentService  $paymentService
-     * @return JsonResponse
-     */
     public function start(int $id, Request $request, PaymentService $paymentService): JsonResponse
     {
         $returnUrl = $request->get('returnUrl');
@@ -49,14 +43,10 @@ class PaymentsController extends Controller
         }
 
         return response()->json([
-            'paymentLink' => $link
+            'paymentLink' => $link,
         ]);
     }
 
-    /**
-     * @param  Request  $request
-     * @return JsonResponse
-     */
     public function getByOrder(Request $request): JsonResponse
     {
         $data = $this->validate($request, [
@@ -74,10 +64,6 @@ class PaymentsController extends Controller
         return response()->json($payment);
     }
 
-    /**
-     * @param  Request  $request
-     * @return JsonResponse
-     */
     public function payments(Request $request): JsonResponse
     {
         $data = $this->validate($request, [
@@ -93,10 +79,6 @@ class PaymentsController extends Controller
         return response()->json(['items' => $payments]);
     }
 
-    /**
-     * @param Request $request
-     * @return Response
-     */
     public function handlerLocal(Request $request): Response
     {
         $paymentSystem = new LocalPaymentSystem();
@@ -106,9 +88,7 @@ class PaymentsController extends Controller
     }
 
     /**
-     * @param  Request  $request
      * @throws \Exception
-     * @return JsonResponse
      */
     public function handlerYandex(Request $request): JsonResponse
     {
@@ -116,7 +96,7 @@ class PaymentsController extends Controller
         $paymentSystem->handlePushPayment($request->all());
 
         return response()->json([
-            'processed' => 1
+            'processed' => 1,
         ]);
     }
 }

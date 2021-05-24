@@ -42,10 +42,12 @@ class Cargo extends OmsModel
 {
     use WithWeightAndSizes;
 
+    private const SIDES = ['width', 'height', 'length'];
+
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = [
+    public const FILLABLE = [
         'merchant_id',
         'store_id',
         'status',
@@ -55,13 +57,8 @@ class Cargo extends OmsModel
         'shipping_problem_comment',
     ];
 
-    /**
-     * @var array
-     */
-    protected $fillable = self::FILLABLE;
-
     /** @var array */
-    private const SIDES = ['width', 'height', 'length'];
+    protected $fillable = self::FILLABLE;
 
     /** @var string */
     protected $table = 'cargo';
@@ -74,14 +71,9 @@ class Cargo extends OmsModel
         'length' => 'float',
     ];
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected static $restIncludes = ['shipments', 'shipments.basketItems'];
 
-    /**
-     * @return HasMany
-     */
     public function shipments(): HasMany
     {
         return $this->hasMany(Shipment::class);
@@ -89,18 +81,16 @@ class Cargo extends OmsModel
 
     /**
      * Кол-во коробок груза
-     * @return int
      */
     public function getPackageQtyAttribute(): int
     {
-        return (int)$this->shipments->reduce(function ($sum, Shipment $shipment) {
+        return (int) $this->shipments->reduce(function ($sum, Shipment $shipment) {
             return $sum + $shipment->packages()->count();
         });
     }
 
     /**
      * Рассчитать вес груза
-     * @return float
      */
     public function calcWeight(): float
     {
@@ -117,7 +107,6 @@ class Cargo extends OmsModel
 
     /**
      * Рассчитать объем груза
-     * @return float
      */
     public function calcVolume(): float
     {
@@ -134,7 +123,6 @@ class Cargo extends OmsModel
 
     /**
      * Рассчитать значение максимальной стороны (длины, ширины или высоты) из всех коробок груза
-     * @return float
      */
     public function calcMaxSide(): float
     {
@@ -155,8 +143,6 @@ class Cargo extends OmsModel
 
     /**
      * Определить название максимальной стороны (длины, ширины или высоты) из всех коробок груза
-     * @param  float  $maxSide
-     * @return string
      */
     public function identifyMaxSideName(float $maxSide): string
     {
@@ -177,9 +163,6 @@ class Cargo extends OmsModel
     }
 
     /**
-     * @param  Builder  $query
-     * @param  RestQuery  $restQuery
-     * @return Builder
      * @throws \Pim\Core\PimException
      */
     public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
@@ -198,7 +181,7 @@ class Cargo extends OmsModel
 
         //Фильтр по номеру отправления в грузе
         $shipmentNumberFilter = $restQuery->getFilter('shipment_number');
-        if($shipmentNumberFilter) {
+        if ($shipmentNumberFilter) {
             [$op, $value] = $shipmentNumberFilter[0];
             $cargoIds = array_filter(Shipment::query()
                 ->select('cargo_id')
@@ -214,7 +197,6 @@ class Cargo extends OmsModel
     }
 
     /**
-     * @param  RestQuery  $restQuery
      * @return array
      */
     public function toRest(RestQuery $restQuery): array
