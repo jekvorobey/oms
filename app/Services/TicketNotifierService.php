@@ -230,6 +230,7 @@ class TicketNotifierService
                             'name' => sprintf('%s %s', $speaker['first_name'], $speaker['last_name']),
                             'profession' => $activity->name,
                             'about' => $speaker['description'],
+                            'file_id' => $speaker['file_id'],
                             'avatar' => $this
                                 ->fileService
                                 ->getFiles([$speaker['file_id']])
@@ -241,6 +242,10 @@ class TicketNotifierService
             })->all();
 
             $speakerIdx = empty($programs[0]['speakers']) ? 1 : 0;
+
+            if (!empty($programs[$speakerIdx])) {
+                $url = sprintf('%s/files/compressed/%d/288/192/orig', config('app.showcase_host'), $programs[$speakerIdx]['speakers'][0]['file_id']);
+            }
 
             $classes[] = [
                 'name' => $event->name,
@@ -359,7 +364,7 @@ class TicketNotifierService
             'params' => [
                 'Получатель' => $order->receiver_name,
                 'Телефон' => OrderObserver::formatNumber($order->receiver_phone),
-                'Сумма заказа' => sprintf('%s ₽', (int) $order->price)
+                'Сумма заказа' => $order->price > 0 ? sprintf('%s ₽', (int) $order->price) : 'Бесплатно'
             ],
             'classes' => $classes,
             'CUSTOMER_NAME' => $user->first_name,
