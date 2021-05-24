@@ -57,6 +57,8 @@
     </rule>
 
     <rule ref="vendor/slevomat/coding-standard/SlevomatCodingStandard/ruleset.xml">
+        <exclude name="SlevomatCodingStandard.Classes.SuperfluousInterfaceNaming"/>
+
         <!-- Нужные правила, но пока исключаем, много кода править придется -->
         <exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingAnyTypeHint"/>
         <exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint"/>

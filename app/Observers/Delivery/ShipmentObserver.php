@@ -54,11 +54,7 @@ class ShipmentObserver
      */
     public function updating(Shipment $shipment): bool
     {
-        if (!$this->checkAllProductsPacked($shipment)) {
-            return false;
-        }
-
-        return true;
+        return $this->checkAllProductsPacked($shipment);
     }
 
     /**

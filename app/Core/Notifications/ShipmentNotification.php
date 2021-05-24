@@ -17,9 +17,12 @@ use MerchantManagement\Services\OperatorService\OperatorService;
  */
 class ShipmentNotification extends AbstractNotification implements NotificationInterface
 {
+    /**
+     * @param Shipment $mainModel
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
     public static function notify(int $type, OmsModel $mainModel, OmsModel $model): void
     {
-        /** @var Shipment $mainModel */
         self::notifyMerchants($type, $mainModel);
         self::notifyAdmins($type, $mainModel);
     }
@@ -77,7 +80,8 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
                     $notification->setPayloadField('title', 'Проблема при сборке отправления');
                     $notification->setPayloadField(
                         'body',
-                        "Возникла проблема при сборке отправления {$shipment->number} из заказа {$shipment->delivery->order->number}: {$shipment->assembly_problem_comment}"
+                        "Возникла проблема при сборке отправления {$shipment->number} " .
+                        "из заказа {$shipment->delivery->order->number}: {$shipment->assembly_problem_comment}"
                     );
                 }
         }

@@ -104,10 +104,10 @@ class TicketNotifierService
         $basketItems = $order->basket->items;
         $user = $order->getUser();
 
-        /** @var PublicEventDto */
+        /** @var PublicEventDto $firstEvent */
         $firstEvent = null;
 
-        /** @var OrganizerDto */
+        /** @var OrganizerDto $firstOrganizer */
         $firstOrganizer = null;
 
         $classes = [];
@@ -269,7 +269,7 @@ class TicketNotifierService
             ];
 
             foreach ($basketItem->product['ticket_ids'] as $ticket) {
-                /** @var TicketDto */
+                /** @var TicketDto $ticket */
                 $ticket = $this->publicEventTicketService->tickets(
                     $this->publicEventTicketService
                         ->newQuery()

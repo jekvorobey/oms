@@ -126,7 +126,13 @@ class NotifyPublicEvent extends Command
             return $items;
         })
         ->each(
-            function ($items) use ($publicEventTypeService, $serviceNotificationService, $userService, $publicEventSprintStageService, $publicEventOrganizerService) {
+            function ($items) use (
+                $publicEventTypeService,
+                $serviceNotificationService,
+                $userService,
+                $publicEventSprintStageService,
+                $publicEventOrganizerService
+            ) {
                 $date = Carbon::parse($items['event']->date_start)->locale('ru');
                 $stage = $publicEventSprintStageService->find(
                     $publicEventSprintStageService->query()

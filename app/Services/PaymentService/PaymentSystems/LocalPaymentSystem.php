@@ -73,6 +73,7 @@ class LocalPaymentSystem implements PaymentSystemInterface
 
     /**
      * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public function commitHoldedPayment(Payment $localPayment, $amount)
     {

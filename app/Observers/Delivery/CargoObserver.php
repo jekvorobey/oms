@@ -36,11 +36,7 @@ class CargoObserver
      */
     public function updating(Cargo $cargo): bool
     {
-        if (!$this->checkHasShipments($cargo)) {
-            return false;
-        }
-
-        return true;
+        return $this->checkHasShipments($cargo);
     }
 
     /**

@@ -410,6 +410,7 @@ class CheckoutOrder
 
     /**
      * @throws Exception
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     private function createTickets(Order $order): void
     {

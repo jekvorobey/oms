@@ -438,7 +438,7 @@ class Shipment extends OmsModel
         //Фильтр по службе доставки на нулевой миле
         $deliveryServiceZeroMileFilter = $restQuery->getFilter('delivery_service_zero_mile');
         if ($deliveryServiceZeroMileFilter) {
-            [$op, $value] = $deliveryServiceZeroMileFilter[0];
+            [, $value] = $deliveryServiceZeroMileFilter[0];
 
             $query->whereIn('delivery_service_zero_mile', $value)
                 ->orWhere(function (Builder $query) use ($value) {
@@ -455,7 +455,7 @@ class Shipment extends OmsModel
         $filterByDeliveryAddressFields = function (string $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
             $deliveryAddressFieldFilter = $restQuery->getFilter('delivery_address_' . $fieldName);
             if ($deliveryAddressFieldFilter) {
-                [$op, $value] = $deliveryAddressFieldFilter[0];
+                [, $value] = $deliveryAddressFieldFilter[0];
 
                 $query->whereHas('delivery', function (Builder $query) use ($fieldName, $value) {
                     $query->whereJsonContains('delivery_address->' . $fieldName, $value);

@@ -5,7 +5,7 @@ use Illuminate\Database\Seeder;
 
 class PaymentMethodsSeeder extends Seeder
 {
-    public const availableMethods = [
+    public const AVAILABLE_METHODS = [
         1 => [
             'name' => 'Сертификат подарочный',
             'code' => 'gift_certificate',
@@ -42,7 +42,7 @@ class PaymentMethodsSeeder extends Seeder
         // Защита от дубликатов: очистить таблицу перед заполнением //
         PaymentMethod::query()->truncate();
 
-        foreach (self::availableMethods as $key => $value) {
+        foreach (self::AVAILABLE_METHODS as $key => $value) {
             $record = new PaymentMethod();
             $record->id = $key;
             $record->name = $value['name'];

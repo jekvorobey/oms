@@ -176,7 +176,7 @@ class OrderService
         //Получаем информацию по мастер-классам
         $offerIds = $basketItems->pluck('offer_id');
         /** @var PublicEventCartStruct[] $cardStructs */
-        [$totalCount, $cardStructs] = (new PublicEventCartRepository())->query()
+        [, $cardStructs] = (new PublicEventCartRepository())->query()
             ->whereOfferIds($offerIds->all())
             ->pageNumber(1, $offerIds->count())
             ->get();
@@ -322,6 +322,7 @@ class OrderService
     /**
      * Отправить билеты на мастер-классы на почту покупателю заказа
      * @throws \Throwable
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public function sendTicketsEmail(Order $order): void
     {

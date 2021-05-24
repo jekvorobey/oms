@@ -15,11 +15,6 @@ class PublicEventCartQuery
     /** @var PublicEventQuery */
     private $pimPublicEventQuery;
 
-    /**
-     * PublicEventCardQuery constructor.
-     * @param int|null $segment
-     * @param int|null $role
-     */
     public function __construct(PublicEventCartRepository $repository)
     {
         $this->pimPublicEventQuery = new PublicEventQuery();

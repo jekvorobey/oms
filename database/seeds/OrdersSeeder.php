@@ -64,13 +64,13 @@ class OrdersSeeder extends Seeder
 
         /** @var StockService $stockService */
         $stockService = resolve(StockService::class);
+        /** @var Collection|StockDto[] $stocks */
         $stocks = collect();
         /** @var Collection|OfferDto[] $chunkedOffers */
         foreach ($offers->chunk(50) as $chunkedOffers) {
             $restQuery = $stockService->newQuery();
             $restQuery->addFields(StockDto::entity(), 'store_id', 'offer_id')
                 ->setFilter('offer_id', $chunkedOffers->pluck('id')->toArray());
-            /** @var Collection|StockDto[] $stocks */
             $chunkedStocks = $stockService->stocks($restQuery)->groupBy('offer_id');
 
             //Мержим коллекции $stocks и $chunkedStocks, метод $stocks->merge() не работает для многомерных коллекций

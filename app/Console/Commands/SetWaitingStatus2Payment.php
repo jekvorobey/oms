@@ -33,7 +33,9 @@ class SetWaitingStatus2Payment extends Command
      *
      * @var string
      */
-    protected $description = 'Установить статус оплаты "Ожидает оплаты" через ' . SetWaitingStatus2Payment::MINUTES_FOR_WAITING . ' мин после создания и неоплаты';
+    protected $description = 'Установить статус оплаты "Ожидает оплаты" через ' .
+        SetWaitingStatus2Payment::MINUTES_FOR_WAITING .
+        ' мин после создания и неоплаты';
 
     /**
      * Execute the console command.

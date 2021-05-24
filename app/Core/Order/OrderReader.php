@@ -354,13 +354,13 @@ class OrderReader
 
                 $minPriceFilter = $restQuery->getFilter('min_price_for_current_discount');
                 if ($minPriceFilter) {
-                    [$op, $minPrice] = current($minPriceFilter);
+                    [, $minPrice] = current($minPriceFilter);
                     $query->whereRaw('`cost` - `change` >= ?', [$minPrice]);
                 }
 
                 $maxPriceFilter = $restQuery->getFilter('max_price_for_current_discount');
                 if ($maxPriceFilter) {
-                    [$op, $maxPrice] = current($maxPriceFilter);
+                    [, $maxPrice] = current($maxPriceFilter);
                     $query->whereRaw('`cost` - `change` <= ?', [$maxPrice]);
                 }
             });

@@ -337,8 +337,6 @@ class DocumentService
     public function getShipmentInventory(Shipment $shipment): DocumentDto
     {
         $documentDto = new DocumentDto();
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = resolve(DeliveryService::class);
 
         try {
             $templateProcessor = $this->getTemplateProcessor(self::INVENTORY);

@@ -16,6 +16,7 @@ class BasketItemObserver
 {
     /**
      * Handle the basket item "saving" event.
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public function saving(BasketItem $basketItem)
     {

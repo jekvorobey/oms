@@ -25,7 +25,8 @@ class OrderSmsNotify
         $cost = $delivery->shipments->sum('cost');
         static::send(
             $delivery->order,
-            "Заказ №{$delivery->number} на сумму {$cost} р. передан в службу доставки. Ожидайте доставку {$delivery_at} с {$delivery_time_start} до {$delivery_time_end}."
+            "Заказ №{$delivery->number} на сумму {$cost} р. передан в службу доставки. " .
+            "Ожидайте доставку {$delivery_at} с {$delivery_time_start} до {$delivery_time_end}."
         );
     }
 

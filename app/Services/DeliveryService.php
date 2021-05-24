@@ -320,8 +320,8 @@ class DeliveryService
         $storePickupTimes = collect();
         if ($store->storePickupTime()) {
             for ($day = 1; $day <= 7; $day++) {
-                /** @var StorePickupTimeDto $pickupTimeDto */
                 //Ищем время отгрузки с учетом службы доставки
+                /** @var StorePickupTimeDto $pickupTimeDto */
                 $pickupTimeDto = $store->storePickupTime()->filter(function (StorePickupTimeDto $item) use (
                     $day,
                     $cargo
@@ -598,11 +598,11 @@ class DeliveryService
         $deliveryOrderCostDto->delivery_cost = 0;
 
         $deliveryOrderCostDto->cod_cost = 0;
+        /** @var Shipment $shipment */
         foreach ($delivery->shipments as $shipment) {
             if ($shipment->is_canceled) {
                 continue;
             }
-            /** @var Shipment $shipment */
             $deliveryOrderCostDto->cod_cost += $shipment->basketItems->sum('cost');
         }
         //todo Удалить поле delivery_cost_pay из DeliveryOrderCostDto
@@ -796,9 +796,9 @@ class DeliveryService
             $deliveryOrderService = resolve(DeliveryOrderService::class);
 
             $deliveriesByService = $deliveries->groupBy('delivery_service');
+            /** @var Collection|Delivery[] $items */
             foreach ($deliveriesByService as $deliveryServiceId => $items) {
                 try {
-                    /** @var Collection|Delivery[] $items */
                     $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders(
                         $deliveryServiceId,
                         $items->pluck('xml_id')->all()

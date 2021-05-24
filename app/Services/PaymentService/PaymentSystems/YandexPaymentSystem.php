@@ -4,6 +4,7 @@ namespace App\Services\PaymentService\PaymentSystems;
 
 use App\Models\Order\Order;
 use App\Models\Payment\Payment;
+use App\Models;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
@@ -12,6 +13,7 @@ use YooKassa\Model\Notification\NotificationSucceeded;
 use YooKassa\Model\Notification\NotificationWaitingForCapture;
 use YooKassa\Model\NotificationEventType;
 use YooKassa\Model\PaymentStatus;
+use GuzzleHttp\Client as GuzzleClient;
 
 /**
  * Class YandexPaymentSystem
@@ -123,7 +125,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $this->logger->info('Redirect payment', [
                 'proxy' => $metadata['source'],
             ]);
-            $client = new \GuzzleHttp\Client();
+            $client = new GuzzleClient();
             $client->request('POST', $metadata['source'] . route('handler.yandexPayment', [], false), [
                 'form_params' => $data,
             ]);
@@ -140,18 +142,18 @@ class YandexPaymentSystem implements PaymentSystemInterface
             switch ($payment->getStatus()) {
                 case PaymentStatus::WAITING_FOR_CAPTURE:
                     $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
-                    $localPayment->status = \App\Models\Payment\PaymentStatus::HOLD;
+                    $localPayment->status = Models\Payment\PaymentStatus::HOLD;
                     $localPayment->save();
                     break;
                 case PaymentStatus::SUCCEEDED:
                     $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
-                    $localPayment->status = \App\Models\Payment\PaymentStatus::PAID;
+                    $localPayment->status = Models\Payment\PaymentStatus::PAID;
                     $localPayment->payed_at = Carbon::now();
                     $localPayment->save();
                     break;
                 case PaymentStatus::CANCELED:
                     $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
-                    $localPayment->status = \App\Models\Payment\PaymentStatus::TIMEOUT;
+                    $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
                     $localPayment->save();
                     break;
             }

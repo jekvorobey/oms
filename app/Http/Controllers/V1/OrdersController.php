@@ -154,8 +154,9 @@ class OrdersController extends Controller
         if (!$order) {
             throw new NotFoundHttpException('order not found');
         }
-        /** @var \Illuminate\Validation\Validator $validator */
+
         $data = $request->all();
+        /** @var \Illuminate\Validation\Validator $validator */
         $validator = Validator::make($data, [
             'payments' => 'required|array',
             'payments.*.id' => 'nullable|integer',

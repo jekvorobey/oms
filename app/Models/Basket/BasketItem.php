@@ -201,12 +201,12 @@ class BasketItem extends OmsModel
 
     private function getProductMedia()
     {
-        /** @var OfferService */
+        /** @var OfferService $offerService */
         $offerService = app(OfferService::class);
-        /** @var ProductService */
+        /** @var ProductService $productService */
         $productService = app(ProductService::class);
 
-        /** @var OfferDto */
+        /** @var OfferDto $offer */
         $offer = $offerService->offers(
             $offerService->newQuery()
                 ->setFilter('id', $this->offer_id)
@@ -222,14 +222,14 @@ class BasketItem extends OmsModel
 
     private function getMasterMedia()
     {
-        /** @var PublicEventSprintService */
+        /** @var PublicEventSprintService $sprintService */
         $sprintService = app(PublicEventSprintService::class);
-        /** @var PublicEventMediaService */
+        /** @var PublicEventMediaService $publicEventMediaService */
         $publicEventMediaService = app(PublicEventMediaService::class);
-        /** @var FileService */
+        /** @var FileService $fileService */
         $fileService = app(FileService::class);
 
-        /** @var SprintDto */
+        /** @var SprintDto $sprint */
         $sprint = $sprintService->find(
             $sprintService->query()
                 ->setFilter('id', $this->product['sprint_id'])

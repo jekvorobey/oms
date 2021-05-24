@@ -54,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->singleton(Client::class, function ($app) {
+        $this->app->singleton(Client::class, function () {
             $client = new Client();
             $client->setAuth(config('app.y_checkout_shop_id'), config('app.y_checkout_key'));
             return $client;

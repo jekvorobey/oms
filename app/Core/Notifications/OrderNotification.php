@@ -15,9 +15,12 @@ use Greensight\Message\Dto\Notification\NotificationDto;
  */
 class OrderNotification extends AbstractNotification implements NotificationInterface
 {
+    /**
+     * @param Order $mainModel
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
     public static function notify(int $type, OmsModel $mainModel, OmsModel $model): void
     {
-        /** @var Order $mainModel */
         static::notifyAdmins($type, $mainModel);
     }
 

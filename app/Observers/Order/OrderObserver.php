@@ -580,7 +580,7 @@ class OrderObserver
             return [];
         })();
 
-        /** @var ListsService */
+        /** @var ListsService $points */
         $points = app(ListsService::class);
 
         $deliveryAddress = $order
@@ -930,7 +930,7 @@ class OrderObserver
                 return DeliveryMethod::methodById($order->deliveries->first()->delivery_method)->name;
             })(),
             'DELIVERY_ADDRESS' => (function () use ($order) {
-                /** @var Delivery */
+                /** @var Delivery $delivery */
                 $delivery = $order->deliveries->first();
 
                 if (!empty($delivery) && !empty($easyDelivery = $delivery->getDeliveryAddressString())) {
@@ -941,7 +941,7 @@ class OrderObserver
                     ->formDeliveryAddressString($delivery->delivery_address ?? []) ?? '';
             })(),
             'DELIVIRY_ADDRESS' => (function () use ($order) {
-                /** @var Delivery */
+                /** @var Delivery $delivery */
                 $delivery = $order->deliveries->first();
 
                 if (!empty($delivery) && !empty($easyDelivery = $delivery->getDeliveryAddressString())) {
@@ -1070,7 +1070,7 @@ class OrderObserver
             return '';
         }
 
-        /** @var Client */
+        /** @var Client $client */
         $client = app(Client::class);
 
         return $client->request('GET', 'https://clck.ru/--', [

@@ -147,8 +147,8 @@ class DeliveryObserver
                 }
             }
 
-            $order_id = $delivery->order->id;
-            $link_order = sprintf('%s/profile/orders/%d', config('app.showcase_host'), $delivery->order->id);
+//            $order_id = $delivery->order->id;
+//            $link_order = sprintf('%s/profile/orders/%d', config('app.showcase_host'), $delivery->order->id);
 
             $user = $delivery->order->getUser();
 

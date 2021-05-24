@@ -206,6 +206,7 @@ class DeliverySeeder extends Seeder
                 $delivery->save();
 
                 $deliveryShipmentNumber = 1;
+                /** @var Collection|BasketItem[] $itemsByStore */
                 foreach ($basketItemsByStore as $storeId => $itemsByStore) {
                     if (!$storeId) {
                         continue;
@@ -215,7 +216,6 @@ class DeliverySeeder extends Seeder
                     }
 
                     //Создаем отправление
-                    /** @var Collection|BasketItem[] $itemsByStore */
                     $store = $stores[$storeId];
                     $shipment = new Shipment();
                     $shipment->status = $faker->randomElement(ShipmentStatus::validValues());
