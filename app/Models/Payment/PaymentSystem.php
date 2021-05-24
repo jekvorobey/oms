@@ -11,6 +11,7 @@ class PaymentSystem
 {
     /** Яндекс.Касса */
     public const YANDEX = 1;
+
     /** тестовая система */
     public const TEST = 42;
 

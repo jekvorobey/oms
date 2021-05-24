@@ -10,14 +10,19 @@ class PaymentStatus
 {
     /** не оплачена */
     public const NOT_PAID = 1;
+
     /** оплачена */
     public const PAID = 2;
+
     /** просрочена */
     public const TIMEOUT = 3;
+
     /** средства захолдированы */
     public const HOLD = 4;
+
     /** ошибка */
     public const ERROR = 5;
+
     /** ожидает оплаты */
     public const WAITING = 6;
 

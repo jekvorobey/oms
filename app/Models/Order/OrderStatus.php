@@ -13,24 +13,34 @@ class OrderStatus
 {
     /** предзаказ: ожидаем поступления товара */
     public const PRE_ORDER = 0;
+
     /** оформлен */
     public const CREATED = 1;
+
     /** ожидает проверки АОЗ */
     public const AWAITING_CHECK = 2;
+
     /** проверка АОЗ */
     public const CHECKING = 3;
+
     /** ожидает подтверждения Мерчантом */
     public const AWAITING_CONFIRMATION = 4;
+
     /** в обработке */
     public const IN_PROCESSING = 5;
+
     /** передан на доставку */
     public const TRANSFERRED_TO_DELIVERY = 6;
+
     /** в процессе доставки */
     public const DELIVERING = 7;
+
     /** находится в Пункте Выдачи */
     public const READY_FOR_RECIPIENT = 8;
+
     /** доставлен */
     public const DONE = 9;
+
     /** возвращен */
     public const RETURNED = 10;
 

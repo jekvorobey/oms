@@ -10,9 +10,10 @@ namespace App\Models\Delivery;
 class DeliveryType
 {
     /** несколькими доставками */
-    const TYPE_SPLIT = 1;
+    public const TYPE_SPLIT = 1;
+
     /** одной доставкой */
-    const TYPE_CONSOLIDATION = 2;
+    public const TYPE_CONSOLIDATION = 2;
 
     /** @var int */
     public $id;

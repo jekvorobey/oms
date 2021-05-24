@@ -33,12 +33,16 @@ class DocumentService
 
     /** акт-претензия для отправления */
     public const CLAIM_ACT = 'claim-act.docx';
+
     /** акт приема-передачи отправления/груза*/
     public const ACCEPTANCE_ACT = 'acceptance-act.docx';
+
     /** карточка сборки отправления */
     public const ASSEMBLING_CARD = 'assembling-card.docx';
+
     /** опись отправления заказа */
     public const INVENTORY = 'inventory.docx';
+
     /** окончание в имени файла с шаблоном для программного заполнения данными */
     public const TEMPLATE_SUFFIX = '-template';
 

@@ -14,40 +14,54 @@ class ShipmentStatus
     //внутренние статусы [0; 20]
     /** предзаказ: ожидаем поступления товара */
     public const PRE_ORDER = 0;
+
     /** оформлено */
     public const CREATED = 1;
+
     /** ожидает проверки АОЗ */
     public const AWAITING_CHECK = 2;
+
     /** проверка АОЗ */
     public const CHECKING = 3;
+
     /** ожидает подтверждения Мерчантом */
     public const AWAITING_CONFIRMATION = 4;
+
     /** на комплектации */
     public const ASSEMBLING = 5;
+
     /** готово к отгрузке */
     public const ASSEMBLED = 6;
+
     /** передано Логистическому Оператору */
     public const SHIPPED = 7;
 
     //статусы доставки в случае "нормального" процесса доставки [21; 40]
     /** принято логистическим оператором (принята на склад в пункте отправления) */
     public const ON_POINT_IN = 21;
+
     /** прибыло в город назначения */
     public const ARRIVED_AT_DESTINATION_CITY = 22;
+
     /** принято в пункте назначения (принята на складе в пункте назначения) */
     public const ON_POINT_OUT = 23;
+
     /** находится в Пункте Выдачи (готова к выдаче в пункте назначения) */
     public const READY_FOR_RECIPIENT = 24;
+
     /** выдано курьеру для доставки (передана на доставку в пункте назначения) */
     public const DELIVERING = 25;
+
     /** доставлено получателю */
     public const DONE = 26;
 
     //статусы по отказам и возвратам [41; 60]
     /** ожидается отмена */
     public const CANCELLATION_EXPECTED = 41;
+
     /** ожидается возврат от клиента */
     public const RETURN_EXPECTED_FROM_CUSTOMER = 42;
+
     /** возвращено */
     public const RETURNED = 43;
 

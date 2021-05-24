@@ -10,17 +10,22 @@ namespace App\Models\History;
 class HistoryType
 {
     /** создание сущности */
-    const TYPE_CREATE = 1;
+    public const TYPE_CREATE = 1;
+
     /** обновление сущности */
-    const TYPE_UPDATE = 2;
+    public const TYPE_UPDATE = 2;
+
     /** удаление сущности */
-    const TYPE_DELETE = 3;
+    public const TYPE_DELETE = 3;
+
     /** создание комментария к заказу */
-    const TYPE_COMMENT = 4;
+    public const TYPE_COMMENT = 4;
+
     /** добавление связи одной сущности к другой */
-    const TYPE_CREATE_LINK = 5;
+    public const TYPE_CREATE_LINK = 5;
+
     /** удаление связи одной сущности к другой */
-    const TYPE_DELETE_LINK = 6;
+    public const TYPE_DELETE_LINK = 6;
 
     /** @var int */
     public $id;
