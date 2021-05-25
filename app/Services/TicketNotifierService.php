@@ -197,11 +197,12 @@ class TicketNotifierService
 
             // Временное решение
             // Здесь нужна компрессия
-            $url = $this
-                ->fileService
-                ->getFiles([$media->value])
-                ->first()
-                ->absoluteUrl();
+            // $url = $this
+            //     ->fileService
+            //     ->getFiles([$media->value])
+            //     ->first()
+            //     ->absoluteUrl();
+            $url = sprintf('%s/files/compressed/%d/288/192/orig', config('app.showcase_host'), $media->value);
 
             $event_desc = strip_tags($event->description);
             preg_match('/([^.!?]+[.!?]+){3}/', $event_desc, $event_desc_short, PREG_OFFSET_CAPTURE, 0);
@@ -242,10 +243,6 @@ class TicketNotifierService
             })->all();
 
             $speakerIdx = empty($programs[0]['speakers']) ? 1 : 0;
-
-            if (!empty($programs[$speakerIdx])) {
-                $url = sprintf('%s/files/compressed/%d/288/192/orig', config('app.showcase_host'), $programs[$speakerIdx]['speakers'][0]['file_id']);
-            }
 
             $classes[] = [
                 'name' => $event->name,
