@@ -181,7 +181,7 @@ class TicketNotifierService
 
             $media = $this->publicEventMediaService->find(
                 $this->publicEventMediaService->query()
-                    ->setFilter('collection', 'detail')
+                    ->setFilter('collection', 'catalog')
                     ->setFilter('media_id', $event->id)
                     ->setFilter('media_type', 'App\Models\PublicEvent\PublicEvent')
             )->first();
