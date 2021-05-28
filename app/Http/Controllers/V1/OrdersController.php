@@ -405,7 +405,9 @@ class OrdersController extends Controller
             'date_to' => 'nullable|integer',
         ]);
 
-        $builderDone = Shipment::query()->where('status', ShipmentStatus::DONE);
+        $builderDone = Shipment::query()
+            ->where('status', ShipmentStatus::DONE)
+            ->where('payment_status', 2);
         if (isset($data['date_from'])) {
             $builderDone->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
         }
@@ -414,7 +416,9 @@ class OrdersController extends Controller
         }
         $doneShipments = $builderDone->get();
 
-        $builderReturn = Shipment::query()->where('status', ShipmentStatus::RETURNED);
+        $builderReturn = Shipment::query()
+            ->where('status', ShipmentStatus::RETURNED)
+            ->where('payment_status', 2);
         if (isset($data['date_from'])) {
             $builderReturn->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
         }
