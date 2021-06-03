@@ -10,6 +10,100 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
+ * @OA\Schema(
+ *     description="Груз - совокупность отправлений для доставки на нулевой миле (доставка от мерчанта до распределительного центра)",
+ *     @OA\Property(
+ *         property="merchant_id",
+ *         type="integer",
+ *         description="id мерчанта"
+ *     ),
+ *     @OA\Property(
+ *         property="store_id",
+ *         type="boolean",
+ *         description="id хранилища"
+ *     ),
+ *     @OA\Property(
+ *         property="status",
+ *         type="integer",
+ *         description="статус"
+ *     ),
+ *     @OA\Property(
+ *         property="status_at",
+ *         type="string",
+ *         description="дата установки статуса"
+ *     ),
+ *     @OA\Property(
+ *         property="is_problem",
+ *         type="integer",
+ *         description="флаг, что у груза проблемы при отгрузке"
+ *     ),
+ *     @OA\Property(
+ *         property="is_problem_at",
+ *         type="string",
+ *         description="дата установки флага проблемного груза"
+ *     ),
+ *     @OA\Property(
+ *         property="is_canceled",
+ *         type="integer",
+ *         description="флаг, что груз отменен"
+ *     ),
+ *     @OA\Property(
+ *         property="is_canceled_at",
+ *         type="string",
+ *         description="дата установки флага отмены груза"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_service",
+ *         type="integer",
+ *         description="id cервиса доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="cdek_intake_number",
+ *         type="string",
+ *         description="Номер заявки СДЭК на вызов курьера"
+ *     ),
+ *     @OA\Property(
+ *         property="xml_id",
+ *         type="string",
+ *         description="xml id"
+ *     ),
+ *     @OA\Property(
+ *         property="error_xml_id",
+ *         type="string",
+ *         description="текст последней ошибки при создании заявки на вызов курьера для забора груза в службе доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="width",
+ *         type="number",
+ *         description="ширина (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="height",
+ *         type="number",
+ *         description="высота (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="length",
+ *         type="number",
+ *         description="длина (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="weight",
+ *         type="number",
+ *         description="вес (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="shipping_problem_comment",
+ *         type="string",
+ *         description="последнее сообщение мерчанта о проблеме с отгрузкой"
+ *     ),
+ *     @OA\Property(
+ *         property="package_qty",
+ *         type="integer",
+ *         description="кол-во коробок груза"
+ *     ),
+ * )
+ *
  * Груз - совокупность отправлений для доставки на нулевой миле (доставка от мерчанта до распределительного центра)
  * Class Cargo
  * @package App\Models\Delivery

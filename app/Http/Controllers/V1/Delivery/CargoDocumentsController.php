@@ -19,6 +19,21 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class CargoDocumentsController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="api/v1/cargos/{id}/documents/acceptance-act",
+     *     tags={"Акт приема-передачи по грузу"},
+     *     description="Сформировать акт приема-передачи по грузу",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="absolute_url"),
+     *             @OA\Property(property="original_name"),
+     *             @OA\Property(property="size")
+     *         )
+     *     )
+     *  )
      * Сформировать "Акт приема-передачи по грузу"
      * @param  int  $cargoId
      * @param DeliveryService $deliveryService

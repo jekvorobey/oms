@@ -13,6 +13,184 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
+ * @OA\Schema(
+ *     description="Доставка (одно или несколько отправлений, которые должны быть доставлены в один срок одной службой доставки до покупателя)",
+ *     @OA\Property(
+ *         property="order_id",
+ *         type="integer",
+ *         description="id заказа"
+ *     ),
+ *     @OA\Property(
+ *         property="status",
+ *         type="integer",
+ *         description="статус"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_method",
+ *         type="integer",
+ *         description="Метод доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_service",
+ *         type="integer",
+ *         description="Сервис доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="xml_id",
+ *         type="string",
+ *         description="идентификатор заказа на доставку в службе доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="tracknumber",
+ *         type="string",
+ *         description="трекинг код (соответствует providerNumber в apiship)"
+ *     ),
+ *     @OA\Property(
+ *         property="barcode",
+ *         type="string",
+ *         description="штрихкод (соответствует additionalProviderNumber в apiship)"
+ *     ),
+ *     @OA\Property(
+ *         property="error_xml_id",
+ *         type="string",
+ *         description="текст последней ошибки при создании/обновлении заказа на доставку в службе доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="status_xml_id",
+ *         type="string",
+ *         description="статус заказа на доставку в службе доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="payment_status",
+ *         type="integer",
+ *         description="статус оплаты"
+ *     ),
+ *     @OA\Property(
+ *         property="payment_status_at",
+ *         type="string",
+ *         description="дата установки статуса оплаты"
+ *     ),
+ *     @OA\Property(
+ *         property="is_problem",
+ *         type="integer",
+ *         description="флаг, что доставка проблемная"
+ *     ),
+ *     @OA\Property(
+ *         property="is_problem_at",
+ *         type="string",
+ *         description="дата установки флага проблемной доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="is_canceled",
+ *         type="integer",
+ *         description="флаг, что доставка отменена"
+ *     ),
+ *     @OA\Property(
+ *         property="is_canceled_at",
+ *         type="string",
+ *         description="дата установки флага отмены доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="tariff_id",
+ *         type="integer",
+ *         description="идентификатор тарифа на доставку из сервиса логистики"
+ *     ),
+ *     @OA\Property(
+ *         property="point_id",
+ *         type="integer",
+ *         description="идентификатор пункта самовывоза из сервиса логистики"
+ *     ),
+ *     @OA\Property(
+ *         property="number",
+ *         type="string",
+ *         description="номер доставки (номер_заказа-порядковый_номер_доставки)"
+ *     ),
+ *     @OA\Property(
+ *         property="cost",
+ *         type="number",
+ *         description="стоимость доставки, полученная от службы доставки (не влияет на общую стоимость доставки по заказу!)"
+ *     ),
+ *     @OA\Property(
+ *         property="width",
+ *         type="number",
+ *         description="ширина (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="height",
+ *         type="number",
+ *         description="высота (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="length",
+ *         type="number",
+ *         description="длина (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="weight",
+ *         type="number",
+ *         description="вес (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="receiver_name",
+ *         type="string",
+ *         description="имя получателя"
+ *     ),
+ *     @OA\Property(
+ *         property="receiver_phone",
+ *         type="string",
+ *         description="телефон получателя"
+ *     ),
+ *     @OA\Property(
+ *         property="receiver_email",
+ *         type="string",
+ *         description="e-mail получателя"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_address",
+ *         type="json",
+ *         description="адрес доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_at",
+ *         type="string",
+ *         description="желаемая клиентом дата доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_time_start",
+ *         type="string",
+ *         description="желаемое клиентом время доставки от"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_time_end",
+ *         type="string",
+ *         description="желаемое клиентом время доставки до"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_time_code",
+ *         type="string",
+ *         description="код времени доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="dt",
+ *         type="integer",
+ *         description="delivery time - время доставки в днях, которое отдаёт ЛО"
+ *     ),
+ *     @OA\Property(
+ *         property="pdd",
+ *         type="string",
+ *         description="planned delivery date - плановая дата, начиная с которой доставка может быть доставлена клиенту"
+ *     ),
+ *     @OA\Property(
+ *         property="status_at",
+ *         type="string",
+ *         description=""
+ *     ),
+ *     @OA\Property(
+ *         property="status_xml_id_at",
+ *         type="string",
+ *         description=""
+ *     ),
+ * )
  * Доставка (одно или несколько отправлений, которые должны быть доставлены в один срок одной службой доставки до покупателя)
  * Class Delivery
  *
