@@ -7,6 +7,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 
 /**
+ * @OA\Schema(
+ *     description="Промокоды применённые к заказу",
+ *     @OA\Property(property="id", type="integer", description="ID"),
+ *     @OA\Property(property="order_id", type="integer", description="ID заказа"),
+ *     @OA\Property(property="promo_code_id", type="integer", description="ID промо кода"),
+ *     @OA\Property(property="name", type="string", description="имя"),
+ *     @OA\Property(property="code", type="number", description="код"),
+ *     @OA\Property(property="type", type="integer", description="PromoCodeOutDto::TYPE_DISCOUNT, etc..."),
+ *     @OA\Property(property="discount_id", type="integer", description=""),
+ *     @OA\Property(property="gift_id", type="integer", description=""),
+ *     @OA\Property(property="bonus_id", type="integer", description=""),
+ *     @OA\Property(property="owner_id", type="integer", description="id реферального партнёра"),
+ *
+ * )
+ *
  * Class OrderPromoCodes
  * @package App\Models\Order
  *
