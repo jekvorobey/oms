@@ -22,6 +22,31 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class PaymentsController extends Controller
 {
     /**
+     * @OA\Post (
+     *     path="api/v1/payments/{id}/start",
+     *     tags={"Платежи"},
+     *     description="",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"type"},
+     *          @OA\Property(property="returnUrl", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="paymentLink", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(response="400", description="missing returnUrl"),
+     *     @OA\Response(response="404", description="not found"),
+     *     @OA\Response(response="405", description="access denied"),
+     * )
+     *
      * @param  int  $id
      * @param  Request  $request
      * @param  PaymentService  $paymentService
@@ -54,6 +79,29 @@ class PaymentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/payments/byOrder",
+     *     tags={"Платежи"},
+     *     description="Получить платежи по заказу",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"type"},
+     *          @OA\Property(property="payment_method", type="integer", example="0"),
+     *          @OA\Property(property="orderIds", type="integer", example="0"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Payment"))
+     *         )
+     *     ),
+     *     @OA\Response(response="404", description="payments not found"),
+     * )
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -75,6 +123,28 @@ class PaymentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/payments",
+     *     tags={"Платежи"},
+     *     description="Получить список",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"type"},
+     *          @OA\Property(property="orderIds", type="json", example="[1,2,3]"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Payment"))
+     *         )
+     *     ),
+     *     @OA\Response(response="404", description="payments not found"),
+     * )
+     *
      * @param  Request  $request
      * @return JsonResponse
      */
@@ -94,6 +164,22 @@ class PaymentsController extends Controller
     }
 
     /**
+     * @OA\Post (
+     *     path="api/v1/payments/handler/local",
+     *     tags={"Платежи"},
+     *     description="Handler Local",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          @OA\Property(property="paymentId", type="integer"),
+     *          @OA\Property(property="status", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(response="200", description="ok"),
+     *     @OA\Response(response="400", description="bad request"),
+     * )
+     *
      * @param Request $request
      * @return Response
      */
@@ -106,6 +192,27 @@ class PaymentsController extends Controller
     }
 
     /**
+     * @OA\Post (
+     *     path="api/v1/payments/handler/yandex",
+     *     tags={"Платежи"},
+     *     description="Handler Yandex",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          @OA\Property(property="processed", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="processed", type="integer", example="1")
+     *         )
+     *     ),
+     *     @OA\Response(response="400", description="bad request"),
+     * )
+     *
      * @param  Request  $request
      * @throws \Exception
      * @return JsonResponse

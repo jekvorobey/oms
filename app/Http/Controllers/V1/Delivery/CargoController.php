@@ -108,7 +108,7 @@ class CargoController extends Controller
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\RequestBody(
      *      required=true,
-     *      description="Изменить значение для public event types.",
+     *      description="Изменить значение груза.",
      *          @OA\JsonContent(ref="#/components/schemas/Cargo")
      *     ),
      *     @OA\Response(response="204", description="Данные сохранены"),
