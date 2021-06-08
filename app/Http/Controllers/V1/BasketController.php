@@ -231,7 +231,7 @@ class BasketController extends Controller
     }
 
     /**
-     *  @OA\Delete(
+     * @OA\Delete(
      *     path="api/v1/baskets/{basketId}",
      *     tags={"Корзина"},
      *     description="Удалить корзину",

@@ -8,6 +8,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 /**
+ * @OA\Schema(
+ *     description="Коробка отправления",
+ *     @OA\Property(property="shipment_id", type="integer", description="id посылки"),
+ *     @OA\Property(property="package_id", type="integer", description="id корзины"),
+ *     @OA\Property(property="xml_id", type="number", description="количество"),
+ *     @OA\Property(property="width", type="integer", description="ширина"),
+ *     @OA\Property(property="height", type="integer", description="высота"),
+ *     @OA\Property(property="length", type="integer", description="длина"),
+ *     @OA\Property(property="weight", type="integer", description="вес (расчитывается автоматически)"),
+ *     @OA\Property(property="wrapper_weight", type="integer", description="вес обертки"),
+ *     @OA\Property(property="shipment", type="array", @OA\Items(ref="#/components/schemas/Shipment")),
+ *     @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/ShipmentPackageItem")),
+ * )
  * Коробка отправления
  * Class ShipmentPackage
  * @package App\Models\Delivery
@@ -39,15 +52,15 @@ class ShipmentPackage extends OmsModel
         'length',
         'wrapper_weight',
     ];
-    
+
     /**
      * @var array
      */
     protected $fillable = self::FILLABLE;
-    
+
     /** @var string */
     protected $table = 'shipment_packages';
-    
+
     /** @var array */
     protected $casts = [
         'wrapper_weight' => 'float',
@@ -56,12 +69,12 @@ class ShipmentPackage extends OmsModel
         'height' => 'float',
         'length' => 'float',
     ];
-    
+
     /**
      * @var array
      */
     protected static $restIncludes = ['shipment'];
-    
+
     /**
      * @return BelongsTo
      */
@@ -69,7 +82,7 @@ class ShipmentPackage extends OmsModel
     {
         return $this->belongsTo(Shipment::class);
     }
-    
+
     /**
      * @return HasMany
      */
@@ -77,7 +90,7 @@ class ShipmentPackage extends OmsModel
     {
         return $this->hasMany(ShipmentPackageItem::class);
     }
-    
+
     /**
      * @param  bool  $save
      */
@@ -86,7 +99,7 @@ class ShipmentPackage extends OmsModel
         $this->weight = $this->wrapper_weight + $this->items->reduce(function ($sum, ShipmentPackageItem $item) {
             return $sum + $item->basketItem->product['weight'] * $item->qty;
         });
-        
+
         if ($save) {
             $this->save();
         }

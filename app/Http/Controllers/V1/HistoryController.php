@@ -21,6 +21,19 @@ use Illuminate\Http\Request;
 class HistoryController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="api/v1/orders/{id}/history",
+     *     tags={"История"},
+     *     description="олучить список событий изменения заказов",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/History"))
+     *         )
+     *     )
+     * )
      * Получить список событий изменения заказов
      * @param int $orderId
      * @param Request $request
@@ -32,6 +45,20 @@ class HistoryController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/shipments/{id}/history",
+     *     tags={"История"},
+     *     description="Получить список событий изменения отправлений",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/History"))
+     *         )
+     *     )
+     * )
+     *
      * Получить список событий изменения отправлений
      * @param int $shipmentId
      * @param Request $request
@@ -101,6 +128,20 @@ class HistoryController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/orders/{id}/history/count",
+     *     tags={"История"},
+     *     description="Получить количество событий изменения заказов",
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="pages", type="integer"),
+     *             @OA\Property(property="pageSize", type="integer"),
+     *         )
+     *     )
+     * )
      * Получить количество событий изменения заказов
      * @param int $orderId
      * @param Request $request
@@ -112,6 +153,20 @@ class HistoryController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/shipments/{id}/history/count",
+     *     tags={"История"},
+     *     description="Получить количество событий изменения отправления",
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="pages", type="integer"),
+     *             @OA\Property(property="pageSize", type="integer"),
+     *         )
+     *     )
+     * )
      * Получить количество событий изменения отправления
      * @param int $shipmentId
      * @param Request $request

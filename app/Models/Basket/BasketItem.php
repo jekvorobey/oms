@@ -26,6 +26,25 @@ use Pim\Services\PublicEventSprintService\PublicEventSprintService;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
+ * @OA\Schema(
+ *     description="Состав корзины",
+ *     @OA\Property(property="basket_id", type="integer", description="ID корзины"),
+ *     @OA\Property(property="offer_id", type="integer", description="ID предложения мерчанта"),
+ *     @OA\Property(property="type", type="integer", description="тип товара (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)"),
+ *     @OA\Property(property="name", type="string", description="название товара"),
+ *     @OA\Property(property="qty", type="number", description="кол-во товара"),
+ *     @OA\Property(property="price", type="number", description="цена элемента корзины со скидкой"),
+ *     @OA\Property(property="cost", type="number", description="стоимость элемента корзины без скидок (offerCost * qty)"),
+ *     @OA\Property(property="bonus_spent", type="integer", description="потраченные бонусы на элемент корзины ( * qty)"),
+ *     @OA\Property(property="bonus_discount", type="integer", description="оплачено бонусами ( * qty)"),
+ *     @OA\Property(property="referrer_id", type="integer", description="ID РП, по чьей ссылке товар был добавлен в корзину"),
+ *     @OA\Property(property="product", type="number", description="данные зависящие от типа товара"),
+ *     @OA\Property(property="bundle_id", type="number", description="id бандла, в который входит этот товар"),
+ *     @OA\Property(property="basket", type="array", @OA\Items(ref="#/components/schemas/Basket")),
+ *     @OA\Property(property="shipmentItem", type="array", @OA\Items(ref="#/components/schemas/ShipmentItem")),
+ *     @OA\Property(property="shipmentPackageItem", type="array", @OA\Items(ref="#/components/schemas/ShipmentPackageItem")),
+ * )
+ *
  * Состав корзины
  * Class BasketItem
  * @package App\Models

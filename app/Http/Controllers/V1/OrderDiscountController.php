@@ -14,6 +14,22 @@ use Illuminate\Support\Facades\DB;
 class OrderDiscountController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="api/v1/orders/discounts/{discountId}/kpi",
+     *     tags={"KPI For Discount"},
+     *     description="",
+     *     @OA\Parameter(name="discountId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="orders_sum_with_discount", type="integer"),
+     *             @OA\Property(property="saved_sum", type="number"),
+     *             @OA\Property(property="customers_count", type="integer"),
+     *             @OA\Property(property="orders_count", type="integer"),
+     *         )
+     *     )
+     * )
      * @param int $discountId
      *
      * @return \Illuminate\Http\JsonResponse
