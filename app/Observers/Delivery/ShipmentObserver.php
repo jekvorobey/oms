@@ -575,7 +575,7 @@ class ShipmentObserver
                                     'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
                                     'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
-                                    'PRICE_GOODS' => (int) $shipment->delivery->order->price ?? 0,
+                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price
                                 ]
                             );
                             break;
@@ -589,7 +589,7 @@ class ShipmentObserver
                                     'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
                                     'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
-                                    'PRICE_GOODS' => (int) $shipment->delivery->order->price ?? 0,
+                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price
                                 ]
                             );
                             break;
@@ -622,6 +622,27 @@ class ShipmentObserver
                             break;
                     }
                 }
+            }
+
+            if (($shipment->is_canceled != $shipment->getOriginal('is_canceled')) && $shipment->is_canceled) {
+                $userService = app(UserService::class);
+
+                $user = $userService->users(
+                    $userService->newQuery()
+                        ->setFilter('id', $operators[0]->user_id)
+                )->first();
+
+                $serviceNotificationService->send(
+                    $operators[0]->user_id,
+                    'klientstatus_zakaza_otmenen',
+                    [
+                        'QUANTITY_ORDERS' => 1,
+                        'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
+                        'CUSTOMER_NAME' => $user ? $user->first_name : '',
+                        'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
+                        'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price
+                    ]
+                );
             }
         } catch (\Exception $e) {
             logger($e->getMessage(), $e->getTrace());

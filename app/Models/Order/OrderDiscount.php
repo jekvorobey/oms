@@ -8,6 +8,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Query\JoinClause;
 
 /**
+ * @OA\Schema(
+ *     description="Комментарии к заказам",
+ *     @OA\Property(property="order_id", type="integer", description="ID заказа"),
+ *     @OA\Property(property="discount_id", type="integer", description="ID скидки"),
+ *     @OA\Property(property="name", type="string", description="имя"),
+ *     @OA\Property(property="type", type="integer", description="тип"),
+ *     @OA\Property(property="change", type="number", description=""),
+ *     @OA\Property(property="merchant_id", type="integer", description="ID мерчанта"),
+ *     @OA\Property(property="promo_code_only", type="boolean", description="только промо код"),
+ *     @OA\Property(property="visible_in_catalog", type="boolean", description="видно в каталоге"),
+ *     @OA\Property(property="items", type="string", description="[]"),
+ *     @OA\Property(property="order", type="array", @OA\Items(ref="#/components/schemas/Order")),
+ *
+ * )
+ *
  * Информация о скидках, примененные к заказу
  * Class OrderDiscount
  * @package App\Models\Order

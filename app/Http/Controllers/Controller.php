@@ -8,6 +8,11 @@ use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
+ * @OA\Info(title="Документация к API LENNUF-OMS", version="1.0")
+ * @OA\Server(
+ *      url="http://localhost/",
+ *      description="L5 Swagger OpenApi Localhost Server"
+ * )
  * Class Controller
  * @package App\Http\Controllers
  */

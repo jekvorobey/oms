@@ -1,4 +1,3 @@
 include:
     - project: ibt.studio/ci-templates
       file: /templates/.php-fpm.project.template.yml
-

@@ -9,6 +9,25 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 
 /**
+ * @OA\Schema(
+ *     description="Корзина",
+ *     @OA\Property(
+ *         property="customer_id",
+ *         type="integer",
+ *         description="id покупателя"
+ *     ),
+ *     @OA\Property(
+ *         property="is_belongs_to_order",
+ *         type="boolean",
+ *         description="корзина принадлежит заказу? (поле необходимо для удаления старых корзин без заказов)"
+ *     ),
+ *     @OA\Property(
+ *         property="type",
+ *         type="integer",
+ *         description="тип корзины (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)"
+ *     ),
+ * )
+ *
  * Класс-модель для сущности "Корзина"
  * Class Basket
  * @package App\Models

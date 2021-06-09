@@ -181,7 +181,7 @@ class TicketNotifierService
 
             $media = $this->publicEventMediaService->find(
                 $this->publicEventMediaService->query()
-                    ->setFilter('collection', 'detail')
+                    ->setFilter('collection', 'catalog')
                     ->setFilter('media_id', $event->id)
                     ->setFilter('media_type', 'App\Models\PublicEvent\PublicEvent')
             )->first();
@@ -197,11 +197,12 @@ class TicketNotifierService
 
             // Временное решение
             // Здесь нужна компрессия
-            $url = $this
-                ->fileService
-                ->getFiles([$media->value])
-                ->first()
-                ->absoluteUrl();
+            // $url = $this
+            //     ->fileService
+            //     ->getFiles([$media->value])
+            //     ->first()
+            //     ->absoluteUrl();
+            $url = sprintf('%s/files/compressed/%d/288/192/orig', config('app.showcase_host'), $media->value);
 
             $event_desc = strip_tags($event->description);
             preg_match('/([^.!?]+[.!?]+){3}/', $event_desc, $event_desc_short, PREG_OFFSET_CAPTURE, 0);
@@ -230,6 +231,7 @@ class TicketNotifierService
                             'name' => sprintf('%s %s', $speaker['first_name'], $speaker['last_name']),
                             'profession' => $activity->name,
                             'about' => $speaker['description'],
+                            'file_id' => $speaker['file_id'],
                             'avatar' => $this
                                 ->fileService
                                 ->getFiles([$speaker['file_id']])
@@ -359,7 +361,7 @@ class TicketNotifierService
             'params' => [
                 'Получатель' => $order->receiver_name,
                 'Телефон' => OrderObserver::formatNumber($order->receiver_phone),
-                'Сумма заказа' => sprintf('%s ₽', (int) $order->price)
+                'Сумма заказа' => $order->price > 0 ? sprintf('%s ₽', (int) $order->price) : 'Бесплатно'
             ],
             'classes' => $classes,
             'CUSTOMER_NAME' => $user->first_name,

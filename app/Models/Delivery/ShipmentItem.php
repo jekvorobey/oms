@@ -7,6 +7,14 @@ use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @OA\Schema(
+ *     description="Состав отправления (набор товаров с одного склада одного мерчанта)",
+ *     @OA\Property(property="shipment_id", type="integer", description="ID отгрузки"),
+ *     @OA\Property(property="basket_item_id", type="integer", description="ID товара в корзине"),
+ *     @OA\Property(property="shipment", type="array", @OA\Items(ref="#/components/schemas/Shipment")),
+ *     @OA\Property(property="basketItem", type="array", @OA\Items(ref="#/components/schemas/BasketItem")),
+ * )
+ *
  * Состав отправления (набор товаров с одного склада одного мерчанта)
  * Class ShipmentItem
  * @package App\Models\Delivery
@@ -21,12 +29,12 @@ class ShipmentItem extends OmsModel
 {
     /** @var string */
     protected $table = 'shipment_items';
-    
+
     /**
      * @var array
      */
     protected static $restIncludes = ['shipment', 'basketItem'];
-    
+
     /**
      * @return BelongsTo
      */
@@ -34,7 +42,7 @@ class ShipmentItem extends OmsModel
     {
         return $this->belongsTo(Shipment::class);
     }
-    
+
     /**
      * @return BelongsTo
      */

@@ -6,6 +6,13 @@ use Greensight\CommonMsa\Models\AbstractModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @OA\Schema(
+ *     description="Класс-модель для сущности 'Информация о заказах во внешних системах'",
+ *     @OA\Property(property="order_id", type="integer", description="ID заказа"),
+ *     @OA\Property(property="merchant_integration_id", type="integer", description="ID интеграции мерчанта со внешней системой"),
+ *     @OA\Property(property="order_xml_id", type="string", description="ID заказа во внешней системе"),
+ *     @OA\Property(property="order", type="array", @OA\Items(ref="#/components/schemas/Order")),
+ * )
  * Класс-модель для сущности "Информация о заказах во внешних системах"
  * Class OrderExport
  * @package App\Models\Order
@@ -22,22 +29,22 @@ class OrderExport extends AbstractModel
      * Заполняемые поля модели
      */
     const FILLABLE = ['order_id', 'merchant_integration_id',  'order_xml_id'];
-    
+
     /**
      * @var array
      */
     protected $fillable = self::FILLABLE;
-    
+
     /**
      * @var string
      */
     protected $table = 'orders_export';
-    
+
     /**
      * @var array
      */
     protected static $restIncludes = ['order'];
-    
+
     /**
      * @return BelongsTo
      */

@@ -158,7 +158,7 @@ class OrderObserver
                     $sent_notification = true;
                 }
 
-                if($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::TIMEOUT || $order->payment_status == PaymentStatus::WAITING) {
+                if($order->type !== Basket::TYPE_MASTER && ($this->shouldSendPaidNotification($order) || $order->payment_status == PaymentStatus::TIMEOUT || $order->payment_status == PaymentStatus::WAITING)) {
                     $delivery_method = !empty($order->deliveries()->first()->delivery_method)
                         ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
                         : false;
@@ -735,7 +735,7 @@ class OrderObserver
             ->values();
 
             $part_price = 0;
-            if (!empty($shipments)) {
+            if (!empty($shipments) && !empty($shipments->toArray()[0])) {
                 $products = $shipments->toArray()[0]['products'];
                 foreach ($products as $product) {
                     $part_price += $product['price'];
@@ -1092,7 +1092,7 @@ class OrderObserver
             'AVAILABLE_BAL' => $bonusInfo->available,
             'goods' => $goods->all(),
             'PART_PRICE' => $part_price,
-            'TRACK_NUMBER' => $saved_shipments->first()->delivery->xml_id
+            'TRACK_NUMBER' => $saved_shipments->first() ? $saved_shipments->first()->delivery->xml_id : null
         ];
     }
 

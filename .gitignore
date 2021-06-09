@@ -81,3 +81,6 @@ storage/debugbar
 auth.json
 !storage/app/documents/*
 !views.pdf
+
+# CI/CD #
+!.gitlab-ci.yml

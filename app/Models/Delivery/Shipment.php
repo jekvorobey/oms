@@ -19,6 +19,130 @@ use Pim\Services\OfferService\OfferService;
 use Pim\Services\ProductService\ProductService;
 
 /**
+ * @OA\Schema(
+ *     description="Отправление (набор товаров с одного склада одного мерчанта)",
+ *     @OA\Property(
+ *         property="delivery_id",
+ *         type="integer",
+ *         description="id доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="merchant_id",
+ *         type="integer",
+ *         description="id мерчанта"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_service_zero_mile",
+ *         type="integer",
+ *         description="сервис доставки нулевой мили"
+ *     ),
+ *     @OA\Property(
+ *         property="store_id",
+ *         type="integer",
+ *         description=""
+ *     ),
+ *     @OA\Property(
+ *         property="cargo_id",
+ *         type="integer",
+ *         description="id груза"
+ *     ),
+ *     @OA\Property(
+ *         property="psd",
+ *         type="string",
+ *         description="planned shipment date - плановая дата и время, когда отправление должно быть собрано (получить статус 'Готово к отгрузке')"
+ *     ),
+ *     @OA\Property(
+ *         property="fsd",
+ *         type="string",
+ *         description="fact shipment date - фактическая дата и время, когда отправление собрано (получило статус 'Готово к отгрузке')"
+ *     ),
+ *     @OA\Property(
+ *         property="status",
+ *         type="integer",
+ *         description="статус"
+ *     ),
+ *     @OA\Property(
+ *         property="status_at",
+ *         type="string",
+ *         description="дата установки статуса"
+ *     ),
+ *     @OA\Property(
+ *         property="payment_status",
+ *         type="integer",
+ *         description="статус оплаты"
+ *     ),
+ *     @OA\Property(
+ *         property="payment_status_at",
+ *         type="string",
+ *         description="дата установки статуса оплаты"
+ *     ),
+ *     @OA\Property(
+ *         property="is_problem",
+ *         type="integer",
+ *         description="дата установки статуса оплаты"
+ *     ),
+ *     @OA\Property(
+ *         property="is_problem_at",
+ *         type="string",
+ *         description="дата установки флага проблемного отправления"
+ *     ),
+ *     @OA\Property(
+ *         property="is_canceled",
+ *         type="integer",
+ *         description="флаг, что отправление отменено"
+ *     ),
+ *     @OA\Property(
+ *         property="is_canceled_at",
+ *         type="string",
+ *         description="дата установки флага отмены отправления"
+ *     ),
+ *     @OA\Property(
+ *         property="number",
+ *         type="string",
+ *         description="номер отправления (номер_доставки/порядковый_номер_отправления)"
+ *     ),
+ *     @OA\Property(
+ *         property="cost",
+ *         type="number",
+ *         description="сумма товаров отправления (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="width",
+ *         type="number",
+ *         description="ширина (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="height",
+ *         type="number",
+ *         description="высота (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="length",
+ *         type="number",
+ *         description="длина (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="weight",
+ *         type="number",
+ *         description="вес (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="required_shipping_at",
+ *         type="string",
+ *         description="требуемая дата отгрузки (устарело, использовать psd!)"
+ *     ),
+ *     @OA\Property(
+ *         property="assembly_problem_comment",
+ *         type="string",
+ *         description="последнее сообщение мерчанта о проблеме со сборкой"
+ *     ),
+ *     @OA\Property(
+ *         property="package_qty",
+ *         type="integer",
+ *         description="кол-во коробок отправления"
+ *     ),
+ * )
+ *
  * Отправление (набор товаров с одного склада одного мерчанта)
  * Class Shipment
  * @package App\Models\Delivery

@@ -27,6 +27,25 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class BasketController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="api/v1/baskets/by-customer/{customerId}",
+     *     tags={"Корзина"},
+     *     description="Получить текущую корзину",
+     *     @OA\Parameter(name="customerId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"type"},
+     *          @OA\Property(property="type", type="integer", format="text", example="0"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(ref="#/components/schemas/Basket")
+     *     )
+     * )
      * @param int $customerId
      * @param Request $request
      * @param BasketService $basketService
@@ -50,6 +69,29 @@ class BasketController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/baskets/{basketId}/items/{offerId}",
+     *     tags={"Корзина"},
+     *     description="Добавить товар в корзину",
+     *     @OA\Parameter(name="basketId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="offerId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"type"},
+     *          @OA\Property(property="items[0].offerId", type="integer", format="text", example="0"),
+     *          @OA\Property(property="items[0].cost", type="numeric", format="text", example="0"),
+     *          @OA\Property(property="items[0].price", type="numeric", format="text", example="0"),
+     *          @OA\Property(property="referrer_id", type="integer", format="text", example="0"),
+     *          @OA\Property(property="qty", type="numeric", format="text", example="0"),
+     *          @OA\Property(property="product['store_id']", type="integer", example="0"),
+     *          @OA\Property(property="product['bundle_id']", type="integer", example="0"),
+     *      ),
+     *     ),
+     *     @OA\Response(response="200", description="", @OA\JsonContent(ref="#/components/schemas/Basket")),
+     *     @OA\Response(response="404", description="basket not found"),
+     * )
      * @param int $basketId
      * @param int $offerId
      * @param Request $request
@@ -68,6 +110,27 @@ class BasketController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/items/{offerId}",
+     *     tags={"Корзина"},
+     *     description="Добавить заказ в корзину",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="offerId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"type"},
+     *          @OA\Property(property="referrer_id", type="integer", format="text", example="0"),
+     *          @OA\Property(property="qty", type="numeric", format="text", example="0"),
+     *          @OA\Property(property="product['store_id']", type="integer", example="0"),
+     *          @OA\Property(property="product['bundle_id']", type="integer", example="0"),
+     *      ),
+     *     ),
+     *     @OA\Response(response="200", description="", @OA\JsonContent(ref="#/components/schemas/Basket")),
+     *     @OA\Response(response="404", description="order not found"),
+     * )
+     *
      * @param int $orderId
      * @param int $offerId
      * @param Request $request
@@ -125,6 +188,28 @@ class BasketController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/baskets/{basketId}",
+     *     tags={"Корзина"},
+     *     description="Получить корзину с id",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"type"},
+     *          @OA\Property(property="items", type="json", example="{}"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Basket"))
+     *         )
+     *     )
+     * )
+     *
      * @param int $basketId
      * @param Request $request
      * @param BasketService $basketService
@@ -146,6 +231,14 @@ class BasketController extends Controller
     }
 
     /**
+     * @OA\Delete(
+     *     path="api/v1/baskets/{basketId}",
+     *     tags={"Корзина"},
+     *     description="Удалить корзину",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="500", description="unable to delete basket"),
+     * )
      * @param int $basketId
      * @param BasketService $basketService
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
@@ -161,6 +254,24 @@ class BasketController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/baskets/{basketId}/commit",
+     *     tags={"Корзина"},
+     *     description="Редактирование стоимости, цены, заказа в корзине",
+     *     @OA\Parameter(name="basketId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"type"},
+     *          @OA\Property(property="items[0].offerId", type="integer", format="text", example="0"),
+     *          @OA\Property(property="items[0].cost", type="numeric", format="text", example="0"),
+     *          @OA\Property(property="items[0].price", type="numeric", format="text", example="0"),
+     *      ),
+     *     ),
+     *     @OA\Response(response="204", description="Данные сохранены"),
+     *     @OA\Response(response="404", description="product not found"),
+     * )
      * @param  int  $basketId
      * @param  Request  $request
      * @param BasketService $basketService
@@ -207,6 +318,26 @@ class BasketController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/baskets/qty-by-offer-ids",
+     *     tags={"Корзина"},
+     *     description="Получить количество корзин для идентификаторов офферов",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"offer_ids"},
+     *          @OA\Property(property="offer_ids", type="string", example="[1,2,3]"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="baskets_qty", type="integer", example="0"),
+     *          )
+     *     )
+     * )
      * @param Request $request
      * @return JsonResponse
      */
@@ -234,6 +365,26 @@ class BasketController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="api/v1/baskets/notify-expired/{offer}",
+     *     tags={"Корзина"},
+     *     description="Уведомления о просроченных предложениях",
+     *     @OA\Parameter(name="offer", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *          response="200",
+     *          description="",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="item", type="array", @OA\Items(ref="#/components/schemas/Basket")),
+     *              @OA\Property(property="customer", type="json", example="{}"),
+     *          )
+     *     ),
+     *     @OA\Response(response="400", description="Ошибка валидации"),
+     *     @OA\Response(response="404", description=""),
+     *     @OA\Response(response="500", description="Не удалось сохранить данные"),
+     * )
+     * @param int $offer
+     */
     public function notifyExpiredOffers(int $offer)
     {
         $customerService = app(CustomerService::class);

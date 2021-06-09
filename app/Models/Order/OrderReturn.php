@@ -12,6 +12,18 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
+ * @OA\Schema(
+ *     description="Возврат по заказу",
+ *     @OA\Property(property="order_id", type="integer", description="ID заказа"),
+ *     @OA\Property(property="customer_id", type="integer", description="ID бонуса"),
+ *     @OA\Property(property="number", type="integer", description="идентификатор бонуса клиента"),
+ *     @OA\Property(property="price", type="string", description="название"),
+ *     @OA\Property(property="commission", type="integer", description="тип"),
+ *     @OA\Property(property="status", type="integer", description="id статуса"),
+ *     @OA\Property(property="status_at", type="integer", description="id бонуса"),
+ *     @OA\Property(property="basket", type="array", @OA\Items(ref="#/components/schemas/Basket")),
+ * )
+ *
  * Класс-модель для сущности "Возврат по заказу"
  * Class OrderReturn
  * @package App\Models\Order
