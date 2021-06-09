@@ -7,6 +7,23 @@ use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @OA\Schema(
+ *     description="Состав возврата по заказу",
+ *     @OA\Property(property="order_return_id", type="integer", description="ID возврата по заказу"),
+ *     @OA\Property(property="basket_item_id", type="integer", description="ID возвращаемого элемента корзины"),
+ *     @OA\Property(property="offer_id", type="integer", description="ID предложения к возврату"),
+ *     @OA\Property(property="referrer_id", type="integer", description="ID РП, по чьей ссылке товар был добавлен в корзину"),
+ *     @OA\Property(property="bundle_id", type="integer", description="ID бандла, в который входит этот товар"),
+ *     @OA\Property(property="type", type="integer", description="тип товара (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)"),
+ *     @OA\Property(property="product", type="string", description="данные зависящие от типа товара"),
+ *     @OA\Property(property="name", type="string", description="название товара к возврату"),
+ *     @OA\Property(property="qty", type="number", description="кол-во товара к возврату"),
+ *     @OA\Property(property="price", type="number", description="сумма к возврату ( * qty)"),
+ *     @OA\Property(property="commission", type="number", description="сумма удержанной комиссии ( * qty)"),
+ *     @OA\Property(property="orderReturn", type="array", @OA\Items(ref="#/components/schemas/OrderReturn")),
+ *     @OA\Property(property="basketItem", type="array", @OA\Items(ref="#/components/schemas/BasketItem")),
+ * )
+ *
  * Класс-модель для сущности "Состав возврата по заказу"
  * Class OrderReturnItem
  * @package App\Models\Order

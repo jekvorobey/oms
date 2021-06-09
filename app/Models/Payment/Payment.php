@@ -11,6 +11,55 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @OA\Schema(
+ *     description="Оплата",
+ *     @OA\Property(
+ *         property="order_id",
+ *         type="integer",
+ *         description="id заказа"
+ *     ),
+ *     @OA\Property(
+ *         property="sum",
+ *         type="number",
+ *         description="сумма"
+ *     ),
+ *     @OA\Property(
+ *         property="payed_at",
+ *         type="string",
+ *         description="дата оплаты"
+ *     ),
+ *     @OA\Property(
+ *         property="expires_at",
+ *         type="string",
+ *         description=""
+ *     ),
+ *     @OA\Property(
+ *         property="yandex_expires_at",
+ *         type="string",
+ *         description="дата и время до которого в яндексе отменить или подтвердить платеж"
+ *     ),
+ *     @OA\Property(
+ *         property="status",
+ *         type="integer",
+ *         description="статус"
+ *     ),
+ *     @OA\Property(
+ *         property="payment_method",
+ *         type="integer",
+ *         description="метод оплаты"
+ *     ),
+ *     @OA\Property(
+ *         property="payment_system",
+ *         type="integer",
+ *         description="платежная система"
+ *     ),
+ *     @OA\Property(
+ *         property="data",
+ *         type="string",
+ *         description="данные"
+ *     ),
+ * )
+ *
  * Class Payment
  * @package App\Models
  *
@@ -18,6 +67,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float $sum
  * @property Carbon $payed_at
  * @property Carbon $expires_at
+ * @property Carbon $yandex_expires_at - Дата и время до которого в яндексе отменить или подтвердить платеж
  * @property int $status
  * @property int $payment_method
  * @property int $payment_system
@@ -33,7 +83,7 @@ class Payment extends OmsModel
     protected static $unguarded = true;
 
     /** @var array */
-    protected $dates = ['created_at', 'payed_at', 'expires_at'];
+    protected $dates = ['created_at', 'payed_at', 'expires_at', 'yandex_expires_at'];
     /** @var array */
     protected $casts = ['data' => 'array'];
 

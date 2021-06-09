@@ -28,10 +28,60 @@ class OrdersExportController extends Controller
     use CountAction {
         count as countTrait;
     }
+
+    /**
+     * @OA\Get(
+     *     path="api/v1/orders/{id}/exports",
+     *     tags={"Заказы"},
+     *     description="Получить значение груза с ID",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Cargo"))
+     *         )
+     *     )
+     * )
+     */
     use ReadAction {
         read as readTrait;
     }
+
+    /**
+     * @OA\Delete(
+     *     path="api/v1/orders/{id}/exports/{exportId}",
+     *     tags={"Заказы"},
+     *     description="",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="exportId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="Сущность не найдена"),
+     *     @OA\Response(response="500", description="Не удалось удалить сущность"),
+     * )
+     */
     use DeleteAction;
+
+    /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/exports/{exportId}",
+     *     tags={"Заказы"},
+     *     description="Изменить значения груза.",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="Изменить значение для public event types.",
+     *          @OA\JsonContent(ref="#/components/schemas/Cargo")
+     *     ),
+     *     @OA\Response(response="204", description="Данные сохранены"),
+     *     @OA\Response(response="404", description="product not found"),
+     * )
+     */
     use UpdateAction;
 
     public function modelClass(): string
@@ -60,6 +110,31 @@ class OrdersExportController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/orders/{id}/exports/{exportId}",
+     *     tags={"Заказы"},
+     *     description="",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="exportId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"name"},
+     *          @OA\Property(property="id", type="integer"),
+     *          @OA\Property(property="exportId", type="integer"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="pages", type="integer"),
+     *             @OA\Property(property="pageSize", type="integer"),
+     *         )
+     *     )
+     * )
      * @return \Illuminate\Http\JsonResponse
      */
     public function read(Request $request, RequestInitiator $client)
@@ -111,6 +186,20 @@ class OrdersExportController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/orders/exports/count",
+     *     tags={"Заказы"},
+     *     description="Количество сущностей Заказы на экспорт",
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="pages", type="integer"),
+     *             @OA\Property(property="pageSize", type="integer"),
+     *         )
+     *     )
+     * )
      * @return \Illuminate\Http\JsonResponse
      */
     public function count(Request $request, RequestInitiator $client)
@@ -139,6 +228,29 @@ class OrdersExportController extends Controller
         }
     }
 
+    /**
+     * @OA\Post (
+     *     path="api/v1/orders/{id}/exports",
+     *     tags={"Заказы"},
+     *     description="",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="201",
+     *         description="",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="id", type="integer"),
+     *          ),
+     *
+     *     ),
+     *     @OA\Response(response="400", description="Bad request"),
+     *     @OA\Response(response="500", description="unable to save delivery"),
+     * )
+     */
     public function create(int $orderId, Request $request): JsonResponse
     {
         /** @var Model $modelClass */

@@ -13,6 +13,27 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class PaymentMethodsController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="api/v1/payments/payment-methods",
+     *     tags={"Платежи"},
+     *     description="Получить информацию о способе(-ах) оплаты",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"id"},
+     *          @OA\Property(property="id", type="integer"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="payment_methods", type="array", @OA\Items(ref="#/components/schemas/PaymentMethod"))
+     *         )
+     *     ),
+     * )
+     *
      * Получить информацию о способе(-ах) оплаты
      * @return JsonResponse
      */
@@ -32,6 +53,19 @@ class PaymentMethodsController extends Controller
     }
 
     /**
+     * @OA\Put (
+     *     path="api/v1/payments/payment-methods/{id}",
+     *     tags={"Платежи"},
+     *     description="Обновить параметры для способа оплаты",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(ref="#/components/schemas/PaymentMethod")
+     *     ),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="400", description="bad request"),
+     * )
+     *
      * Обновить параметры для способа оплаты
      * @return Application|ResponseFactory|Response
      */

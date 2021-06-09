@@ -23,7 +23,7 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
      */
     public static function notify(int $type, OmsModel $mainModel, OmsModel $model): void
     {
-        self::notifyMerchants($type, $mainModel);
+        // self::notifyMerchants($type, $mainModel);
         self::notifyAdmins($type, $mainModel);
     }
 
@@ -34,6 +34,7 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
         switch ($type) {
             case HistoryType::TYPE_CREATE:
                 $notification->type = NotificationDto::TYPE_SHIPMENT_NEW;
+                $notification->status = NotificationDto::STATUS_NEW;
                 $notification->setPayloadField('title', 'Новый заказ');
                 $notification->setPayloadField('body', "Создан заказ {$shipment->number}");
                 break;

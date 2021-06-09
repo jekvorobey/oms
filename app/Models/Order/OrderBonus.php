@@ -8,6 +8,19 @@ use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @OA\Schema(
+ *     description="Промокоды применённые к заказу",
+ *     @OA\Property(property="order_id", type="integer", description="ID заказа"),
+ *     @OA\Property(property="bonus_id", type="integer", description="ID бонуса"),
+ *     @OA\Property(property="customer_bonus_id", type="integer", description="идентификатор бонуса клиента"),
+ *     @OA\Property(property="name", type="string", description="название"),
+ *     @OA\Property(property="type", type="integer", description="тип"),
+ *     @OA\Property(property="status", type="integer", description="id статуса"),
+ *     @OA\Property(property="bonus", type="integer", description="id бонуса"),
+ *     @OA\Property(property="valid_period", type="integer", description="действительный период"),
+ *     @OA\Property(property="items", type="integer", description=""),
+ * )
+ *
  * Информация о бонусах, полученных в заказе
  * Class OrderBonus
  * @package App\Models\Order
@@ -60,7 +73,9 @@ class OrderBonus extends OmsModel
             $customerService = resolve(CustomerService::class);
             $customerId = $this->order->customer_id;
             $customerBonusId = $this->customer_bonus_id;
-            $expirationDate = $this->getExpirationDate()->toDateString();
+            $expirationDate = $this->getExpirationDate();
+            if (!empty($expirationDate)) $expirationDate = $expirationDate->toDateString();
+
             $customerService->approveBonus($customerId, $customerBonusId, $expirationDate);
 
             $this->status = self::STATUS_ACTIVE;

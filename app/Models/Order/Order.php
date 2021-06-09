@@ -23,6 +23,149 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
+ * @OA\Schema(
+ *     description="Заказы",
+ *     @OA\Property(
+ *         property="customer_id",
+ *         type="integer",
+ *         description="id покупателя"
+ *     ),
+ *     @OA\Property(
+ *         property="basket_id",
+ *         type="integer",
+ *         description="id корзины"
+ *     ),
+ *     @OA\Property(
+ *         property="type",
+ *         type="integer",
+ *         description="тип корзины (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)"
+ *     ),
+ *     @OA\Property(
+ *         property="receiver_name",
+ *         type="string",
+ *         description="имя получателя (используется только при покупке мастер-классов)"
+ *     ),
+ *     @OA\Property(
+ *         property="receiver_phone",
+ *         type="string",
+ *         description="телефон получателя (используется только при покупке мастер-классов)"
+ *     ),
+ *     @OA\Property(
+ *         property="receiver_email",
+ *         type="string",
+ *         description="e-mail получателя (используется только при покупке мастер-классов)"
+ *     ),
+ *     @OA\Property(
+ *         property="cost",
+ *         type="number",
+ *         description="стоимость (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="price",
+ *         type="number",
+ *         description="стоимость (расчитывается автоматически)"
+ *     ),
+ *     @OA\Property(
+ *         property="spent_bonus",
+ *         type="integer",
+ *         description=""
+ *     ),
+ *     @OA\Property(
+ *         property="added_bonus",
+ *         type="integer",
+ *         description=""
+ *     ),
+ *     @OA\Property(
+ *         property="certificates",
+ *         type="string",
+ *         description="Массив сертификатов"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_type",
+ *         type="integer",
+ *         description="тип доставки (см. \App\Models\Delivery\DeliveryType)"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_price",
+ *         type="integer",
+ *         description="стоимость доставки iBT (с учетом скидки)"
+ *     ),
+ *     @OA\Property(
+ *         property="delivery_cost",
+ *         type="number",
+ *         description="стоимость доставки iBT (без учета скидки)"
+ *     ),
+ *     @OA\Property(
+ *         property="status",
+ *         type="string",
+ *         description="стоимость доставки iBT (без учета скидки)"
+ *     ),
+ *     @OA\Property(
+ *         property="status_at",
+ *         type="string",
+ *         description="дата установки статуса заказа"
+ *     ),
+ *     @OA\Property(
+ *         property="payment_status",
+ *         type="string",
+ *         description="статус оплаты (см. \App\Models\Payment\PaymentStatus)"
+ *     ),
+ *     @OA\Property(
+ *         property="payment_status_at",
+ *         type="string",
+ *         description="дата установки статуса оплаты"
+ *     ),
+ *     @OA\Property(
+ *         property="is_problem",
+ *         type="integer",
+ *         description="флаг, что заказ проблемный"
+ *     ),
+ *     @OA\Property(
+ *         property="is_problem_at",
+ *         type="string",
+ *         description="дата установки флага проблемного заказа"
+ *     ),
+ *     @OA\Property(
+ *         property="is_canceled",
+ *         type="integer",
+ *         description="флаг, что заказ отменен"
+ *     ),
+ *     @OA\Property(
+ *         property="is_canceled_at",
+ *         type="string",
+ *         description="дата установки флага отмены заказа"
+ *     ),
+ *     @OA\Property(
+ *         property="is_require_check",
+ *         type="integer",
+ *         description="флаг, что заказ требует проверки"
+ *     ),
+ *     @OA\Property(
+ *         property="manager_comment",
+ *         type="string",
+ *         description="комментарий менеджера"
+ *     ),
+ *     @OA\Property(
+ *         property="confirmation_type",
+ *         type="integer",
+ *         description="тип подтверждения заказа (см. \App\Models\Order\OrderConfirmationType)"
+ *     ),
+ *     @OA\Property(
+ *         property="number",
+ *         type="string",
+ *         description="номер"
+ *     ),
+ *     @OA\Property(property="basket", type="array", @OA\Items(ref="#/components/schemas/Basket")),
+ *     @OA\Property(property="payments", type="array", @OA\Items(ref="#/components/schemas/Payment")),
+ *     @OA\Property(property="deliveries", type="array", @OA\Items(ref="#/components/schemas/Delivery")),
+ *     @OA\Property(property="comment", type="array", @OA\Items(ref="#/components/schemas/OrderComment")),
+ *     @OA\Property(property="discounts", type="array", @OA\Items(ref="#/components/schemas/OrderDiscount")),
+ *     @OA\Property(property="promoCodes", type="array", @OA\Items(ref="#/components/schemas/OrderPromoCode")),
+ *     @OA\Property(property="bonuses", type="array", @OA\Items(ref="#/components/schemas/OrderBonus")),
+ *     @OA\Property(property="orderReturns", type="array", @OA\Items(ref="#/components/schemas/OrderReturn")),
+ *     @OA\Property(property="history", type="array", @OA\Items(ref="#/components/schemas/History")),
+ * )
+ *
  * Класс-модель для сущности "Заказы"
  * Class Order
  * @package App\Models

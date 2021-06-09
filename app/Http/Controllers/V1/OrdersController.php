@@ -37,6 +37,18 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class OrdersController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="api/v1/orders",
+     *     tags={"Заказы"},
+     *     description="Получить список заказов",
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Order"))
+     *         )
+     *     )
+     * )
      * Получить список заказов
      */
     public function read(Request $request): JsonResponse
@@ -49,6 +61,16 @@ class OrdersController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/orders/{id}",
+     *     tags={"Заказы"},
+     *     description="Получить детальную информацию о заказе в зависимости от его типа",
+     *     @OA\Response(
+     *         response="200",
+     *         description="return Json content",
+     *     )
+     * )
+     *
      * Получить детальную информацию о заказе в зависимости от его типа
      * @throws \Pim\Core\PimException
      */
@@ -75,6 +97,28 @@ class OrdersController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/tickets",
+     *     tags={"Заказы"},
+     *     description="",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"name"},
+     *          @OA\Property(property="basket_item_id", type="integer"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *              @OA\Property(property="basket_item_id", type="integer"),
+     *         )
+     *     ),
+     *     @OA\Response(response="404", description=""),
+     * )
      * @throws \Throwable
      */
     public function tickets(int $id, Request $request, DocumentService $documentService): JsonResponse
@@ -100,6 +144,25 @@ class OrdersController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path=" api/v1/orders/count",
+     *     tags={"Заказы"},
+     *     description="Получить количество заказов по заданому фильтру",
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="pages", type="integer"),
+     *             @OA\Property(property="pageSize", type="integer"),
+     *         )
+     *     )
+     * )
      * Получить количество заказов по заданому фильтру
      */
     public function count(Request $request): JsonResponse
@@ -109,6 +172,31 @@ class OrdersController extends Controller
         return response()->json($reader->count(new RestQuery($request)));
     }
 
+    /**
+     * @OA\Post (
+     *     path="api/v1/orders/by-offers",
+     *     tags={"Заказы"},
+     *     description="",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"name"},
+     *          @OA\Property(property="offersIds", type="string", example="[1,2,3]"),
+     *          @OA\Property(property="perPage", type="integer"),
+     *          @OA\Property(property="page", type="integer"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="201",
+     *         description="{}",
+     *     ),
+     *     @OA\Response(response="400", description="Bad request"),
+     *     @OA\Response(response="500", description="unable to save delivery"),
+     * )
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getByOffers(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -142,6 +230,28 @@ class OrdersController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/payments",
+     *     tags={"Заказы"},
+     *     description="Задать список оплат заказа",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"name"},
+     *          @OA\Property(property="payments[0].id", type="integer"),
+     *          @OA\Property(property="payments[0].sum", type="numeric"),
+     *          @OA\Property(property="payments[0].status", type="integer"),
+     *          @OA\Property(property="payments[0].type", type="integer"),
+     *          @OA\Property(property="payments[0].payment_system", type="integer"),
+     *          @OA\Property(property="payments[0].data", type="json"),
+     *      ),
+     *     ),
+     *     @OA\Response(response="204", description="Данные сохранены"),
+     *     @OA\Response(response="404", description=""),
+     * )
+     *
      * Задать список оплат заказа
      * @throws \Exception
      */
@@ -180,6 +290,34 @@ class OrdersController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}",
+     *     tags={"Заказы"},
+     *     description="Обновить заказ.",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"name"},
+     *          @OA\Property(property="basket_id", type="integer"),
+     *          @OA\Property(property="customer_id", type="integer"),
+     *          @OA\Property(property="cost", type="number"),
+     *          @OA\Property(property="status", type="integer"),
+     *          @OA\Property(property="payment_status", type="integer"),
+     *          @OA\Property(property="delivery_type", type="integer"),
+     *          @OA\Property(property="delivery_address", type="string"),
+     *          @OA\Property(property="receiver_name", type="string"),
+     *          @OA\Property(property="receiver_phone", type="string"),
+     *          @OA\Property(property="receiver_email", type="string"),
+     *          @OA\Property(property="manager_comment", type="string"),
+     *          @OA\Property(property="confirmation_type", type="integer"),
+     *      ),
+     *     ),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="product not found"),
+     *     @OA\Response(response="500", description="unable to save order"),
+     * )
      * Обновить заказ
      */
     public function update(int $id, Request $request, OrderService $orderService): Response
@@ -219,6 +357,15 @@ class OrdersController extends Controller
     }
 
     /**
+     * @OA\Delete(
+     *     path="api/v1/orders/{id}",
+     *     tags={"Заказы"},
+     *     description="Удалить заказ",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="order not found"),
+     *     @OA\Response(response="500", description="unable to save order"),
+     * )
      * Удалить заказ
      * @throws \Exception
      */
@@ -237,6 +384,20 @@ class OrdersController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/pay",
+     *     tags={"Заказы"},
+     *     description="Вручную оплатить заказ. Примечание: оплата по заказам автоматически должна поступать от платежной системы!",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="Изменить значение для public event types.",
+     *          @OA\JsonContent(ref="#/components/schemas/Order")
+     *     ),
+     *     @OA\Response(response="204", description="Данные сохранены"),
+     *     @OA\Response(response="404", description="product not found"),
+     * )
+     *
      * Вручную оплатить заказ
      * Примечание: оплата по заказам автоматически должна поступать от платежной системы!
      * @throws \Exception
@@ -255,6 +416,15 @@ class OrdersController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/cancel",
+     *     tags={"Заказы"},
+     *     description="Отменить заказ.",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="cargo not found"),
+     * )
+     *
      * Отменить заказ
      * @throws \Exception
      */
@@ -272,6 +442,21 @@ class OrdersController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/comment",
+     *     tags={"Заказы"},
+     *     description="Добавить комментарий к заказу.",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          @OA\Property(property="text", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="cargo not found"),
+     * )
      * Добавить комментарий к заказу
      * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
@@ -303,6 +488,34 @@ class OrdersController extends Controller
         return response('', 204);
     }
 
+    /**
+     * @OA\Get(
+     *     path="api/v1/orders/done/referral",
+     *     tags={"Заказы"},
+     *     description="",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"name"},
+     *          @OA\Property(property="date_from", type="string"),
+     *          @OA\Property(property="date_to", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="customer_id", type="integer"),
+     *             @OA\Property(property="created_at", type="string"),
+     *             @OA\Property(property="number", type="number"),
+     *             @OA\Property(property="promo_codes", type="json"),
+     *             @OA\Property(property="discounts", type="json"),
+     *             @OA\Property(property="items", type="json"),
+     *         )
+     *     )
+     * )
+     */
     public function doneReferral(): JsonResponse
     {
         $data = $this->validate(request(), [
@@ -369,6 +582,35 @@ class OrdersController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/orders/done/merchant",
+     *     tags={"Заказы"},
+     *     description="Биллинг по отправлениям",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"name"},
+     *          @OA\Property(property="date_from", type="string"),
+     *          @OA\Property(property="date_to", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="created_at", type="string"),
+     *             @OA\Property(property="items", type="json"),
+     *             @OA\Property(property="order_id", type="integer"),
+     *             @OA\Property(property="shipment_id", type="integer"),
+     *             @OA\Property(property="merchant_id", type="integer"),
+     *             @OA\Property(property="status", type="integer"),
+     *             @OA\Property(property="is_canceled", type="integer"),
+     *             @OA\Property(property="is_canceled_at", type="string"),
+     *             @OA\Property(property="status_at", type="string"),
+     *         )
+     *     )
+     * )
      * Биллинг по отправлениям
      */
     public function doneMerchant(): JsonResponse
@@ -378,7 +620,9 @@ class OrdersController extends Controller
             'date_to' => 'nullable|integer',
         ]);
 
-        $builderDone = Shipment::query()->where('status', ShipmentStatus::DONE);
+        $builderDone = Shipment::query()
+            ->where('status', ShipmentStatus::DONE)
+            ->where('payment_status', 2);
         if (isset($data['date_from'])) {
             $builderDone->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
         }
@@ -387,7 +631,9 @@ class OrdersController extends Controller
         }
         $doneShipments = $builderDone->get();
 
-        $builderReturn = Shipment::query()->where('status', ShipmentStatus::RETURNED);
+        $builderReturn = Shipment::query()
+            ->where('status', ShipmentStatus::RETURNED)
+            ->where('payment_status', 2);
         if (isset($data['date_from'])) {
             $builderReturn->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
         }

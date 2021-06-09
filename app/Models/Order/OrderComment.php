@@ -6,6 +6,21 @@ use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ *
+ * @OA\Schema(
+ *     description="Комментарии к заказам",
+ *     @OA\Property(
+ *         property="order_id",
+ *         type="integer",
+ *         description="ID заказа"
+ *     ),
+ *     @OA\Property(
+ *         property="text",
+ *         type="string",
+ *         description="Текст комментария"
+ *     ),
+ * )
+ *
  * Class OrderComment
  * @package App\Models\Order
  *

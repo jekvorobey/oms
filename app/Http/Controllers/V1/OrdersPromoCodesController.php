@@ -16,6 +16,29 @@ use Illuminate\Http\JsonResponse;
 class OrdersPromoCodesController extends Controller
 {
     /**
+     * @OA\Get(
+     *     path="api/v1/orders/promo-codes/{promoCodeId}/count",
+     *     tags={"Заказы"},
+     *     description="Возвращает сколько раз был применен промокод",
+     *     @OA\Parameter(name="promoCodeId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={},
+     *          @OA\Property(property="customer_id", type="integer"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="promo_code_id", type="integer"),
+     *             @OA\Property(property="count", type="integer"),
+     *         )
+     *     )
+     * )
+     *
      * Возвращает сколько раз был применен промокод
      */
     public function count(int $promoCodeId): JsonResponse

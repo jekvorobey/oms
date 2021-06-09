@@ -8,6 +8,35 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 /**
+ * @OA\Schema(
+ *     description="Класс-модель для сущности 'История изменения сущностей'",
+ *     @OA\Property(
+ *         property="user_id",
+ *         type="integer",
+ *         description="id пользователя"
+ *     ),
+ *     @OA\Property(
+ *         property="type",
+ *         type="integer",
+ *         description="тип события"
+ *     ),
+ *     @OA\Property(
+ *         property="data",
+ *         type="string",
+ *         description="информация"
+ *     ),
+ *     @OA\Property(
+ *         property="entity_type",
+ *         type="string",
+ *         description="название изменяемой сущности (например, BasketItem или ShipmentItem)"
+ *     ),
+ *     @OA\Property(
+ *         property="entity_id",
+ *         type="integer",
+ *         description="id изменяемой сущности (например, Позиция корзины или Позиция отправления)"
+ *     ),
+ * )
+ *
  * Класс-модель для сущности "История изменения сущностей"
  * Class History
  * @package App\Models\History

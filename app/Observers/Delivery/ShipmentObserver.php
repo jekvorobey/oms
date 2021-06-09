@@ -46,7 +46,7 @@ class ShipmentObserver
      */
     public function created(Shipment $shipment)
     {
-        History::saveEvent(HistoryType::TYPE_CREATE, [$shipment->delivery->order, $shipment], $shipment);
+        History::saveEvent(HistoryType::TYPE_CREATE, $shipment->delivery->order, $shipment);
     }
 
     /**
@@ -360,6 +360,7 @@ class ShipmentObserver
                 if ($deliveryShipment->is_canceled) {
                     continue;
                 }
+
                 if ($deliveryShipment->status < $shipment->status) {
                     $allShipmentsHasStatus = false;
                     break;
@@ -485,25 +486,33 @@ class ShipmentObserver
                     'ALL_PRISE_GOODS' => (int) $shipment->cost,
                 ];
 
-                switch ($operator->communication_method) {
-                    case OperatorCommunicationMethod::METHOD_PHONE:
-                        $serviceNotificationService->sendDirect(
-                            'klientoformlen_novyy_zakaz',
-                            $user->phone,
-                            'sms',
-                            $vars
-                        );
-                        break;
-                    case OperatorCommunicationMethod::METHOD_EMAIL:
-                        $serviceNotificationService->sendDirect(
-                            'klientoformlen_novyy_zakaz',
-                            $user->email,
-                            'email',
-                            $vars
-                        );
-                        break;
+                if ($user) {
+                    switch ($operator->communication_method) {
+                        case OperatorCommunicationMethod::METHOD_PHONE:
+                            $serviceNotificationService->sendDirect(
+                                'klientoformlen_novyy_zakaz',
+                                $user->phone,
+                                'sms',
+                                $vars
+                            );
+                            break;
+                        case OperatorCommunicationMethod::METHOD_EMAIL:
+                            $serviceNotificationService->sendDirect(
+                                'klientoformlen_novyy_zakaz',
+                                $user->email,
+                                'email',
+                                $vars
+                            );
+                            break;
+                    }
                 }
             }
+
+            $serviceNotificationService->send(
+                $operators[0]->user_id,
+                'klientoformlen_novyy_zakaz',
+                $vars
+            );
         } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
         }
@@ -540,8 +549,8 @@ class ShipmentObserver
                                     'QUANTITY_ORDERS' => 1,
                                     'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                                    'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
-                                    'PRICE_GOODS' => (int) $shipment->delivery->order->price ?? 0,
+                                    'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
+                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                                 ]
                             );
                             break;
@@ -554,8 +563,8 @@ class ShipmentObserver
                                     'QUANTITY_ORDERS' => 1,
                                     'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                                    'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
-                                    'PRICE_GOODS' => (int) $shipment->delivery->order->price ?? 0,
+                                    'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
+                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                                 ]
                             );
                             break;
@@ -588,6 +597,27 @@ class ShipmentObserver
                             break;
                     }
                 }
+            }
+
+            if (($shipment->is_canceled != $shipment->getOriginal('is_canceled')) && $shipment->is_canceled) {
+                $userService = app(UserService::class);
+
+                $user = $userService->users(
+                    $userService->newQuery()
+                        ->setFilter('id', $operators[0]->user_id)
+                )->first();
+
+                $serviceNotificationService->send(
+                    $operators[0]->user_id,
+                    'klientstatus_zakaza_otmenen',
+                    [
+                        'QUANTITY_ORDERS' => 1,
+                        'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
+                        'CUSTOMER_NAME' => $user ? $user->first_name : '',
+                        'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
+                        'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price
+                    ]
+                );
             }
         } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());

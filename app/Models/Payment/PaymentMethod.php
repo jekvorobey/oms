@@ -5,6 +5,24 @@ namespace App\Models\Payment;
 use App\Models\OmsModel;
 
 /**
+ * @OA\Schema(
+ *     description="Способы платежей",
+ *     @OA\Property(property="name", type="string", description="Название способа оплаты"),
+ *     @OA\Property(property="code", type="string", description="Символьный код способа оплаты"),
+ *     @OA\Property(property="accept_prepaid", type="boolean", description="Поддержка предоплаченных банковских карт"),
+ *     @OA\Property(property="accept_virtual", type="boolean", description="Поддержка виртуальных банковских карт"),
+ *     @OA\Property(property="accept_real", type="boolean", description="Поддержка пластиковых банковских карт"),
+ *     @OA\Property(property="accept_postpaid", type="boolean", description="Поддержка дебетовых и кредитных банковских карт"),
+ *     @OA\Property(property="covers", type="number", description="Доля от суммы, которую можно оплатить выбранным способом"),
+ *     @OA\Property(property="max_limit", type="number", description="Максимальная сумма оплаты за одну операцию"),
+ *     @OA\Property(property="excluded_payment_methods", type="string", description="Не сочетается с указанными методами", example="{}"),
+ *     @OA\Property(property="excluded_regions", type="string", description="Недоступен в указанных регионах", example="{}"),
+ *     @OA\Property(property="excluded_delivery_services", type="string", description="Недоступен для указанных Л.О.", example="{}"),
+ *     @OA\Property(property="excluded_offer_statuses", type="string", description="Недоступен для офферов с указанными статусами", example="{}"),
+ *     @OA\Property(property="excluded_customers", type="string", description="Недоступен для указанных пользователей", example="{}"),
+ *     @OA\Property(property="active", type="boolean", description="Статус метода оплаты"),
+ * )
+ *
  * Class PaymentMethod
  * @package App\Models\Payment
  *

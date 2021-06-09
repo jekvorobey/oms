@@ -8,6 +8,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
 /**
+ * @OA\Schema(
+ *     description="Коробка отправления",
+ *     @OA\Property(property="shipment_id", type="integer", description="id посылки"),
+ *     @OA\Property(property="package_id", type="integer", description="id корзины"),
+ *     @OA\Property(property="xml_id", type="number", description="количество"),
+ *     @OA\Property(property="width", type="integer", description="ширина"),
+ *     @OA\Property(property="height", type="integer", description="высота"),
+ *     @OA\Property(property="length", type="integer", description="длина"),
+ *     @OA\Property(property="weight", type="integer", description="вес (расчитывается автоматически)"),
+ *     @OA\Property(property="wrapper_weight", type="integer", description="вес обертки"),
+ *     @OA\Property(property="shipment", type="array", @OA\Items(ref="#/components/schemas/Shipment")),
+ *     @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/ShipmentPackageItem")),
+ * )
  * Коробка отправления
  * Class ShipmentPackage
  * @package App\Models\Delivery

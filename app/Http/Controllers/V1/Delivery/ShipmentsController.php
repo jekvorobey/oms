@@ -38,9 +38,90 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class ShipmentsController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="api/v1/shipments/count",
+     *     tags={"Поставки"},
+     *     description="Количество сущностей вариантов значений поставки",
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="pages", type="integer"),
+     *             @OA\Property(property="pageSize", type="integer"),
+     *         )
+     *     )
+     * )
+     */
     use CountAction;
+
+    /**
+     * @OA\Get(
+     *     path="api/v1/shipments",
+     *     tags={"Поставки"},
+     *     description="Получить список поставок",
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Shipment"))
+     *         )
+     *     )
+     * )
+     *
+     * @OA\Get(
+     *     path="api/v1/shipments/{id}",
+     *     tags={"Поставки"},
+     *     description="Получить значение поставки с ID",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(ref="#/components/schemas/Shipment")
+     *     )
+     * )
+     */
     use ReadAction;
+
+    /**
+     * @OA\Put(
+     *     path="api/v1/shipments/{id}",
+     *     tags={"Поставки"},
+     *     description="Изменить значения поставки.",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="Изменить значение поставки.",
+     *          @OA\JsonContent(ref="#/components/schemas/Shipment")
+     *     ),
+     *     @OA\Response(response="204", description="Данные сохранены"),
+     *     @OA\Response(response="404", description="product not found"),
+     * )
+     */
     use UpdateAction;
+
+    /**
+     * @OA\Delete(
+     *     path="api/v1/shipments/{id}",
+     *     tags={"Поставки"},
+     *     description="Удалить поставку",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="Сущность не найдена"),
+     *     @OA\Response(response="500", description="Не удалось удалить сущность"),
+     * )
+     */
     use DeleteAction;
 
     public function modelClass(): string
@@ -79,6 +160,29 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/shipments/active",
+     *     tags={"Поставки"},
+     *     description="Получить ID и сумму (руб.) принятых мерчантом заказов за период",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"merchant_id","period"},
+     *          @OA\Property(property="merchant_id", type="integer"),
+     *          @OA\Property(property="period", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *          @OA\Property(property="count", type="integer"),
+     *          @OA\Property(property="period", type="string")
+     *         )
+     *     )
+     * )
+     *
      * Получить ID и сумму (руб.) принятых мерчантом заказов за период
      * @return JsonResponse
      */
@@ -112,6 +216,28 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/shipments/delivered",
+     *     tags={"Поставки"},
+     *     description=" Получить ID и сумму (руб.) доставленных заказов у мерчанта за период",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"merchant_id","period"},
+     *          @OA\Property(property="merchant_id", type="integer"),
+     *          @OA\Property(property="period", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *          @OA\Property(property="count", type="integer"),
+     *          @OA\Property(property="period", type="string")
+     *         )
+     *     )
+     * )
      * Получить ID и сумму (руб.) доставленных заказов у мерчанта за период
      * @return JsonResponse
      */
@@ -143,6 +269,21 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/deliveries/{id}/shipments/count",
+     *     tags={"Поставки"},
+     *     description=" Подсчитать кол-во отправлений доставки",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="pages", type="integer"),
+     *             @OA\Property(property="pageSize", type="integer"),
+     *         )
+     *     )
+     * )
      * Подсчитать кол-во отправлений доставки
      */
     public function countByDelivery(int $deliveryId, Request $request): JsonResponse
@@ -168,6 +309,36 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Post (
+     *     path="api/v1/deliveries/{id}/shipments",
+     *     tags={"Корзина"},
+     *     description="Создать отправление",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          @OA\Property(property="delivery_id", type="integer"),
+     *          @OA\Property(property="merchant_id", type="integer"),
+     *          @OA\Property(property="store_id", type="integer"),
+     *          @OA\Property(property="cargo_id", type="integer"),
+     *          @OA\Property(property="status", type="integer"),
+     *          @OA\Property(property="payment_status_at", type="string"),
+     *          @OA\Property(property="number", type="string"),
+     *          @OA\Property(property="required_shipping_at", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="201",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer")
+     *         )
+     *     ),
+     *     @OA\Response(response="404", description="delivery not found"),
+     *     @OA\Response(response="500", description="unable to save shipment item"),
+     * )
+     *
      * Создать отправление
      */
     public function create(int $deliveryId, Request $request): JsonResponse
@@ -197,6 +368,26 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/shipments/similar-unshipped-shipments",
+     *     tags={"Поставки"},
+     *     description="Получить собранные неотгруженные отправления со схожими параметрами для текущего груза (склад, служба доставки)",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"cargo_id"},
+     *          @OA\Property(property="cargo_id", type="integer"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Shipment"))
+     *         )
+     *     )
+     * )
      * Получить собранные неотгруженные отправления со схожими параметрами для текущего груза (склад, служба доставки)
      */
     public function similarUnshippedShipments(Request $request): JsonResponse
@@ -235,6 +426,25 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/deliveries/{id}/shipments",
+     *     tags={"Поставки"},
+     *     description="Список отправлений доставки",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Shipment"))
+     *         )
+     *     )
+     * )
+     *
      * Список отправлений доставки
      */
     public function readByDelivery(int $deliveryId, Request $request): JsonResponse
@@ -261,6 +471,27 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/shipments/{id}/items/count",
+     *     tags={"Поставки"},
+     *     description="Подсчитать кол-во элементов (товаров с одного склада одного мерчанта) отправления",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *      @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="string"),
+     *             @OA\Property(property="pages", type="string"),
+     *             @OA\Property(property="pageSize", type="string")
+     *         )
+     *     )
+     * )
+     *
      * Подсчитать кол-во элементов (товаров с одного склада одного мерчанта) отправления
      */
     public function countItems(int $shipmentId, Request $request): JsonResponse
@@ -286,6 +517,25 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/shipments/{id}/items",
+     *     tags={"Поставки"},
+     *     description="Список элементов (товаров с одного склада одного мерчанта) отправления",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/ShipmentItem")),
+     *         )
+     *     )
+     * )
+     *
      * Список элементов (товаров с одного склада одного мерчанта) отправления
      */
     public function readItems(int $shipmentId, Request $request): JsonResponse
@@ -312,6 +562,26 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path=" api/v1/shipments/{id}/items/{basketItemId}",
+     *     tags={"Поставки"},
+     *     description="Информация об элементе (товар с одного склада одного мерчанта) отправления",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="basketItemId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/ShipmentItem")),
+     *         )
+     *     )
+     * )
+     *
      * Информация об элементе (товар с одного склада одного мерчанта) отправления
      */
     public function readItem(int $shipmentId, int $basketItemId, Request $request): JsonResponse
@@ -336,6 +606,16 @@ class ShipmentsController extends Controller
     }
 
     /**
+     *  @OA\Post (
+     *     path=" api/v1/shipments/{id}/items/{basketItemId}",
+     *     tags={"Корзина"},
+     *     description="Создать элемент (товар с одного склада одного мерчанта) отправления",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="basketItemId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="shipment not found"),
+     *     @OA\Response(response="500", description="unable to save shipment item"),
+     * )
      * Создать элемент (товар с одного склада одного мерчанта) отправления
      */
     public function createItem(int $shipmentId, int $basketItemId): Response
@@ -358,6 +638,15 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Delete(
+     *     path="api/v1/shipments/{id}/items/{basketItemId}",
+     *     tags={"Корзина"},
+     *     description="Удалить элемент (товар с одного склада одного мерчанта) отправления",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="basketItemId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="shipment item not found"),
+     * )
      * Удалить элемент (товар с одного склада одного мерчанта) отправления
      */
     public function deleteItem(int $shipmentId, int $basketItemId): Response
@@ -385,6 +674,22 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/shipments/{id}/barcodes",
+     *     tags={"Поставки"},
+     *     description="Получить штрихкоды для мест (коробок) отправления",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="absolute_url", type="string"),
+     *             @OA\Property(property="original_name", type="string"),
+     *             @OA\Property(property="size", type="string")
+     *         )
+     *     )
+     * )
+     *
      * Получить штрихкоды для мест (коробок) отправления
      */
     public function barcodes(int $id, DeliveryService $deliveryService, FileService $fileService): JsonResponse
@@ -414,6 +719,21 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/shipments/{id}/cdek-receipt",
+     *     tags={"Поставки"},
+     *     description="Получить квитанцию cdek для заказа на доставку",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="absolute_url", type="string"),
+     *             @OA\Property(property="original_name", type="string"),
+     *             @OA\Property(property="size", type="string")
+     *         )
+     *     )
+     * )
      * Получить квитанцию cdek для заказа на доставку
      */
     public function cdekReceipt(int $id, DeliveryService $deliveryService, FileService $fileService): JsonResponse
@@ -443,6 +763,16 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/shipments/{id}/mark-as-problem",
+     *     tags={"Поставки"},
+     *     description="Пометить как проблемное",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="shipment not found"),
+     *     @OA\Response(response="500", description="bad request"),
+     * )
+     *
      * Пометить как проблемное
      */
     public function markAsProblem(int $id, Request $request, DeliveryService $deliveryService): Response
@@ -463,6 +793,16 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/shipments/{id}/mark-as-non-problem",
+     *     tags={"Поставки"},
+     *     description="Пометить как непроблемное",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="shipment not found"),
+     *     @OA\Response(response="500", description="bad request"),
+     * )
+     *
      * Пометить как непроблемное
      */
     public function markAsNonProblem(int $id, DeliveryService $deliveryService): Response
@@ -479,6 +819,14 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/shipments/{id}/cancel",
+     *     tags={"Поставки"},
+     *     description="Отменить отправление",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="product not found"),
+     * )
      * Отменить отправление
      * @throws \Exception
      */
@@ -495,6 +843,30 @@ class ShipmentsController extends Controller
         return response('', 204);
     }
 
+    /**
+     * @OA\Get(
+     *     path="api/v1/shipments/exports/new",
+     *     tags={"Поставки"},
+     *     description="",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"filter['merchant_id']"},
+     *          @OA\Property(property="filter['merchant_id']", type="integer"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Shipment"))
+     *         )
+     *     )
+     * )
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function readNew(Request $request): JsonResponse
     {
         $restQuery = new RestQuery($request);
@@ -519,6 +891,37 @@ class ShipmentsController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="api/v1/shipments/exports",
+     *     tags={"Поставки"},
+     *     description="",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"shipment_id","merchant_integration_id"},
+     *          @OA\Property(property="shipment_id", type="integer"),
+     *          @OA\Property(property="merchant_integration_id", type="integer"),
+     *          @OA\Property(property="shipment_xml_id", type="string"),
+     *          @OA\Property(property="err_code", type="integer"),
+     *          @OA\Property(property="err_message", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *          response="200",
+     *          description="",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="id", type="string"),
+     *          )
+     *     ),
+     *     @OA\Response(response="400", description="Ошибка валидации"),
+     *     @OA\Response(response="404", description=""),
+     *     @OA\Response(response="500", description="Не удалось сохранить данные"),
+     * )
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function createShipmentExport(Request $request): JsonResponse
     {
         $data = $this->validate($request, [

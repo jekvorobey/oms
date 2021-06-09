@@ -364,7 +364,11 @@
                         </div>
                         <div class="head-sidebar">
                             <div class="id">{{$ticket->code}}</div>
+                            @if ($ticketsInfo->pricePerOne > 0)
                             <div class="cost">{{price_format($ticketsInfo->pricePerOne)}} &#8381;</div>
+                            @else
+                            <div class="cost">Бесплатно</div>
+                            @endif
                             <p>
                                 <div class="text-small">
                                 Номер заказа
@@ -470,8 +474,8 @@
                             </div>
                             <div class="program-layout">
                                 <div class="speakers">
-                                    <div class="sub-title space" style="margin-bottom: 23px">СПИКЕРЫ</div>
                                     @if($stage->speakerIds)
+                                    <div class="sub-title space" style="margin-bottom: 23px">СПИКЕРЫ</div>
                                         @foreach($stage->speakerIds as $speakerId)
                                             @if($publicEvent->speakers->has($speakerId))
                                                 @php

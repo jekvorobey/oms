@@ -34,9 +34,92 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class DeliveryController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="api/v1/deliveries/count",
+     *     tags={"Дотсавка"},
+     *     description="Количество сущностей вариантов значений доставка",
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="pages", type="integer"),
+     *             @OA\Property(property="pageSize", type="integer"),
+     *         )
+     *     )
+     * )
+     */
     use CountAction;
+
+    /**
+     * @OA\Get(
+     *     path="api/v1/deliveries",
+     *     tags={"Дотсавка"},
+     *     description="Получить список доставок",
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Delivery"))
+     *         )
+     *     )
+     * )
+     *
+     * @OA\Get(
+     *     path="api/v1/deliveries/{id}",
+     *     tags={"Дотсавка"},
+     *     description="Получить значение доставки с ID",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Delivery"))
+     *         )
+     *     )
+     * )
+     */
     use ReadAction;
+
+    /**
+     * @OA\Put(
+     *     path="api/v1/deliveries/{id}",
+     *     tags={"Дотсавка"},
+     *     description="Изменить значения значение доставки с ID.",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="Изменить значение для public event types.",
+     *          @OA\JsonContent(ref="#/components/schemas/Delivery")
+     *     ),
+     *     @OA\Response(response="204", description="Данные сохранены"),
+     *     @OA\Response(response="404", description="product not found"),
+     * )
+     */
     use UpdateAction;
+
+    /**
+     * @OA\Delete(
+     *     path="api/v1/deliveries/{id}",
+     *     tags={"Дотсавка"},
+     *     description="Удалить доставку",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="Сущность не найдена"),
+     *     @OA\Response(response="500", description="Не удалось удалить сущность"),
+     * )
+     */
     use DeleteAction;
 
     public function modelClass(): string
@@ -88,6 +171,21 @@ class DeliveryController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/orders/{id}/deliveries/count",
+     *     tags={"Дотсавка"},
+     *     description="Подсчитать кол-во доставок заказа",
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="pages", type="integer"),
+     *             @OA\Property(property="pageSize", type="integer"),
+     *         )
+     *     )
+     * )
+     *
      * Подсчитать кол-во доставок заказа
      */
     public function countByOrder(int $orderId, Request $request): JsonResponse
@@ -114,6 +212,52 @@ class DeliveryController extends Controller
     }
 
     /**
+     * @OA\Post (
+     *     path="api/v1/orders/{id}/deliveries",
+     *     tags={"Дотсавка"},
+     *     description="Создать доставку",
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"name"},
+     *          @OA\Property(property="status", type="integer"),
+     *          @OA\Property(property="delivery_method", type="integer"),
+     *          @OA\Property(property="delivery_service", type="integer"),
+     *          @OA\Property(property="xml_id", type="string"),
+     *          @OA\Property(property="tariff_id", type="integer"),
+     *          @OA\Property(property="point_id", type="integer"),
+     *          @OA\Property(property="number", type="string"),
+     *          @OA\Property(property="delivery_at", type="string"),
+     *          @OA\Property(property="receiver_name", type="string"),
+     *          @OA\Property(property="receiver_phone", type="string"),
+     *          @OA\Property(property="receiver_email", type="string"),
+     *          @OA\Property(property="delivery_address['country_code']", type="string"),
+     *          @OA\Property(property="delivery_address['post_index']", type="string"),
+     *          @OA\Property(property="delivery_address['region']", type="string"),
+     *          @OA\Property(property="delivery_address['region_guid']", type="string"),
+     *          @OA\Property(property="delivery_address['city']", type="string"),
+     *          @OA\Property(property="delivery_address['city_guid']", type="string"),
+     *          @OA\Property(property="delivery_address['street']", type="string"),
+     *          @OA\Property(property="delivery_address['house']", type="string"),
+     *          @OA\Property(property="delivery_address['block']", type="string"),
+     *          @OA\Property(property="delivery_address['flat']", type="string"),
+     *          @OA\Property(property="delivery_address['porch']", type="string"),
+     *          @OA\Property(property="delivery_address['floor']", type="string"),
+     *          @OA\Property(property="delivery_address['intercom']", type="string"),
+     *          @OA\Property(property="delivery_address['comment']", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="201",
+     *         description="",
+     *         @OA\JsonContent(
+     *          @OA\Property(property="id", type="integer"),
+     *         )
+     *     ),
+     *     @OA\Response(response="400", description="Bad request"),
+     *     @OA\Response(response="500", description="unable to save delivery"),
+     * )
      * Создать доставку
      */
     public function create(int $orderId, Request $request): JsonResponse
@@ -143,6 +287,24 @@ class DeliveryController extends Controller
     }
 
     /**
+     * @OA\Get(
+     *     path="api/v1/orders/{id}/deliveries",
+     *     tags={"Дотсавка"},
+     *     description="Список доставок заказа",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
+     *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
+     *     @OA\Parameter(name="filter", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса filter"),
+     *     @OA\Parameter(name="sort", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса sort"),
+     *     @OA\Parameter(name="page", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="integer")), description="параметр json-api запроса page"),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Delivery"))
+     *         )
+     *     )
+     * )
      * Список доставок заказа
      */
     public function readByOrder(int $orderId, Request $request): JsonResponse
@@ -169,6 +331,14 @@ class DeliveryController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/deliveries/{id}/cancel",
+     *     tags={"Дотсавка"},
+     *     description="Отменить доставку.",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="delivery not found"),
+     * )
      * Отменить доставку
      * @throws \Exception
      */
@@ -186,6 +356,14 @@ class DeliveryController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/deliveries/{id}/delivery-order",
+     *     tags={"Дотсавка"},
+     *     description="Создать/обновить заказ на доставку у службы доставки.",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="delivery not found"),
+     * )
      * Создать/обновить заказ на доставку у службы доставки
      * @throws \Exception
      */
@@ -201,6 +379,15 @@ class DeliveryController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/deliveries/{id}/delivery-order/cancel",
+     *     tags={"Дотсавка"},
+     *     description="Отменить заказ на доставку у службы доставки.",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="delivery not found"),
+     * )
+     *
      * Отменить заказ на доставку у службы доставки
      */
     public function cancelDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
