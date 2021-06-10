@@ -79,7 +79,7 @@ return [/*
     |
     */
 
-    'timezone' => ini_get('date.timezone') ?? 'UTC',
+    'timezone' => ini_get('date.timezone') ?: 'Europe/Moscow',
 
     /*
     |--------------------------------------------------------------------------
