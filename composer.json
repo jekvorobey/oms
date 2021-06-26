@@ -10,7 +10,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "git@git.yiilab.com:ibt.studio/laravel-health-check.git"
+            "url": "git@git.yiilab.com:maxim.kyprov/laravel-health-check.git"
         },
         {
             "type": "vcs",
