@@ -10,6 +10,10 @@
     "repositories": [
         {
             "type": "vcs",
+            "url": "git@git.yiilab.com:ibt.studio/laravel-health-check.git"
+        },
+        {
+            "type": "vcs",
             "url": "git@git.yiilab.com:ibt.studio/ibt-common-ms-code.git"
         },
         {
@@ -48,7 +52,6 @@
     "require": {
         "php": "^7.1.3",
         "ext-json": "*",
-        "cubesystems/laravel-health-check": "^1.2",
         "darkaonline/l5-swagger": "5.8.*",
         "fideloper/proxy": "^4.0",
         "iwengo/ibt-cm-lib": "dev-master-ylab as dev-master",
@@ -63,6 +66,7 @@
         "jenssegers/date": "^4.0",
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",
+        "letsgoi/laravel-health-check": "dev-master",
         "mikehaertl/php-pdftk": "^0.8.1",
         "phpoffice/phpword": "^0.17.0",
         "sentry/sentry-laravel": "^2.7",

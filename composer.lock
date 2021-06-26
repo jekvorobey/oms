@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6240cb332a569494c804fb70be96c091",
+    "content-hash": "ae9e39532dc30e4ea8219ca641276a88",
     "packages": [
         {
             "name": "clue/stream-filter",
@@ -71,59 +71,6 @@
                 }
             ],
             "time": "2020-10-02T12:38:20+00:00"
-        },
-        {
-            "name": "cubesystems/laravel-health-check",
-            "version": "1.2.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/cubesystems/laravel-health-check.git",
-                "reference": "504735e52eff72c818a398825f10c54c24d0970e"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/cubesystems/laravel-health-check/zipball/504735e52eff72c818a398825f10c54c24d0970e",
-                "reference": "504735e52eff72c818a398825f10c54c24d0970e",
-                "shasum": ""
-            },
-            "require": {
-                "illuminate/bus": "~5.0|~6.0|~7.0|~8.0",
-                "illuminate/console": "~5.0|~6.0|~7.0|~8.0",
-                "illuminate/database": "~5.0|~6.0|~7.0|~8.0",
-                "illuminate/queue": "~5.0|~6.0|~7.0|~8.0",
-                "illuminate/routing": "~5.0|~6.0|~7.0|~8.0",
-                "illuminate/support": "~5.0|~6.0|~7.0|~8.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "CubeSystems\\HealthCheck\\HealthCheckServiceProvider"
-                    ],
-                    "aliases": []
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "CubeSystems\\HealthCheck\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Miks Mikelsons",
-                    "email": "miks@cubesystems.lv"
-                }
-            ],
-            "description": "Adds Liveness and Readiness Probes in the Laravel application",
-            "support": {
-                "issues": "https://github.com/cubesystems/laravel-health-check/issues",
-                "source": "https://github.com/cubesystems/laravel-health-check/tree/1.2.1"
-            },
-            "time": "2021-03-24T12:15:46+00:00"
         },
         {
             "name": "darkaonline/l5-swagger",
@@ -1892,6 +1839,75 @@
                 }
             ],
             "time": "2021-01-18T20:58:21+00:00"
+        },
+        {
+            "name": "letsgoi/laravel-health-check",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "git@git.yiilab.com:ibt.studio/laravel-health-check.git",
+                "reference": "e3aec2e50a58542bc405ac81c2b36cf2f75842ab"
+            },
+            "require": {
+                "ext-json": "*",
+                "illuminate/support": "^5.0|^6.0|^7.0|^8.0",
+                "php": ">=7.2"
+            },
+            "require-dev": {
+                "letsgoi/php-code-style": "^0.1.1",
+                "orchestra/testbench": "^5.1",
+                "phpunit/phpunit": "^8.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Letsgoi\\HealthCheck\\HealthCheckServiceProvider"
+                    ],
+                    "aliases": {
+                        "HealthCheck": "Letsgoi\\HealthCheck\\Facades\\HealthCheck"
+                    }
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Letsgoi\\HealthCheck\\": "src"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Letsgoi\\HealthCheck\\Tests\\": "tests"
+                }
+            },
+            "scripts": {
+                "test": [
+                    "phpunit"
+                ],
+                "syntax": [
+                    "phpcs"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "GOI",
+                    "email": "tech@letsgoi.com"
+                }
+            ],
+            "description": "Laravel health checker",
+            "homepage": "https://github.com/letsgoi/laravel-health-check",
+            "keywords": [
+                "check",
+                "goi",
+                "health",
+                "health-check",
+                "laravel",
+                "letsgoi"
+            ],
+            "time": "2021-06-26T15:59:31+00:00"
         },
         {
             "name": "mikehaertl/php-pdftk",
@@ -9520,7 +9536,8 @@
         "iwengo/ibt-merchant-management-lib": 20,
         "iwengo/ibt-message-lib": 20,
         "iwengo/ibt-pim-lib": 20,
-        "iwengo/ibt-store-lib": 20
+        "iwengo/ibt-store-lib": 20,
+        "letsgoi/laravel-health-check": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
