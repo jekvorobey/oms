@@ -3,7 +3,10 @@
 namespace App\Exceptions;
 
 use Exception;
+use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Sentry\Laravel\Integration;
+use Sentry\State\Scope;
 
 class Handler extends ExceptionHandler
 {
@@ -33,7 +36,27 @@ class Handler extends ExceptionHandler
      */
     public function report(Exception $exception)
     {
+        if (app()->bound('sentry') && $this->shouldReport($exception)) {
+            $this->setUserToSentry();
+
+            app('sentry')->captureException($exception);
+        }
+
         parent::report($exception);
+    }
+
+    protected function setUserToSentry(): void
+    {
+        Integration::configureScope(static function (Scope $scope): void {
+            try {
+                $request = resolve(RequestInitiator::class);
+                $scope->setUser([
+                    'id' => $request->userId(),
+                ]);
+            } catch (\Throwable $exception) {
+                //
+            }
+        });
     }
 
     /**

@@ -10,6 +10,10 @@
     "repositories": [
         {
             "type": "vcs",
+            "url": "git@git.yiilab.com:maxim.kyprov/laravel-health-check.git"
+        },
+        {
+            "type": "vcs",
             "url": "git@git.yiilab.com:ibt.studio/ibt-common-ms-code.git"
         },
         {
@@ -62,8 +66,10 @@
         "jenssegers/date": "^4.0",
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",
+        "letsgoi/laravel-health-check": "dev-master",
         "mikehaertl/php-pdftk": "^0.8.1",
         "phpoffice/phpword": "^0.17.0",
+        "sentry/sentry-laravel": "^2.7",
         "spatie/calendar-links": "^1.4",
         "yoomoney/yookassa-sdk-php": "^2.0"
     },
