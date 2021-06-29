@@ -861,8 +861,6 @@ class ShipmentsController extends Controller
      *         )
      *     )
      * )
-     * @param Request $request
-     * @return JsonResponse
      */
     public function readNew(Request $request): JsonResponse
     {
@@ -916,8 +914,6 @@ class ShipmentsController extends Controller
      *     @OA\Response(response="404", description=""),
      *     @OA\Response(response="500", description="Не удалось сохранить данные"),
      * )
-     * @param Request $request
-     * @return JsonResponse
      */
     public function createShipmentExport(Request $request): JsonResponse
     {

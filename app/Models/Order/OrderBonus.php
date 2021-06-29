@@ -74,7 +74,9 @@ class OrderBonus extends OmsModel
             $customerId = $this->order->customer_id;
             $customerBonusId = $this->customer_bonus_id;
             $expirationDate = $this->getExpirationDate();
-            if (!empty($expirationDate)) $expirationDate = $expirationDate->toDateString();
+            if (!empty($expirationDate)) {
+                $expirationDate = $expirationDate->toDateString();
+            }
 
             $customerService->approveBonus($customerId, $customerBonusId, $expirationDate);
 

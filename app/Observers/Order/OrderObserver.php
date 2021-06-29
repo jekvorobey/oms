@@ -703,7 +703,7 @@ class OrderObserver
 
                                 $productItem['button'] = [
                                     'link' => sprintf('%s/catalog/%s/%s#characteristics', config('app.showcase_host'), $category->code, $product->code),
-                                    'text' => 'ОСТАВИТЬ ОТЗЫВ'
+                                    'text' => 'ОСТАВИТЬ ОТЗЫВ',
                                 ];
                             }
 
@@ -726,13 +726,13 @@ class OrderObserver
             })
             ->values();
 
-            $part_price = 0;
-            if (!empty($shipments) && !empty($shipments->toArray()[0])) {
-                $products = $shipments->toArray()[0]['products'];
-                foreach ($products as $product) {
-                    $part_price += $product['price'];
-                }
+        $part_price = 0;
+        if (!empty($shipments) && !empty($shipments->toArray()[0])) {
+            $products = $shipments->toArray()[0]['products'];
+            foreach ($products as $product) {
+                $part_price += $product['price'];
             }
+        }
 
         $bonusInfo = $customerService->getBonusInfo($order->customer_id);
 
@@ -770,7 +770,7 @@ class OrderObserver
                         'Спасибо что выбрали нас! Надеемся что процесс покупки доставил
                         <br>вам исключительно положительные эмоции.
                         <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
-                        <br>еще лучше и удобнее'
+                        <br>еще лучше и удобнее',
                     ];
                 }
 
@@ -831,7 +831,8 @@ class OrderObserver
 
                     return [
                         sprintf('ЧАСТЬ ЗАКАЗА %s ПЕРЕДАНА В СЛУЖБУ ДОСТАВКИ%s', $order->number, $track_string),
-                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
+                        sprintf(
+                            'Заказ №%s на сумму %s р. передан в службу доставки.
                         Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                             $order->number,
                             $part_price,
@@ -923,7 +924,8 @@ class OrderObserver
 
                     return [
                         sprintf('ЗАКАЗ %s ПЕРЕДАН В СЛУЖБУ ДОСТАВКИ%s', $order->number, $track_string),
-                        sprintf('Заказ №%s на сумму %s р. передан в службу доставки.
+                        sprintf(
+                            'Заказ №%s на сумму %s р. передан в службу доставки.
                         <br>Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
                             $order->number,
                             (int) $order->price,
@@ -948,10 +950,12 @@ class OrderObserver
 
                     return [
                         sprintf('ЗАКАЗ %s ОЖИДАЕТ В ПУНКТЕ ВЫДАЧИ!', $order->number),
-                        sprintf('Заказ №%s на сумму %d р. ожидает вас в пункте выдачи по адресу: %s в течение семи дней.',
-                        $order->number,
-                        $order->price,
-                        $deliveryAddress)
+                        sprintf(
+                            'Заказ №%s на сумму %d р. ожидает вас в пункте выдачи по адресу: %s в течение семи дней.',
+                            $order->number,
+                            $order->price,
+                            $deliveryAddress
+                        ),
                     ];
                     // return ['%s, ВАШ ЗАКАЗ ОЖИДАЕТ ВАС', 'Ваш заказ поступил в пункт самовывоза. Вы можете забрать свою покупку в течении 3-х дней'];
                 case OrderStatus::DONE:
@@ -962,11 +966,11 @@ class OrderObserver
                     // }
                     $withoutParams = true;
                     return [
-                        '%s, ' . sprintf("ВАШ ЗАКАЗ %s ВЫПОЛНЕН", $order->number),
+                        '%s, ' . sprintf('ВАШ ЗАКАЗ %s ВЫПОЛНЕН', $order->number),
                         'Спасибо что выбрали нас! Надеемся что процесс покупки доставил
                         <br>вам исключительно положительные эмоции.
                         <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
-                        <br>еще лучше и удобнее'
+                        <br>еще лучше и удобнее',
                     ];
                 // case OrderStatus::RETURNED:
                 //     return [
@@ -1104,7 +1108,7 @@ class OrderObserver
             'AVAILABLE_BAL' => $bonusInfo->available,
             'goods' => $goods->all(),
             'PART_PRICE' => $part_price,
-            'TRACK_NUMBER' => $saved_shipments->first() ? $saved_shipments->first()->delivery->xml_id : null
+            'TRACK_NUMBER' => $saved_shipments->first() ? $saved_shipments->first()->delivery->xml_id : null,
         ];
     }
 

@@ -6,7 +6,6 @@ use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- *
  * @OA\Schema(
  *     description="Комментарии к заказам",
  *     @OA\Property(

@@ -358,7 +358,6 @@ class BasketController extends Controller
      *     @OA\Response(response="404", description=""),
      *     @OA\Response(response="500", description="Не удалось сохранить данные"),
      * )
-     * @param int $offer
      */
     public function notifyExpiredOffers(int $offer)
     {

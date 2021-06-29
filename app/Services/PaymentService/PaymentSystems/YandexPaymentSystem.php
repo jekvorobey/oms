@@ -219,11 +219,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
             if (($certificatesDiscount > 0) && ($itemValue > 1)) {
                 $discountPrice = $itemValue - 1;
                 if ($discountPrice > $certificatesDiscount) {
-                    $itemValue = $itemValue - $certificatesDiscount;
+                    $itemValue -= $certificatesDiscount;
                     $certificatesDiscount = 0;
-                }
-                else {
-                    $itemValue = $itemValue - $discountPrice;
+                } else {
+                    $itemValue -= $discountPrice;
                     $certificatesDiscount -= $discountPrice;
                 }
             }

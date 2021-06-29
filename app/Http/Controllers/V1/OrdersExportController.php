@@ -28,7 +28,6 @@ class OrdersExportController extends Controller
     use CountAction {
         count as countTrait;
     }
-
     /**
      * @OA\Get(
      *     path="api/v1/orders/{id}/exports",
@@ -52,7 +51,6 @@ class OrdersExportController extends Controller
     use ReadAction {
         read as readTrait;
     }
-
     /**
      * @OA\Delete(
      *     path="api/v1/orders/{id}/exports/{exportId}",

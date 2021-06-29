@@ -194,8 +194,6 @@ class OrdersController extends Controller
      *     @OA\Response(response="400", description="Bad request"),
      *     @OA\Response(response="500", description="unable to save delivery"),
      * )
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getByOffers(Request $request): JsonResponse
     {

@@ -144,7 +144,7 @@ class DocumentService
                 }),
                 'table.total_product_price' => price_format($shipment->basketItems->sum('price')),
                 'act_date' => strftime('%d %B %Y'),
-                'act_id' => $shipment->cargo_id ? $shipment->cargo_id : $shipment->id,
+                'act_id' => $shipment->cargo_id ?: $shipment->id,
                 'merchant_name' => htmlspecialchars($merchant->legal_name, ENT_QUOTES | ENT_XML1),
                 'merchant_id' => $merchant->id,
                 'merchant_register_date' => strftime('%d %B %Y', strtotime($merchant->created_at)),

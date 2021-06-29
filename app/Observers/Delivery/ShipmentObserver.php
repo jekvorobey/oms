@@ -508,11 +508,7 @@ class ShipmentObserver
                 }
             }
 
-            $serviceNotificationService->send(
-                $operators[0]->user_id,
-                'klientoformlen_novyy_zakaz',
-                $vars
-            );
+            $serviceNotificationService->send($operators[0]->user_id, 'klientoformlen_novyy_zakaz', $vars);
         } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
         }
@@ -549,7 +545,7 @@ class ShipmentObserver
                                     'QUANTITY_ORDERS' => 1,
                                     'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                                    'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
+                                    'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
                                     'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                                 ]
                             );
@@ -563,7 +559,7 @@ class ShipmentObserver
                                     'QUANTITY_ORDERS' => 1,
                                     'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                                    'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
+                                    'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
                                     'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                                 ]
                             );
@@ -614,8 +610,8 @@ class ShipmentObserver
                         'QUANTITY_ORDERS' => 1,
                         'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                         'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                        'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
-                        'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price
+                        'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
+                        'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                     ]
                 );
             }
