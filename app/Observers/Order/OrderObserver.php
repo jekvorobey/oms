@@ -658,11 +658,11 @@ class OrderObserver
 
         $saved_shipments = $shipments;
 
-        /** @var OfferService */
+        /** @var OfferService $offerService */
         $offerService = app(OfferService::class);
-        /** @var ProductService */
+        /** @var ProductService $productService */
         $productService = app(ProductService::class);
-        /** @var CategoryService */
+        /** @var CategoryService $categoryService */
         $categoryService = app(CategoryService::class);
 
         $shipments = $shipments
@@ -683,19 +683,16 @@ class OrderObserver
                             ];
 
                             if ($order->status === OrderStatus::DONE) {
-                               /** @var OfferDto */
                                 $offer = $offerService->offers(
                                     $offerService->newQuery()
                                         ->setFilter('id', $item->offer_id)
                                 )->first();
 
-                                /** @var ProductDto */
                                 $product = $productService->products(
                                     $productService->newQuery()
                                         ->setFilter('id', $offer->product_id)
                                 )->first();
 
-                                /** @var CategoryDto */
                                 $category = $categoryService->categories(
                                     $categoryService->newQuery()
                                         ->setFilter('id', $product->category_id)
@@ -740,7 +737,21 @@ class OrderObserver
         $withoutParams = false;
         $hideShipmentsDate = false;
 
-        [$title, $text] = (function () use ($order, $override, $user, $override_delivery, $delivery_canceled, $part_price, $saved_shipments, &$params, $points, &$deliveryAddress, &$deliveryDate, &$withoutParams, &$hideShipmentsDate) {
+        [$title, $text] = (function () use (
+            $order,
+            $override,
+            $user,
+            $override_delivery,
+            $delivery_canceled,
+            $part_price,
+            $saved_shipments,
+            &$params,
+            $points,
+            &$deliveryAddress,
+            &$deliveryDate,
+            &$withoutParams,
+            &$hideShipmentsDate
+        ) {
             if ($override_delivery) {
                 // $bonus = optional($order->bonuses->first());
 
