@@ -43,7 +43,6 @@ class CargoController extends Controller
      * )
      */
     use CountAction;
-
     /**
      * @OA\Post(
      *     path="api/v1/cargos",
@@ -59,7 +58,6 @@ class CargoController extends Controller
      * )
      */
     use CreateAction;
-
     /**
      * @OA\Get(
      *     path="api/v1/cargos",
@@ -99,7 +97,6 @@ class CargoController extends Controller
      * )
      */
     use ReadAction;
-
     /**
      * @OA\Put(
      *     path="api/v1/cargos/{id}",
@@ -116,7 +113,6 @@ class CargoController extends Controller
      * )
      */
     use UpdateAction;
-
     /**
      * @OA\Delete(
      *     path="api/v1/cargos/{id}",

@@ -66,7 +66,6 @@ class OrdersExportController extends Controller
      * )
      */
     use DeleteAction;
-
     /**
      * @OA\Put(
      *     path="api/v1/orders/{id}/exports/{exportId}",

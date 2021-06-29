@@ -63,7 +63,6 @@ class ShipmentPackagesController extends Controller
      * )
      */
     use ReadAction;
-
     /**
      * @OA\Put(
      *     path="api/v1/shipment-packages/{id}",

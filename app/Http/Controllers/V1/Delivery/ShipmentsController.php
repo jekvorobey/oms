@@ -55,7 +55,6 @@ class ShipmentsController extends Controller
      * )
      */
     use CountAction;
-
     /**
      * @OA\Get(
      *     path="api/v1/shipments",
@@ -93,7 +92,6 @@ class ShipmentsController extends Controller
      * )
      */
     use ReadAction;
-
     /**
      * @OA\Put(
      *     path="api/v1/shipments/{id}",
@@ -110,7 +108,6 @@ class ShipmentsController extends Controller
      * )
      */
     use UpdateAction;
-
     /**
      * @OA\Delete(
      *     path="api/v1/shipments/{id}",
