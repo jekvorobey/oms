@@ -57,7 +57,7 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/payments.log'),
             'level' => 'debug',
-            'permission' => 0664,
+            'permission' => 0775,
         ],
 
         'slack' => [
