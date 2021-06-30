@@ -33,34 +33,21 @@ class SpeakerInfoDto implements Arrayable
     /** @var string */
     public $linkedin;
 
-    /**
-     * @param  string|null  $link
-     * @return string|null
-     */
     protected function getSocialLogin(?string $link): ?string
     {
         return $link ? collect(explode('/', $link))->last() : null;
     }
 
-    /**
-     * @param  string|null  $instagram
-     */
     public function setInstagram(?string $instagram): void
     {
         $this->instagram = $this->getSocialLogin($instagram);
     }
 
-    /**
-     * @param  string|null  $facebook
-     */
     public function setFacebook(?string $facebook): void
     {
         $this->facebook = $this->getSocialLogin($facebook);
     }
 
-    /**
-     * @param  string|null  $linkedin
-     */
     public function setLinkedin(?string $linkedin): void
     {
         $this->linkedin = $this->getSocialLogin($linkedin);

@@ -14,7 +14,6 @@ class ShipmentPackageObserver
 {
     /**
      * Handle the shipment package "created" event.
-     * @param  ShipmentPackage $shipmentPackage
      * @return void
      */
     public function created(ShipmentPackage $shipmentPackage)
@@ -23,15 +22,14 @@ class ShipmentPackageObserver
             HistoryType::TYPE_CREATE,
             [
                 $shipmentPackage->shipment->delivery->order,
-                $shipmentPackage->shipment
+                $shipmentPackage->shipment,
             ],
             $shipmentPackage
         );
     }
-    
+
     /**
      * Handle the shipment package "updated" event.
-     * @param  ShipmentPackage $shipmentPackage
      * @return void
      */
     public function updated(ShipmentPackage $shipmentPackage)
@@ -40,15 +38,14 @@ class ShipmentPackageObserver
             HistoryType::TYPE_UPDATE,
             [
                 $shipmentPackage->shipment->delivery->order,
-                $shipmentPackage->shipment
+                $shipmentPackage->shipment,
             ],
             $shipmentPackage
         );
     }
-    
+
     /**
      * Handle the shipment package "deleting" event.
-     * @param  ShipmentPackage $shipmentPackage
      * @throws \Exception
      */
     public function deleting(ShipmentPackage $shipmentPackage)
@@ -57,25 +54,23 @@ class ShipmentPackageObserver
             HistoryType::TYPE_DELETE,
             [
                 $shipmentPackage->shipment->delivery->order,
-                $shipmentPackage->shipment
+                $shipmentPackage->shipment,
             ],
             $shipmentPackage
         );
     }
-    
+
     /**
      * Handle the shipment package "deleted" event.
-     * @param  ShipmentPackage $shipmentPackage
      * @throws \Exception
      */
     public function deleted(ShipmentPackage $shipmentPackage)
     {
         $shipmentPackage->shipment->recalc();
     }
-    
+
     /**
      * Handle the shipment package "saving" event.
-     * @param  ShipmentPackage $shipmentPackage
      * @throws \Exception
      */
     public function saving(ShipmentPackage $shipmentPackage)
@@ -84,16 +79,15 @@ class ShipmentPackageObserver
             $shipmentPackage->recalcWeight(false);
         }
     }
-    
+
     /**
      * Handle the shipment package "saved" event.
-     * @param  ShipmentPackage $shipmentPackage
      * @throws \Exception
      */
     public function saved(ShipmentPackage $shipmentPackage)
     {
         $needRecalc = false;
-        
+
         foreach (['weight', 'width', 'height', 'length'] as $field) {
             if ($shipmentPackage->getOriginal($field) != $shipmentPackage[$field]) {
                 $needRecalc = true;

@@ -17,12 +17,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class LocalPaymentSystem implements PaymentSystemInterface
 {
-    /** @var string */
     public const STATUS_DONE = 'done';
 
     /**
-     * @param  Payment  $payment
-     * @param  string  $returnLink
      * @throws Exception
      */
     public function createExternalPayment(Payment $payment, string $returnLink): void
@@ -37,23 +34,19 @@ class LocalPaymentSystem implements PaymentSystemInterface
         $payment->save();
     }
 
-    /**
-     * @param  Payment  $payment
-     * @return string|null
-     */
     public function paymentLink(Payment $payment): ?string
     {
         return $payment->data['paymentLink'] ?? null;
     }
 
     /**
-     * @param  array  $data
+     * @param array $data
      */
     public function handlePushPayment(array $data): void
     {
         $validator = Validator::make($data, [
             'paymentId' => 'required',
-            'status' => 'required'
+            'status' => 'required',
         ]);
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
@@ -66,16 +59,13 @@ class LocalPaymentSystem implements PaymentSystemInterface
         if (!$payment) {
             throw new NotFoundHttpException();
         }
-        if (self::STATUS_DONE == $status) {
+        if ($status == self::STATUS_DONE) {
             $payment->status = PaymentStatus::PAID;
             $payment->payed_at = Carbon::now();
             $payment->save();
         }
     }
 
-    /**
-     * @return int|null
-     */
     public function duration(): ?int
     {
         return 1;
@@ -83,15 +73,13 @@ class LocalPaymentSystem implements PaymentSystemInterface
 
     /**
      * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public function commitHoldedPayment(Payment $localPayment, $amount)
     {
         // TODO: Implement commitHoldedPayment() method.
     }
 
-    /**
-     * @inheritDoc
-     */
     public function externalPaymentId(Payment $payment): ?string
     {
         return $payment->data['paymentId'] ?? null;

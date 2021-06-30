@@ -23,9 +23,9 @@ class LocalPaymentController extends Controller
         if (!$payment) {
             throw new NotFoundHttpException();
         }
-        
+
         $done = $request->get('done');
-        
+
         if (!$done) {
             return view('payment', [
                 'doneLink' => route('paymentPage', ['paymentId' => $paymentId, 'done' => 'sync']),
@@ -35,15 +35,15 @@ class LocalPaymentController extends Controller
             $data['done'] = true;
             $payment->data = $data;
             $payment->save();
-            
+
             $client = new Client();
             $client->post($payment->data['handlerUrl'], [
                 'json' => [
                     'paymentId' => $paymentId,
-                    'status' => 'done'
-                ]
+                    'status' => 'done',
+                ],
             ]);
-            
+
             return redirect($payment->data['returnLink']);
         }
     }

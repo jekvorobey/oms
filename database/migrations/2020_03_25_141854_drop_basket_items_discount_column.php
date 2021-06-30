@@ -32,7 +32,7 @@ class DropBasketItemsDiscountColumn extends Migration
         });
 
         BasketItem::query()->update([
-            'discount' => DB::raw("`cost` - `price`")
+            'discount' => DB::raw('`cost` - `price`'),
         ]);
     }
 }

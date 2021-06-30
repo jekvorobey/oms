@@ -43,7 +43,6 @@ class CargoController extends Controller
      * )
      */
     use CountAction;
-
     /**
      * @OA\Post(
      *     path="api/v1/cargos",
@@ -59,7 +58,6 @@ class CargoController extends Controller
      * )
      */
     use CreateAction;
-
     /**
      * @OA\Get(
      *     path="api/v1/cargos",
@@ -99,7 +97,6 @@ class CargoController extends Controller
      * )
      */
     use ReadAction;
-
     /**
      * @OA\Put(
      *     path="api/v1/cargos/{id}",
@@ -116,7 +113,6 @@ class CargoController extends Controller
      * )
      */
     use UpdateAction;
-
     /**
      * @OA\Delete(
      *     path="api/v1/cargos/{id}",
@@ -130,9 +126,6 @@ class CargoController extends Controller
      */
     use DeleteAction;
 
-    /**
-     * @inheritDoc
-     */
     public function modelClass(): string
     {
         return Cargo::class;
@@ -170,9 +163,6 @@ class CargoController extends Controller
      *     @OA\Response(response="404", description="product not found"),
      * )
      * Отменить груз
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      * @throws \Exception
      */
     public function cancel(int $id, OmsDeliveryService $deliveryService): Response
@@ -199,9 +189,6 @@ class CargoController extends Controller
      *     @OA\Response(response="500", description=""),
      * )
      * Создать заявку на вызов курьера для забора груза
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      * @throws \Exception
      */
     public function createCourierCall(int $id, OmsDeliveryService $deliveryService): Response
@@ -225,9 +212,6 @@ class CargoController extends Controller
      *     @OA\Response(response="404", description="cargo not found"),
      * )
      * Отменить заявку на вызов курьера для забора груза
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      */
     public function cancelCourierCall(int $id, OmsDeliveryService $deliveryService): Response
     {
@@ -250,8 +234,6 @@ class CargoController extends Controller
      *     @OA\Response(response="404", description="cargo not found"),
      * )
      * Проверить наличие ошибок в заявке на вызов курьера во внешнем сервисе
-     * @param int $id
-     * @param OmsDeliveryService $deliveryService
      * @return Application|ResponseFactory|Response
      */
     public function checkExternalStatus(int $id, OmsDeliveryService $deliveryService)

@@ -238,10 +238,12 @@ class Delivery extends OmsModel
 {
     use WithWeightAndSizes;
 
+    private const SIDES = ['width', 'height', 'length'];
+
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = [
+    public const FILLABLE = [
         'order_id',
         'status',
         'delivery_method',
@@ -264,13 +266,8 @@ class Delivery extends OmsModel
         'delivery_address',
     ];
 
-    /**
-     * @var array
-     */
-    protected $fillable = self::FILLABLE;
-
     /** @var array */
-    private const SIDES = ['width', 'height', 'length'];
+    protected $fillable = self::FILLABLE;
 
     /** @var string */
     protected $table = 'delivery';
@@ -285,45 +282,33 @@ class Delivery extends OmsModel
         'length' => 'float',
     ];
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected static $restIncludes = ['shipments'];
 
     /**
-     * @param  string  $orderNumber - номер заказа
-     * @param  int  $i - порядковый номер доставки в заказе
-     * @return string
+     * @param string $orderNumber - номер заказа
+     * @param int $i - порядковый номер доставки в заказе
      */
     public static function makeNumber(string $orderNumber, int $i): string
     {
         return $orderNumber . '-' . $i;
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    /**
-     * @return HasMany
-     */
     public function shipments(): HasMany
     {
         return $this->hasMany(Shipment::class);
     }
 
-    /**
-     * @param $value
-     */
     protected function setDeliveryAddressAttribute($value)
     {
-        $value = (array)$value;
+        $value = (array) $value;
         foreach ($value as &$item) {
-            $item = (string)$item;
+            $item = (string) $item;
         }
 
         if ($value) {
@@ -333,9 +318,6 @@ class Delivery extends OmsModel
         $this->attributes['delivery_address'] = json_encode($value);
     }
 
-    /**
-     * @return string
-     */
     public function getDeliveryAddressString(): string
     {
         if ($this->isPickup()) {
@@ -352,17 +334,16 @@ class Delivery extends OmsModel
                 $this->delivery_address = $deliveryAddress;
             }
 
-            return (string)$this->delivery_address['address_string'];
+            return (string) $this->delivery_address['address_string'];
         }
     }
 
     /**
-     * @param  array  $address
-     * @return string
+     * @param array $address
      */
     public function formDeliveryAddressString(array $address): string
     {
-        return (string)join(', ', array_filter([
+        return (string) join(', ', array_filter([
             $address['post_index'] ?? null,
             $address['region'] ?? null,
             $address['city'] ?? null,
@@ -375,11 +356,8 @@ class Delivery extends OmsModel
 
     /**
      * Установить статус доставки у службы доставки (без сохранения!)
-     * @param  string  $status
-     * @param  Carbon|null $statusAt
-     * @return self
      */
-    public function setStatusXmlId(string $status, Carbon $statusAt = null): self
+    public function setStatusXmlId(string $status, ?Carbon $statusAt = null): self
     {
         if ($this->status_xml_id != $status || $this->status_xml_id_at != $statusAt) {
             $this->status_xml_id = $status;
@@ -391,7 +369,6 @@ class Delivery extends OmsModel
 
     /**
      * Рассчитать вес доставки
-     * @return float
      */
     public function calcWeight(): float
     {
@@ -406,7 +383,6 @@ class Delivery extends OmsModel
 
     /**
      * Рассчитать объем доставки
-     * @return float
      */
     public function calcVolume(): float
     {
@@ -421,7 +397,6 @@ class Delivery extends OmsModel
 
     /**
      * Рассчитать значение максимальной стороны (длины, ширины или высоты) из всех отправлений доставки
-     * @return float
      */
     public function calcMaxSide(): float
     {
@@ -440,8 +415,6 @@ class Delivery extends OmsModel
 
     /**
      * Определить название максимальной стороны (длины, ширины или высоты) из всех отправлений доставки
-     * @param  float  $maxSide
-     * @return string
      */
     public function identifyMaxSideName(float $maxSide): string
     {
@@ -508,7 +481,6 @@ class Delivery extends OmsModel
 
     /**
      * Доставка с самовывозом?
-     * @return bool
      */
     public function isPickup(): bool
     {
@@ -517,7 +489,6 @@ class Delivery extends OmsModel
 
     /**
      * Доставка с курьерской доставкой?
-     * @return bool
      */
     public function isDelivery(): bool
     {

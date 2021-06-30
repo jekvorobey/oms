@@ -17,7 +17,6 @@ use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductImageDto;
 use Pim\Dto\Product\ProductImageType;
 use Pim\Dto\PublicEvent\MediaDto;
-use Pim\Dto\PublicEvent\PublicEventMediaDto;
 use Pim\Dto\PublicEvent\SprintDto;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\ProductService\ProductService;
@@ -70,45 +69,35 @@ class BasketItem extends OmsModel
 {
     /** @var array */
     protected $casts = [
-        'product' => 'array'
+        'product' => 'array',
     ];
 
     /**
      * BasketItem constructor.
-     * @param  array  $attributes
+     * @param array $attributes
      */
     public function __construct(array $attributes = [])
     {
         $this->product = [];
+
         parent::__construct($attributes);
     }
-    /**
-     * @return BelongsTo
-     */
+
     public function basket(): BelongsTo
     {
         return $this->belongsTo(Basket::class);
     }
 
-    /**
-     * @return HasOne
-     */
     public function shipmentItem(): HasOne
     {
         return $this->hasOne(ShipmentItem::class);
     }
 
-    /**
-     * @return HasOne
-     */
     public function shipmentPackageItem(): HasOne
     {
         return $this->hasOne(ShipmentPackageItem::class);
     }
 
-    /**
-     * @return HasMany
-     */
     public function orderReturnItems(): HasMany
     {
         return $this->hasMany(OrderReturnItem::class);
@@ -120,12 +109,21 @@ class BasketItem extends OmsModel
      */
     public function setDataByType(array $data = []): void
     {
-        if($this->type == Basket::TYPE_PRODUCT) {
+        if ($this->type == Basket::TYPE_PRODUCT) {
             /** @var OfferService $offerService */
             $offerService = resolve(OfferService::class);
             $offerInfo = $offerService->offerInfo($this->offer_id);
             $offerStocks = $offerInfo->stocks->keyBy('store_id');
-            if ((isset($data['product']['store_id']) && (!$offerStocks->has($data['product']['store_id']) || $offerStocks[$data['product']['store_id']]->qty <= 0)) || $offerStocks->isEmpty()) {
+            if (
+                (
+                    isset($data['product']['store_id'])
+                    && (
+                        !$offerStocks->has($data['product']['store_id'])
+                        || $offerStocks[$data['product']['store_id']]->qty <= 0
+                    )
+                )
+                || $offerStocks->isEmpty()
+            ) {
                 throw new BadRequestHttpException('offer without stocks');
             }
             $this->name = $offerInfo->name;
@@ -160,18 +158,15 @@ class BasketItem extends OmsModel
                 'ticket_type_name' => $publicEventCartStruct->getNameByOfferId($this->offer_id),
             ]);
         } elseif ($this->type == Basket::TYPE_CERTIFICATE) {
-
+            //
         } else {
             throw new Exception('Undefined basket type');
         }
     }
 
-    /**
-     * @return int|null
-     */
     public function getStoreId(): ?int
     {
-        return isset($this->product['store_id']) ? (int)$this->product['store_id'] : null;
+        return isset($this->product['store_id']) ? (int) $this->product['store_id'] : null;
     }
 
     /**
@@ -180,45 +175,32 @@ class BasketItem extends OmsModel
      */
     public function getTicketIds(): ?array
     {
-        return isset($this->product['ticket_ids']) ? (array)$this->product['ticket_ids'] : null;
+        return isset($this->product['ticket_ids']) ? (array) $this->product['ticket_ids'] : null;
     }
 
     /**
-     * @param  array  $ticketIds
+     * @param array $ticketIds
      */
     public function setTicketIds(array $ticketIds): void
     {
         $this->setProductField('ticket_ids', $ticketIds);
     }
 
-    /**
-     * @return int|null
-     */
     public function getSprintId(): ?int
     {
-        return isset($this->product['sprint_id']) ? (int)$this->product['sprint_id'] : null;
+        return isset($this->product['sprint_id']) ? (int) $this->product['sprint_id'] : null;
     }
 
-    /**
-     * @return int|null
-     */
     public function getTicketTypeId(): ?int
     {
-        return isset($this->product['ticket_type_id']) ? (int)$this->product['ticket_type_id'] : null;
+        return isset($this->product['ticket_type_id']) ? (int) $this->product['ticket_type_id'] : null;
     }
 
-    /**
-     * @return string|null
-     */
     public function getTicketTypeName(): ?string
     {
-        return isset($this->product['ticket_type_name']) ? (string)$this->product['ticket_type_name'] : null;
+        return isset($this->product['ticket_type_name']) ? (string) $this->product['ticket_type_name'] : null;
     }
 
-    /**
-     * @param  string  $field
-     * @param $value
-     */
     protected function setProductField(string $field, $value): void
     {
         $product = $this->product;
@@ -238,12 +220,12 @@ class BasketItem extends OmsModel
 
     private function getProductMedia()
     {
-        /** @var OfferService */
+        /** @var OfferService $offerService */
         $offerService = app(OfferService::class);
-        /** @var ProductService */
+        /** @var ProductService $productService */
         $productService = app(ProductService::class);
 
-        /** @var OfferDto */
+        /** @var OfferDto $offer */
         $offer = $offerService->offers(
             $offerService->newQuery()
                 ->setFilter('id', $this->offer_id)
@@ -259,14 +241,14 @@ class BasketItem extends OmsModel
 
     private function getMasterMedia()
     {
-        /** @var PublicEventSprintService */
+        /** @var PublicEventSprintService $sprintService */
         $sprintService = app(PublicEventSprintService::class);
-        /** @var PublicEventMediaService */
+        /** @var PublicEventMediaService $publicEventMediaService */
         $publicEventMediaService = app(PublicEventMediaService::class);
-        /** @var FileService */
+        /** @var FileService $fileService */
         $fileService = app(FileService::class);
 
-        /** @var SprintDto */
+        /** @var SprintDto $sprint */
         $sprint = $sprintService->find(
             $sprintService->query()
                 ->setFilter('id', $this->product['sprint_id'])

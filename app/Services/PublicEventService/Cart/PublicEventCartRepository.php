@@ -23,16 +23,12 @@ class PublicEventCartRepository
         $this->searchService = resolve(SearchService::class);
     }
 
-    /**
-     * @return PublicEventCartQuery
-     */
     public function query(): PublicEventCartQuery
     {
         return new PublicEventCartQuery($this);
     }
 
     /**
-     * @param  PublicEventCartQuery  $query
      * @return array|[total, publicEvents]
      */
     public function find(PublicEventCartQuery $query): array
@@ -44,7 +40,6 @@ class PublicEventCartRepository
     }
 
     /**
-     * @param  PublicEventSearchResult  $searchResult
      * @return array|PublicEventCartStruct[]
      */
     private function extractPublicEventCards(PublicEventSearchResult $searchResult): array

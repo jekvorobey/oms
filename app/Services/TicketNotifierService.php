@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Observers\Order\OrderObserver;
 use Carbon\Carbon;
@@ -105,15 +104,15 @@ class TicketNotifierService
         $basketItems = $order->basket->items;
         $user = $order->getUser();
 
-        /** @var PublicEventDto */
+        /** @var PublicEventDto $firstEvent */
         $firstEvent = null;
 
-        /** @var OrganizerDto */
+        /** @var OrganizerDto $firstOrganizer */
         $firstOrganizer = null;
 
         $classes = [];
         $pdfs = [];
-        foreach($basketItems as $basketItem) {
+        foreach ($basketItems as $basketItem) {
             $sprint = $this->publicEventSprintService->find(
                 $this->publicEventSprintService
                     ->query()
@@ -151,7 +150,7 @@ class TicketNotifierService
                     ->getByStage($stage->id);
 
                 return [
-                    sprintf("%s, %s", $place->name, $place->address),
+                    sprintf('%s, %s', $place->name, $place->address),
                     Carbon::parse($stage->date)->locale('ru')->isoFormat('D MMMM (dd)'),
                     Carbon::parse($stage->time_from)->format('H:i'),
                     Carbon::parse($stage->time_to)->format('H:i'),
@@ -162,10 +161,10 @@ class TicketNotifierService
                         'speakers' => collect($speakers['items']),
                         'date' => $stage->date,
                         'from' => $stage->time_from,
-                        'to' => $stage->time_to
+                        'to' => $stage->time_to,
                     ],
                     $place,
-                    $placeMedia
+                    $placeMedia,
                 ];
             });
 
@@ -175,7 +174,7 @@ class TicketNotifierService
                     ->setFilter('id', $sprint->public_event_id)
             )->first();
 
-            if($firstEvent == null) {
+            if ($firstEvent == null) {
                 $firstEvent = $event;
             }
 
@@ -191,7 +190,7 @@ class TicketNotifierService
                     ->setFilter('id', $event->organizer_id)
             )->first();
 
-            if($firstOrganizer == null) {
+            if ($firstOrganizer == null) {
                 $firstOrganizer = $organizer;
             }
 
@@ -222,9 +221,9 @@ class TicketNotifierService
                     'adress' => $el[0],
                     'text' => $el[4]['text'],
                     'kit' => $el[4]['kit'],
-                    'speakers' => ($el[4]['speakers'])->map(function ($speaker) {
+                    'speakers' => $el[4]['speakers']->map(function ($speaker) {
                         $activity = $this->customerService->activities()->setIds([
-                            $speaker['profession_id']
+                            $speaker['profession_id'],
                         ])->load()->first();
 
                         return [
@@ -236,9 +235,9 @@ class TicketNotifierService
                                 ->fileService
                                 ->getFiles([$speaker['file_id']])
                                 ->first()
-                                ->absoluteUrl()
+                                ->absoluteUrl(),
                         ];
-                    })->all()
+                    })->all(),
                 ];
             })->all();
 
@@ -252,7 +251,7 @@ class TicketNotifierService
                 'price' => price_format((int) $basketItem->price),
                 'nearest_date' => $stages->map(function ($el) {
                     return sprintf(
-                        "%s, %s-%s",
+                        '%s, %s-%s',
                         $el[1],
                         $el[2],
                         $el[3]
@@ -266,15 +265,15 @@ class TicketNotifierService
                     'phone' => $organizer->phone,
                     'messagers' => false,
                     'email' => $organizer->email,
-                    'site' => $organizer->site
+                    'site' => $organizer->site,
                 ],
                 'apple_wallet' => $link->ics(),
                 'google_calendar' => $link->google(),
-                'calendar' => $link->ics()
+                'calendar' => $link->ics(),
             ];
 
-            foreach($basketItem->product['ticket_ids'] as $ticket) {
-                /** @var TicketDto */
+            foreach ($basketItem->product['ticket_ids'] as $ticket) {
+                /** @var TicketDto $ticket */
                 $ticket = $this->publicEventTicketService->tickets(
                     $this->publicEventTicketService
                         ->newQuery()
@@ -293,7 +292,7 @@ class TicketNotifierService
                     'bought_at' => $order->created_at->locale('ru')->isoFormat('D MMMM, HH:mm'),
                     'time' => $stages->map(function ($el) {
                         return sprintf(
-                            "%s, %s-%s",
+                            '%s, %s-%s',
                             $el[1],
                             $el[2],
                             $el[3]
@@ -306,7 +305,7 @@ class TicketNotifierService
                         'name' => sprintf('%s %s', $ticket->last_name, $ticket->first_name),
                         'short_name' => mb_substr($ticket->first_name, 0, 1) . mb_substr($ticket->last_name, 0, 1),
                         'email' => $ticket->email,
-                        'phone' => OrderObserver::formatNumber($ticket->phone)
+                        'phone' => OrderObserver::formatNumber($ticket->phone),
                     ],
                     'manager' => [
                         'name' => $organizer->name,
@@ -314,7 +313,7 @@ class TicketNotifierService
                         'phone' => $organizer->phone,
                         'messangers' => false,
                         'email' => $organizer->email,
-                        'site' => $organizer->site
+                        'site' => $organizer->site,
                     ],
                     'map' => $this->generateMapImage(
                         $stages->map(function ($stage) {
@@ -325,10 +324,10 @@ class TicketNotifierService
                         return [
                             'title' => $stage[0],
                             'text' => $stage[5]->description,
-                            'images' => $stage[6]
+                            'images' => $stage[6],
                         ];
                     })->unique('title')->all(),
-                    'programs' => $programs
+                    'programs' => $programs,
                 ];
             }
         }
@@ -340,9 +339,6 @@ class TicketNotifierService
 
         $firstItem = $basketItems->first()->id;
         $document = $this->documentService->getOrderPdfTickets($order, $firstItem);
-
-        $ticketFiles = $this->fileService
-        ->getFiles([$document->file_id]);
 
         $data = [
             'menu' => [
@@ -361,7 +357,7 @@ class TicketNotifierService
             'params' => [
                 'Получатель' => $order->receiver_name,
                 'Телефон' => OrderObserver::formatNumber($order->receiver_phone),
-                'Сумма заказа' => $order->price > 0 ? sprintf('%s ₽', (int) $order->price) : 'Бесплатно'
+                'Сумма заказа' => $order->price > 0 ? sprintf('%s ₽', (int) $order->price) : 'Бесплатно',
             ],
             'classes' => $classes,
             'CUSTOMER_NAME' => $user->first_name,
@@ -379,10 +375,10 @@ class TicketNotifierService
                     ->absoluteUrl()
             ),
             'REFUND_ORDER' => sprintf('%s ₽', (int) optional($order->orderReturns->first())->price),
-            'NUMBER_TICKET' => optional(optional($order->orderReturns->first())->items)->count() ?? 0
+            'NUMBER_TICKET' => optional(optional($order->orderReturns->first())->items)->count() ?? 0,
         ];
 
-        if($basketItems->count() > 1) {
+        if ($basketItems->count() > 1) {
             $this->serviceNotificationService->send(
                 $user->id,
                 'kupleny_bilety_neskolko_shtuk',
@@ -412,11 +408,11 @@ class TicketNotifierService
 
     private function generateTicketWord(int $count)
     {
-        if($count == 1) {
+        if ($count == 1) {
             return 'билет';
         }
 
-        if($count > 1 && $count < 5) {
+        if ($count > 1 && $count < 5) {
             return 'билета';
         }
 

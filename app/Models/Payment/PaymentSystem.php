@@ -9,16 +9,26 @@ namespace App\Models\Payment;
  */
 class PaymentSystem
 {
-    /** @var int - Яндекс.Касса */
+    /** Яндекс.Касса */
     public const YANDEX = 1;
-    /** @var int - тестовая система */
+
+    /** тестовая система */
     public const TEST = 42;
-    
+
     /** @var int */
     public $id;
     /** @var string */
     public $name;
-    
+
+    /**
+     * PaymentSystem constructor.
+     */
+    public function __construct(int $id, string $name)
+    {
+        $this->id = $id;
+        $this->name = $name;
+    }
+
     /**
      * @return array|PaymentStatus[]
      */
@@ -30,7 +40,6 @@ class PaymentSystem
         ];
     }
 
-
     /**
      * @return array
      */
@@ -40,16 +49,5 @@ class PaymentSystem
             self::YANDEX,
             self::TEST,
         ];
-    }
-
-    /**
-     * PaymentSystem constructor.
-     * @param  int  $id
-     * @param  string  $name
-     */
-    public function __construct(int $id, string $name)
-    {
-        $this->id = $id;
-        $this->name = $name;
     }
 }

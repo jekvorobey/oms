@@ -18,19 +18,15 @@ use MerchantManagement\Services\OperatorService\OperatorService;
 class ShipmentNotification extends AbstractNotification implements NotificationInterface
 {
     /**
-     * @inheritDoc
+     * @param Shipment $mainModel
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public static function notify(int $type, OmsModel $mainModel, OmsModel $model): void
     {
-        /** @var Shipment $mainModel */
         // self::notifyMerchants($type, $mainModel);
         self::notifyAdmins($type, $mainModel);
     }
 
-    /**
-     * @param  int  $type
-     * @param  Shipment  $shipment
-     */
     protected static function notifyMerchants(int $type, Shipment $shipment): void
     {
         $notification = static::getBaseNotification();
@@ -39,19 +35,19 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
             case HistoryType::TYPE_CREATE:
                 $notification->type = NotificationDto::TYPE_SHIPMENT_NEW;
                 $notification->status = NotificationDto::STATUS_NEW;
-                $notification->setPayloadField('title', "Новый заказ");
+                $notification->setPayloadField('title', 'Новый заказ');
                 $notification->setPayloadField('body', "Создан заказ {$shipment->number}");
                 break;
             case HistoryType::TYPE_UPDATE:
-                if($shipment->is_canceled && $shipment->getOriginal('is_canceled') != $shipment->is_canceled) {
+                if ($shipment->is_canceled && $shipment->getOriginal('is_canceled') != $shipment->is_canceled) {
                     $notification->type = NotificationDto::TYPE_SHIPMENT_CANCEL;
-                    $notification->setPayloadField('title', "Отмена заказа");
+                    $notification->setPayloadField('title', 'Отмена заказа');
                     $notification->setPayloadField('body', "Заказ {$shipment->number} был отменён");
                 }
                 break;
         }
 
-        if(!$notification->type) {
+        if (!$notification->type) {
             return;
         }
 
@@ -74,24 +70,24 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
         }
     }
 
-    /**
-     * @param  int  $type
-     * @param  Shipment  $shipment
-     */
     protected static function notifyAdmins(int $type, Shipment $shipment): void
     {
         $notification = static::getBaseNotification();
 
         switch ($type) {
             case HistoryType::TYPE_UPDATE:
-                if($shipment->is_problem && $shipment->getOriginal('is_problem') != $shipment->is_problem) {
+                if ($shipment->is_problem && $shipment->getOriginal('is_problem') != $shipment->is_problem) {
                     $notification->type = NotificationDto::TYPE_SHIPMENT_PROBLEM;
-                    $notification->setPayloadField('title', "Проблема при сборке отправления");
-                    $notification->setPayloadField('body', "Возникла проблема при сборке отправления {$shipment->number} из заказа {$shipment->delivery->order->number}: {$shipment->assembly_problem_comment}");
+                    $notification->setPayloadField('title', 'Проблема при сборке отправления');
+                    $notification->setPayloadField(
+                        'body',
+                        "Возникла проблема при сборке отправления {$shipment->number} " .
+                        "из заказа {$shipment->delivery->order->number}: {$shipment->assembly_problem_comment}"
+                    );
                 }
         }
 
-        if(!isset($notification->type)) {
+        if (!isset($notification->type)) {
             return;
         }
 

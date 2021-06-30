@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ApproveBonus extends Command
 {
-    const DEFAULT_OFFSET = 14;
+    public const DEFAULT_OFFSET = 14;
 
     /**
      * The name and signature of the console command.
@@ -38,10 +38,7 @@ class ApproveBonus extends Command
     {
         /** @var MarketingOptionService $marketingOptionService */
         $marketingOptionService = resolve(MarketingOptionService::class);
-        $offset = $marketingOptionService->get(
-            OptionDto::KEY_ORDER_ACTIVATION_BONUS_DELAY,
-            self::DEFAULT_OFFSET
-        );
+        $offset = $marketingOptionService->get(OptionDto::KEY_ORDER_ACTIVATION_BONUS_DELAY, self::DEFAULT_OFFSET);
 
         $statusAt = Carbon::now()->addDays(-$offset)->endOfDay();
         $orders = Order::query()

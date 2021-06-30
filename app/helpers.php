@@ -1,14 +1,8 @@
 <?php
 
-use App\Models\City;
-use App\Models\Region;
-use App\Services\External\DaData\DaDataService;
-
 if (! function_exists('in_production')) {
-
     /**
      * Находится ли приложение в прод режиме
-     * @return boolean
      */
     function in_production(): bool
     {
@@ -17,11 +11,9 @@ if (! function_exists('in_production')) {
 }
 
 if (! function_exists('g2kg')) {
-
     /**
      * Перевести граммы в килограммы
-     * @param  float  $value - значение в граммах
-     * @return float
+     * @param float $value - значение в граммах
      */
     function g2kg(float $value): float
     {
@@ -30,11 +22,8 @@ if (! function_exists('g2kg')) {
 }
 
 if (! function_exists('price_format')) {
-
     /**
      * Вывести число в виде цены
-     * @param  float  $value
-     * @return string
      */
     function price_format(float $value): string
     {
@@ -43,11 +32,8 @@ if (! function_exists('price_format')) {
 }
 
 if (! function_exists('qty_format')) {
-
     /**
      * Вывести число в виде кол-ва
-     * @param  float  $value
-     * @return string
      */
     function qty_format(float $value): string
     {
@@ -56,11 +42,6 @@ if (! function_exists('qty_format')) {
 }
 
 if (! function_exists('short_day_of_week')) {
-
-    /**
-     * @param  int  $dayNumber
-     * @return string
-     */
     function short_day_of_week(int $dayNumber): string
     {
         $days = [
@@ -73,19 +54,17 @@ if (! function_exists('short_day_of_week')) {
             'сб',
         ];
 
-        return isset($days[$dayNumber]) ? $days[$dayNumber] : '';
+        return $days[$dayNumber] ?? '';
     }
 }
 
 if (! function_exists('phoneNumberFormat')) {
     /**
-     * Приведение номера телефона к формату, принимаемому  API ЛО
-     * @param string|null $phoneNumber
-     * @return string
+     * Приведение номера телефона к формату, принимаемому API ЛО
      */
-    function phoneNumberFormat(string $phoneNumber = null): string
+    function phoneNumberFormat(?string $phoneNumber = null): string
     {
-        return ($phoneNumber)
+        return $phoneNumber
             ? preg_replace('/[^\d+]+/', '', $phoneNumber)
             : '';
     }

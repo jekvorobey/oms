@@ -31,7 +31,6 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
      * @return void
      */
     protected function schedule(Schedule $schedule)
@@ -46,7 +45,7 @@ class Kernel extends ConsoleKernel
 
         try {
             $this->cargoExportByStores($schedule);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             report($e);
         }
     }
@@ -58,15 +57,14 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
-        $this->load(__DIR__.'/Commands/OneTime');
+        $this->load(__DIR__ . '/Commands');
+        $this->load(__DIR__ . '/Commands/OneTime');
 
         require base_path('routes/console.php');
     }
 
     /**
      * Создание заявок на вызов курьера по складам
-     * @param  Schedule  $schedule
      */
     protected function cargoExportByStores(Schedule $schedule): void
     {
@@ -90,7 +88,7 @@ class Kernel extends ConsoleKernel
                         try {
                             $schedule->command(CargoExport::class, [$store->id, $pickupTime->delivery_service])
                                 ->at((new \DateTime($pickupTime->cargo_export_time))->format('H:i'));
-                        } catch (\Exception $e) {
+                        } catch (\Throwable $e) {
                         }
                     }
                 }

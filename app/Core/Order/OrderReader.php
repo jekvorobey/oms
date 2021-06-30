@@ -15,7 +15,7 @@ use Pim\Services\ProductService\ProductService;
 
 class OrderReader
 {
-    const PAGE_SIZE = 10;
+    public const PAGE_SIZE = 10;
 
     public function byId(int $id): ?Order
     {
@@ -101,10 +101,6 @@ class OrderReader
         ];
     }
 
-    /**
-     * @param Builder $query
-     * @param RestQuery $restQuery
-     */
     protected function addSelect(Builder $query, RestQuery $restQuery): void
     {
         if ($fields = $restQuery->getFields('order')) {
@@ -113,8 +109,6 @@ class OrderReader
     }
 
     /**
-     * @param Builder $query
-     * @param RestQuery $restQuery
      * @throws \Pim\Core\PimException
      */
     protected function addFilter(Builder $query, RestQuery $restQuery): void
@@ -184,7 +178,7 @@ class OrderReader
         };
         //Фильтр по коду оффера мерчанта из ERP мерчанта
         $offerXmlIdFilter = $restQuery->getFilter('offer_xml_id');
-        if($offerXmlIdFilter) {
+        if ($offerXmlIdFilter) {
             [$op, $value] = current($offerXmlIdFilter);
             /** @var OfferService $offerService */
             $offerService = resolve(OfferService::class);
@@ -203,13 +197,16 @@ class OrderReader
         }
 
         //Функция-фильтр по свойству товара
-        $filterByProductField = function ($filterField, $productField) use (
+        $filterByProductField = function (
+            $filterField,
+            $productField
+        ) use (
             $restQuery,
             $modifiedRestQuery,
             $filterByOfferIds
         ) {
             $productVendorCodeFilter = $restQuery->getFilter($filterField);
-            if($productVendorCodeFilter) {
+            if ($productVendorCodeFilter) {
                 [$op, $value] = current($productVendorCodeFilter);
 
                 /** @var ProductService $productService */
@@ -248,7 +245,7 @@ class OrderReader
         if ($paymentMethodFilter) {
             [$op, $value] = current($paymentMethodFilter);
             $query->whereHas('payments', function (Builder $query) use ($value) {
-                $query->whereIn('payment_method', (array)$value);
+                $query->whereIn('payment_method', (array) $value);
             });
             $modifiedRestQuery->removeFilter('payment_method');
         }
@@ -259,7 +256,7 @@ class OrderReader
             [$op, $value] = current($storeFilter);
             $query->whereHas('deliveries', function (Builder $query) use ($value) {
                 $query->whereHas('shipments', function (Builder $query) use ($value) {
-                    $query->whereIn('store_id', (array)$value);
+                    $query->whereIn('store_id', (array) $value);
                 });
             });
             $modifiedRestQuery->removeFilter('stores');
@@ -270,7 +267,7 @@ class OrderReader
         if ($deliveryServiceFilter) {
             [$op, $value] = current($deliveryServiceFilter);
             $query->whereHas('deliveries', function (Builder $query) use ($value) {
-                $query->whereIn('delivery_service', (array)$value);
+                $query->whereIn('delivery_service', (array) $value);
             });
             $modifiedRestQuery->removeFilter('delivery_service');
         }
@@ -331,15 +328,16 @@ class OrderReader
 
         if ($sprintIdFilter) {
             [$op, $value] = $sprintIdFilter[0];
-            $value = (array)$value;
-            foreach ($value as $i_1 => $v_1)
+            $value = (array) $value;
+            foreach ($value as $i_1 => $v_1) {
                 $value[$i_1] = (int) $v_1;
+            }
             $value = array_unique($value);
 
             if (count($value)) {
                 $query->whereHas('basket', function (Builder $query) use ($value) {
                     $query->whereHas('items', function (Builder $query) use ($value) {
-                        $query->whereRaw("JSON_EXTRACT(product, '$.sprint_id') IN (" . join(',', $value) . ")");
+                        $query->whereRaw("JSON_EXTRACT(product, '$.sprint_id') IN (" . join(',', $value) . ')');
                     });
                 });
             }
@@ -356,14 +354,14 @@ class OrderReader
 
                 $minPriceFilter = $restQuery->getFilter('min_price_for_current_discount');
                 if ($minPriceFilter) {
-                    [$op, $minPrice] = current($minPriceFilter);
-                    $query->whereRaw("`cost` - `change` >= ?", [$minPrice]);
+                    [, $minPrice] = current($minPriceFilter);
+                    $query->whereRaw('`cost` - `change` >= ?', [$minPrice]);
                 }
 
                 $maxPriceFilter = $restQuery->getFilter('max_price_for_current_discount');
                 if ($maxPriceFilter) {
-                    [$op, $maxPrice] = current($maxPriceFilter);
-                    $query->whereRaw("`cost` - `change` <= ?", [$maxPrice]);
+                    [, $maxPrice] = current($maxPriceFilter);
+                    $query->whereRaw('`cost` - `change` <= ?', [$maxPrice]);
                 }
             });
             $modifiedRestQuery->removeFilter('discount_id');
@@ -380,10 +378,6 @@ class OrderReader
         }
     }
 
-    /**
-     * @param Builder $query
-     * @param RestQuery $restQuery
-     */
     protected function addPagination(Builder $query, RestQuery $restQuery): void
     {
         $pagination = $restQuery->getPage();

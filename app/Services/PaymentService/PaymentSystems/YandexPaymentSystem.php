@@ -4,6 +4,7 @@ namespace App\Services\PaymentService\PaymentSystems;
 
 use App\Models\Order\Order;
 use App\Models\Payment\Payment;
+use App\Models;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
@@ -12,6 +13,7 @@ use YooKassa\Model\Notification\NotificationSucceeded;
 use YooKassa\Model\Notification\NotificationWaitingForCapture;
 use YooKassa\Model\NotificationEventType;
 use YooKassa\Model\PaymentStatus;
+use GuzzleHttp\Client as GuzzleClient;
 
 /**
  * Class YandexPaymentSystem
@@ -20,6 +22,7 @@ use YooKassa\Model\PaymentStatus;
 class YandexPaymentSystem implements PaymentSystemInterface
 {
     public const CURRENCY_RUB = 'RUB';
+
     /** @var Client */
     private $yandexService;
     /** @var Logger */
@@ -35,8 +38,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * @param  Payment  $payment
-     * @param  string  $returnLink
      * @throws \Exception
      */
     public function createExternalPayment(Payment $payment, string $returnLink): void
@@ -56,13 +57,13 @@ class YandexPaymentSystem implements PaymentSystemInterface
             ],
             'description' => "Заказ №{$order->id}",
             'receipt' => [
-                "tax_system_code" => "2",
+                'tax_system_code' => '2',
                 'phone' => $order->customerPhone(),
                 'items' => $this->generateItems($order),
             ],
             'metadata' => [
-                'source' => config('app.url')
-            ]
+                'source' => config('app.url'),
+            ],
         ];
         /*$email = $order->customerEmail();
         if ($email) {
@@ -87,9 +88,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
     /**
      * Получить от внешней системы ссылку страницы оплаты.
-     *
-     * @param Payment $payment
-     * @return string|null
      */
     public function paymentLink(Payment $payment): ?string
     {
@@ -98,9 +96,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
     /**
      * Получить от id оплаты во внешней системе.
-     *
-     * @param Payment $payment
-     * @return string|null
      */
     public function externalPaymentId(Payment $payment): ?string
     {
@@ -109,14 +104,13 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
     /**
      * Обработать данные от платёжной ситсемы о совершении платежа.
-     * @param  array  $data
-     * @return void
+     * @param array $data
      * @throws \Exception
      */
     public function handlePushPayment(array $data): void
     {
         $this->logger->info('Handle external payment');
-        $notification = ($data['event'] === NotificationEventType::PAYMENT_SUCCEEDED)
+        $notification = $data['event'] === NotificationEventType::PAYMENT_SUCCEEDED
             ? new NotificationSucceeded($data)
             : new NotificationWaitingForCapture($data);
 
@@ -129,16 +123,16 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
         if ($metadata && $metadata['source'] && $metadata['source'] !== config('app.url')) {
             $this->logger->info('Redirect payment', [
-                'proxy' => $metadata['source']
+                'proxy' => $metadata['source'],
             ]);
-            $client = new \GuzzleHttp\Client();
+            $client = new GuzzleClient();
             $client->request('POST', $metadata['source'] . route('handler.yandexPayment', [], false), [
-                'form_params' => $data
+                'form_params' => $data,
             ]);
         } else {
             $this->logger->info('Process payment', [
                 'external_payment_id' => $payment->id,
-                'status' => $payment->getStatus()
+                'status' => $payment->getStatus(),
             ]);
             /** @var Payment $localPayment */
             $localPayment = Payment::query()
@@ -148,19 +142,19 @@ class YandexPaymentSystem implements PaymentSystemInterface
             switch ($payment->getStatus()) {
                 case PaymentStatus::WAITING_FOR_CAPTURE:
                     $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
-                    $localPayment->status = \App\Models\Payment\PaymentStatus::HOLD;
+                    $localPayment->status = Models\Payment\PaymentStatus::HOLD;
                     $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
                     $localPayment->save();
                     break;
                 case PaymentStatus::SUCCEEDED:
                     $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
-                    $localPayment->status = \App\Models\Payment\PaymentStatus::PAID;
+                    $localPayment->status = Models\Payment\PaymentStatus::PAID;
                     $localPayment->payed_at = Carbon::now();
                     $localPayment->save();
                     break;
                 case PaymentStatus::CANCELED:
                     $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
-                    $localPayment->status = \App\Models\Payment\PaymentStatus::TIMEOUT;
+                    $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
                     $localPayment->save();
                     break;
             }
@@ -171,8 +165,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
      * Время в часах, в течение которого можно совершить платёж после его создания.
      * Если за это время платёж не совершён - заказ отменяется.
      * Если не указано, то время бесконечно.
-     *
-     * @return int|null
      */
     public function duration(): ?int
     {
@@ -180,7 +172,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * @param Payment $localPayment
      * @param $amount
      * @throws \Exception
      */
@@ -192,7 +183,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'currency' => self::CURRENCY_RUB,
             ],
             'receipt' => [
-                "tax_system_code" => "2",
+                'tax_system_code' => '2',
                 'phone' => $localPayment->order->customerPhone(),
                 'items' => $this->generateItems($localPayment->order),
             ],
@@ -212,7 +203,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * @param Order $order
      * @return array
      */
     protected function generateItems(Order $order)
@@ -229,11 +219,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
             if (($certificatesDiscount > 0) && ($itemValue > 1)) {
                 $discountPrice = $itemValue - 1;
                 if ($discountPrice > $certificatesDiscount) {
-                    $itemValue = $itemValue - $certificatesDiscount;
+                    $itemValue -= $certificatesDiscount;
                     $certificatesDiscount = 0;
-                }
-                else {
-                    $itemValue = $itemValue - $discountPrice;
+                } else {
+                    $itemValue -= $discountPrice;
                     $certificatesDiscount -= $discountPrice;
                 }
             }
@@ -246,11 +235,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     'currency' => self::CURRENCY_RUB,
                 ],
                 'vat_code' => 1,
-                "payment_mode" => "full_prepayment",
-                "payment_subject" => "commodity"
+                'payment_mode' => 'full_prepayment',
+                'payment_subject' => 'commodity',
             ];
         }
-        if ((float)$order->delivery_price > 0) {
+        if ((float) $order->delivery_price > 0) {
             $deliveryPrice = $order->delivery_price;
             if (($certificatesDiscount > 0) && ($deliveryPrice >= $certificatesDiscount)) {
                 $deliveryPrice -= $certificatesDiscount;
@@ -263,8 +252,8 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     'currency' => self::CURRENCY_RUB,
                 ],
                 'vat_code' => 1,
-                "payment_mode" => "full_prepayment",
-                "payment_subject" => "service"
+                'payment_mode' => 'full_prepayment',
+                'payment_subject' => 'service',
             ];
         }
         return $items;

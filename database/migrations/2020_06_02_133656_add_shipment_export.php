@@ -25,7 +25,6 @@ class AddShipmentExport extends Migration
             $table->foreign('shipment_id')->references('id')->on('shipments');
             $table->unique(['shipment_id', 'merchant_integration_id']);
         });
-
     }
 
     /**

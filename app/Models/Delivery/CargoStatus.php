@@ -11,55 +11,46 @@ namespace App\Models\Delivery;
  */
 class CargoStatus
 {
-    /** @var int - сформирован (автоматически устанавливается платформой) */
+    /** сформирован (автоматически устанавливается платформой) */
     public const CREATED = 1;
-    /** @var int - передан Логистическому Оператору (устанавливается вручную оператором мерчанта) */
+
+    /** передан Логистическому Оператору (устанавливается вручную оператором мерчанта) */
     public const SHIPPED = 2;
-    /** @var int - принят Логистическим Оператором (автоматически устанавливается платформой из статуса Отправлений) */
+
+    /** принят Логистическим Оператором (автоматически устанавливается платформой из статуса Отправлений) */
     public const TAKEN = 3;
-    
+
     /** @var int */
     public $id;
     /** @var string */
     public $name;
-    
+
+    /**
+     * CargoStatus constructor.
+     */
+    public function __construct(int $id, string $name)
+    {
+        $this->id = $id;
+        $this->name = $name;
+    }
+
     /**
      * @return array|self[]
      */
     public static function all()
     {
         return [
-            self::CREATED => new self(
-                self::CREATED,
-                'Создан'
-            ),
-            self::SHIPPED => new self(
-                self::SHIPPED,
-                'Передан Логистическому Оператору'
-            ),
-            self::TAKEN => new self(
-                self::TAKEN,
-                'Принят Логистическим Оператором'
-            ),
+            self::CREATED => new self(self::CREATED, 'Создан'),
+            self::SHIPPED => new self(self::SHIPPED, 'Передан Логистическому Оператору'),
+            self::TAKEN => new self(self::TAKEN, 'Принят Логистическим Оператором'),
         ];
     }
-    
+
     /**
      * @return array
      */
     public static function validValues(): array
     {
         return array_keys(static::all());
-    }
-    
-    /**
-     * CargoStatus constructor.
-     * @param  int  $id
-     * @param  string  $name
-     */
-    public function __construct(int $id, string $name)
-    {
-        $this->id = $id;
-        $this->name = $name;
     }
 }

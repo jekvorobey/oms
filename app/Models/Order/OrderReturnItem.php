@@ -44,17 +44,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class OrderReturnItem extends OmsModel
 {
-    /**
-     * @return BelongsTo
-     */
     public function orderReturn(): BelongsTo
     {
         return $this->belongsTo(OrderReturn::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function basketItem(): BelongsTo
     {
         return $this->belongsTo(BasketItem::class);
@@ -71,7 +65,7 @@ class OrderReturnItem extends OmsModel
             app(ServiceNotificationService::class)->send($order->getUser()->id, 'servisnyeizmenenie_zakaza_sostav_zakaza', [
                 'ORDER_ID' => $order->id,
                 'CUSTOMER_NAME' => $order->getUser()->first_name,
-                'LINK_ORDER' => sprintf("%s/profile/orders/%d", config('app.showcase_host'), $order->id),
+                'LINK_ORDER' => sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id),
                 'NAME_GOODS' => $basketItem->name,
                 'PART_PRICE' => (int) $basketItem->cost,
                 'NUMBER' => (int) $item->qty,

@@ -44,25 +44,16 @@ use Illuminate\Support\Collection;
  */
 class OrderReturn extends OmsModel
 {
-    /**
-     * @return HasMany
-     */
     public function items(): HasMany
     {
         return $this->hasMany(OrderReturnItem::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    /**
-     * @return MorphToMany
-     */
     public function history(): MorphToMany
     {
         return $this->morphToMany(History::class, 'main_entity', (new HistoryMainEntity())->getTable());
@@ -70,8 +61,6 @@ class OrderReturn extends OmsModel
 
     /**
      * Сформировать номер для возврата
-     * @param  int  $orderId
-     * @return string
      */
     public static function makeNumber(int $orderId): string
     {

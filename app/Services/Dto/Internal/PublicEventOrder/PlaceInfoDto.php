@@ -34,9 +34,6 @@ class PlaceInfoDto
         $this->gallery = collect();
     }
 
-    /**
-     * @param  GalleryItemInfoDto  $galleryItemInfoDto
-     */
     public function addGalleryItem(GalleryItemInfoDto $galleryItemInfoDto): void
     {
         $this->gallery->push($galleryItemInfoDto);

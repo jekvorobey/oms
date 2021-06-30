@@ -26,10 +26,9 @@ use Pim\Core\PimException;
  */
 class DeliverySeeder extends Seeder
 {
-    /** @var int */
-    const FAKER_SEED = 123456;
-    /** @var array */
-    const REAL_ADDRESSES = [
+    public const FAKER_SEED = 123456;
+
+    public const REAL_ADDRESSES = [
         [
             'country_code' => 'RU',
             'post_index' => '124482',
@@ -160,7 +159,7 @@ class DeliverySeeder extends Seeder
             $deliveriesCount = $order->delivery_type == DeliveryType::TYPE_SPLIT ?
                 $faker->numberBetween(1, $basketItemsByStore->count()) : 1;
             /** @var int $shipmentsCount - кол-во отправлений в доставке */
-            $shipmentsCount = (int)$basketItemsByStore->count()/$deliveriesCount;
+            $shipmentsCount = (int) $basketItemsByStore->count() / $deliveriesCount;
 
             $shipmentNumber = 1;
             for ($deliveryNum = 1; $deliveryNum <= $deliveriesCount; $deliveryNum++) {
@@ -171,7 +170,7 @@ class DeliverySeeder extends Seeder
                 $delivery->delivery_service = $faker->randomElement([
                     LogisticsDeliveryService::SERVICE_B2CPL,
                 ]);
-                switch($delivery->delivery_service) {
+                switch ($delivery->delivery_service) {
                     case LogisticsDeliveryService::SERVICE_B2CPL:
                         $delivery->setStatusXmlId($faker->randomElement(array_keys(B2CplDeliveryOrderStatus::allStatuses())));
                         $b2cplStatus = B2CplDeliveryOrderStatus::statusById($delivery->status_xml_id);
@@ -202,21 +201,21 @@ class DeliverySeeder extends Seeder
                 ) {
                     $delivery->point_id = $faker->randomElement($points[$delivery->delivery_service]->pluck('id')->toArray());
                 } else {
-                    $delivery->delivery_address = $faker->randomElement(static::REAL_ADDRESSES);
+                    $delivery->delivery_address = $faker->randomElement(self::REAL_ADDRESSES);
                 }
                 $delivery->save();
 
                 $deliveryShipmentNumber = 1;
+                /** @var Collection|BasketItem[] $itemsByStore */
                 foreach ($basketItemsByStore as $storeId => $itemsByStore) {
                     if (!$storeId) {
                         continue;
                     }
-                    if ($deliveryShipmentNumber > $shipmentsCount && $deliveryNum != $deliveriesCount ) {
+                    if ($deliveryShipmentNumber > $shipmentsCount && $deliveryNum != $deliveriesCount) {
                         break;
                     }
 
                     //Создаем отправление
-                    /** @var Collection|BasketItem[] $itemsByStore */
                     $store = $stores[$storeId];
                     $shipment = new Shipment();
                     $shipment->status = $faker->randomElement(ShipmentStatus::validValues());
@@ -267,14 +266,16 @@ class DeliverySeeder extends Seeder
                     //Добавляем собранные отправления в груз
                     try {
                         $deliveryService->addShipment2Cargo($shipment);
-                    } catch (Exception $e) {
+                    } catch (Throwable $e) {
+                        //
                     }
                 }
 
                 //Создаем заказ на доставку у службы доставки
                 try {
                     $deliveryService->saveDeliveryOrder($delivery);
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
+                    //
                 }
             }
         }

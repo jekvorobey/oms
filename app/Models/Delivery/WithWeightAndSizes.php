@@ -14,14 +14,14 @@ trait WithWeightAndSizes
         $volume = $this->calcVolume();
         $maxSide = $this->calcMaxSide();
         $maxSideName = $this->identifyMaxSideName($maxSide);
-        $avgSide = pow($volume, 1/3);
-        
+        $avgSide = pow($volume, 1 / 3);
+
         if ($maxSide <= $avgSide) {
             foreach (self::SIDES as $side) {
                 $this[$side] = $avgSide;
             }
         } else {
-            $otherSide = sqrt($volume/$maxSide);
+            $otherSide = sqrt($volume / $maxSide);
             foreach (self::SIDES as $side) {
                 if ($side == $maxSideName) {
                     $this[$side] = $maxSide;
@@ -30,7 +30,7 @@ trait WithWeightAndSizes
                 }
             }
         }
-        
+
         $this->save();
     }
 }

@@ -15,7 +15,7 @@ class OrderCommentObserver
 {
     /**
      * Handle the order comment "created" event.
-     * @param  Order  $order
+     * @param Order $order
      * @return void
      */
     public function created(OrderComment $orderComment)
@@ -25,7 +25,7 @@ class OrderCommentObserver
 
     /**
      * Handle the order comment "updated" event.
-     * @param  Order  $order
+     * @param Order $order
      * @return void
      */
     public function updated(OrderComment $orderComment)

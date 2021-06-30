@@ -22,7 +22,7 @@ class CheckoutTicket
     public $professionId;
 
     /**
-     * @param  array  $data
+     * @param array $data
      * @return static
      */
     public static function fromArray(array $data): self

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Order\Order;
 use App\Models\Order\OrderDiscount;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Class OrderDiscountController
@@ -30,8 +29,6 @@ class OrderDiscountController extends Controller
      *         )
      *     )
      * )
-     * @param int $discountId
-     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function KPIForDiscount(int $discountId)

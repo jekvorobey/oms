@@ -14,8 +14,7 @@ use Illuminate\Support\Collection;
  */
 class PaymentsSeeder extends Seeder
 {
-    /** @var int */
-    const FAKER_SEED = 123456;
+    public const FAKER_SEED = 123456;
 
     /**
      * Run the database seeds.

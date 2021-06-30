@@ -5,7 +5,6 @@ namespace App\Models\Order;
 use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-
 /**
  * @OA\Schema(
  *     description="Промокоды применённые к заказу",
@@ -36,6 +35,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $bonus_id
  * @property int|null $owner_id - id реферального партнёра
  */
+
 class OrderPromoCode extends OmsModel
 {
     /** @var string */
@@ -44,7 +44,7 @@ class OrderPromoCode extends OmsModel
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = [
+    public const FILLABLE = [
         'order_id',
         'promo_code_id',
         'name',
@@ -61,18 +61,14 @@ class OrderPromoCode extends OmsModel
      * Статус промокода
      */
     /** Активна */
-    const STATUS_ACTIVE = 4;
-    /** Тестовый */
-    const STATUS_TEST = 8;
+    public const STATUS_ACTIVE = 4;
 
-    /**
-     * @var array
-     */
+    /** Тестовый */
+    public const STATUS_TEST = 8;
+
+    /** @var array */
     protected $fillable = self::FILLABLE;
 
-    /**
-     * @return BelongsTo
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

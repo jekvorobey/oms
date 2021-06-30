@@ -16,7 +16,7 @@ class CheckoutShipment
     public $psd;
     /** @var int[] */
     public $items;
-    
+
     public static function fromArray(array $data): self
     {
         $shipment = new self();
@@ -26,9 +26,9 @@ class CheckoutShipment
             'cost' => $shipment->cost,
             'date' => $shipment->date,
             'psd' => $shipment->psd,
-            'items' => $shipment->items
+            'items' => $shipment->items,
         ] = $data);
-        
+
         return $shipment;
     }
 }

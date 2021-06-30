@@ -14,7 +14,7 @@ class ShipmentPackageItemObserver
 {
     /**
      * Handle the package item "created" event.
-     * @param  ShipmentPackageItem $shipmentPackageItemItem
+     * @param ShipmentPackageItem $shipmentPackageItemItem
      * @return void
      */
     public function created(ShipmentPackageItem $shipmentPackageItem)
@@ -28,10 +28,9 @@ class ShipmentPackageItemObserver
             $shipmentPackageItem
         );
     }
-    
+
     /**
      * Handle the package item "updated" event.
-     * @param  ShipmentPackageItem $shipmentPackageItem
      * @return void
      */
     public function updated(ShipmentPackageItem $shipmentPackageItem)
@@ -45,10 +44,9 @@ class ShipmentPackageItemObserver
             $shipmentPackageItem
         );
     }
-    
+
     /**
      * Handle the package item "deleting" event.
-     * @param  ShipmentPackageItem $shipmentPackageItem
      * @throws \Exception
      */
     public function deleting(ShipmentPackageItem $shipmentPackageItem)
@@ -62,20 +60,18 @@ class ShipmentPackageItemObserver
             $shipmentPackageItem
         );
     }
-    
+
     /**
      * Handle the package item "deleted" event.
-     * @param  ShipmentPackageItem $shipmentPackageItem
      * @throws \Exception
      */
     public function deleted(ShipmentPackageItem $shipmentPackageItem)
     {
         $shipmentPackageItem->shipmentPackage->recalcWeight();
     }
-    
+
     /**
      * Handle the package item "saved" event.
-     * @param  ShipmentPackageItem $shipmentPackageItem
      * @throws \Exception
      */
     public function saved(ShipmentPackageItem $shipmentPackageItem)

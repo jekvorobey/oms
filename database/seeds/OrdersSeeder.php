@@ -24,11 +24,9 @@ use Pim\Services\ProductService\ProductService;
  */
 class OrdersSeeder extends Seeder
 {
-    /** @var int */
-    const FAKER_SEED = 123456;
+    public const FAKER_SEED = 123456;
 
-    /** @var int */
-    const ORDERS_COUNT = 100;
+    public const ORDERS_COUNT = 100;
 
     /**
      * @throws PimException
@@ -66,13 +64,13 @@ class OrdersSeeder extends Seeder
 
         /** @var StockService $stockService */
         $stockService = resolve(StockService::class);
+        /** @var Collection|StockDto[] $stocks */
         $stocks = collect();
         /** @var Collection|OfferDto[] $chunkedOffers */
         foreach ($offers->chunk(50) as $chunkedOffers) {
             $restQuery = $stockService->newQuery();
             $restQuery->addFields(StockDto::entity(), 'store_id', 'offer_id')
                 ->setFilter('offer_id', $chunkedOffers->pluck('id')->toArray());
-            /** @var Collection|StockDto[] $stocks */
             $chunkedStocks = $stockService->stocks($restQuery)->groupBy('offer_id');
 
             //Мержим коллекции $stocks и $chunkedStocks, метод $stocks->merge() не работает для многомерных коллекций
@@ -156,7 +154,7 @@ class OrdersSeeder extends Seeder
             if ($faker->boolean()) {
                 try {
                     $orderService->cancel($order);
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                 }
             }
 

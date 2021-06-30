@@ -12,7 +12,6 @@ use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
-use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderStatus;
 use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
@@ -44,10 +43,10 @@ class DeliveryObserver
          * сейчас клиент может отказаться только от всей доставки целеком, а не от какой-то её части
          */
         DeliveryStatus::CANCELLATION_EXPECTED => ShipmentStatus::CANCELLATION_EXPECTED,
-        DeliveryStatus::RETURNED   => ShipmentStatus::RETURNED,
+        DeliveryStatus::RETURNED => ShipmentStatus::RETURNED,
 
         DeliveryStatus::ASSEMBLING => ShipmentStatus::ASSEMBLING,
-        DeliveryStatus::ASSEMBLED  => ShipmentStatus::ASSEMBLED,
+        DeliveryStatus::ASSEMBLED => ShipmentStatus::ASSEMBLED,
     ];
 
     /**
@@ -67,7 +66,6 @@ class DeliveryObserver
 
     /**
      * Handle the delivery "created" event.
-     * @param  Delivery $delivery
      * @return void
      */
     public function created(Delivery $delivery)
@@ -77,7 +75,6 @@ class DeliveryObserver
 
     /**
      * Handle the delivery "updated" event.
-     * @param  Delivery  $delivery
      * @return void
      * @throws \Exception
      */
@@ -95,7 +92,7 @@ class DeliveryObserver
 
     protected function sendNotification(Delivery $delivery)
     {
-        if($delivery->id == null) {
+        if ($delivery->id == null) {
             return;
         }
 
@@ -110,9 +107,13 @@ class DeliveryObserver
 
             $customer = $customerRaw->user_id;
             if ($delivery->status != $delivery->getOriginal('status')) {
-                if(!($delivery->status == DeliveryStatus::DONE && $delivery->order->added_bonus == 0)) {
-                    if($delivery->order->deliveries()->count() != 1) {
-                        if ($delivery->status != DeliveryStatus::DONE || $delivery->status == DeliveryStatus::DONE && $delivery->order->status == OrderStatus::DONE) {
+                if (!($delivery->status == DeliveryStatus::DONE && $delivery->order->added_bonus == 0)) {
+                    if ($delivery->order->deliveries()->count() != 1) {
+                        if (
+                            $delivery->status != DeliveryStatus::DONE
+                            || $delivery->status == DeliveryStatus::DONE
+                            && $delivery->order->status == OrderStatus::DONE
+                        ) {
                             $notificationService->send(
                                 $customer,
                                 $this->createNotificationType(
@@ -133,7 +134,7 @@ class DeliveryObserver
                                         'DELIVERY_TIME' => (function () use ($delivery) {
                                             $time = Carbon::parse($delivery->pdd);
 
-                                            if($time->isMidnight()) {
+                                            if ($time->isMidnight()) {
                                                 return '';
                                             }
 
@@ -148,47 +149,51 @@ class DeliveryObserver
                 }
             }
 
-            $order_id = $delivery->order->id;
-            $link_order = sprintf("%s/profile/orders/%d", config('app.showcase_host'), $delivery->order->id);
+//            $order_id = $delivery->order->id;
+//            $link_order = sprintf('%s/profile/orders/%d', config('app.showcase_host'), $delivery->order->id);
 
             $user = $delivery->order->getUser();
 
-            if($delivery->getOriginal('delivery_address') != '[]' && $delivery->getAttributes()['delivery_address']) {
+            if ($delivery->getOriginal('delivery_address') != '[]' && $delivery->getAttributes()['delivery_address']) {
                 $oldAddr = json_decode($delivery->getOriginal('delivery_address'))->address_string;
                 $newAddr = json_decode($delivery->getAttributes()['delivery_address'])->address_string;
 
-                if(
+                if (
                     $oldAddr != $newAddr
                 ) {
                     $notificationService->send(
                         $customer,
                         'servisnyeizmenenie_zakaza_adres_dostavki',
-                        $this->makeArray($delivery, sprintf('
+                        $this->makeArray($delivery, sprintf(
+                            '
                         %s, здравствуйте.
                         Ваш заказ №%s изменен.
 
                         Адрес доставки изменен на %s
                         ',
-                        app(OrderObserver::class)->parseName($user, $delivery->order),
-                        $delivery->order->number,
-                        $delivery->formDeliveryAddressString($delivery->delivery_address)))
+                            app(OrderObserver::class)->parseName($user, $delivery->order),
+                            $delivery->order->number,
+                            $delivery->formDeliveryAddressString($delivery->delivery_address)
+                        ))
                     );
                 }
             }
 
-            if($delivery->getOriginal('point_id') != $delivery->point_id) {
+            if ($delivery->getOriginal('point_id') != $delivery->point_id) {
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_adres_dostavki',
-                    $this->makeArray($delivery, sprintf('
+                    $this->makeArray($delivery, sprintf(
+                        '
                     %s, здравствуйте.
                     Ваш заказ №%s изменен.
 
                     Адрес доставки изменен на %s
                     ',
-                    app(OrderObserver::class)->parseName($user, $delivery->order),
-                    $delivery->order->number,
-                    $delivery->getDeliveryAddressString()))
+                        app(OrderObserver::class)->parseName($user, $delivery->order),
+                        $delivery->order->number,
+                        $delivery->getDeliveryAddressString()
+                    ))
                 );
             }
 
@@ -196,15 +201,17 @@ class DeliveryObserver
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_poluchatel_dostavki',
-                    $this->makeArray($delivery, sprintf('
+                    $this->makeArray($delivery, sprintf(
+                        '
                     %s, здравствуйте.
                     Ваш заказ №%s изменен.
 
                     Получатель изменен: %s
                     ',
-                    app(OrderObserver::class)->parseName($user, $delivery->order),
-                    $delivery->order->number,
-                    $delivery->receiver_name))
+                        app(OrderObserver::class)->parseName($user, $delivery->order),
+                        $delivery->order->number,
+                        $delivery->receiver_name
+                    ))
                 );
             }
 
@@ -212,20 +219,22 @@ class DeliveryObserver
                 $notificationService->send(
                     $customer,
                     'servisnyeizmenenie_zakaza_data_dostavki',
-                    $this->makeArray($delivery, sprintf('
+                    $this->makeArray($delivery, sprintf(
+                        '
                     %s, здравствуйте.
                     Ваш заказ №%s изменен.
 
                     Дата доставки изменена на: %s
                     ',
-                    app(OrderObserver::class)->parseName($user, $delivery->order),
-                    $delivery->order->number,
-                    $this->getDeliveryDate($delivery)))
+                        app(OrderObserver::class)->parseName($user, $delivery->order),
+                        $delivery->order->number,
+                        $this->getDeliveryDate($delivery)
+                    ))
                 );
             }
 
-            if($delivery->getOriginal('is_canceled') != $delivery->is_canceled && $delivery->is_canceled) {
-                if(!$delivery->order->isConsolidatedDelivery()) {
+            if ($delivery->getOriginal('is_canceled') != $delivery->is_canceled && $delivery->is_canceled) {
+                if (!$delivery->order->isConsolidatedDelivery()) {
                     $notificationService->send(
                         $customer,
                         (function () use ($delivery) {
@@ -239,14 +248,13 @@ class DeliveryObserver
                     );
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
         }
     }
 
     /**
      * Handle the delivery "deleting" event.
-     * @param  Delivery $delivery
      * @throws \Exception
      */
     public function deleting(Delivery $delivery)
@@ -256,7 +264,6 @@ class DeliveryObserver
 
     /**
      * Handle the delivery "saved" event.
-     * @param  Delivery $delivery
      */
     public function saving(Delivery $delivery)
     {
@@ -268,7 +275,6 @@ class DeliveryObserver
 
     /**
      * Установить дату изменения статуса доставки.
-     * @param  Delivery  $delivery
      */
     protected function setStatusAt(Delivery $delivery): void
     {
@@ -279,7 +285,6 @@ class DeliveryObserver
 
     /**
      * Установить дату изменения статуса оплаты доставки.
-     * @param  Delivery $delivery
      */
     protected function setPaymentStatusAt(Delivery $delivery): void
     {
@@ -290,7 +295,6 @@ class DeliveryObserver
 
     /**
      * Установить дату установки флага проблемной доставки
-     * @param  Delivery $delivery
      */
     protected function setProblemAt(Delivery $delivery): void
     {
@@ -301,7 +305,6 @@ class DeliveryObserver
 
     /**
      * Установить дату отмены доставки
-     * @param  Delivery $delivery
      */
     protected function setCanceledAt(Delivery $delivery): void
     {
@@ -312,15 +315,15 @@ class DeliveryObserver
 
     /**
      * Установить статус доставки всем отправлениям
-     * @param  Delivery $delivery
      */
     protected function setStatusToShipments(Delivery $delivery): void
     {
         if (isset(self::STATUS_TO_SHIPMENTS[$delivery->status]) && $delivery->status != $delivery->getOriginal('status')) {
             $delivery->loadMissing('shipments');
             foreach ($delivery->shipments as $shipment) {
-                if ($shipment->status == self::STATUS_TO_SHIPMENTS[$delivery->status])
+                if ($shipment->status == self::STATUS_TO_SHIPMENTS[$delivery->status]) {
                     continue;
+                }
 
                 $shipment->status = self::STATUS_TO_SHIPMENTS[$delivery->status];
                 $shipment->save();
@@ -330,7 +333,6 @@ class DeliveryObserver
 
     /**
      * Установить флаг отмены всем отправлениям
-     * @param  Delivery $delivery
      * @throws \Exception
      */
     protected function setIsCanceledToShipments(Delivery $delivery): void
@@ -347,7 +349,6 @@ class DeliveryObserver
 
     /**
      * Автоматическая установка статуса для заказа, если все его доставки получили нужный статус
-     * @param  Delivery $delivery
      */
     protected function setStatusToOrder(Delivery $delivery): void
     {
@@ -387,7 +388,6 @@ class DeliveryObserver
 
     /**
      * Автоматическая установка флага отмены для заказа, если все его доставки отменены
-     * @param  Delivery  $delivery
      * @throws \Exception
      */
     protected function setIsCanceledToOrder(Delivery $delivery): void
@@ -414,9 +414,6 @@ class DeliveryObserver
         }
     }
 
-    /**
-     * @param  Delivery  $delivery
-     */
     protected function notifyIfShipped(Delivery $delivery)
     {
         $oldStatus = $delivery->getOriginal('status');
@@ -428,9 +425,6 @@ class DeliveryObserver
         }
     }
 
-    /**
-     * @param  Delivery  $delivery
-     */
     protected function notifyIfReadyForRecipient(Delivery $delivery)
     {
         $oldStatus = $delivery->getOriginal('status');
@@ -448,7 +442,7 @@ class DeliveryObserver
 
         $type .= '_bez_konsolidatsii';
 
-        if($postomat) {
+        if ($postomat) {
             $type .= '_pvzpostamat';
         } else {
             $type .= '_kurer';
@@ -479,7 +473,7 @@ class DeliveryObserver
 
     protected function makeArray(Delivery $delivery, string $text)
     {
-        $link_order = sprintf("%s/profile/orders/%d", config('app.showcase_host'), $delivery->order->id);
+        $link_order = sprintf('%s/profile/orders/%d', config('app.showcase_host'), $delivery->order->id);
         $user = $delivery->order->getUser();
 
         $shipments = $delivery
@@ -497,10 +491,10 @@ class DeliveryObserver
                                 'name' => $item->name,
                                 'count' => (int) $item->qty,
                                 'price' => (int) $item->price,
-                                'image' => $item->getItemMedia()[0] ?? ''
+                                'image' => $item->getItemMedia()[0] ?? '',
                             ];
                         })
-                        ->toArray()
+                        ->toArray(),
                 ];
             });
 
@@ -530,13 +524,15 @@ class DeliveryObserver
             'button' => [],
             'params' => [
                 'Получатель' => $delivery->receiver_name,
-                'Телефон' => !empty($delivery->receiver_phone) ? $delivery->receiver_phone : OrderObserver::formatNumber($delivery->order->customerPhone()),
+                'Телефон' => !empty($delivery->receiver_phone) ? $delivery->receiver_phone : OrderObserver::formatNumber(
+                    $delivery->order->customerPhone()
+                ),
                 'Сумма заказа' => sprintf('%s ₽', (int) $delivery->order->cost),
                 'Получение' => DeliveryMethod::methodById($delivery->delivery_method)->name,
                 'Дата доставки' => $this->getDeliveryDate($delivery),
                 'Адрес доставки' => (function () use ($delivery) {
                     $points = app(ListsService::class);
-                    if($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
+                    if ($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
                         return $delivery->formDeliveryAddressString($points->points(
                             $points->newQuery()
                                 ->setFilter('id', $delivery->point_id)
@@ -544,7 +540,7 @@ class DeliveryObserver
                     }
 
                     return $delivery->formDeliveryAddressString($delivery->delivery_address ?? []);
-                })()
+                })(),
             ],
             'shipments' => $shipments->toArray(),
             'delivery_price' => (int) $delivery->order->delivery_cost,
@@ -552,7 +548,7 @@ class DeliveryObserver
             'total_price' => (int) $delivery->order->price,
             'finisher_text' => sprintf(
                 'Узнать статус выполнения заказа можно в <a href="%s">Личном кабинете</a>',
-                sprintf("%s/profile", config('app.showcase_host'))
+                sprintf('%s/profile', config('app.showcase_host'))
             ),
         ];
     }
@@ -582,7 +578,7 @@ class DeliveryObserver
         $delivery->status = DeliveryStatus::DONE;
         $delivery->save();
 
-        dump("IGNORE FROM HERE");
+        dump('IGNORE FROM HERE');
 
         $delivery->status = $os;
         $delivery->save();

@@ -17,7 +17,7 @@ class OrderReturnDto extends Fluent
 {
     /**
      * OrderReturnDto constructor.
-     * @param  array  $attributes
+     * @param array $attributes
      */
     public function __construct($attributes = [])
     {

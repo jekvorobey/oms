@@ -16,9 +16,6 @@ class CancelExpiredOrders extends Command
     /** @var string */
     protected $description = 'Отменить заказы, у которых истёк срок оплаты неоплаченных оплат';
 
-    /**
-     * @param  PaymentService  $paymentService
-     */
     public function handle(PaymentService $paymentService)
     {
         $payments = $paymentService->expiredPayments();

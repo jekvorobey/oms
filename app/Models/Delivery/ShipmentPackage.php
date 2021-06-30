@@ -43,7 +43,7 @@ class ShipmentPackage extends OmsModel
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = [
+    public const FILLABLE = [
         'shipment_id',
         'package_id',
         'status',
@@ -53,9 +53,7 @@ class ShipmentPackage extends OmsModel
         'wrapper_weight',
     ];
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $fillable = self::FILLABLE;
 
     /** @var string */
@@ -70,30 +68,19 @@ class ShipmentPackage extends OmsModel
         'length' => 'float',
     ];
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected static $restIncludes = ['shipment'];
 
-    /**
-     * @return BelongsTo
-     */
     public function shipment(): BelongsTo
     {
         return $this->belongsTo(Shipment::class);
     }
 
-    /**
-     * @return HasMany
-     */
     public function items(): HasMany
     {
         return $this->hasMany(ShipmentPackageItem::class);
     }
 
-    /**
-     * @param  bool  $save
-     */
     public function recalcWeight(bool $save = true): void
     {
         $this->weight = $this->wrapper_weight + $this->items->reduce(function ($sum, ShipmentPackageItem $item) {

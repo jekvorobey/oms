@@ -19,7 +19,6 @@ use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
-use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
 use Greensight\Logistics\Dto\Order\CdekDeliveryOrderReceiptDto;
@@ -57,8 +56,6 @@ class DeliveryService
 {
     /**
      * Получить объект отправления по его id
-     * @param  int  $deliveryId
-     * @return Delivery|null
      */
     public function getDelivery(int $deliveryId): ?Delivery
     {
@@ -67,8 +64,6 @@ class DeliveryService
 
     /**
      * Получить объект отправления по его id
-     * @param  int  $shipmentId
-     * @return Shipment|null
      */
     public function getShipment(int $shipmentId): ?Shipment
     {
@@ -77,8 +72,6 @@ class DeliveryService
 
     /**
      * Получить объект груза по его id
-     * @param  int  $cargoId
-     * @return Cargo|null
      */
     public function getCargo(int $cargoId): ?Cargo
     {
@@ -87,9 +80,6 @@ class DeliveryService
 
     /**
      * Создать коробку отправления
-     * @param int $shipmentId
-     * @param  int  $packageId
-     * @return ShipmentPackage|null
      */
     public function createShipmentPackage(int $shipmentId, int $packageId): ?ShipmentPackage
     {
@@ -115,8 +105,6 @@ class DeliveryService
 
     /**
      * Удалить коробку отправления со всем её содержимым
-     * @param  int  $shipmentPackageId
-     * @return bool
      */
     public function deleteShipmentPackage(int $shipmentPackageId): bool
     {
@@ -134,11 +122,6 @@ class DeliveryService
 
     /**
      * Добавить/обновить/удалить элемент (собранный товар с одного склада одного мерчанта) коробки отправления
-     * @param  int  $shipmentPackageId
-     * @param  int  $basketItemId
-     * @param  float  $qty
-     * @param  int  $setBy
-     * @return bool
      * @throws Exception
      */
     public function setShipmentPackageItem(int $shipmentPackageId, int $basketItemId, float $qty, int $setBy): bool
@@ -159,7 +142,7 @@ class DeliveryService
                 throw new Exception('Shipment package qty can\'t be more than basket item qty');
             } else {
                 if (is_null($shipmentPackageItem)) {
-                    $shipmentPackageItem = new ShipmentPackageItem;
+                    $shipmentPackageItem = new ShipmentPackageItem();
                 }
                 $shipmentPackageItem->updateOrCreate([
                     'shipment_package_id' => $shipmentPackageId,
@@ -173,8 +156,6 @@ class DeliveryService
 
     /**
      * Проверить, что все товары отправления упакованы по коробкам
-     * @param Shipment $shipment
-     * @return bool
      */
     public function checkAllShipmentProductsPacked(Shipment $shipment): bool
     {
@@ -196,7 +177,6 @@ class DeliveryService
 
     /**
      * Добавить отправление в груз
-     * @param  Shipment $shipment
      * @throws Exception
      */
     public function addShipment2Cargo(Shipment $shipment): void
@@ -248,7 +228,6 @@ class DeliveryService
 
     /**
      * Создать заявку на вызов курьера для забора груза
-     * @param  Cargo  $cargo
      * @throws Exception
      */
     public function createCourierCall(Cargo $cargo): void
@@ -257,7 +236,9 @@ class DeliveryService
             throw new Exception('Груз не в статусе "Создан"');
         }
         if ($cargo->xml_id) {
-            throw new Exception('Для груза уже создана заявка на вызов курьера с номером "' . $cargo->xml_id . '"');
+            throw new Exception(
+                'Для груза уже создана заявка на вызов курьера с номером "' . $cargo->xml_id . '"'
+            );
         }
         if ($cargo->shipments->isEmpty()) {
             throw new Exception('Груз не содержит отправлений');
@@ -281,18 +262,18 @@ class DeliveryService
         $courierCallInputDto = new CourierCallInputDto();
 
         $senderDto = new SenderDto();
-        $senderDto->address_string = isset($store->address['address_string']) ? $store->address['address_string'] : '';
-        $senderDto->post_index = isset($store->address['post_index']) ? $store->address['post_index'] : '';
-        $senderDto->country_code = isset($store->address['country_code']) ? $store->address['country_code'] : '';
-        $senderDto->region = isset($store->address['region']) ? $store->address['region'] : '';
-        $senderDto->area = isset($store->address['area']) ? $store->address['area'] : '';
-        $senderDto->city = isset($store->address['city']) ? $store->address['city'] : '';
-        $senderDto->city_guid = isset($store->address['city_guid']) ? $store->address['city_guid'] : '';
-        $senderDto->region_guid = isset($store->address['region_guid']) ? $store->address['region_guid'] : '';
-        $senderDto->street = isset($store->address['street']) ? $store->address['street'] : '';
-        $senderDto->house = isset($store->address['house']) ? $store->address['house'] : '';
-        $senderDto->block = isset($store->address['block']) ? $store->address['block'] : '';
-        $senderDto->flat = isset($store->address['flat']) ? $store->address['flat'] : '';
+        $senderDto->address_string = $store->address['address_string'] ?? '';
+        $senderDto->post_index = $store->address['post_index'] ?? '';
+        $senderDto->country_code = $store->address['country_code'] ?? '';
+        $senderDto->region = $store->address['region'] ?? '';
+        $senderDto->area = $store->address['area'] ?? '';
+        $senderDto->city = $store->address['city'] ?? '';
+        $senderDto->city_guid = $store->address['city_guid'] ?? '';
+        $senderDto->region_guid = $store->address['region_guid'] ?? '';
+        $senderDto->street = $store->address['street'] ?? '';
+        $senderDto->house = $store->address['house'] ?? '';
+        $senderDto->block = $store->address['block'] ?? '';
+        $senderDto->flat = $store->address['flat'] ?? '';
         $senderDto->company_name = $merchant->legal_name;
         $senderDto->contact_name = !is_null($store->storeContact()) ? $store->storeContact()[0]->name : '';
         $senderDto->email = !is_null($store->storeContact()) ? $store->storeContact()[0]->email : '';
@@ -301,17 +282,17 @@ class DeliveryService
 
         if ($store->cdek_address && !empty($store->cdek_address['address_string'])) {
             $cdekSenderDto = new SenderDto();
-            $cdekSenderDto->address_string = isset($store->cdek_address['address_string']) ? $store->cdek_address['address_string'] : '';
-            $cdekSenderDto->post_index = isset($store->cdek_address['post_index']) ? $store->cdek_address['post_index'] : '';
-            $cdekSenderDto->country_code = isset($store->cdek_address['country_code']) ? $store->cdek_address['country_code'] : '';
-            $cdekSenderDto->region = isset($store->cdek_address['region']) ? $store->cdek_address['region'] : '';
-            $cdekSenderDto->area = isset($store->cdek_address['area']) ? $store->cdek_address['area'] : '';
-            $cdekSenderDto->city = isset($store->cdek_address['city']) ? $store->cdek_address['city'] : '';
-            $cdekSenderDto->city_guid = isset($store->cdek_address['city_guid']) ? $store->cdek_address['city_guid'] : '';
-            $cdekSenderDto->street = isset($store->cdek_address['street']) ? $store->cdek_address['street'] : '';
-            $cdekSenderDto->house = isset($store->cdek_address['house']) ? $store->cdek_address['house'] : '';
-            $cdekSenderDto->block = isset($store->cdek_address['block']) ? $store->cdek_address['block'] : '';
-            $cdekSenderDto->flat = isset($store->cdek_address['flat']) ? $store->cdek_address['flat'] : '';
+            $cdekSenderDto->address_string = $store->cdek_address['address_string'] ?? '';
+            $cdekSenderDto->post_index = $store->cdek_address['post_index'] ?? '';
+            $cdekSenderDto->country_code = $store->cdek_address['country_code'] ?? '';
+            $cdekSenderDto->region = $store->cdek_address['region'] ?? '';
+            $cdekSenderDto->area = $store->cdek_address['area'] ?? '';
+            $cdekSenderDto->city = $store->cdek_address['city'] ?? '';
+            $cdekSenderDto->city_guid = $store->cdek_address['city_guid'] ?? '';
+            $cdekSenderDto->street = $store->cdek_address['street'] ?? '';
+            $cdekSenderDto->house = $store->cdek_address['house'] ?? '';
+            $cdekSenderDto->block = $store->cdek_address['block'] ?? '';
+            $cdekSenderDto->flat = $store->cdek_address['flat'] ?? '';
             $cdekSenderDto->company_name = $merchant->legal_name;
             $cdekSenderDto->contact_name = !is_null($store->storeContact()) ? $store->storeContact()[0]->name : '';
             $cdekSenderDto->email = !is_null($store->storeContact()) ? $store->storeContact()[0]->email : '';
@@ -339,8 +320,8 @@ class DeliveryService
         $storePickupTimes = collect();
         if ($store->storePickupTime()) {
             for ($day = 1; $day <= 7; $day++) {
-                /** @var StorePickupTimeDto $pickupTimeDto */
                 //Ищем время отгрузки с учетом службы доставки
+                /** @var StorePickupTimeDto $pickupTimeDto */
                 $pickupTimeDto = $store->storePickupTime()->filter(function (StorePickupTimeDto $item) use (
                     $day,
                     $cargo
@@ -362,7 +343,7 @@ class DeliveryService
         $date = new \DateTime('now', $timezone);
         $dateNow = new \DateTime('now', $timezone);
         while ($dayPlus <= 6) {
-            $date = $date->modify('+' . $dayPlus . ' day' . ($dayPlus > 1 ?  's': ''));
+            $date = $date->modify('+' . $dayPlus . ' day' . ($dayPlus > 1 ? 's' : ''));
             //Получаем номер дня недели (1 - понедельник, ..., 7 - воскресенье)
             $dayOfWeek = $date->format('N');
             $dayPlus++;
@@ -394,7 +375,7 @@ class DeliveryService
                 } else {
                     $cargo->error_xml_id = $courierCallOutputDto->message;
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $cargo->error_xml_id = $e->getMessage();
             }
         }
@@ -408,14 +389,14 @@ class DeliveryService
 
     /**
      * Отменить груз (все отправления груза отвязываются от него!)
-     * @param  Cargo  $cargo
-     * @return bool
      * @throws Exception
      */
     public function cancelCargo(Cargo $cargo): bool
     {
         if ($cargo->status >= CargoStatus::SHIPPED) {
-            throw new \Exception('Груз, начиная со статуса "Передан Логистическому Оператору", нельзя отменить');
+            throw new \Exception(
+                'Груз, начиная со статуса "Передан Логистическому Оператору", нельзя отменить'
+            );
         }
 
         $result = DB::transaction(function () use ($cargo) {
@@ -443,7 +424,6 @@ class DeliveryService
 
     /**
      * Отменить заявку на вызов курьера для забора груза
-     * @param  Cargo  $cargo
      */
     public function cancelCourierCall(Cargo $cargo): void
     {
@@ -462,7 +442,6 @@ class DeliveryService
 
     /**
      * Проверить ошибки в заявке на вызов курьера во внешнем сервисе
-     * @param Cargo $cargo
      */
     public function checkExternalStatus(Cargo $cargo): void
     {
@@ -481,7 +460,6 @@ class DeliveryService
 
     /**
      * Сохранить (создать или обновить) заказ на доставку с службе доставке
-     * @param  Delivery  $delivery
      * @throws Exception
      */
     public function saveDeliveryOrder(Delivery $delivery): void
@@ -492,8 +470,9 @@ class DeliveryService
          */
         $cntShipments = 0;
         foreach ($delivery->shipments as $shipment) {
-            if ($shipment->is_canceled)
+            if ($shipment->is_canceled) {
                 continue;
+            }
 
             $validShipmentStatuses = [
                 ShipmentStatus::ASSEMBLED,
@@ -515,8 +494,10 @@ class DeliveryService
         $deliveryOrderService = resolve(DeliveryOrderService::class);
         try {
             if (!$delivery->xml_id) {
-                $deliveryOrderOutputDto = $deliveryOrderService->createOrder($delivery->delivery_service,
-                    $deliveryOrderInputDto);
+                $deliveryOrderOutputDto = $deliveryOrderService->createOrder(
+                    $delivery->delivery_service,
+                    $deliveryOrderInputDto
+                );
                 if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->xml_id) {
                     $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
                     if ($deliveryOrderOutputDto->tracknumber) {
@@ -566,7 +547,7 @@ class DeliveryService
                     }
                 }
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $delivery->error_xml_id = $e->getMessage();
             $delivery->save();
         }
@@ -574,8 +555,6 @@ class DeliveryService
 
     /**
      * Сформировать заказ на доставку
-     * @param  Delivery  $delivery
-     * @return DeliveryOrderInputDto
      * @throws \Cms\Core\CmsException
      */
     protected function formDeliveryOrder(Delivery $delivery): DeliveryOrderInputDto
@@ -584,7 +563,7 @@ class DeliveryService
         $deliveryOrderInputDto = new DeliveryOrderInputDto();
 
         //Информация об получателе заказа
-        $recipientDto = new RecipientDto((array)$delivery->delivery_address);
+        $recipientDto = new RecipientDto((array) $delivery->delivery_address);
         $deliveryOrderInputDto->recipient = $recipientDto;
 
         //Информация о заказе
@@ -619,10 +598,11 @@ class DeliveryService
         $deliveryOrderCostDto->delivery_cost = 0;
 
         $deliveryOrderCostDto->cod_cost = 0;
+        /** @var Shipment $shipment */
         foreach ($delivery->shipments as $shipment) {
-            if ($shipment->is_canceled)
+            if ($shipment->is_canceled) {
                 continue;
-            /** @var Shipment $shipment */
+            }
             $deliveryOrderCostDto->cod_cost += $shipment->basketItems->sum('cost');
         }
         //todo Удалить поле delivery_cost_pay из DeliveryOrderCostDto
@@ -689,7 +669,7 @@ class DeliveryService
             $senderDto->contact_name = join(' ', [
                 $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_LAST_NAME],
                 $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_FIRST_NAME],
-                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_MIDDLE_NAME]
+                $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_MIDDLE_NAME],
             ]);
             $senderDto->email = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_EMAIL];
             $senderDto->phone = $marketplaceData[OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_PHONE];
@@ -746,10 +726,10 @@ class DeliveryService
                     $places->push($deliveryOrderPlaceDto);
                     $deliveryOrderPlaceDto->number = $packageNumber++;
                     $deliveryOrderPlaceDto->code = $package->id;
-                    $deliveryOrderPlaceDto->width = (int)ceil($package->width);
-                    $deliveryOrderPlaceDto->height = (int)ceil($package->height);
-                    $deliveryOrderPlaceDto->length = (int)ceil($package->length);
-                    $deliveryOrderPlaceDto->weight = (int)ceil($package->weight);
+                    $deliveryOrderPlaceDto->width = (int) ceil($package->width);
+                    $deliveryOrderPlaceDto->height = (int) ceil($package->height);
+                    $deliveryOrderPlaceDto->length = (int) ceil($package->length);
+                    $deliveryOrderPlaceDto->weight = (int) ceil($package->weight);
 
                     $items = collect();
                     $deliveryOrderPlaceDto->items = $items;
@@ -759,11 +739,11 @@ class DeliveryService
                         $items->push($deliveryOrderItemDto);
                         $deliveryOrderItemDto->articul = $basketItem->offer_id; //todo Добавить сохранение артикула товара в корзине
                         $deliveryOrderItemDto->name = $basketItem->name;
-                        $deliveryOrderItemDto->quantity = (float)$item->qty;
-                        $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int)ceil($basketItem->product['height']) : 0;
-                        $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
-                        $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
-                        $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
+                        $deliveryOrderItemDto->quantity = (float) $item->qty;
+                        $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int) ceil($basketItem->product['height']) : 0;
+                        $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int) ceil($basketItem->product['width']) : 0;
+                        $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int) ceil($basketItem->product['length']) : 0;
+                        $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int) ceil($basketItem->product['weight']) : 0;
                         $deliveryOrderItemDto->cost = round($item->qty > 0 ? $basketItem->price / $item->qty : 0, 2);
                         //todo Когда будет постоплата, передавать реальную стоимость к оплате за товары доставки в поле ниже
                         $deliveryOrderItemDto->price = 0;
@@ -775,10 +755,10 @@ class DeliveryService
                 $places->push($deliveryOrderPlaceDto);
                 $deliveryOrderPlaceDto->number = $packageNumber++;
                 $deliveryOrderPlaceDto->code = $shipment->number;
-                $deliveryOrderPlaceDto->width = (int)ceil($shipment->width);
-                $deliveryOrderPlaceDto->height = (int)ceil($shipment->height);
-                $deliveryOrderPlaceDto->length = (int)ceil($shipment->length);
-                $deliveryOrderPlaceDto->weight = (int)ceil($shipment->weight);
+                $deliveryOrderPlaceDto->width = (int) ceil($shipment->width);
+                $deliveryOrderPlaceDto->height = (int) ceil($shipment->height);
+                $deliveryOrderPlaceDto->length = (int) ceil($shipment->length);
+                $deliveryOrderPlaceDto->weight = (int) ceil($shipment->weight);
 
                 $items = collect();
                 $deliveryOrderPlaceDto->items = $items;
@@ -788,11 +768,11 @@ class DeliveryService
                     $items->push($deliveryOrderItemDto);
                     $deliveryOrderItemDto->articul = $basketItem->offer_id; //todo Добавить сохранение артикула товара в корзине
                     $deliveryOrderItemDto->name = $basketItem->name;
-                    $deliveryOrderItemDto->quantity = (float)$basketItem->qty;
-                    $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int)ceil($basketItem->product['height']) : 0;
-                    $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int)ceil($basketItem->product['width']) : 0;
-                    $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int)ceil($basketItem->product['length']) : 0;
-                    $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int)ceil($basketItem->product['weight']) : 0;
+                    $deliveryOrderItemDto->quantity = (float) $basketItem->qty;
+                    $deliveryOrderItemDto->height = isset($basketItem->product['height']) ? (int) ceil($basketItem->product['height']) : 0;
+                    $deliveryOrderItemDto->width = isset($basketItem->product['width']) ? (int) ceil($basketItem->product['width']) : 0;
+                    $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int) ceil($basketItem->product['length']) : 0;
+                    $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int) ceil($basketItem->product['weight']) : 0;
                     $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->cost / $basketItem->qty : 0, 2);
                     //todo Когда будет постоплата, передавать реальную стоимость к оплате за товары доставки в поле ниже
                     $deliveryOrderItemDto->price = 0;
@@ -816,11 +796,13 @@ class DeliveryService
             $deliveryOrderService = resolve(DeliveryOrderService::class);
 
             $deliveriesByService = $deliveries->groupBy('delivery_service');
+            /** @var Collection|Delivery[] $items */
             foreach ($deliveriesByService as $deliveryServiceId => $items) {
                 try {
-                    /** @var Collection|Delivery[] $items */
-                    $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders($deliveryServiceId,
-                        $items->pluck('xml_id')->all());
+                    $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders(
+                        $deliveryServiceId,
+                        $items->pluck('xml_id')->all()
+                    );
                     foreach ($deliveryOrderStatusDtos as $deliveryOrderStatusDto) {
                         if ($deliveries->has($deliveryOrderStatusDto->number)) {
                             $delivery = $deliveries[$deliveryOrderStatusDto->number];
@@ -836,7 +818,7 @@ class DeliveryService
                             }
                         }
                     }
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                 }
             }
         }
@@ -846,8 +828,6 @@ class DeliveryService
      * Получить id службы доставки на нулевой миле для отправления.
      * Сначала проверяется, не указана ли служба доставки у самого отправления:
      * если указана, то возвращается она, иначе берется служба доставки у доставки, в которую входит отправление
-     * @param  Shipment  $shipment
-     * @return int
      */
     public function getZeroMileShipmentDeliveryServiceId(Shipment $shipment): int
     {
@@ -856,8 +836,6 @@ class DeliveryService
 
     /**
      * Получить файл со штрихкодами коробок для заказа на доставку
-     * @param  Shipment $shipment
-     * @return DeliveryOrderBarcodesDto|null
      */
     public function getShipmentBarcodes(Shipment $shipment): ?DeliveryOrderBarcodesDto
     {
@@ -873,21 +851,18 @@ class DeliveryService
         try {
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            $deliveryOrderBarcodesDto = $deliveryOrderService->barcodesOrder(
+            return $deliveryOrderService->barcodesOrder(
                 $delivery->delivery_service,
                 $delivery->xml_id,
                 array_filter($shipment->packages->pluck('xml_id')->toArray())
             );
-
-            return $deliveryOrderBarcodesDto;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return null;
         }
     }
 
     /**
      * Получить квитанцию cdek для заказа на доставку
-     * @param  Shipment $shipment
      * @return DeliveryOrderBarcodesDto|null
      */
     public function getShipmentCdekReceipt(Shipment $shipment): ?CdekDeliveryOrderReceiptDto
@@ -904,22 +879,14 @@ class DeliveryService
         try {
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            $cdekDeliveryOrderReceiptDto = $deliveryOrderService->cdekReceiptOrder(
-                $delivery->delivery_service,
-                $delivery->xml_id
-            );
-
-            return $cdekDeliveryOrderReceiptDto;
-        } catch (Exception $e) {
+            return $deliveryOrderService->cdekReceiptOrder($delivery->delivery_service, $delivery->xml_id);
+        } catch (\Throwable $e) {
             return null;
         }
     }
 
     /**
      * Пометить отправление как проблемное
-     * @param Shipment $shipment
-     * @param string $comment
-     * @return bool
      */
     public function markAsProblemShipment(Shipment $shipment, string $comment = ''): bool
     {
@@ -931,8 +898,6 @@ class DeliveryService
 
     /**
      * Пометить отправление как непроблемное
-     * @param Shipment $shipment
-     * @return bool
      */
     public function markAsNonProblemShipment(Shipment $shipment): bool
     {
@@ -943,14 +908,14 @@ class DeliveryService
 
     /**
      * Отменить отправление
-     * @param  Shipment  $shipment
-     * @return bool
      * @throws Exception
      */
     public function cancelShipment(Shipment $shipment): bool
     {
         if ($shipment->status >= ShipmentStatus::DONE) {
-            throw new \Exception('Отправление, начиная со статуса "Доставлено получателю", нельзя отменить');
+            throw new \Exception(
+                'Отправление, начиная со статуса "Доставлено получателю", нельзя отменить'
+            );
         }
 
         $shipment->is_canceled = true;
@@ -961,14 +926,14 @@ class DeliveryService
 
     /**
      * Отменить доставку
-     * @param  Delivery  $delivery
-     * @return bool
      * @throws Exception
      */
     public function cancelDelivery(Delivery $delivery): bool
     {
         if ($delivery->status >= DeliveryStatus::DONE) {
-            throw new \Exception('Доставку, начиная со статуса "Доставлена получателю", нельзя отменить');
+            throw new \Exception(
+                'Доставку, начиная со статуса "Доставлена получателю", нельзя отменить'
+            );
         }
 
         $delivery->is_canceled = true;
@@ -983,7 +948,6 @@ class DeliveryService
 
     /**
      * Отменить заказ на доставку у службы доставки (ЛО)
-     * @param  Delivery  $delivery
      */
     public function cancelDeliveryOrder(Delivery $delivery): void
     {

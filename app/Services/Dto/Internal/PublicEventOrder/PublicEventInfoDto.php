@@ -41,33 +41,21 @@ class PublicEventInfoDto implements Arrayable
         $this->ticketsInfo = collect();
     }
 
-    /**
-     * @param  SpeakerInfoDto  $speakerInfoDto
-     */
     public function addSpeaker(SpeakerInfoDto $speakerInfoDto): void
     {
         $this->speakers->put($speakerInfoDto->id, $speakerInfoDto);
     }
 
-    /**
-     * @param  PlaceInfoDto  $placeInfoDto
-     */
     public function addPlace(PlaceInfoDto $placeInfoDto): void
     {
         $this->places->put($placeInfoDto->id, $placeInfoDto);
     }
 
-    /**
-     * @param  StageInfoDto  $stageInfoDto
-     */
     public function addStage(StageInfoDto $stageInfoDto): void
     {
         $this->stages->push($stageInfoDto);
     }
 
-    /**
-     * @param  TicketsInfoDto  $ticketsInfoDto
-     */
     public function addTicketInfo(TicketsInfoDto $ticketsInfoDto): void
     {
         $this->ticketsInfo->push($ticketsInfoDto);

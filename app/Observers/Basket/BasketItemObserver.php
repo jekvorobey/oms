@@ -5,9 +5,6 @@ namespace App\Observers\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
-use App\Models\Order\Order;
-use App\Models\Order\OrderStatus;
-use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Pim\Services\SearchService\SearchService;
 
 /**
@@ -19,7 +16,7 @@ class BasketItemObserver
 {
     /**
      * Handle the basket item "saving" event.
-     * @param  BasketItem $basketItem
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public function saving(BasketItem $basketItem)
     {
@@ -33,7 +30,6 @@ class BasketItemObserver
 
     /**
      * Handle the basket item "saved" event.
-     * @param  BasketItem $basketItem
      */
     public function saved(BasketItem $basketItem)
     {
@@ -41,14 +37,16 @@ class BasketItemObserver
             $basketItem->basket->order->costRecalc();
         }*/
 
-        if ($basketItem->qty != $basketItem->getOriginal('qty')
+        if (
+            $basketItem->qty != $basketItem->getOriginal('qty')
         ) {
             if ($basketItem->shipmentItem) {
                 $basketItem->shipmentItem->shipment->recalc();
             }
         }
 
-        if ($basketItem->qty != $basketItem->getOriginal('qty') ||
+        if (
+            $basketItem->qty != $basketItem->getOriginal('qty') ||
             $basketItem->price != $basketItem->getOriginal('price')
         ) {
             if ($basketItem->shipmentItem) {
@@ -59,7 +57,6 @@ class BasketItemObserver
 
     /**
      * Handle the basket item "created" event.
-     * @param  BasketItem $basketItem
      */
     public function created(BasketItem $basketItem)
     {
@@ -74,7 +71,6 @@ class BasketItemObserver
 
     /**
      * Handle the basket item "updated" event.
-     * @param  BasketItem $basketItem
      */
     public function updated(BasketItem $basketItem)
     {
@@ -85,7 +81,6 @@ class BasketItemObserver
 
     /**
      * Handle the basket item "deleting" event.
-     * @param  BasketItem $basketItem
      * @throws \Exception
      */
     public function deleting(BasketItem $basketItem)

@@ -16,57 +16,53 @@ use Greensight\Message\Dto\Notification\NotificationDto;
 class OrderNotification extends AbstractNotification implements NotificationInterface
 {
     /**
-     * @inheritDoc
+     * @param Order $mainModel
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public static function notify(int $type, OmsModel $mainModel, OmsModel $model): void
     {
-        /** @var Order $mainModel */
         static::notifyAdmins($type, $mainModel);
     }
-    
-    /**
-     * @param  int  $type
-     * @param  Order  $order
-     */
+
     protected static function notifyAdmins(int $type, Order $order): void
     {
         $notification = static::getBaseNotification();
-    
+
         switch ($type) {
             case HistoryType::TYPE_CREATE:
                 $notification->type = NotificationDto::TYPE_ORDER_NEW;
-                $notification->setPayloadField('title', "Новый заказ");
+                $notification->setPayloadField('title', 'Новый заказ');
                 $notification->setPayloadField('body', "Создан заказ {$order->number}");
                 break;
             case HistoryType::TYPE_UPDATE:
-                if($order->is_problem) {
+                if ($order->is_problem) {
                     $notification->type = NotificationDto::TYPE_ORDER_PROBLEM;
-                    $notification->setPayloadField('title', "Проблемный заказ");
+                    $notification->setPayloadField('title', 'Проблемный заказ');
                     $notification->setPayloadField('body', "Заказ {$order->number} помечен как проблемный");
                 }
-                if($order->payment_status == PaymentStatus::PAID) {
+                if ($order->payment_status == PaymentStatus::PAID) {
                     $notification->type = NotificationDto::TYPE_ORDER_PAYED;
-                    $notification->setPayloadField('title', "Оплачен заказ");
+                    $notification->setPayloadField('title', 'Оплачен заказ');
                     $notification->setPayloadField('body', "Заказ {$order->number} оплачен");
                 }
-                if($order->is_canceled) {
+                if ($order->is_canceled) {
                     $notification->type = NotificationDto::TYPE_ORDER_CANCEL;
-                    $notification->setPayloadField('title', "Отмена заказа");
+                    $notification->setPayloadField('title', 'Отмена заказа');
                     $notification->setPayloadField('body', "Заказ {$order->number} был отменён");
                 }
                 break;
-        
+
             case HistoryType::TYPE_COMMENT:
                 $notification->type = NotificationDto::TYPE_ORDER_COMMENT;
-                $notification->setPayloadField('title', "Обновлён комментарий заказа");
+                $notification->setPayloadField('title', 'Обновлён комментарий заказа');
                 $notification->setPayloadField('body', "Комментарий заказа {$order->number} был обновлен");
                 break;
         }
-    
-        if(!$notification->type) {
+
+        if (!$notification->type) {
             return;
         }
-    
+
         //todo Добавить создание уведомлений для администраторов
     }
 }

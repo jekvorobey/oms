@@ -29,27 +29,27 @@ use Pim\Services\ProductService\ProductService;
  */
 class DocumentService
 {
-    /** @var string */
-    const DISK = 'document-templates';
+    public const DISK = 'document-templates';
 
-    /** @var string - акт-претензия для отправления */
+    /** акт-претензия для отправления */
     public const CLAIM_ACT = 'claim-act.docx';
-    /** @var string - акт приема-передачи отправления/груза*/
+
+    /** акт приема-передачи отправления/груза*/
     public const ACCEPTANCE_ACT = 'acceptance-act.docx';
-    /** @var string - карточка сборки отправления */
+
+    /** карточка сборки отправления */
     public const ASSEMBLING_CARD = 'assembling-card.docx';
-    /** @var string - опись отправления заказа */
+
+    /** опись отправления заказа */
     public const INVENTORY = 'inventory.docx';
-    /** @var string - окончание в имени файла с шаблоном для программного заполнения данными */
+
+    /** окончание в имени файла с шаблоном для программного заполнения данными */
     public const TEMPLATE_SUFFIX = '-template';
 
-    /** @var string */
     public const TICKETS = 'order-tickets.pdf';
 
     /**
      * Сформировать "Акт приема-передачи по отправлению"
-     * @param  Shipment $shipment
-     * @return DocumentDto
      */
     public function getShipmentAcceptanceAct(Shipment $shipment): DocumentDto
     {
@@ -80,10 +80,8 @@ class DocumentService
                     // запросив статус заказа (в нем может быть barcode)
                     // Его изначально нет, и это происходит постоянно, потому что при создании заказа
                     // barcode = null, он появляется у apiship позднее (задержка порядка минут 5)
-                    if ($shipment->delivery->delivery_service === LogisticsDeliveryService::SERVICE_BOXBERRY)
-                    {
-                        if ($shipment->delivery->xml_id && !$shipment->delivery->barcode)
-                        {
+                    if ($shipment->delivery->delivery_service === LogisticsDeliveryService::SERVICE_BOXBERRY) {
+                        if ($shipment->delivery->xml_id && !$shipment->delivery->barcode) {
                             // делаем это в транзакции - что бы не поломать остальной код
                             try {
                                 $status = resolve(DeliveryOrderService::class)
@@ -101,7 +99,8 @@ class DocumentService
                                 if ($isChange) {
                                     $shipment->delivery->save();
                                 }
-                            } catch (\Exception $e) {}
+                            } catch (\Throwable $e) {
+                            }
                         }
                     }
 
@@ -111,7 +110,7 @@ class DocumentService
                         'table.package_barcode' => $itemNum == 0 ? ($package->xml_id ?? $shipment->delivery->barcode) : '',
                         'table.shipment_cost' => $itemNum == 0 ? price_format(
                             $package->items->sum(function (ShipmentPackageItem $item) {
-                                return $item->qty * ($item->basketItem->price / $item->basketItem->qty);
+                                return $item->qty * $item->basketItem->price / $item->basketItem->qty;
                             })
                         ) : '',
                         'table.shipment_packages' => ($packageNum + 1) . '/' . $shipment->packages->count(),
@@ -121,7 +120,7 @@ class DocumentService
                         'table.product_weight' => isset($item->basketItem->product['weight']) ?
                             g2kg($item->qty * $item->basketItem->product['weight']) : '',
                         'table.product_price' => price_format(
-                            $item->qty * ($item->basketItem->price / $item->basketItem->qty)
+                            $item->qty * $item->basketItem->price / $item->basketItem->qty
                         ),
                     ];
                 }
@@ -133,7 +132,7 @@ class DocumentService
             $logisticOperator = $listsService->deliveryService($deliveryServiceId);
 
             $merchant = $merchantService->merchant($shipment->merchant_id);
-            setlocale(LC_TIME, "ru_RU.UTF-8");
+            setlocale(LC_TIME, 'ru_RU.UTF-8');
 
             $tableTotalRow = [
                 'table.total_shipment_cost' => price_format($shipment->cost),
@@ -145,7 +144,7 @@ class DocumentService
                 }),
                 'table.total_product_price' => price_format($shipment->basketItems->sum('price')),
                 'act_date' => strftime('%d %B %Y'),
-                'act_id' => $shipment->cargo_id ? $shipment->cargo_id : $shipment->id,
+                'act_id' => $shipment->cargo_id ?: $shipment->id,
                 'merchant_name' => htmlspecialchars($merchant->legal_name, ENT_QUOTES | ENT_XML1),
                 'merchant_id' => $merchant->id,
                 'merchant_register_date' => strftime('%d %B %Y', strtotime($merchant->created_at)),
@@ -154,11 +153,11 @@ class DocumentService
             $templateProcessor->setValues($tableTotalRow);
 
             $documentName = $this->getFileWithSuffix(self::ACCEPTANCE_ACT, '-' . $shipment->number);
-            $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
+            $documentPath = Storage::disk(self::DISK)->path('') . $documentName;
             $templateProcessor->saveAs($documentPath);
             $this->saveDocument($documentDto, $documentPath, $documentName);
-            Storage::disk(static::DISK)->delete($documentName);
-        } catch (Exception $e) {
+            Storage::disk(self::DISK)->delete($documentName);
+        } catch (\Throwable $e) {
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
         }
@@ -168,8 +167,6 @@ class DocumentService
 
     /**
      * Сформировать "Акт приема-передачи по грузу"
-     * @param  Cargo $cargo
-     * @return DocumentDto
      */
     public function getCargoAcceptanceAct(Cargo $cargo): DocumentDto
     {
@@ -221,7 +218,7 @@ class DocumentService
                             'table.package_barcode' => $itemNum == 0 ? $package->xml_id : '',
                             'table.shipment_cost' => $itemNum == 0 ? price_format(
                                 $package->items->sum(function (ShipmentPackageItem $item) {
-                                    return $item->qty * ($item->basketItem->price / $item->basketItem->qty);
+                                    return $item->qty * $item->basketItem->price / $item->basketItem->qty;
                                 })
                             ) : '',
                             'table.shipment_packages' => ($packageNum + 1) . '/' . $shipment->packages->count(),
@@ -231,7 +228,7 @@ class DocumentService
                             'table.product_weight' => isset($item->basketItem->product['weight']) ?
                                 g2kg($item->qty * $item->basketItem->product['weight']) : '',
                             'table.product_price' => price_format(
-                                $item->qty * ($item->basketItem->price / $item->basketItem->qty)
+                                $item->qty * $item->basketItem->price / $item->basketItem->qty
                             ),
                         ];
                     }
@@ -241,7 +238,7 @@ class DocumentService
 
             $logisticOperator = $listsService->deliveryService($cargo->delivery_service);
             $merchant = $merchantService->merchant($cargo->merchant_id);
-            setlocale(LC_TIME, "ru_RU.UTF-8");
+            setlocale(LC_TIME, 'ru_RU.UTF-8');
 
             $tableTotalRow = [
                 'table.total_shipment_cost' => price_format($totalShipmentCost),
@@ -259,11 +256,11 @@ class DocumentService
             $templateProcessor->setValues($tableTotalRow);
 
             $documentName = $this->getFileWithSuffix(self::ACCEPTANCE_ACT, '-' . $cargo->id);
-            $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
+            $documentPath = Storage::disk(self::DISK)->path('') . $documentName;
             $templateProcessor->saveAs($documentPath);
             $this->saveDocument($documentDto, $documentPath, $documentName);
-            Storage::disk(static::DISK)->delete($documentName);
-        } catch (Exception $e) {
+            Storage::disk(self::DISK)->delete($documentName);
+        } catch (\Throwable $e) {
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
         }
@@ -273,8 +270,6 @@ class DocumentService
 
     /**
      * Сформировать "Карточка сборки отправления"
-     * @param  Shipment $shipment
-     * @return DocumentDto
      */
     public function getShipmentAssemblingCard(Shipment $shipment): DocumentDto
     {
@@ -324,11 +319,11 @@ class DocumentService
             $templateProcessor->setValues($fieldValues);
 
             $documentName = $this->getFileWithSuffix(self::ASSEMBLING_CARD, '-' . $shipment->number);
-            $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
+            $documentPath = Storage::disk(self::DISK)->path('') . $documentName;
             $templateProcessor->saveAs($documentPath);
             $this->saveDocument($documentDto, $documentPath, $documentName);
-            Storage::disk(static::DISK)->delete($documentName);
-        } catch (Exception $e) {
+            Storage::disk(self::DISK)->delete($documentName);
+        } catch (\Throwable $e) {
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
         }
@@ -338,14 +333,10 @@ class DocumentService
 
     /**
      * Сформировать "Опись отправления заказа"
-     * @param  Shipment $shipment
-     * @return DocumentDto
      */
     public function getShipmentInventory(Shipment $shipment): DocumentDto
     {
         $documentDto = new DocumentDto();
-        /** @var DeliveryService $deliveryService */
-        $deliveryService = resolve(DeliveryService::class);
 
         try {
             $templateProcessor = $this->getTemplateProcessor(self::INVENTORY);
@@ -386,11 +377,11 @@ class DocumentService
             $templateProcessor->setValues($fieldValues);
 
             $documentName = $this->getFileWithSuffix(self::INVENTORY, '-' . $shipment->number);
-            $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
+            $documentPath = Storage::disk(self::DISK)->path('') . $documentName;
             $templateProcessor->saveAs($documentPath);
             $this->saveDocument($documentDto, $documentPath, $documentName);
-            Storage::disk(static::DISK)->delete($documentName);
-        } catch (Exception $e) {
+            Storage::disk(self::DISK)->delete($documentName);
+        } catch (\Throwable $e) {
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
         }
@@ -399,15 +390,13 @@ class DocumentService
     }
 
     /**
-     * @param  Order  $order
-     * @param  int|null $basketItemId - id элемента корзины, для которого необходимо получить pdf-файл с билетами
-     * @return DocumentDto
+     * @param int|null $basketItemId - id элемента корзины, для которого необходимо получить pdf-файл с билетами
      * @throws \Throwable
      */
     public function getOrderPdfTickets(Order $order, ?int $basketItemId = null): DocumentDto
     {
         if (!$order->isPaid()) {
-            throw new Exception("Order is not paid");
+            throw new Exception('Order is not paid');
         }
 
         $documentDto = new DocumentDto();
@@ -426,13 +415,13 @@ class DocumentService
             ])->render();
             $pdf->addPage($html, [], Pdf::TYPE_HTML);
             $documentName = $this->getFileWithSuffix(self::TICKETS, '-' . $order->number);
-            $documentPath = Storage::disk(static::DISK)->path('') . $documentName;
-            if (Storage::disk(static::DISK)->put($documentName, '')) {
+            $documentPath = Storage::disk(self::DISK)->path('') . $documentName;
+            if (Storage::disk(self::DISK)->put($documentName, '')) {
                 $pdf->saveAs($documentPath);
                 $this->saveDocument($documentDto, $documentPath, $documentName);
-                Storage::disk(static::DISK)->delete($documentName);
+                Storage::disk(self::DISK)->delete($documentName);
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
         }
@@ -443,8 +432,6 @@ class DocumentService
     /**
      * Получить название файла с шаблоном для программного заполнения данными.
      * Например, для claim-act.docx будет claim-act-template.docx
-     * @param  string  $template
-     * @return string
      */
     protected function getFileWithSuffix(string $template, string $suffix): string
     {
@@ -454,8 +441,6 @@ class DocumentService
     }
 
     /**
-     * @param  string  $template
-     * @return TemplateProcessor
      * @throws \PhpOffice\PhpWord\Exception\CopyFileException
      * @throws \PhpOffice\PhpWord\Exception\CreateTemporaryFileException
      */
@@ -463,13 +448,12 @@ class DocumentService
     {
         $programTemplate = $this->getFileWithSuffix($template, self::TEMPLATE_SUFFIX);
 
-        return new TemplateProcessor(Storage::disk(static::DISK)->path($programTemplate));
+        return new TemplateProcessor(Storage::disk(self::DISK)->path($programTemplate));
     }
 
     /**
      * Получить товары по офферам
-     * @param  array  $offersIds
-     * @return Collection
+     * @param array $offersIds
      */
     protected function getProductsByOffers(array $offersIds): Collection
     {
@@ -483,20 +467,15 @@ class DocumentService
 
     /**
      * Сохранить сформированный документ в сервис file
-     * @param  DocumentDto  $documentDto
-     * @param  string  $documentPath - полный путь к документу на сервере oms
-     * @param  string  $documentName - название файла документа
+     * @param string $documentPath - полный путь к документу на сервере oms
+     * @param string $documentName - название файла документа
      */
     protected function saveDocument(DocumentDto $documentDto, string $documentPath, string $documentName)
     {
         try {
             /** @var FileService $fileService */
             $fileService = resolve(FileService::class);
-            $fileId = $fileService->uploadFile(
-                'oms-documents',
-                $documentName,
-                $documentPath
-            );
+            $fileId = $fileService->uploadFile('oms-documents', $documentName, $documentPath);
             if ($fileId) {
                 $documentDto->success = true;
                 $documentDto->file_id = $fileId;
@@ -504,7 +483,7 @@ class DocumentService
                 $documentDto->success = false;
                 $documentDto->message = 'Ошибка при сохранении документа';
             }
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $documentDto->success = false;
             $documentDto->message = $e->getMessage();
         }
