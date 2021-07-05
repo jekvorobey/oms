@@ -57,7 +57,7 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/payments.log'),
             'level' => 'debug',
-            'permission' => 0666,
+            'permission' => 0777, // TODO: temporary solution, before ELK
         ],
 
         'slack' => [
