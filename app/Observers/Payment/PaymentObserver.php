@@ -15,7 +15,6 @@ class PaymentObserver
 {
     /**
      * Handle the order "created" event.
-     * @param  Payment $payment
      * @return void
      */
     public function created(Payment $payment)
@@ -26,7 +25,6 @@ class PaymentObserver
 
     /**
      * Handle the order "updated" event.
-     * @param  Payment $payment
      * @return void
      */
     public function updated(Payment $payment)
@@ -37,7 +35,6 @@ class PaymentObserver
 
     /**
      * Handle the order "saved" event.
-     * @param  Payment $payment
      * @return void
      */
     public function saved(Payment $payment)
@@ -52,7 +49,6 @@ class PaymentObserver
 
     /**
      * Handle the order "deleting" event.
-     * @param  Payment $payment
      * @throws \Exception
      */
     public function deleting(Payment $payment)

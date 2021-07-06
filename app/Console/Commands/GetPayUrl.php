@@ -27,7 +27,6 @@ class GetPayUrl extends Command
 
     /**
      * Execute the console command.
-     * @param PaymentService $paymentService
      * @throws \Exception
      */
     public function handle(PaymentService $paymentService)

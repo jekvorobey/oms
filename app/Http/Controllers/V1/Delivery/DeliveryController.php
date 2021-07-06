@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\V1\Delivery;
 
 use App\Http\Controllers\Controller;
@@ -26,11 +27,11 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-
 /**
  * Class DeliveryController
  * @package App\Http\Controllers\V1\Delivery
  */
+
 class DeliveryController extends Controller
 {
     /**
@@ -50,7 +51,6 @@ class DeliveryController extends Controller
      * )
      */
     use CountAction;
-
     /**
      * @OA\Get(
      *     path="api/v1/deliveries",
@@ -90,7 +90,6 @@ class DeliveryController extends Controller
      * )
      */
     use ReadAction;
-
     /**
      * @OA\Put(
      *     path="api/v1/deliveries/{id}",
@@ -107,7 +106,6 @@ class DeliveryController extends Controller
      * )
      */
     use UpdateAction;
-
     /**
      * @OA\Delete(
      *     path="api/v1/deliveries/{id}",
@@ -121,9 +119,6 @@ class DeliveryController extends Controller
      */
     use DeleteAction;
 
-    /**
-     * @inheritDoc
-     */
     public function modelClass(): string
     {
         return Delivery::class;
@@ -189,9 +184,6 @@ class DeliveryController extends Controller
      * )
      *
      * Подсчитать кол-во доставок заказа
-     * @param int $orderId
-     * @param  Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function countByOrder(int $orderId, Request $request): JsonResponse
     {
@@ -264,9 +256,6 @@ class DeliveryController extends Controller
      *     @OA\Response(response="500", description="unable to save delivery"),
      * )
      * Создать доставку
-     * @param  int  $orderId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function create(int $orderId, Request $request): JsonResponse
     {
@@ -290,7 +279,7 @@ class DeliveryController extends Controller
         }
 
         return response()->json([
-            'id' => $delivery->id
+            'id' => $delivery->id,
         ], 201);
     }
 
@@ -314,9 +303,6 @@ class DeliveryController extends Controller
      *     )
      * )
      * Список доставок заказа
-     * @param  int  $orderId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function readByOrder(int $orderId, Request $request): JsonResponse
     {
@@ -337,7 +323,7 @@ class DeliveryController extends Controller
             });
 
         return response()->json([
-            'items' => $items
+            'items' => $items,
         ]);
     }
 
@@ -351,9 +337,6 @@ class DeliveryController extends Controller
      *     @OA\Response(response="404", description="delivery not found"),
      * )
      * Отменить доставку
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      * @throws \Exception
      */
     public function cancel(int $id, OmsDeliveryService $deliveryService): Response
@@ -379,9 +362,6 @@ class DeliveryController extends Controller
      *     @OA\Response(response="404", description="delivery not found"),
      * )
      * Создать/обновить заказ на доставку у службы доставки
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      * @throws \Exception
      */
     public function saveDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
@@ -406,9 +386,6 @@ class DeliveryController extends Controller
      * )
      *
      * Отменить заказ на доставку у службы доставки
-     * @param  int  $id
-     * @param  OmsDeliveryService  $deliveryService
-     * @return Response
      */
     public function cancelDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
     {
@@ -423,7 +400,6 @@ class DeliveryController extends Controller
 
     /**
      * Получить кол-во доставок по каждой службе доставки за сегодня
-     * @return JsonResponse
      */
     public function countTodayByDeliveryServices(): JsonResponse
     {
@@ -439,7 +415,7 @@ class DeliveryController extends Controller
                     'delivery_service_id' => $delivery->delivery_service,
                     'qty_today' => $delivery['total'],
                 ];
-            })
+            }),
         ]);
     }
 }

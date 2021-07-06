@@ -37,7 +37,7 @@ class FixPublicEventOrdersStatus extends Command
         /** @var Collection|Order[] $orders */
         $orders = Order::query()
             ->where('type', Basket::TYPE_MASTER)
-            ->where(function(Builder $query) {
+            ->where(function (Builder $query) {
                 $query->whereIn('status', [OrderStatus::AWAITING_CONFIRMATION, OrderStatus::CREATED])
                     ->orWhereHas('orderReturns');
             })

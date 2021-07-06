@@ -113,8 +113,6 @@ class CheckoutController extends Controller
      *     ),
      *     @OA\Response(response="400", description="Bad request"),
      * )
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function commit(Request $request): JsonResponse
     {
@@ -221,7 +219,7 @@ class CheckoutController extends Controller
         $checkoutOrder = CheckoutOrder::fromArray($data);
         try {
             [$orderId, $orderNumber] = $checkoutOrder->save();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             throw new HttpException($e->getCode() ? : 500, $e->getMessage());
         }
 

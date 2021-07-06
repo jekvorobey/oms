@@ -9,9 +9,10 @@ namespace App\Models\Order;
  */
 class OrderConfirmationType
 {
-    /** @var int - подтвердить заказ по SMS */
+    /** подтвердить заказ по SMS */
     public const SMS = 1;
-    /** @var int - подтвердить заказ через звонок оператора */
+
+    /** подтвердить заказ через звонок оператора */
     public const CALL = 2;
 
     /** @var int */
@@ -20,15 +21,21 @@ class OrderConfirmationType
     public $name;
 
     /**
+     * OrderConfirmationType constructor.
+     */
+    public function __construct(int $id, string $name)
+    {
+        $this->id = $id;
+        $this->name = $name;
+    }
+
+    /**
      * @return array
      */
     public static function all()
     {
         return [
-            self::SMS => new self(
-                self::SMS,
-                'Подтвердить заказ по SMS'
-            ),
+            self::SMS => new self(self::SMS, 'Подтвердить заказ по SMS'),
             self::CALL => new self(
                 self::CALL,
                 'Подтвердить заказ через звонок оператора'
@@ -42,16 +49,5 @@ class OrderConfirmationType
     public static function validValues(): array
     {
         return array_keys(static::all());
-    }
-
-    /**
-     * OrderConfirmationType constructor.
-     * @param  int  $id
-     * @param  string  $name
-     */
-    public function __construct(int $id, string $name)
-    {
-        $this->id = $id;
-        $this->name = $name;
     }
 }

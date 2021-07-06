@@ -34,10 +34,6 @@ class ShipmentDocumentsController extends Controller
      *     @OA\Response(response="500", description="bad request")
      * )
      * Сформировать "Акт приема-передачи по отправлению"
-     * @param  int  $shipmentId
-     * @param DeliveryService $deliveryService
-     * @param DocumentService $documentService
-     * @return JsonResponse
      */
     public function acceptanceAct(
         int $shipmentId,
@@ -70,10 +66,6 @@ class ShipmentDocumentsController extends Controller
      *     @OA\Response(response="500", description="bad request")
      * )
      * Сформировать "Карточка сборки отправления"
-     * @param  int  $shipmentId
-     * @param DeliveryService $deliveryService
-     * @param DocumentService $documentService
-     * @return JsonResponse
      */
     public function assemblingCard(
         int $shipmentId,
@@ -106,10 +98,6 @@ class ShipmentDocumentsController extends Controller
      *     @OA\Response(response="500", description="bad request")
      * )
      * Сформировать "Опись отправления заказа"
-     * @param  int  $shipmentId
-     * @param DeliveryService $deliveryService
-     * @param DocumentService $documentService
-     * @return JsonResponse
      */
     public function inventory(
         int $shipmentId,
@@ -126,10 +114,6 @@ class ShipmentDocumentsController extends Controller
         return $this->getResponse($documentDto);
     }
 
-    /**
-     * @param  DocumentDto  $documentDto
-     * @return JsonResponse
-     */
     protected function getResponse(DocumentDto $documentDto): JsonResponse
     {
         if ($documentDto->success && $documentDto->file_id) {

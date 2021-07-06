@@ -29,7 +29,6 @@ class OrderTicket2Pdf extends Command
 
     /**
      * Execute the console command.
-     * @param  DocumentService  $documentService
      * @throws \Throwable
      */
     public function handle(DocumentService $documentService)

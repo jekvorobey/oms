@@ -19,7 +19,6 @@ class OrderReturnService
 {
     /**
      * Создать возврат по заказу
-     * @param  OrderReturnDto  $orderReturnDto
      * @return array - [id, number]
      * @throws \Exception
      */
@@ -80,7 +79,7 @@ class OrderReturnService
                 if ($orderReturnItem->qty > $basketItem->qty) {
                     throw new \Exception("Returning qty for BasketItem with id={$item->basket_item_id} more than at order");
                 }
-                $orderReturnItem->price = ($basketItem->price / $basketItem->qty) * $orderReturnItem->qty;
+                $orderReturnItem->price = $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
                 $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии
                 $orderReturn->save();
             }
@@ -127,7 +126,7 @@ class OrderReturnService
                  */
                 foreach ($orderReturnDto->items as $itemDto) {
                     if ($orderReturnItems->has($itemDto->basket_item_id)) {
-                        $orderReturnItem = $orderReturnItems[$itemDto->basket_item_id];
+                        // $orderReturnItem = $orderReturnItems[$itemDto->basket_item_id];
                         //todo
                     }
                 }

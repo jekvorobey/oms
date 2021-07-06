@@ -188,10 +188,12 @@ class Shipment extends OmsModel
 {
     use WithWeightAndSizes;
 
+    private const SIDES = ['width', 'height', 'length'];
+
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = [
+    public const FILLABLE = [
         'delivery_id',
         'merchant_id',
         'psd',
@@ -208,76 +210,50 @@ class Shipment extends OmsModel
     /** @var string */
     public $notificator = ShipmentNotification::class;
 
-    /**
-     * @var array
-     */
-    protected $fillable = self::FILLABLE;
-
     /** @var array */
-    private const SIDES = ['width', 'height', 'length'];
+    protected $fillable = self::FILLABLE;
 
     /** @var string */
     protected $table = 'shipments';
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems'];
 
     /**
      * @param int $orderNumber - порядковый номер заказа
      * @param int $deliveryNumber - порядковый номер доставки
      * @param int $i - порядковый номер отправления в заказе
-     * @return string
      */
     public static function makeNumber(int $orderNumber, int $deliveryNumber, int $i): string
     {
         return $orderNumber . '-' . $deliveryNumber . '-' . sprintf("%'02d", $i);
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function delivery(): BelongsTo
     {
         return $this->belongsTo(Delivery::class);
     }
 
-    /**
-     * @return HasMany
-     */
     public function items(): HasMany
     {
         return $this->hasMany(ShipmentItem::class);
     }
 
-    /**
-     * @return BelongsToMany
-     */
     public function basketItems(): BelongsToMany
     {
         return $this->belongsToMany(BasketItem::class, (new ShipmentItem())->getTable());
     }
 
-    /**
-     * @return HasMany
-     */
     public function packages(): HasMany
     {
         return $this->hasMany(ShipmentPackage::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function cargo(): BelongsTo
     {
         return $this->belongsTo(Cargo::class);
     }
 
-    /**
-     * @return HasOne
-     */
     public function export(): HasOne
     {
         return $this->hasOne(ShipmentExport::class);
@@ -304,16 +280,14 @@ class Shipment extends OmsModel
 
     /**
      * Кол-во коробок отправления
-     * @return int
      */
     public function getPackageQtyAttribute(): int
     {
-        return (int)$this->packages()->count();
+        return (int) $this->packages()->count();
     }
 
     /**
      * Рассчитать вес отправления
-     * @return float
      */
     public function calcWeight(): float
     {
@@ -334,7 +308,6 @@ class Shipment extends OmsModel
 
     /**
      * Рассчитать объем отправления
-     * @return float
      */
     public function calcVolume(): float
     {
@@ -356,7 +329,6 @@ class Shipment extends OmsModel
 
     /**
      * Рассчитать значение максимальной стороны (длины, ширины или высоты) из всех отправлений
-     * @return float
      */
     public function calcMaxSide(): float
     {
@@ -386,8 +358,6 @@ class Shipment extends OmsModel
 
     /**
      * Определить название максимальной стороны (длины, ширины или высоты) из всех отправлений
-     * @param  float  $maxSide
-     * @return string
      */
     public function identifyMaxSideName(float $maxSide): string
     {
@@ -418,9 +388,6 @@ class Shipment extends OmsModel
     }
 
     /**
-     * @param  Builder  $query
-     * @param  RestQuery  $restQuery
-     * @return Builder
      * @throws \Pim\Core\PimException
      */
     public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
@@ -463,7 +430,7 @@ class Shipment extends OmsModel
         };
         //Фильтр по коду оффера мерчанта из ERP мерчанта
         $offerXmlIdFilter = $restQuery->getFilter('offer_xml_id');
-        if($offerXmlIdFilter) {
+        if ($offerXmlIdFilter) {
             [$op, $value] = $offerXmlIdFilter[0];
             /** @var OfferService $offerService */
             $offerService = resolve(OfferService::class);
@@ -485,14 +452,17 @@ class Shipment extends OmsModel
         }
 
         //Функция-фильтр по свойству товара
-        $filterByProductField = function ($filterField, $productField) use (
+        $filterByProductField = function (
+            $filterField,
+            $productField
+        ) use (
             $restQuery,
             $modifiedRestQuery,
             $merchantId,
             $filterByOfferIds
         ) {
             $productVendorCodeFilter = $restQuery->getFilter($filterField);
-            if($productVendorCodeFilter) {
+            if ($productVendorCodeFilter) {
                 [$op, $value] = $productVendorCodeFilter[0];
 
                 /** @var ProductService $productService */
@@ -530,7 +500,7 @@ class Shipment extends OmsModel
         $filterByProductField('brands', 'brand_id');
 
         //Функция-фильтр по полям заказа связанного с отправлением
-        $filterByOrderField = function (String $filterName, String $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
+        $filterByOrderField = function (string $filterName, string $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
             $orderFieldFilter = $restQuery->getFilter($filterName);
             if ($orderFieldFilter) {
                 [$op, $value] = $orderFieldFilter[0];
@@ -567,7 +537,7 @@ class Shipment extends OmsModel
         }
 
         //Функция-фильтр по полям доставки связанной с отправлением
-        $filterByDeliveryField = function (String $filterName, String $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
+        $filterByDeliveryField = function (string $filterName, string $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
             $deliveryFieldFilter = $restQuery->getFilter($filterName);
             if ($deliveryFieldFilter) {
                 [$op, $value] = $deliveryFieldFilter[0];
@@ -592,10 +562,10 @@ class Shipment extends OmsModel
         //Фильтр по службе доставки на нулевой миле
         $deliveryServiceZeroMileFilter = $restQuery->getFilter('delivery_service_zero_mile');
         if ($deliveryServiceZeroMileFilter) {
-            [$op, $value] = $deliveryServiceZeroMileFilter[0];
+            [, $value] = $deliveryServiceZeroMileFilter[0];
 
             $query->whereIn('delivery_service_zero_mile', $value)
-                ->orWhere(function (Builder $query) use ($op, $value) {
+                ->orWhere(function (Builder $query) use ($value) {
                     $query->whereNull('delivery_service_zero_mile')
                         ->whereHas('delivery', function (Builder $query) use ($value) {
                             $query->whereIn('delivery_service', $value);
@@ -606,10 +576,10 @@ class Shipment extends OmsModel
         }
 
         //Функция-фильтр по полям адреса доставки
-        $filterByDeliveryAddressFields = function (String $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
+        $filterByDeliveryAddressFields = function (string $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
             $deliveryAddressFieldFilter = $restQuery->getFilter('delivery_address_' . $fieldName);
             if ($deliveryAddressFieldFilter) {
-                [$op, $value] = $deliveryAddressFieldFilter[0];
+                [, $value] = $deliveryAddressFieldFilter[0];
 
                 $query->whereHas('delivery', function (Builder $query) use ($fieldName, $value) {
                     $query->whereJsonContains('delivery_address->' . $fieldName, $value);
@@ -632,7 +602,6 @@ class Shipment extends OmsModel
     }
 
     /**
-     * @param  RestQuery  $restQuery
      * @return array
      */
     public function toRest(RestQuery $restQuery): array

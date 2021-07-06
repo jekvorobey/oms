@@ -227,82 +227,52 @@ class Order extends OmsModel
         'certificates' => 'array',
     ];
 
-    /**
-     * @return integer
-     */
     public static function makeNumber(): int
     {
         $ordersCount = (self::all()->last()->id ?? 0) + 1000000;
-        return (int)$ordersCount + 1;
+        return (int) $ordersCount + 1;
     }
 
-    /**
-     * @return HasOne
-     */
     public function basket(): HasOne
     {
         return $this->hasOne(Basket::class, 'id', 'basket_id');
     }
 
-    /**
-     * @return HasMany
-     */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
     }
 
-    /**
-     * @return HasMany
-     */
     public function deliveries(): HasMany
     {
         return $this->hasMany(Delivery::class);
     }
 
-    /**
-     * @return HasOne
-     */
     public function comment(): HasOne
     {
         return $this->hasOne(OrderComment::class);
     }
 
-    /**
-     * @return HasMany
-     */
     public function discounts(): HasMany
     {
         return $this->hasMany(OrderDiscount::class, 'order_id');
     }
 
-    /**
-     * @return HasMany
-     */
     public function promoCodes(): HasMany
     {
         return $this->hasMany(OrderPromoCode::class, 'order_id');
     }
 
-    /**
-     * @return HasMany
-     */
     public function bonuses(): HasMany
     {
         return $this->hasMany(OrderBonus::class, 'order_id');
     }
 
-    /**
-     * @return HasMany
-     */
     public function orderReturns(): HasMany
     {
         return $this->hasMany(OrderReturn::class);
     }
 
-    /**
-     * @return MorphToMany
-     */
     public function history(): MorphToMany
     {
         return $this->morphToMany(History::class, 'main_entity', (new HistoryMainEntity())->getTable());
@@ -312,9 +282,6 @@ class Order extends OmsModel
      * Учитывать те заказы, в которых использовалась скидка $discountId,
      * данная скидка должна быть либо активирована без промокода,
      * либо активирована промокодом, но со статусом ACTIVE
-     *
-     * @param Builder $query
-     * @param int     $discountId
      */
     public function scopeForDiscountReport(Builder $query, int $discountId)
     {
@@ -352,7 +319,6 @@ class Order extends OmsModel
 
     /**
      * Получить телефон из профиля пользователя.
-     * @return string
      */
     public function customerPhone(): string
     {
@@ -368,7 +334,6 @@ class Order extends OmsModel
 
     /**
      * Заказ оплачен?
-     * @return bool
      */
     public function isPaid(): bool
     {
@@ -377,7 +342,6 @@ class Order extends OmsModel
 
     /**
      * Заказ может быть обработан?
-     * @return bool
      */
     public function canBeProcessed(): bool
     {
@@ -390,7 +354,6 @@ class Order extends OmsModel
 
     /**
      * Заказ является заказом с товарами?
-     * @return bool
      */
     public function isProductOrder(): bool
     {
@@ -399,7 +362,6 @@ class Order extends OmsModel
 
     /**
      * Заказ является заказом с мастер-классами?
-     * @return bool
      */
     public function isPublicEventOrder(): bool
     {
@@ -408,7 +370,6 @@ class Order extends OmsModel
 
     /**
      * Заказ является заказом порадочного сертификата?
-     * @return bool
      */
     public function isCertificateOrder(): bool
     {
@@ -417,7 +378,6 @@ class Order extends OmsModel
 
     /**
      * Заказ является консолидированным?
-     * @return bool
      */
     public function isConsolidatedDelivery(): bool
     {

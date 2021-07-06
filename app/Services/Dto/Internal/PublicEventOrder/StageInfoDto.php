@@ -31,21 +31,17 @@ class StageInfoDto
     /** @var int[] */
     public $speakerIds;
 
-    /** @var string */
     public const DATE_FORMAT = 'Y-m-d';
-    /** @var string */
+
     public const TIME_FORMAT = 'H:i:s';
 
-    /**
-     * @param  string  $date
-     */
     public function setDate(string $date): void
     {
         $this->date = Carbon::createFromFormat(self::DATE_FORMAT, $date);
     }
 
     /**
-     * @param  string  $date
+     * @param string $date
      */
     public function setTimeFrom(string $time): void
     {
@@ -53,7 +49,7 @@ class StageInfoDto
     }
 
     /**
-     * @param  string  $date
+     * @param string $date
      */
     public function setTimeTo(string $time): void
     {

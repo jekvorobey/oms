@@ -42,7 +42,6 @@ class ShipmentObserver
 
     /**
      * Handle the shipment "created" event.
-     * @param  Shipment $shipment
      * @return void
      */
     public function created(Shipment $shipment)
@@ -52,21 +51,14 @@ class ShipmentObserver
 
     /**
      * Handle the shipment "updating" event.
-     * @param  Shipment $shipment
-     * @return bool
      */
     public function updating(Shipment $shipment): bool
     {
-        if (!$this->checkAllProductsPacked($shipment)) {
-            return false;
-        }
-
-        return true;
+        return $this->checkAllProductsPacked($shipment);
     }
 
     /**
      * Handle the shipment "updated" event.
-     * @param  Shipment  $shipment
      * @return void
      * @throws Exception
      */
@@ -82,7 +74,6 @@ class ShipmentObserver
 
     /**
      * Handle the shipment "deleting" event.
-     * @param  Shipment $shipment
      * @throws Exception
      */
     public function deleting(Shipment $shipment)
@@ -96,7 +87,6 @@ class ShipmentObserver
 
     /**
      * Handle the shipment "deleted" event.
-     * @param  Shipment $shipment
      * @throws Exception
      */
     public function deleted(Shipment $shipment)
@@ -109,7 +99,6 @@ class ShipmentObserver
 
     /**
      * Handle the order "saving" event.
-     * @param  Shipment $shipment
      * @return void
      */
     public function saving(Shipment $shipment)
@@ -123,7 +112,6 @@ class ShipmentObserver
 
     /**
      * Handle the shipment "saved" event.
-     * @param  Shipment $shipment
      * @throws Exception
      */
     public function saved(Shipment $shipment)
@@ -140,12 +128,11 @@ class ShipmentObserver
 
     /**
      * Проверить, что все товары отправления упакованы по коробкам, если статус меняется на "Собрано"
-     * @param Shipment $shipment
-     * @return bool
      */
     protected function checkAllProductsPacked(Shipment $shipment): bool
     {
-        if ($shipment->status != $shipment->getOriginal('status') &&
+        if (
+            $shipment->status != $shipment->getOriginal('status') &&
             $shipment->status == ShipmentStatus::ASSEMBLED
         ) {
             /** @var DeliveryService $deliveryService */
@@ -159,7 +146,6 @@ class ShipmentObserver
 
     /**
      * Пересчитать груз и доставку при сохранении отправления
-     * @param Shipment $shipment
      */
     protected function recalcCargoAndDeliveryOnSaved(Shipment $shipment): void
     {
@@ -182,7 +168,6 @@ class ShipmentObserver
 
     /**
      * Пересчитать старый и новый грузы при сохранении отправления
-     * @param Shipment $shipment
      */
     protected function recalcCargosOnSaved(Shipment $shipment): void
     {
@@ -207,12 +192,13 @@ class ShipmentObserver
 
     /**
      * Пометить заказ как проблемный в случае проблемного отправления
-     * @param Shipment $shipment
      */
     protected function markOrderAsProblem(Shipment $shipment): void
     {
-        if ($shipment->is_problem != $shipment->getOriginal('is_problem') &&
-            $shipment->is_problem) {
+        if (
+            $shipment->is_problem != $shipment->getOriginal('is_problem') &&
+            $shipment->is_problem
+        ) {
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->markAsProblem($shipment->delivery->order);
@@ -221,7 +207,6 @@ class ShipmentObserver
 
     /**
      * Пометить заказ как непроблемный, если все его отправления непроблемные
-     * @param Shipment $shipment
      */
     protected function markOrderAsNonProblem(Shipment $shipment): void
     {
@@ -236,7 +221,6 @@ class ShipmentObserver
      * Создать/обновить заказ на доставку
      * Создание заказа на доставку происходит когда все отправления доставки получают статус "Все товары отправления в наличии"
      * Обновление заказа на доставку происходит когда отправление доставки получает статус "Собрано"
-     * @param Shipment $shipment
      */
     protected function upsertDeliveryOrder(Shipment $shipment): void
     {
@@ -253,7 +237,7 @@ class ShipmentObserver
                 /** @var DeliveryService $deliveryService */
                 $deliveryService = resolve(DeliveryService::class);
                 $deliveryService->saveDeliveryOrder($delivery);
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
                 logger(['upsertDeliveryOrder error' => $e->getMessage()]);
             }
         }
@@ -261,7 +245,6 @@ class ShipmentObserver
 
     /**
      * Добавить отправление в груз
-     * @param Shipment $shipment
      */
     protected function add2Cargo(Shipment $shipment): void
     {
@@ -269,13 +252,12 @@ class ShipmentObserver
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
             $deliveryService->addShipment2Cargo($shipment);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
         }
     }
 
     /**
      * Добавить информацию о добавлении/удалении отправления в/из груз/а
-     * @param  Shipment  $shipment
      */
     protected function add2CargoHistory(Shipment $shipment): void
     {
@@ -292,7 +274,6 @@ class ShipmentObserver
 
     /**
      * Установить дату изменения статуса отправления
-     * @param  Shipment $shipment
      */
     protected function setStatusAt(Shipment $shipment): void
     {
@@ -303,7 +284,6 @@ class ShipmentObserver
 
     /**
      * Установить дату изменения статуса оплаты отправления
-     * @param  Shipment $shipment
      */
     protected function setPaymentStatusAt(Shipment $shipment): void
     {
@@ -314,7 +294,6 @@ class ShipmentObserver
 
     /**
      * Установить дату установки флага проблемного отправления
-     * @param  Shipment $shipment
      */
     protected function setProblemAt(Shipment $shipment): void
     {
@@ -325,7 +304,6 @@ class ShipmentObserver
 
     /**
      * Установить дату отмены отправления
-     * @param  Shipment $shipment
      */
     protected function setCanceledAt(Shipment $shipment): void
     {
@@ -336,7 +314,6 @@ class ShipmentObserver
 
     /**
      * Установить фактическую дату и время, когда отправление собрано (получило статус "Готово к отгрузке")
-     * @param  Shipment $shipment
      */
     protected function setFsd(Shipment $shipment): void
     {
@@ -348,7 +325,6 @@ class ShipmentObserver
     /**
      * Переводим в статус "Ожидает проверки АОЗ" из статуса "Оформлено",
      * если статус доставки "Ожидает проверки АОЗ"
-     * @param  Shipment $shipment
      */
     protected function setAwaitingCheckStatus(Shipment $shipment): void
     {
@@ -360,7 +336,6 @@ class ShipmentObserver
     /**
      * Переводим в статус "Ожидает подтверждения Мерчантом" из статуса "Оформлено",
      * если статус доставки "Ожидает подтверждения Мерчантом"
-     * @param  Shipment $shipment
      */
     protected function setAwaitingConfirmationStatus(Shipment $shipment): void
     {
@@ -371,7 +346,6 @@ class ShipmentObserver
 
     /**
      * Автоматическая установка статуса для доставки, если все её отправления получили нужный статус
-     * @param  Shipment  $shipment
      */
     protected function setStatusToDelivery(Shipment $shipment): void
     {
@@ -383,8 +357,9 @@ class ShipmentObserver
 
             $allShipmentsHasStatus = true;
             foreach ($delivery->shipments as $deliveryShipment) {
-                if ($deliveryShipment->is_canceled)
+                if ($deliveryShipment->is_canceled) {
                     continue;
+                }
 
                 if ($deliveryShipment->status < $shipment->status) {
                     $allShipmentsHasStatus = false;
@@ -401,7 +376,6 @@ class ShipmentObserver
 
     /**
      * Автоматическая установка флага отмены для доставки, если все её отправления отменены
-     * @param  Shipment  $shipment
      * @throws Exception
      */
     protected function setIsCanceledToDelivery(Shipment $shipment): void
@@ -431,7 +405,6 @@ class ShipmentObserver
     /**
      * Автоматическая установка статуса "Принят Логистическим Оператором" для груза,
      * если все его отправления получили статус "Принято Логистическим Оператором"
-     * @param  Shipment  $shipment
      */
     protected function setTakenStatusToCargo(Shipment $shipment): void
     {
@@ -459,7 +432,6 @@ class ShipmentObserver
     /**
      * Переводим доставку в статус "Предзаказ: ожидаем поступления товара",
      * если статус отправления "Предзаказ: ожидаем поступления товара"
-     * @param  Shipment $shipment
      */
     protected function setPreOrderStatusToDelivery(Shipment $shipment): void
     {
@@ -472,11 +444,11 @@ class ShipmentObserver
 
     public function sendCreatedNotification(Shipment $shipment)
     {
-        if(!in_array($shipment->status, static::ELIGIBLE_STATUS)) {
+        if (!in_array($shipment->status, self::ELIGIBLE_STATUS)) {
             return true;
         }
 
-        if($shipment->status == $shipment->getOriginal('status')) {
+        if ($shipment->status == $shipment->getOriginal('status')) {
             return true;
         }
 
@@ -489,7 +461,7 @@ class ShipmentObserver
             $operatorService = app(OperatorService::class);
 
             $operators = $operatorService->operators(
-                (new RestQuery)
+                (new RestQuery())
                     ->setFilter('merchant_id', '=', $shipment->merchant_id)
             );
 
@@ -504,14 +476,14 @@ class ShipmentObserver
 
                 $vars = [
                     'QUANTITY_ORDERS' => 1,
-                    'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
+                    'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
                     'SUM_ORDERS' => (int) $shipment->cost,
                     'GOODS_NAME' => $shipment->items->first()->basketItem->name,
                     'QUANTITY_GOODS' => (int) $shipment->items->first()->basketItem->qty,
                     'PRISE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                     'ALL_QUANTITY_GOODS' => (int) $shipment->items()->with('basketItem')->get()->sum('basketItem.qty'),
-                    'ALL_PRISE_GOODS' => (int) $shipment->cost
+                    'ALL_PRISE_GOODS' => (int) $shipment->cost,
                 ];
 
                 if ($user) {
@@ -536,12 +508,8 @@ class ShipmentObserver
                 }
             }
 
-            $serviceNotificationService->send(
-                $operators[0]->user_id,
-                'klientoformlen_novyy_zakaz',
-                $vars
-            );
-        } catch (\Exception $e) {
+            $serviceNotificationService->send($operators[0]->user_id, 'klientoformlen_novyy_zakaz', $vars);
+        } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
         }
     }
@@ -552,8 +520,11 @@ class ShipmentObserver
             $serviceNotificationService = app(ServiceNotificationService::class);
             $operatorService = app(OperatorService::class);
 
-            $operators = $operatorService->operators((new RestQuery)->setFilter('merchant_id', '=',
-                $shipment->merchant_id));
+            $operators = $operatorService->operators((new RestQuery())->setFilter(
+                'merchant_id',
+                '=',
+                $shipment->merchant_id
+            ));
 
             foreach ($operators as $operator) {
                 $userService = app(UserService::class);
@@ -574,8 +545,8 @@ class ShipmentObserver
                                     'QUANTITY_ORDERS' => 1,
                                     'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                                    'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
-                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price
+                                    'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
+                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                                 ]
                             );
                             break;
@@ -588,8 +559,8 @@ class ShipmentObserver
                                     'QUANTITY_ORDERS' => 1,
                                     'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                                     'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                                    'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
-                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price
+                                    'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
+                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                                 ]
                             );
                             break;
@@ -605,7 +576,7 @@ class ShipmentObserver
                                 'sms',
                                 [
                                     'QUANTITY_ORDERS' => 1,
-                                    'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                                    'LINK_ORDERS' => sprintf('%s/shipment/%d', config('mas.masHost'), $shipment->id),
                                 ]
                             );
                             break;
@@ -616,7 +587,7 @@ class ShipmentObserver
                                 'email',
                                 [
                                     'QUANTITY_ORDERS' => 1,
-                                    'LINK_ORDERS' => sprintf("%s/shipment/%d", config('mas.masHost'), $shipment->id)
+                                    'LINK_ORDERS' => sprintf('%s/shipment/%d', config('mas.masHost'), $shipment->id),
                                 ]
                             );
                             break;
@@ -639,12 +610,12 @@ class ShipmentObserver
                         'QUANTITY_ORDERS' => 1,
                         'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
                         'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                        'LINK_ORDERS' => sprintf("%s/shipment/list/%d", config('mas.masHost'), $shipment->id),
-                        'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price
+                        'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
+                        'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
                     ]
                 );
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
         }
     }

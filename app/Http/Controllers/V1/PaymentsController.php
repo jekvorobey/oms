@@ -46,11 +46,6 @@ class PaymentsController extends Controller
      *     @OA\Response(response="404", description="not found"),
      *     @OA\Response(response="405", description="access denied"),
      * )
-     *
-     * @param  int  $id
-     * @param  Request  $request
-     * @param  PaymentService  $paymentService
-     * @return JsonResponse
      */
     public function start(int $id, Request $request, PaymentService $paymentService): JsonResponse
     {
@@ -74,7 +69,7 @@ class PaymentsController extends Controller
         }
 
         return response()->json([
-            'paymentLink' => $link
+            'paymentLink' => $link,
         ]);
     }
 
@@ -101,9 +96,6 @@ class PaymentsController extends Controller
      *     ),
      *     @OA\Response(response="404", description="payments not found"),
      * )
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function getByOrder(Request $request): JsonResponse
     {
@@ -144,9 +136,6 @@ class PaymentsController extends Controller
      *     ),
      *     @OA\Response(response="404", description="payments not found"),
      * )
-     *
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function payments(Request $request): JsonResponse
     {
@@ -179,9 +168,6 @@ class PaymentsController extends Controller
      *     @OA\Response(response="200", description="ok"),
      *     @OA\Response(response="400", description="bad request"),
      * )
-     *
-     * @param Request $request
-     * @return Response
      */
     public function handlerLocal(Request $request): Response
     {
@@ -212,10 +198,7 @@ class PaymentsController extends Controller
      *     ),
      *     @OA\Response(response="400", description="bad request"),
      * )
-     *
-     * @param  Request  $request
      * @throws \Exception
-     * @return JsonResponse
      */
     public function handlerYandex(Request $request): JsonResponse
     {
@@ -223,7 +206,7 @@ class PaymentsController extends Controller
         $paymentSystem->handlePushPayment($request->all());
 
         return response()->json([
-            'processed' => 1
+            'processed' => 1,
         ]);
     }
 }

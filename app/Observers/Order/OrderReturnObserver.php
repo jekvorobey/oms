@@ -14,7 +14,6 @@ class OrderReturnObserver
 {
     /**
      * Handle the order return "created" event.
-     * @param  OrderReturn  $orderReturn
      * @return void
      */
     public function created(OrderReturn $orderReturn)
@@ -24,7 +23,6 @@ class OrderReturnObserver
 
     /**
      * Handle the order return "updated" event.
-     * @param  OrderReturn  $orderReturn
      * @return void
      * @throws \Exception
      */
@@ -35,7 +33,6 @@ class OrderReturnObserver
 
     /**
      * Handle the order return "saving" event.
-     * @param  OrderReturn  $orderReturn
      * @return void
      */
     public function saving(OrderReturn $orderReturn)
@@ -46,7 +43,6 @@ class OrderReturnObserver
 
     /**
      * Handle the order return "deleting" event.
-     * @param  OrderReturn  $orderReturn
      * @throws \Exception
      */
     public function deleting(OrderReturn $orderReturn)
@@ -60,7 +56,7 @@ class OrderReturnObserver
 
     /**
      * Установить дату изменения статуса возврата
-     * @param  OrderReturn $order
+     * @param OrderReturn $order
      */
     protected function setStatusAt(OrderReturn $orderReturn): void
     {

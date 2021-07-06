@@ -34,37 +34,27 @@ class ShipmentPackageItem extends OmsModel
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = [
+    public const FILLABLE = [
         'shipment_package_id',
         'basket_item_id',
         'qty',
         'set_by',
     ];
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $fillable = self::FILLABLE;
 
     /** @var string */
     protected $table = 'shipment_package_items';
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected static $restIncludes = ['shipmentPackage', 'basketItem'];
 
-    /**
-     * @return BelongsTo
-     */
     public function shipmentPackage(): BelongsTo
     {
         return $this->belongsTo(ShipmentPackage::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function basketItem(): BelongsTo
     {
         return $this->belongsTo(BasketItem::class);

@@ -63,7 +63,6 @@ class ShipmentPackagesController extends Controller
      * )
      */
     use ReadAction;
-
     /**
      * @OA\Put(
      *     path="api/v1/shipment-packages/{id}",
@@ -81,17 +80,11 @@ class ShipmentPackagesController extends Controller
      */
     use UpdateAction;
 
-    /**
-     * @inheritDoc
-     */
     public function modelClass(): string
     {
         return ShipmentPackage::class;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function modelItemsClass(): string
     {
         return ShipmentPackageItem::class;
@@ -135,9 +128,6 @@ class ShipmentPackagesController extends Controller
      *     )
      * )
      * Подсчитать кол-во коробок отправления
-     * @param int $shipmentId
-     * @param  Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function countByShipment(int $shipmentId, Request $request): JsonResponse
     {
@@ -191,9 +181,6 @@ class ShipmentPackagesController extends Controller
      *     @OA\Response(response="500", description="Не удалось сохранить данные"),
      * )
      * Создать коробку отправления
-     * @param  int  $shipmentId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function create(int $shipmentId, Request $request): JsonResponse
     {
@@ -217,7 +204,7 @@ class ShipmentPackagesController extends Controller
         }
 
         return response()->json([
-            'id' => $shipmentPackage->id
+            'id' => $shipmentPackage->id,
         ], 201);
     }
 
@@ -242,9 +229,6 @@ class ShipmentPackagesController extends Controller
      * )
      *
      * Список коробок отправления
-     * @param  int  $shipmentId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function readByShipment(int $shipmentId, Request $request): JsonResponse
     {
@@ -265,7 +249,7 @@ class ShipmentPackagesController extends Controller
             });
 
         return response()->json([
-            'items' => $items
+            'items' => $items,
         ]);
     }
 
@@ -281,9 +265,6 @@ class ShipmentPackagesController extends Controller
      * )
      *
      * Удалить коробку отправления со всем её содержимым
-     * @param  int  $id
-     * @param DeliveryService $deliveryService
-     * @return Response
      */
     public function delete(int $id, DeliveryService $deliveryService): Response
     {
@@ -294,7 +275,7 @@ class ShipmentPackagesController extends Controller
             }
 
             return response('', 204);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             throw new HttpException(500, $e->getMessage());
         }
     }
@@ -316,9 +297,6 @@ class ShipmentPackagesController extends Controller
      * )
      *
      * Подсчитать кол-во элементов (товаров с одного склада одного мерчанта) коробки отправления
-     * @param  int  $shipmentPackageId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function countItems(int $shipmentPackageId, Request $request): JsonResponse
     {
@@ -362,9 +340,6 @@ class ShipmentPackagesController extends Controller
      *     )
      * )
      * Список элементов (товаров с одного склада одного мерчанта) отправления
-     * @param  int  $shipmentPackageId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function readItems(int $shipmentPackageId, Request $request): JsonResponse
     {
@@ -385,7 +360,7 @@ class ShipmentPackagesController extends Controller
             });
 
         return response()->json([
-            'items' => $items
+            'items' => $items,
         ]);
     }
 
@@ -410,10 +385,6 @@ class ShipmentPackagesController extends Controller
      *     )
      * )
      * Информация об элементе (товар с одного склада одного мерчанта) коробки отправления
-     * @param  int  $shipmentPackageId
-     * @param  int  $basketItemId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function readItem(int $shipmentPackageId, int $basketItemId, Request $request): JsonResponse
     {
@@ -455,14 +426,13 @@ class ShipmentPackagesController extends Controller
      *     @OA\Response(response="500", description="bad request")
      * )
      * Добавить/обновить/удалить элемент (собранный товар с одного склада одного мерчанта) коробки отправления
-     * @param  int  $shipmentPackageId
-     * @param  int  $basketItemId
-     * @param  Request  $request
-     * @param  DeliveryService  $deliveryService
-     * @return Response
      */
-    public function setItem(int $shipmentPackageId, int $basketItemId, Request $request, DeliveryService $deliveryService): Response
-    {
+    public function setItem(
+        int $shipmentPackageId,
+        int $basketItemId,
+        Request $request,
+        DeliveryService $deliveryService
+    ): Response {
         $data = $this->validate($request, [
             'qty' => ['required', 'numeric'],
             'set_by' => ['required', 'integer'],
@@ -480,7 +450,7 @@ class ShipmentPackagesController extends Controller
             }
 
             return response('', 204);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             throw new HttpException(500, $e->getMessage());
         }
     }

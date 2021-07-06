@@ -16,7 +16,7 @@ use Illuminate\Support\Collection;
 class SetWaitingStatus2Payment extends Command
 {
     /**
-     * @var int Кол-во минут от даты создания оплаты, по истечению которого в случае неоплаты,
+     * Кол-во минут от даты создания оплаты, по истечению которого в случае неоплаты,
      * она должна перейти в статус "Ожидает оплаты"
      */
     protected const MINUTES_FOR_WAITING = 10;
@@ -33,15 +33,16 @@ class SetWaitingStatus2Payment extends Command
      *
      * @var string
      */
-    protected $description = 'Установить статус оплаты "Ожидает оплаты" через ' . SetWaitingStatus2Payment::MINUTES_FOR_WAITING . ' мин после создания и неоплаты';
+    protected $description = 'Установить статус оплаты "Ожидает оплаты" через ' .
+        SetWaitingStatus2Payment::MINUTES_FOR_WAITING .
+        ' мин после создания и неоплаты';
 
     /**
      * Execute the console command.
-     * @param PaymentService $paymentService
      */
     public function handle(PaymentService $paymentService)
     {
-        $dateTimeMinutesAgo = (new Carbon())->modify('-' . static::MINUTES_FOR_WAITING . ' minutes');
+        $dateTimeMinutesAgo = (new Carbon())->modify('-' . self::MINUTES_FOR_WAITING . ' minutes');
         /** @var Collection|Payment[] $payments */
         $payments = Payment::query()
             ->where('status', PaymentStatus::NOT_PAID)

@@ -11,27 +11,37 @@ use App\Models\Basket\Basket;
  */
 class OrderStatus
 {
-    /** @var int - предзаказ: ожидаем поступления товара */
+    /** предзаказ: ожидаем поступления товара */
     public const PRE_ORDER = 0;
-    /** @var int - оформлен */
+
+    /** оформлен */
     public const CREATED = 1;
-    /** @var int - ожидает проверки АОЗ */
+
+    /** ожидает проверки АОЗ */
     public const AWAITING_CHECK = 2;
-    /** @var int - проверка АОЗ */
+
+    /** проверка АОЗ */
     public const CHECKING = 3;
-    /** @var int - ожидает подтверждения Мерчантом */
+
+    /** ожидает подтверждения Мерчантом */
     public const AWAITING_CONFIRMATION = 4;
-    /** @var int - в обработке */
+
+    /** в обработке */
     public const IN_PROCESSING = 5;
-    /** @var int - передан на доставку */
+
+    /** передан на доставку */
     public const TRANSFERRED_TO_DELIVERY = 6;
-    /** @var int - в процессе доставки */
+
+    /** в процессе доставки */
     public const DELIVERING = 7;
-    /** @var int - находится в Пункте Выдачи */
+
+    /** находится в Пункте Выдачи */
     public const READY_FOR_RECIPIENT = 8;
-    /** @var int - доставлен */
+
+    /** доставлен */
     public const DONE = 9;
-    /** @var int - возвращен */
+
+    /** возвращен */
     public const RETURNED = 10;
 
     /** @var int */
@@ -40,6 +50,17 @@ class OrderStatus
     public $name;
     /** @var int[] - типы заказов, для которых актуален статус */
     public $types;
+
+    /**
+     * OrderStatus constructor.
+     * @param array $types
+     */
+    public function __construct(int $id, string $name, array $types)
+    {
+        $this->id = $id;
+        $this->name = $name;
+        $this->types = $types;
+    }
 
     /**
      * @return array
@@ -134,7 +155,6 @@ class OrderStatus
     }
 
     /**
-     * @param  int  $type
      * @return array
      */
     public static function validValues(int $type = Basket::TYPE_PRODUCT): array
@@ -142,18 +162,5 @@ class OrderStatus
         return array_keys(array_filter(static::all(), function (self $orderStatus) use ($type) {
             return in_array($type, $orderStatus->types);
         }));
-    }
-
-    /**
-     * OrderStatus constructor.
-     * @param  int  $id
-     * @param  string  $name
-     * @param  array  $types
-     */
-    public function __construct(int $id, string $name, array $types)
-    {
-        $this->id = $id;
-        $this->name = $name;
-        $this->types = $types;
     }
 }

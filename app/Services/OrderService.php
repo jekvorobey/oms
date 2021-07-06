@@ -10,14 +10,6 @@ use App\Services\Dto\Internal\PublicEventOrder;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
 use App\Services\PublicEventService\Email\PublicEventCartStruct;
-use Greensight\Message\Dto\Mail\PublicEvent\Ticket\Dto\CustomerInfoDto;
-use Greensight\Message\Dto\Mail\PublicEvent\Ticket\Dto\OrderInfoDto;
-use Greensight\Message\Dto\Mail\PublicEvent\Ticket\Dto\OrganizerInfoDto;
-use Greensight\Message\Dto\Mail\PublicEvent\Ticket\Dto\PublicEventInfoDto;
-use Greensight\Message\Dto\Mail\PublicEvent\Ticket\Dto\SpeakerInfoDto;
-use Greensight\Message\Dto\Mail\PublicEvent\Ticket\Dto\TicketsInfoDto;
-use Greensight\Message\Dto\Mail\PublicEvent\Ticket\TicketEmailDto;
-use Greensight\Message\Services\MailService\MailService;
 use Illuminate\Support\Collection;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use App\Observers\Order\OrderObserver;
@@ -31,8 +23,6 @@ class OrderService
 {
     /**
      * Получить объект заказа по его id
-     * @param  int  $orderId
-     * @return Order|null
      */
     public function getOrder(int $orderId): ?Order
     {
@@ -42,8 +32,6 @@ class OrderService
     /**
      * Вручную оплатить заказ.
      * Примечание: оплата по заказам автоматически должна поступать от платежной системы!
-     * @param  Order  $order
-     * @return bool
      * @throws \Exception
      */
     public function pay(Order $order): bool
@@ -51,7 +39,7 @@ class OrderService
         /** @var Payment $payment */
         $payment = $order->payments->first();
         if (!$payment) {
-            throw new \Exception("Оплата для заказа не найдена");
+            throw new \Exception('Оплата для заказа не найдена');
         }
         /** @var PaymentService $paymentService */
         $paymentService = resolve(PaymentService::class);
@@ -61,7 +49,6 @@ class OrderService
 
     /**
      * Обновить статус оплаты заказа в соотвествии со статусами оплат
-     * @param Order $order
      */
     public function refreshPaymentStatus(Order $order): void
     {
@@ -78,8 +65,6 @@ class OrderService
 
     /**
      * Отменить заказ
-     * @param  Order  $order
-     * @return bool
      * @throws \Exception
      */
     public function cancel(Order $order): bool
@@ -95,10 +80,6 @@ class OrderService
 
     /**
      * Установить статус оплаты заказа
-     * @param Order $order
-     * @param  int  $status
-     * @param  bool  $save
-     * @return bool
      */
     protected function setPaymentStatus(Order $order, int $status, bool $save = true): bool
     {
@@ -112,8 +93,6 @@ class OrderService
 
     /**
      * Пометить заказ как проблемный
-     * @param Order $order
-     * @return bool
      */
     public function markAsProblem(Order $order): bool
     {
@@ -124,8 +103,6 @@ class OrderService
 
     /**
      * Пометить заказ как непроблемный, если все его отправления непроблемные
-     * @param Order $order
-     * @return bool
      */
     public function markAsNonProblem(Order $order): bool
     {
@@ -148,7 +125,7 @@ class OrderService
 
     /**
      * Вернуть остатки по билетам
-     * @param  Collection|Order[]  $orders
+     * @param Collection|Order[] $orders
      * @param bool $saveOrders - сохранить данные по заказам
      */
     public function returnTickets(Collection $orders, bool $saveOrders = true): void
@@ -160,7 +137,7 @@ class OrderService
                 if ($order->isPublicEventOrder()) {
                     $order->loadMissing('basket.items');
                     foreach ($order->basket->items as $basketItem) {
-                        $ticketIds = array_merge($ticketIds, (array)$basketItem->getTicketIds());
+                        $ticketIds = array_merge($ticketIds, (array) $basketItem->getTicketIds());
                     }
                 }
             }
@@ -183,18 +160,13 @@ class OrderService
     }
 
     /**
-     * @param  Order  $order
-     * @param  bool  $loadTickets
-     * @param  int|null  $basketItemId
-     * @return PublicEventOrder\OrderInfoDto|null
      * @throws \Pim\Core\PimException
      */
     public function getPublicEventsOrderInfo(
         Order $order,
         bool $loadTickets = false,
         ?int $basketItemId = null
-    ): ?PublicEventOrder\OrderInfoDto
-    {
+    ): ?PublicEventOrder\OrderInfoDto {
         if (!$order->isPublicEventOrder()) {
             return null;
         }
@@ -204,7 +176,7 @@ class OrderService
         //Получаем информацию по мастер-классам
         $offerIds = $basketItems->pluck('offer_id');
         /** @var PublicEventCartStruct[] $cardStructs */
-        [$totalCount, $cardStructs] = (new PublicEventCartRepository())->query()
+        [, $cardStructs] = (new PublicEventCartRepository())->query()
             ->whereOfferIds($offerIds->all())
             ->pageNumber(1, $offerIds->count())
             ->get();
@@ -305,7 +277,7 @@ class OrderService
             $organizerInfoDto->phone = $cardStruct->organizer['phone'];
             $organizerInfoDto->email = $cardStruct->organizer['email'];
             $organizerInfoDto->site = $cardStruct->organizer['site'];
-            $organizerInfoDto->messengerPhone = $cardStruct->organizer['messenger_phone'] ? $cardStruct->organizer['messenger_phone'] : $cardStruct->organizer['phone'];
+            $organizerInfoDto->messengerPhone = $cardStruct->organizer['messenger_phone'] ?: $cardStruct->organizer['phone'];
             foreach ($basketItems as $item) {
                 if ($cardStruct->sprintId == $item->getSprintId()) {
                     $ticketsInfoDto = new PublicEventOrder\TicketsInfoDto();
@@ -319,8 +291,8 @@ class OrderService
                     $ticketsInfoDto->nearestTimeFrom = $cardStruct->nearestTimeFrom;
                     $ticketsInfoDto->nearestPlaceName = $cardStruct->nearestPlaceName;
                     $ticketsInfoDto->ticketsQty = count($item->getTicketIds());
-                    $ticketsInfoDto->price = (float)$item->price;
-                    $ticketsInfoDto->pricePerOne = $ticketsInfoDto->price/$ticketsInfoDto->ticketsQty;
+                    $ticketsInfoDto->price = (float) $item->price;
+                    $ticketsInfoDto->pricePerOne = $ticketsInfoDto->price / $ticketsInfoDto->ticketsQty;
 
                     if ($loadTickets) {
                         foreach ($item->getTicketIds() as $ticketId) {
@@ -347,8 +319,8 @@ class OrderService
 
     /**
      * Отправить билеты на мастер-классы на почту покупателю заказа
-     * @param  Order  $order
      * @throws \Throwable
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public function sendTicketsEmail(Order $order): void
     {

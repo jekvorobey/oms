@@ -43,8 +43,7 @@ use App\Models\OmsModel;
  */
 class PaymentMethod extends OmsModel
 {
-    /** @deprecated */
-    /** @var int - онлайн */
+    /** @deprecated ? */
     public const ONLINE = 1;
 
     /**
@@ -56,5 +55,4 @@ class PaymentMethod extends OmsModel
             self::ONLINE,
         ];
     }
-
 }

@@ -14,7 +14,6 @@ class ShipmentItemObserver
 {
     /**
      * Handle the shipment item "created" event.
-     * @param  ShipmentItem $shipmentItem
      * @return void
      */
     public function created(ShipmentItem $shipmentItem)
@@ -28,10 +27,9 @@ class ShipmentItemObserver
             $shipmentItem
         );
     }
-    
+
     /**
      * Handle the shipment item "updated" event.
-     * @param  ShipmentItem $shipmentItem
      * @return void
      */
     public function updated(ShipmentItem $shipmentItem)
@@ -45,10 +43,9 @@ class ShipmentItemObserver
             $shipmentItem
         );
     }
-    
+
     /**
      * Handle the shipment item "deleting" event.
-     * @param  ShipmentItem $shipmentItem
      * @throws \Exception
      */
     public function deleting(ShipmentItem $shipmentItem)
@@ -62,10 +59,9 @@ class ShipmentItemObserver
             $shipmentItem
         );
     }
-    
+
     /**
      * Handle the shipment item "deleted" event.
-     * @param  ShipmentItem $shipmentItem
      * @throws \Exception
      */
     public function deleted(ShipmentItem $shipmentItem)
@@ -73,10 +69,9 @@ class ShipmentItemObserver
         $shipmentItem->shipment->costRecalc();
         $shipmentItem->shipment->recalc();
     }
-    
+
     /**
      * Handle the shipment item "saved" event.
-     * @param  ShipmentItem $shipmentItem
      * @throws \Exception
      */
     public function saved(ShipmentItem $shipmentItem)

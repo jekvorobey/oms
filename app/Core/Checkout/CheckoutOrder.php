@@ -28,7 +28,6 @@ use Pim\Dto\PublicEvent\TicketStatus;
 use Pim\Services\CertificateService\CertificateService;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use Pim\Services\PublicEventTicketTypeService\RestPublicEventTicketTypeService;
-use Spatie\CalendarLinks\Link;
 
 class CheckoutOrder
 {
@@ -76,7 +75,6 @@ class CheckoutOrder
     public $deliveryCost;
     /** @var int */
     public $deliveryPrice;
-
 
     /** @var CheckoutDelivery[] */
     public $deliveries;
@@ -285,9 +283,6 @@ class CheckoutOrder
         return $order;
     }
 
-    /**
-     * @param Order $order
-     */
     private function debitingBonus(Order $order)
     {
         $totalBonusSpent = 0;
@@ -298,13 +293,10 @@ class CheckoutOrder
 
         if ($totalBonusSpent > 0) {
             $customerService = resolve(CustomerService::class);
-            $customerService->debitingBonus($this->customerId, $order->id, (string)$order->id, $totalBonusSpent);
+            $customerService->debitingBonus($this->customerId, $order->id, (string) $order->id, $totalBonusSpent);
         }
     }
 
-    /**
-     * @param Order $order
-     */
     private function createOrderDiscounts(Order $order)
     {
         /** @var OrderDiscount $discount */
@@ -314,9 +306,6 @@ class CheckoutOrder
         }
     }
 
-    /**
-     * @param Order $order
-     */
     private function createOrderPromoCodes(Order $order)
     {
         /** @var OrderPromoCode $promoCode */
@@ -326,9 +315,6 @@ class CheckoutOrder
         }
     }
 
-    /**
-     * @param Order $order
-     */
     private function createOrderBonuses(Order $order)
     {
         /** @var CustomerService $customerService */
@@ -354,7 +340,6 @@ class CheckoutOrder
     }
 
     /**
-     * @param Order $order
      * @throws Exception
      */
     private function createShipments(Order $order): void
@@ -384,10 +369,10 @@ class CheckoutOrder
             $delivery->point_id = $checkoutDelivery->pointId;
             $delivery->delivery_at = $checkoutDelivery->selectedDate;
             $delivery->delivery_time_start = $checkoutDelivery->deliveryTimeStart ?
-                Carbon::createFromFormat('H',  $checkoutDelivery->deliveryTimeStart) :
+                Carbon::createFromFormat('H', $checkoutDelivery->deliveryTimeStart) :
                 null;
             $delivery->delivery_time_end = $checkoutDelivery->deliveryTimeEnd ?
-                Carbon::createFromFormat('H',  $checkoutDelivery->deliveryTimeEnd) :
+                Carbon::createFromFormat('H', $checkoutDelivery->deliveryTimeEnd) :
                 null;
             $delivery->delivery_time_code = $checkoutDelivery->deliveryTimeCode;
             $delivery->dt = $checkoutDelivery->dt;
@@ -425,6 +410,7 @@ class CheckoutOrder
 
     /**
      * @throws Exception
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     private function createTickets(Order $order): void
     {
@@ -448,7 +434,9 @@ class CheckoutOrder
 
             $tickets = $publicEvents[$basketItem->offer_id]->tickets;
             if ($basketItem->qty != $tickets->count()) {
-                throw new Exception("Кол-во билетов для offer_id={$basketItem->offer_id} из корзины не совпадает с чекаутом");
+                throw new Exception(
+                    "Кол-во билетов для offer_id={$basketItem->offer_id} из корзины не совпадает с чекаутом"
+                );
             }
 
             $ticketIds = [];
@@ -471,7 +459,7 @@ class CheckoutOrder
 
                 $basketItem->setTicketIds($ticketIds);
                 $basketItem->save();
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
                 foreach ($ticketIds as $ticketId) {
                     $ticketService->deleteTicket($ticketId);
                 }
@@ -481,9 +469,6 @@ class CheckoutOrder
         }
     }
 
-    /**
-     * @param Order $order
-     */
     private function spendCertificates(Order $order)
     {
         $amount = 0;
@@ -497,7 +482,6 @@ class CheckoutOrder
     }
 
     /**
-     * @param Order $order
      * @throws Exception
      */
     private function createPayment(Order $order): void

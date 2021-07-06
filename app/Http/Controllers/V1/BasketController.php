@@ -46,15 +46,11 @@ class BasketController extends Controller
      *         @OA\JsonContent(ref="#/components/schemas/Basket")
      *     )
      * )
-     * @param int $customerId
-     * @param Request $request
-     * @param BasketService $basketService
-     * @return JsonResponse
      */
     public function getCurrentBasket(int $customerId, Request $request, BasketService $basketService): JsonResponse
     {
         $data = $this->validate($request, [
-            'type' => 'required|integer'
+            'type' => 'required|integer',
         ]);
 
         $basket = $basketService->findFreeUserBasket($data['type'], $customerId);
@@ -92,15 +88,14 @@ class BasketController extends Controller
      *     @OA\Response(response="200", description="", @OA\JsonContent(ref="#/components/schemas/Basket")),
      *     @OA\Response(response="404", description="basket not found"),
      * )
-     * @param int $basketId
-     * @param int $offerId
-     * @param Request $request
-     * @param BasketService $basketService
-     * @return JsonResponse
      * @throws \Exception
      */
-    public function setItemByBasket(int $basketId, int $offerId, Request $request, BasketService $basketService): JsonResponse
-    {
+    public function setItemByBasket(
+        int $basketId,
+        int $offerId,
+        Request $request,
+        BasketService $basketService
+    ): JsonResponse {
         $basket = $basketService->getBasket($basketId);
         if (!$basket) {
             throw new NotFoundHttpException('basket not found');
@@ -131,15 +126,14 @@ class BasketController extends Controller
      *     @OA\Response(response="404", description="order not found"),
      * )
      *
-     * @param int $orderId
-     * @param int $offerId
-     * @param Request $request
-     * @param OrderService $orderService
-     * @return JsonResponse
      * @throws \Exception
      */
-    public function setItemByOrder(int $orderId, int $offerId, Request $request, OrderService $orderService): JsonResponse
-    {
+    public function setItemByOrder(
+        int $orderId,
+        int $offerId,
+        Request $request,
+        OrderService $orderService
+    ): JsonResponse {
         $order = $orderService->getOrder($orderId);
         if (!$order) {
             throw new NotFoundHttpException('order not found');
@@ -149,11 +143,6 @@ class BasketController extends Controller
     }
 
     /**
-     * @param int $basketId
-     * @param int $offerId
-     * @param Request $request
-     *
-     * @return JsonResponse
      * @throws \Exception
      */
     protected function setItem(int $basketId, int $offerId, Request $request): JsonResponse
@@ -209,11 +198,6 @@ class BasketController extends Controller
      *         )
      *     )
      * )
-     *
-     * @param int $basketId
-     * @param Request $request
-     * @param BasketService $basketService
-     * @return JsonResponse
      */
     public function getBasket(int $basketId, Request $request, BasketService $basketService): JsonResponse
     {
@@ -239,9 +223,6 @@ class BasketController extends Controller
      *     @OA\Response(response="204", description=""),
      *     @OA\Response(response="500", description="unable to delete basket"),
      * )
-     * @param int $basketId
-     * @param BasketService $basketService
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      * @throws \Exception
      */
     public function dropBasket(int $basketId, BasketService $basketService): Response
@@ -272,10 +253,6 @@ class BasketController extends Controller
      *     @OA\Response(response="204", description="Данные сохранены"),
      *     @OA\Response(response="404", description="product not found"),
      * )
-     * @param  int  $basketId
-     * @param  Request  $request
-     * @param BasketService $basketService
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|Response
      */
     public function commitItemsPrice(int $basketId, Request $request, BasketService $basketService): Response
     {
@@ -309,7 +286,6 @@ class BasketController extends Controller
     }
 
     /**
-     * @param Basket $basket
      * @return array
      */
     protected function getItems(Basket $basket): array
@@ -338,8 +314,6 @@ class BasketController extends Controller
      *          )
      *     )
      * )
-     * @param Request $request
-     * @return JsonResponse
      */
     protected function qtyByOfferIds(Request $request): JsonResponse
     {
@@ -355,9 +329,10 @@ class BasketController extends Controller
             ->where('orders.is_canceled', false)
             ->where('orders.is_problem', false)
             ->whereIn('orders.status', [OrderStatus::IN_PROCESSING, OrderStatus::DELIVERING,
-                OrderStatus::READY_FOR_RECIPIENT, OrderStatus::DONE])
+                OrderStatus::READY_FOR_RECIPIENT, OrderStatus::DONE,
+            ])
             ->groupBy('offer_id')
-            ->pluck('total','offer_id')
+            ->pluck('total', 'offer_id')
             ->all();
 
         return response()->json([
@@ -383,7 +358,6 @@ class BasketController extends Controller
      *     @OA\Response(response="404", description=""),
      *     @OA\Response(response="500", description="Не удалось сохранить данные"),
      * )
-     * @param int $offer
      */
     public function notifyExpiredOffers(int $offer)
     {
@@ -400,7 +374,7 @@ class BasketController extends Controller
                         $customerService
                             ->newQuery()
                             ->setFilter('id', $basketItem->basket->customer_id)
-                    )->first()
+                    )->first(),
                 ];
             })
             ->each(function ($el) use ($serviceNotificationService) {
@@ -411,4 +385,3 @@ class BasketController extends Controller
             });
     }
 }
-

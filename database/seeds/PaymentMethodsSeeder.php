@@ -5,32 +5,33 @@ use Illuminate\Database\Seeder;
 
 class PaymentMethodsSeeder extends Seeder
 {
-    const availableMethods = [
+    public const AVAILABLE_METHODS = [
         1 => [
             'name' => 'Сертификат подарочный',
-            'code' => 'gift_certificate'
+            'code' => 'gift_certificate',
         ],
         2 => [
             'name' => 'Бонусный счет',
-            'code' => 'bonus_balance'
+            'code' => 'bonus_balance',
         ],
         3 => [
             'name' => 'Банковская карта',
-            'code' => 'credit_card'
+            'code' => 'credit_card',
         ],
         4 => [
             'name' => 'Google Pay / Apple Pay',
-            'code' => 'mobile_acquiring'
+            'code' => 'mobile_acquiring',
         ],
         5 => [
             'name' => 'Пользовательский счет',
-            'code' => 'internal_balance'
+            'code' => 'internal_balance',
         ],
         6 => [
             'name' => 'Наличные или картой при получении',
-            'code' => 'cash'
-        ]
+            'code' => 'cash',
+        ],
     ];
+
     /**
      * Run the database seeds.
      *
@@ -41,7 +42,7 @@ class PaymentMethodsSeeder extends Seeder
         // Защита от дубликатов: очистить таблицу перед заполнением //
         PaymentMethod::query()->truncate();
 
-        foreach (static::availableMethods as $key => $value) {
+        foreach (self::AVAILABLE_METHODS as $key => $value) {
             $record = new PaymentMethod();
             $record->id = $key;
             $record->name = $value['name'];

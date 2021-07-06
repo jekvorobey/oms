@@ -28,26 +28,17 @@ class OrderExport extends AbstractModel
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = ['order_id', 'merchant_integration_id',  'order_xml_id'];
+    public const FILLABLE = ['order_id', 'merchant_integration_id', 'order_xml_id'];
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $fillable = self::FILLABLE;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $table = 'orders_export';
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected static $restIncludes = ['order'];
 
-    /**
-     * @return BelongsTo
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

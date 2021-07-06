@@ -16,8 +16,6 @@ class PaymentService
 {
     /**
      * Получить объект оплаты по его id
-     * @param  int  $paymentId
-     * @return Payment|null
      */
     public function getPayment(int $paymentId): ?Payment
     {
@@ -27,8 +25,6 @@ class PaymentService
     /**
      * Начать оплату.
      * Задаёт время когда оплата станет просроченной, и создаёт оплату во внешней системе оплаты.
-     * @param int $paymentId
-     * @param string $returnUrl
      * @return string адрес страницы оплаты во внешней системе
      */
     public function start(int $paymentId, string $returnUrl): ?string
@@ -59,8 +55,6 @@ class PaymentService
 
     /**
      * Установить статус оплаты "Оплачена"
-     * @param  Payment  $payment
-     * @return bool
      */
     public function pay(Payment $payment): bool
     {
@@ -72,8 +66,6 @@ class PaymentService
 
     /**
      * Установить статус оплаты "Просрочено"
-     * @param  Payment  $payment
-     * @return bool
      */
     public function timeout(Payment $payment): bool
     {
@@ -84,8 +76,6 @@ class PaymentService
 
     /**
      * Установить статус оплаты "Ожидает оплаты"
-     * @param  Payment  $payment
-     * @return bool
      */
     public function waiting(Payment $payment): bool
     {

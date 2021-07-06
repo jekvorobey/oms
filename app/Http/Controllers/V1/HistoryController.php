@@ -35,9 +35,6 @@ class HistoryController extends Controller
      *     )
      * )
      * Получить список событий изменения заказов
-     * @param int $orderId
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function readByOrder(int $orderId, Request $request): JsonResponse
     {
@@ -60,9 +57,6 @@ class HistoryController extends Controller
      * )
      *
      * Получить список событий изменения отправлений
-     * @param int $shipmentId
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function readByShipment(int $shipmentId, Request $request): JsonResponse
     {
@@ -84,21 +78,12 @@ class HistoryController extends Controller
      *     )
      * )
      * Получить список событий изменения груза
-     * @param int $cargoId
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function readByCargo(int $cargoId, Request $request): JsonResponse
     {
         return $this->readByMainEntity(Cargo::class, $cargoId, $request);
     }
 
-    /**
-     * @param  string  $mainEntity
-     * @param  int  $mainEntityId
-     * @param  Request  $request
-     * @return JsonResponse
-     */
     protected function readByMainEntity(string $mainEntity, int $mainEntityId, Request $request): JsonResponse
     {
         $restQuery = new RestQuery($request);
@@ -123,7 +108,7 @@ class HistoryController extends Controller
             });
 
         return response()->json([
-            'items' => $items
+            'items' => $items,
         ]);
     }
 
@@ -143,9 +128,6 @@ class HistoryController extends Controller
      *     )
      * )
      * Получить количество событий изменения заказов
-     * @param int $orderId
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function countByOrder(int $orderId, Request $request): JsonResponse
     {
@@ -168,9 +150,6 @@ class HistoryController extends Controller
      *     )
      * )
      * Получить количество событий изменения отправления
-     * @param int $shipmentId
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function countByShipment(int $shipmentId, Request $request): JsonResponse
     {
@@ -193,21 +172,12 @@ class HistoryController extends Controller
      *     )
      * )
      * Получить количество событий изменения груза
-     * @param int $cargoId
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function countByCargo(int $cargoId, Request $request): JsonResponse
     {
         return $this->countByMainEntity(Cargo::class, $cargoId, $request);
     }
 
-    /**
-     * @param  string  $mainEntity
-     * @param  int  $mainEntityId
-     * @param  Request  $request
-     * @return JsonResponse
-     */
     protected function countByMainEntity(string $mainEntity, int $mainEntityId, Request $request): JsonResponse
     {
         $restQuery = new RestQuery($request);

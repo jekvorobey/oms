@@ -27,24 +27,24 @@ use Illuminate\Database\Query\JoinClause;
  * Class OrderDiscount
  * @package App\Models\Order
  *
- * @property int        $order_id
- * @property int        $discount_id
- * @property string     $name
- * @property int        $type
- * @property float      $change
- * @property int|null   $merchant_id
- * @property bool       $promo_code_only
- * @property bool       $visible_in_catalog
+ * @property int $order_id
+ * @property int $discount_id
+ * @property string $name
+ * @property int $type
+ * @property float $change
+ * @property int|null $merchant_id
+ * @property bool $promo_code_only
+ * @property bool $visible_in_catalog
  * @property array|null $items
  *
- * @property Order      $order
+ * @property Order $order
  */
 class OrderDiscount extends OmsModel
 {
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = [
+    public const FILLABLE = [
         'order_id',
         'discount_id',
         'name',
@@ -56,9 +56,7 @@ class OrderDiscount extends OmsModel
         'items',
     ];
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $fillable = self::FILLABLE;
 
     /** @var array */
@@ -68,18 +66,15 @@ class OrderDiscount extends OmsModel
      * Учитывать только те скидки на заказы, в которых использовалась скидка $discountId,
      * данная скидка должна быть либо активирована без промокода,
      * либо активирована промокодом, но со статусом ACTIVE
-     *
-     * @param Builder $query
-     * @param int     $discountId
      */
     public function scopeForDiscountReport(Builder $query, int $discountId)
     {
-        $d = with(new OrderDiscount)->getTable();
-        $p = with(new OrderPromoCode)->getTable();
+        $d = with(new OrderDiscount())->getTable();
+        $p = with(new OrderPromoCode())->getTable();
 
         $query
             ->where("{$d}.discount_id", $discountId)
-            ->leftJoin($p, function(JoinClause $join) use ($p, $d) {
+            ->leftJoin($p, function (JoinClause $join) use ($p, $d) {
                 $join->on("{$d}.discount_id", '=', "{$p}.discount_id");
                 $join->on("{$d}.order_id", '=', "{$p}.order_id");
             })
@@ -90,9 +85,6 @@ class OrderDiscount extends OmsModel
             });
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

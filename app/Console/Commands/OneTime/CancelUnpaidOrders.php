@@ -30,7 +30,6 @@ class CancelUnpaidOrders extends Command
 
     /**
      * Execute the console command.
-     * @param  OrderService  $orderService
      * @throws \Exception
      */
     public function handle(OrderService $orderService)
@@ -40,7 +39,8 @@ class CancelUnpaidOrders extends Command
         foreach ($orders as $order) {
             try {
                 $orderService->cancel($order);
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
+                //
             }
         }
     }

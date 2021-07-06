@@ -30,22 +30,14 @@ class ShipmentItem extends OmsModel
     /** @var string */
     protected $table = 'shipment_items';
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected static $restIncludes = ['shipment', 'basketItem'];
 
-    /**
-     * @return BelongsTo
-     */
     public function shipment(): BelongsTo
     {
         return $this->belongsTo(Shipment::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function basketItem(): BelongsTo
     {
         return $this->belongsTo(BasketItem::class);

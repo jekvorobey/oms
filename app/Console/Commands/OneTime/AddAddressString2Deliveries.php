@@ -40,7 +40,8 @@ class AddAddressString2Deliveries extends Command
                 $deliveryAddress['address_string'] = $delivery->getDeliveryAddressString();
                 $delivery->delivery_address = $deliveryAddress;
                 $delivery->save();
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
+                //
             }
         }
     }

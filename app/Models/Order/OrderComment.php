@@ -6,7 +6,6 @@ use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- *
  * @OA\Schema(
  *     description="Комментарии к заказам",
  *     @OA\Property(
@@ -37,19 +36,14 @@ class OrderComment extends OmsModel
     /**
      * Заполняемые поля модели
      */
-    const FILLABLE = [
+    public const FILLABLE = [
         'text',
         'order_id',
     ];
 
-    /**
-     * @var array
-     */
+    /** @var array */
     protected $fillable = self::FILLABLE;
 
-    /**
-     * @return BelongsTo
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

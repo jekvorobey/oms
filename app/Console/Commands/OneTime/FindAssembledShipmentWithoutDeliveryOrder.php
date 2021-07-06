@@ -37,7 +37,7 @@ class FindAssembledShipmentWithoutDeliveryOrder extends Command
         $shipments = Shipment::query()
             ->where('status', '>=', ShipmentStatus::ASSEMBLED)
             ->whereNotNull('cargo_id')
-            ->whereHas('delivery', function(Builder $query) {
+            ->whereHas('delivery', function (Builder $query) {
                 $query->whereNull('xml_id');
             })
             ->with('delivery.order')

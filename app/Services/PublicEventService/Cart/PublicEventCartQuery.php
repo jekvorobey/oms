@@ -17,7 +17,6 @@ class PublicEventCartQuery
 
     /**
      * PublicEventCardQuery constructor.
-     * @param  PublicEventCartRepository  $repository
      */
     public function __construct(PublicEventCartRepository $repository)
     {
@@ -26,7 +25,7 @@ class PublicEventCartQuery
     }
 
     /**
-     * @param  array  $offerIds
+     * @param array $offerIds
      * @return $this
      */
     public function whereOfferIds(array $offerIds): self
@@ -37,8 +36,6 @@ class PublicEventCartQuery
     }
 
     /**
-     * @param  int  $page
-     * @param  int  $size
      * @return $this
      */
     public function pageNumber(int $page, int $size): self
@@ -75,9 +72,6 @@ class PublicEventCartQuery
         return $this->repository->find($this);
     }
 
-    /**
-     * @return PublicEventQuery
-     */
     public function getPimPublicEventQuery(): PublicEventQuery
     {
         return $this->pimPublicEventQuery;

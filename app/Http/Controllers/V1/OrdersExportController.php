@@ -28,7 +28,6 @@ class OrdersExportController extends Controller
     use CountAction {
         count as countTrait;
     }
-
     /**
      * @OA\Get(
      *     path="api/v1/orders/{id}/exports",
@@ -52,7 +51,6 @@ class OrdersExportController extends Controller
     use ReadAction {
         read as readTrait;
     }
-
     /**
      * @OA\Delete(
      *     path="api/v1/orders/{id}/exports/{exportId}",
@@ -66,7 +64,6 @@ class OrdersExportController extends Controller
      * )
      */
     use DeleteAction;
-
     /**
      * @OA\Put(
      *     path="api/v1/orders/{id}/exports/{exportId}",
@@ -84,9 +81,6 @@ class OrdersExportController extends Controller
      */
     use UpdateAction;
 
-    /**
-     * @inheritDoc
-     */
     public function modelClass(): string
     {
         return OrderExport::class;
@@ -138,9 +132,6 @@ class OrdersExportController extends Controller
      *         )
      *     )
      * )
-     *
-     * @param  Request  $request
-     * @param  RequestInitiator  $client
      * @return \Illuminate\Http\JsonResponse
      */
     public function read(Request $request, RequestInitiator $client)
@@ -153,7 +144,8 @@ class OrdersExportController extends Controller
         $exportId = $request->route('exportId');
         if ($orderId) {
             if ($exportId) {
-                $query = $modelClass::modifyQuery($modelClass::query()
+                $query = $modelClass::modifyQuery(
+                    $modelClass::query()
                     ->where('order_id', $orderId)
                     ->where('id', $exportId),
                     $restQuery
@@ -183,7 +175,7 @@ class OrdersExportController extends Controller
             }
 
             return response()->json([
-                'items' => $items
+                'items' => $items,
             ]);
         } else {
             return $this->readTrait($request, $client);
@@ -205,9 +197,6 @@ class OrdersExportController extends Controller
      *         )
      *     )
      * )
-     *
-     * @param Request $request
-     * @param RequestInitiator $client
      * @return \Illuminate\Http\JsonResponse
      */
     public function count(Request $request, RequestInitiator $client)
@@ -258,10 +247,6 @@ class OrdersExportController extends Controller
      *     @OA\Response(response="400", description="Bad request"),
      *     @OA\Response(response="500", description="unable to save delivery"),
      * )
-     *
-     * @param  int  $orderId
-     * @param  Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function create(int $orderId, Request $request): JsonResponse
     {
@@ -281,7 +266,7 @@ class OrdersExportController extends Controller
         }
 
         return response()->json([
-            'id' => $model->id
+            'id' => $model->id,
         ], 201);
     }
 }

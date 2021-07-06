@@ -89,11 +89,12 @@ class Payment extends OmsModel
 
     /**
      * Payment constructor.
-     * @param  array  $attributes
+     * @param array $attributes
      */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
+
         if (!$this->created_at) {
             $this->created_at = Carbon::now();
         }
@@ -102,21 +103,17 @@ class Payment extends OmsModel
         }
     }
 
-    /**
-     * @return PaymentSystemInterface|null
-     */
     public function paymentSystem(): ?PaymentSystemInterface
     {
         switch ($this->payment_system) {
-            case PaymentSystem::YANDEX: return new YandexPaymentSystem();
-            case PaymentSystem::TEST: return new LocalPaymentSystem();
+            case PaymentSystem::YANDEX:
+                return new YandexPaymentSystem();
+            case PaymentSystem::TEST:
+                return new LocalPaymentSystem();
         }
         return null;
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

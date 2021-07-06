@@ -55,7 +55,6 @@ class ShipmentsController extends Controller
      * )
      */
     use CountAction;
-
     /**
      * @OA\Get(
      *     path="api/v1/shipments",
@@ -93,7 +92,6 @@ class ShipmentsController extends Controller
      * )
      */
     use ReadAction;
-
     /**
      * @OA\Put(
      *     path="api/v1/shipments/{id}",
@@ -110,7 +108,6 @@ class ShipmentsController extends Controller
      * )
      */
     use UpdateAction;
-
     /**
      * @OA\Delete(
      *     path="api/v1/shipments/{id}",
@@ -124,17 +121,11 @@ class ShipmentsController extends Controller
      */
     use DeleteAction;
 
-    /**
-     * @inheritDoc
-     */
     public function modelClass(): string
     {
         return Shipment::class;
     }
 
-    /**
-     * @inheritDoc
-     */
     public function modelItemsClass(): string
     {
         return ShipmentItem::class;
@@ -196,7 +187,7 @@ class ShipmentsController extends Controller
     {
         $data = $this->validate(request(), [
             'merchant_id' => 'required|integer',
-            'period' => 'required|string'
+            'period' => 'required|string',
         ]);
         $orders = Shipment::query()
             ->select(['merchant_id', 'cost'])
@@ -205,10 +196,9 @@ class ShipmentsController extends Controller
                 ['merchant_id', '=', $data['merchant_id']],
                 ['status', '>=', ShipmentStatus::AWAITING_CONFIRMATION],
                 ['status', '<=', ShipmentStatus::DONE],
-                ['is_canceled', '=', 0]
+                ['is_canceled', '=', 0],
             ]);
-        if (!$orders)
-        {
+        if (!$orders) {
             $orders_count = 0;
             $orders_price = 0;
         } else {
@@ -252,7 +242,7 @@ class ShipmentsController extends Controller
     {
         $data = $this->validate(request(), [
             'merchant_id' => 'required|integer',
-            'period' => 'required|string'
+            'period' => 'required|string',
         ]);
         $orders = Shipment::query()
             ->select(['merchant_id', 'cost'])
@@ -261,8 +251,7 @@ class ShipmentsController extends Controller
                 ['merchant_id', '=', $data['merchant_id']],
                 ['status', '=', ShipmentStatus::DONE],
             ]);
-        if (!$orders)
-        {
+        if (!$orders) {
             $orders_count = 0;
             $orders_price = 0;
         } else {
@@ -293,9 +282,6 @@ class ShipmentsController extends Controller
      *     )
      * )
      * Подсчитать кол-во отправлений доставки
-     * @param int $deliveryId
-     * @param  Request  $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function countByDelivery(int $deliveryId, Request $request): JsonResponse
     {
@@ -351,9 +337,6 @@ class ShipmentsController extends Controller
      * )
      *
      * Создать отправление
-     * @param  int  $deliveryId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function create(int $deliveryId, Request $request): JsonResponse
     {
@@ -377,7 +360,7 @@ class ShipmentsController extends Controller
         }
 
         return response()->json([
-            'id' => $shipment->id
+            'id' => $shipment->id,
         ], 201);
     }
 
@@ -403,8 +386,6 @@ class ShipmentsController extends Controller
      *     )
      * )
      * Получить собранные неотгруженные отправления со схожими параметрами для текущего груза (склад, служба доставки)
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function similarUnshippedShipments(Request $request): JsonResponse
     {
@@ -426,18 +407,18 @@ class ShipmentsController extends Controller
         $shipments = Shipment::query()
             ->where('merchant_id', $cargo->merchant_id)
             ->where('store_id', $cargo->store_id)
-            ->where(function(Builder $q) use ($similarCargosIds) {
+            ->where(function (Builder $q) use ($similarCargosIds) {
                 $q->whereNull('cargo_id')
                     ->orWhereIn('cargo_id', $similarCargosIds);
             })
             ->where('status', ShipmentStatus::ASSEMBLED)
-            ->whereHas('delivery', function(Builder $q) use ($cargo){
+            ->whereHas('delivery', function (Builder $q) use ($cargo) {
                 $q->where('delivery_service', $cargo->delivery_service);
             })
             ->get();
 
         return response()->json([
-            'items' => $shipments
+            'items' => $shipments,
         ]);
     }
 
@@ -462,9 +443,6 @@ class ShipmentsController extends Controller
      * )
      *
      * Список отправлений доставки
-     * @param  int  $deliveryId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function readByDelivery(int $deliveryId, Request $request): JsonResponse
     {
@@ -485,7 +463,7 @@ class ShipmentsController extends Controller
             });
 
         return response()->json([
-            'items' => $items
+            'items' => $items,
         ]);
     }
 
@@ -512,9 +490,6 @@ class ShipmentsController extends Controller
      * )
      *
      * Подсчитать кол-во элементов (товаров с одного склада одного мерчанта) отправления
-     * @param  int  $shipmentId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function countItems(int $shipmentId, Request $request): JsonResponse
     {
@@ -559,9 +534,6 @@ class ShipmentsController extends Controller
      * )
      *
      * Список элементов (товаров с одного склада одного мерчанта) отправления
-     * @param  int  $shipmentId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function readItems(int $shipmentId, Request $request): JsonResponse
     {
@@ -582,7 +554,7 @@ class ShipmentsController extends Controller
             });
 
         return response()->json([
-            'items' => $items
+            'items' => $items,
         ]);
     }
 
@@ -608,10 +580,6 @@ class ShipmentsController extends Controller
      * )
      *
      * Информация об элементе (товар с одного склада одного мерчанта) отправления
-     * @param  int  $shipmentId
-     * @param  int  $basketItemId
-     * @param  Request  $request
-     * @return JsonResponse
      */
     public function readItem(int $shipmentId, int $basketItemId, Request $request): JsonResponse
     {
@@ -646,9 +614,6 @@ class ShipmentsController extends Controller
      *     @OA\Response(response="500", description="unable to save shipment item"),
      * )
      * Создать элемент (товар с одного склада одного мерчанта) отправления
-     * @param  int  $shipmentId
-     * @param  int  $basketItemId
-     * @return Response
      */
     public function createItem(int $shipmentId, int $basketItemId): Response
     {
@@ -680,9 +645,6 @@ class ShipmentsController extends Controller
      *     @OA\Response(response="404", description="shipment item not found"),
      * )
      * Удалить элемент (товар с одного склада одного мерчанта) отправления
-     * @param  int  $shipmentId
-     * @param  int  $basketItemId
-     * @return Response
      */
     public function deleteItem(int $shipmentId, int $basketItemId): Response
     {
@@ -697,7 +659,7 @@ class ShipmentsController extends Controller
 
         try {
             $ok = $shipmentItem->delete();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $ok = false;
         }
 
@@ -726,10 +688,6 @@ class ShipmentsController extends Controller
      * )
      *
      * Получить штрихкоды для мест (коробок) отправления
-     * @param  int  $id
-     * @param  DeliveryService  $deliveryService
-     * @param  FileService  $fileService
-     * @return JsonResponse
      */
     public function barcodes(int $id, DeliveryService $deliveryService, FileService $fileService): JsonResponse
     {
@@ -774,10 +732,6 @@ class ShipmentsController extends Controller
      *     )
      * )
      * Получить квитанцию cdek для заказа на доставку
-     * @param  int  $id
-     * @param  DeliveryService  $deliveryService
-     * @param  FileService  $fileService
-     * @return JsonResponse
      */
     public function cdekReceipt(int $id, DeliveryService $deliveryService, FileService $fileService): JsonResponse
     {
@@ -817,10 +771,6 @@ class ShipmentsController extends Controller
      * )
      *
      * Пометить как проблемное
-     * @param  int  $id
-     * @param Request $request
-     * @param  DeliveryService  $deliveryService
-     * @return Response
      */
     public function markAsProblem(int $id, Request $request, DeliveryService $deliveryService): Response
     {
@@ -851,9 +801,6 @@ class ShipmentsController extends Controller
      * )
      *
      * Пометить как непроблемное
-     * @param  int  $id
-     * @param  DeliveryService  $deliveryService
-     * @return Response
      */
     public function markAsNonProblem(int $id, DeliveryService $deliveryService): Response
     {
@@ -878,9 +825,6 @@ class ShipmentsController extends Controller
      *     @OA\Response(response="404", description="product not found"),
      * )
      * Отменить отправление
-     * @param  int  $id
-     * @param  DeliveryService  $deliveryService
-     * @return Response
      * @throws \Exception
      */
     public function cancel(int $id, DeliveryService $deliveryService): Response
@@ -917,8 +861,6 @@ class ShipmentsController extends Controller
      *         )
      *     )
      * )
-     * @param Request $request
-     * @return JsonResponse
      */
     public function readNew(Request $request): JsonResponse
     {
@@ -940,7 +882,7 @@ class ShipmentsController extends Controller
             ->get();
 
         return response()->json([
-            'items' => $items
+            'items' => $items,
         ]);
     }
 
@@ -972,8 +914,6 @@ class ShipmentsController extends Controller
      *     @OA\Response(response="404", description=""),
      *     @OA\Response(response="500", description="Не удалось сохранить данные"),
      * )
-     * @param Request $request
-     * @return JsonResponse
      */
     public function createShipmentExport(Request $request): JsonResponse
     {
@@ -982,7 +922,7 @@ class ShipmentsController extends Controller
             'merchant_integration_id' => 'required|int',
             'shipment_xml_id' => 'nullable|string',
             'err_code' => 'nullable|int',
-            'err_message' => 'nullable|string'
+            'err_message' => 'nullable|string',
         ]);
 
         /** @var ShipmentExport $shipmentExport */
@@ -1002,7 +942,7 @@ class ShipmentsController extends Controller
         }
 
         return response()->json([
-            'id' => $shipmentExport->id
+            'id' => $shipmentExport->id,
         ], 201);
     }
 }

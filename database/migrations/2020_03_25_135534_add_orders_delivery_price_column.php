@@ -22,7 +22,7 @@ class AddOrdersDeliveryPriceColumn extends Migration
         });
 
         Order::query()->update([
-            'delivery_price' => DB::raw("`delivery_cost`")
+            'delivery_price' => DB::raw('`delivery_cost`'),
         ]);
     }
 

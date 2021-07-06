@@ -55,21 +55,17 @@ class History extends OmsModel
     protected $table = 'history';
     /** @var array */
     protected $casts = [
-        'data' => 'array'
+        'data' => 'array',
     ];
 
-    /**
-     * @return HasMany
-     */
     public function historyMainEntities(): HasMany
     {
         return $this->hasMany(HistoryMainEntity::class);
     }
 
     /**
-     * @param  int  $type
-     * @param  OmsModel|array  $mainModels
-     * @param  OmsModel|null  $model
+     * @param OmsModel|array $mainModels
+     * @param OmsModel|null $model
      */
     public static function saveEvent(int $type, $mainModels, OmsModel $model): void
     {

@@ -15,8 +15,6 @@ class BasketService
 {
     /**
      * Получить объект корзины по его id
-     * @param  int  $basketId
-     * @return Basket|null
      */
     public function getBasket(int $basketId): ?Basket
     {
@@ -25,9 +23,6 @@ class BasketService
 
     /**
      * Получить текущую корзину пользователя
-     * @param int $type
-     * @param int $customerId
-     * @return Basket
      */
     public function findFreeUserBasket(int $type, int $customerId): Basket
     {
@@ -45,9 +40,6 @@ class BasketService
 
     /**
      * Создать корзину
-     * @param  int  $type
-     * @param  int  $customerId
-     * @return Basket
      */
     protected function createBasket(int $type, int $customerId): Basket
     {
@@ -62,10 +54,6 @@ class BasketService
 
     /**
      * Получить объект товар корзины, даже если его нет в БД
-     * @param  int  $basketId
-     * @param  int  $offerId
-     * @param  int|null  $bundleId
-     * @return BasketItem|null
      */
     public function itemByOffer(int $basketId, int $offerId, ?int $bundleId = null): ?BasketItem
     {
@@ -92,9 +80,7 @@ class BasketService
 
     /**
      * Создать/изменить/удалить товар корзины
-     * @param int $basketId
-     * @param  int  $offerId
-     * @param  array  $data
+     * @param array $data
      * @return bool|null
      * @throws Exception
      */
@@ -129,8 +115,6 @@ class BasketService
 
     /**
      * Удалить корзину
-     * @param  int  $basketId
-     * @return bool
      * @throws Exception
      */
     public function deleteBasket(int $basketId): bool
