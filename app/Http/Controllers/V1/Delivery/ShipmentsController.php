@@ -194,7 +194,7 @@ class ShipmentsController extends Controller
             ->where([
                 ['created_at', '>', $data['period']],
                 ['merchant_id', '=', $data['merchant_id']],
-                ['status', '>=', ShipmentStatus::AWAITING_CONFIRMATION],
+                ['status', '>=', ShipmentStatus::ASSEMBLING],
                 ['status', '<=', ShipmentStatus::DONE],
                 ['is_canceled', '=', 0],
             ]);
