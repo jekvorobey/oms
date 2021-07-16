@@ -194,7 +194,7 @@ class ShipmentsController extends Controller
             ->where([
                 ['created_at', '>', $data['period']],
                 ['merchant_id', '=', $data['merchant_id']],
-                ['status', '>=', ShipmentStatus::ASSEMBLING],
+                ['status', '>=', ShipmentStatus::AWAITING_CONFIRMATION],
                 ['status', '<=', ShipmentStatus::DONE],
                 ['is_canceled', '=', 0],
             ]);
@@ -876,7 +876,7 @@ class ShipmentsController extends Controller
 
         $items = $query
             ->with(['basketItems', 'delivery.order'])
-            ->where('status', '>=', ShipmentStatus::ASSEMBLING)
+            ->where('status', '>=', ShipmentStatus::AWAITING_CONFIRMATION)
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
             ->doesntHave('export')
             ->get();
