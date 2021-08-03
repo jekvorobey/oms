@@ -876,7 +876,7 @@ class ShipmentsController extends Controller
 
         $items = $query
             ->with(['basketItems', 'delivery.order'])
-            ->where('status', '>=', ShipmentStatus::ASSEMBLING)
+            ->where('status', '>=', ShipmentStatus::AWAITING_CONFIRMATION)
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
             ->doesntHave('export')
             ->get();

@@ -90,7 +90,7 @@ class PaymentService
      */
     public static function expiredPayments(): Collection
     {
-        return Payment::query()->where('status', [PaymentStatus::NOT_PAID, PaymentStatus::WAITING])
+        return Payment::query()->whereIn('status', [PaymentStatus::NOT_PAID, PaymentStatus::WAITING])
             ->where('expires_at', '<', Carbon::now()->format('Y-m-d H:i:s'))
             ->get(['id', 'order_id']);
     }
