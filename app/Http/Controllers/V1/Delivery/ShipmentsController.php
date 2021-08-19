@@ -878,6 +878,7 @@ class ShipmentsController extends Controller
             ->with(['basketItems', 'delivery.order'])
             ->where('status', '>=', ShipmentStatus::AWAITING_CONFIRMATION)
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
+            ->where('is_canceled', false)
             ->doesntHave('export')
             ->get();
 

@@ -9,7 +9,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
  * Class CheckoutController
@@ -217,11 +216,8 @@ class CheckoutController extends Controller
         ]);
 
         $checkoutOrder = CheckoutOrder::fromArray($data);
-        try {
-            [$orderId, $orderNumber] = $checkoutOrder->save();
-        } catch (\Throwable $e) {
-            throw new HttpException($e->getCode() ? : 500, $e->getMessage());
-        }
+
+        [$orderId, $orderNumber] = $checkoutOrder->save();
 
         return response()->json([
             'item' => [
