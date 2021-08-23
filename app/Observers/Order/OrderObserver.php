@@ -194,7 +194,7 @@ class OrderObserver
                 $this->sendStatusNotification($notificationService, $order, $user_id);
             }
 
-            if ($order->wasChanged('is_cancelled') && $order->is_canceled) {
+            if ($order->wasChanged('is_canceled') && $order->is_canceled) {
                 $notificationService->send(
                     $user_id,
                     $this->createCancelledNotificationType(
