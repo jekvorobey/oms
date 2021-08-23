@@ -595,7 +595,7 @@ class ShipmentObserver
     {
         return $shipment->wasChanged('is_canceled')
             && $shipment->is_canceled
-            && !in_array($shipment->status, self::ELIGIBLE_STATUS);
+            && $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION;
     }
 
     private function cancelledNotificationAttributes(Shipment $shipment, UserDto $user): array
