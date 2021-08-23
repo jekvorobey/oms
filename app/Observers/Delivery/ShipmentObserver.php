@@ -12,6 +12,7 @@ use App\Models\History\HistoryType;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use Exception;
+use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
@@ -239,6 +240,7 @@ class ShipmentObserver
                 $deliveryService->saveDeliveryOrder($delivery);
             } catch (\Throwable $e) {
                 logger(['upsertDeliveryOrder error' => $e->getMessage()]);
+                report($e);
             }
         }
     }
@@ -253,6 +255,7 @@ class ShipmentObserver
             $deliveryService = resolve(DeliveryService::class);
             $deliveryService->addShipment2Cargo($shipment);
         } catch (\Throwable $e) {
+            report($e);
         }
     }
 
@@ -510,7 +513,7 @@ class ShipmentObserver
 
             $serviceNotificationService->send($operators[0]->user_id, 'klientoformlen_novyy_zakaz', $vars);
         } catch (\Throwable $e) {
-            logger($e->getMessage(), $e->getTrace());
+            report($e);
         }
     }
 
@@ -519,6 +522,7 @@ class ShipmentObserver
         try {
             $serviceNotificationService = app(ServiceNotificationService::class);
             $operatorService = app(OperatorService::class);
+            $userService = app(UserService::class);
 
             $operators = $operatorService->operators((new RestQuery())->setFilter(
                 'merchant_id',
@@ -526,97 +530,82 @@ class ShipmentObserver
                 $shipment->merchant_id
             ));
 
-            foreach ($operators as $operator) {
-                $userService = app(UserService::class);
+            $isNeedSendCancelledNotification = $this->isNeedSendCancelledNotification($shipment);
+            $isNeedSendProblemNotification = $shipment->wasChanged('is_problem') && $shipment->is_problem;
 
+            if (!$isNeedSendCancelledNotification && !$isNeedSendProblemNotification) {
+                return;
+            }
+
+            foreach ($operators as $i => $operator) {
+                /** @var UserDto $user */
                 $user = $userService->users(
                     $userService->newQuery()
                         ->setFilter('id', $operator->user_id)
                 )->first();
 
-                if (($shipment->is_canceled != $shipment->getOriginal('is_canceled')) && $shipment->is_canceled) {
-                    switch ($operator->communication_method) {
-                        case OperatorCommunicationMethod::METHOD_PHONE:
-                            $serviceNotificationService->sendDirect(
-                                'klientstatus_zakaza_otmenen',
-                                $user->phone,
-                                'sms',
-                                [
-                                    'QUANTITY_ORDERS' => 1,
-                                    'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
-                                    'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                                    'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
-                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
-                                ]
-                            );
-                            break;
-                        case OperatorCommunicationMethod::METHOD_EMAIL:
-                            $serviceNotificationService->sendDirect(
-                                'klientstatus_zakaza_otmenen',
-                                $user->email,
-                                'email',
-                                [
-                                    'QUANTITY_ORDERS' => 1,
-                                    'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
-                                    'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                                    'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
-                                    'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
-                                ]
-                            );
-                            break;
-                    }
+                if ($i === 0 && $isNeedSendCancelledNotification) {
+                    $serviceNotificationService->send(
+                        $user->id,
+                        'klientstatus_zakaza_otmenen',
+                        $this->cancelledNotificationAttributes($shipment, $user),
+                    );
                 }
 
-                if (($shipment->is_problem != $shipment->getOriginal('is_problem')) && $shipment->is_problem) {
-                    switch ($operator->communication_method) {
-                        case OperatorCommunicationMethod::METHOD_PHONE:
-                            $serviceNotificationService->sendDirect(
-                                'klientstatus_zakaza_problemnyy',
-                                $user->phone,
-                                'sms',
-                                [
-                                    'QUANTITY_ORDERS' => 1,
-                                    'LINK_ORDERS' => sprintf('%s/shipment/%d', config('mas.masHost'), $shipment->id),
-                                ]
-                            );
-                            break;
-                        case OperatorCommunicationMethod::METHOD_EMAIL:
-                            $serviceNotificationService->sendDirect(
-                                'klientstatus_zakaza_problemnyy',
-                                $user->email,
-                                'email',
-                                [
-                                    'QUANTITY_ORDERS' => 1,
-                                    'LINK_ORDERS' => sprintf('%s/shipment/%d', config('mas.masHost'), $shipment->id),
-                                ]
-                            );
-                            break;
-                    }
+                switch ($operator->communication_method) {
+                    case OperatorCommunicationMethod::METHOD_PHONE:
+                        $receiver = $user->phone;
+                        $channel = 'sms';
+                        break;
+                    case OperatorCommunicationMethod::METHOD_EMAIL:
+                        $receiver = $user->email;
+                        $channel = 'email';
+                        break;
+                    default:
+                        continue 2;
                 }
-            }
 
-            if (($shipment->is_canceled != $shipment->getOriginal('is_canceled')) && $shipment->is_canceled) {
-                $userService = app(UserService::class);
+                if ($isNeedSendCancelledNotification) {
+                    $serviceNotificationService->sendDirect(
+                        'klientstatus_zakaza_otmenen',
+                        $receiver,
+                        $channel,
+                        $this->cancelledNotificationAttributes($shipment, $user),
+                    );
+                }
 
-                $user = $userService->users(
-                    $userService->newQuery()
-                        ->setFilter('id', $operators[0]->user_id)
-                )->first();
-
-                $serviceNotificationService->send(
-                    $operators[0]->user_id,
-                    'klientstatus_zakaza_otmenen',
-                    [
-                        'QUANTITY_ORDERS' => 1,
-                        'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
-                        'CUSTOMER_NAME' => $user ? $user->first_name : '',
-                        'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
-                        'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
-                    ]
-                );
+                if ($isNeedSendProblemNotification) {
+                    $serviceNotificationService->sendDirect(
+                        'klientstatus_zakaza_problemnyy',
+                        $receiver,
+                        $channel,
+                        [
+                            'QUANTITY_ORDERS' => 1,
+                            'LINK_ORDERS' => sprintf('%s/shipment/%d', config('mas.masHost'), $shipment->id),
+                        ]
+                    );
+                }
             }
         } catch (\Throwable $e) {
-            logger($e->getMessage(), $e->getTrace());
+            report($e);
         }
+    }
+
+    private function isNeedSendCancelledNotification(Shipment $shipment): bool
+    {
+        return $shipment->wasChanged('is_canceled')
+            && $shipment->is_canceled
+            && !in_array($shipment->status, self::ELIGIBLE_STATUS);
+    }
+
+    private function cancelledNotificationAttributes(Shipment $shipment, UserDto $user): array
+    {
+        return [
+            'QUANTITY_ORDERS' => 1,
+            'ORDER_NUMBER' => $shipment->delivery->order->number ?? '',
+            'CUSTOMER_NAME' => $user->first_name ?? '',
+            'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
+            'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
+        ];
     }
 }
