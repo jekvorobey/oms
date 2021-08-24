@@ -15,6 +15,7 @@ use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\AuthService\UserService;
+use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use MerchantManagement\Dto\OperatorCommunicationMethod;
 use MerchantManagement\Dto\OperatorDto;
@@ -71,6 +72,7 @@ class ShipmentObserver
         $this->setIsCanceledToDelivery($shipment);
         $this->setTakenStatusToCargo($shipment);
         $this->sendStatusNotification($shipment);
+        $this->returnBonusesWhenCancelled($shipment);
     }
 
     /**
@@ -607,5 +609,19 @@ class ShipmentObserver
             'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
             'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
         ];
+    }
+
+    private function returnBonusesWhenCancelled(Shipment $shipment): void
+    {
+        if ($shipment->wasChanged('is_canceled') && $shipment->is_canceled) {
+            $spent = $shipment->basketItems()->sum('bonus_spent');
+
+            $order = $shipment->delivery->order;
+
+            /** @var CustomerService $customerService */
+            $customerService = resolve(CustomerService::class);
+
+            $customerService->returnDebitingBonus($order->customer_id, $order->id, $spent);
+        }
     }
 }
