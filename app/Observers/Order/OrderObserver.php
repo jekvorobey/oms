@@ -156,7 +156,7 @@ class OrderObserver
                     $order->type !== Basket::TYPE_MASTER
                     && (
                         $this->shouldSendPaidNotification($order)
-                        || $order->payment_status == PaymentStatus::TIMEOUT
+                        // || $order->payment_status == PaymentStatus::TIMEOUT
                         || $order->payment_status == PaymentStatus::WAITING
                     )
                 ) {
@@ -172,7 +172,7 @@ class OrderObserver
                         ),
                         $this->generateNotificationVariables($order, (function () use ($order) {
                             switch ($order->payment_status) {
-                                case PaymentStatus::TIMEOUT:
+                                // case PaymentStatus::TIMEOUT:
                                 case PaymentStatus::WAITING:
                                     return self::OVERRIDE_AWAITING_PAYMENT;
                                 case PaymentStatus::PAID:
@@ -468,11 +468,10 @@ class OrderObserver
     protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat)
     {
         switch ($payment_status) {
-            case PaymentStatus::TIMEOUT:
+            // case PaymentStatus::TIMEOUT:
             case PaymentStatus::WAITING:
                 return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
             case PaymentStatus::PAID:
-                return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
             case PaymentStatus::HOLD:
                 return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
             default:
