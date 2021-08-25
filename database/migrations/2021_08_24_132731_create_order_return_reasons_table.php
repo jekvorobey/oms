@@ -16,6 +16,8 @@ class CreateOrderReturnReasonsTable extends Migration
         Schema::create('order_return_reasons', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('text');
+            $table->dateTime('created_at');
+            $table->dateTime('updated_at');
         });
     }
 
