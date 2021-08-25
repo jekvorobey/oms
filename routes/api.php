@@ -95,6 +95,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::delete('', 'OrderReturnReasonController@delete');
             });
             Route::get('', 'OrderReturnReasonController@read');
+            Route::post('', 'OrderReturnReasonController@create');
         });
 
         Route::get('', 'OrdersController@read');
