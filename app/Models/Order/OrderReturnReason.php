@@ -13,5 +13,6 @@ use App\Models\OmsModel;
 class OrderReturnReason extends OmsModel
 {
     public const FILLABLE = ['text'];
+
     protected $fillable = self::FILLABLE;
 }

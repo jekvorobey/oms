@@ -9,6 +9,7 @@ use Greensight\CommonMsa\Rest\Controller\CreateAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
 use Greensight\CommonMsa\Rest\Controller\UpdateAction;
+use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
 
 /**
  * Class OrderReturnReasonController
@@ -140,5 +141,15 @@ class OrderReturnReasonController extends Controller
     protected function writableFieldList(): array
     {
         return OrderReturnReason::FILLABLE;
+    }
+
+    /**
+     * @return array
+     */
+    protected function inputValidators(): array
+    {
+        return [
+            'text' => [new RequiredOnPost(), 'string'],
+        ];
     }
 }
