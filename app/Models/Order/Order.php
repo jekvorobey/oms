@@ -211,6 +211,7 @@ use Illuminate\Support\Collection;
  * @property Collection|OrderBonus[] $bonuses - бонусы применённые к заказу
  * @property Collection|OrderReturn[] $orderReturns - возвраты по заказу
  * @property Collection|History[] $history - история изменений
+ * @property OrderReturnReason $orderReturnReason - причина возврата заказа
  */
 class Order extends OmsModel
 {
@@ -276,6 +277,11 @@ class Order extends OmsModel
     public function history(): MorphToMany
     {
         return $this->morphToMany(History::class, 'main_entity', (new HistoryMainEntity())->getTable());
+    }
+
+    public function returnReason(): HasOne
+    {
+        return $this->hasOne(OrderReturnReason::class, 'return_reason_id');
     }
 
     /**
