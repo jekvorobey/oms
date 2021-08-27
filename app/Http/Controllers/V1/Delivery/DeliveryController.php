@@ -339,13 +339,16 @@ class DeliveryController extends Controller
      * Отменить доставку
      * @throws \Exception
      */
-    public function cancel(int $id, OmsDeliveryService $deliveryService): Response
+    public function cancel(int $id, Request $request, OmsDeliveryService $deliveryService): Response
     {
+        $data = $this->validate($request, [
+            'orderReturnReason' => 'required|integer',
+        ]);
         $delivery = $deliveryService->getDelivery($id);
         if (!$delivery) {
             throw new NotFoundHttpException('delivery not found');
         }
-        if (!$deliveryService->cancelDelivery($delivery)) {
+        if (!$deliveryService->cancelDelivery($delivery, $data['orderReturnReason'])) {
             throw new HttpException(500);
         }
 

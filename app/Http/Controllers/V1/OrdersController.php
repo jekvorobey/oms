@@ -427,13 +427,17 @@ class OrdersController extends Controller
      * Отменить заказ
      * @throws \Exception
      */
-    public function cancel(int $id, int $orderReturnReasonId, OrderService $orderService): Response
+    public function cancel(int $id, Request $request, OrderService $orderService): Response
     {
+        $data = $this->validate($request, [
+            'orderReturnReason' => 'required|integer',
+        ]);
+
         $order = $orderService->getOrder($id);
         if (!$order) {
             throw new NotFoundHttpException('order not found');
         }
-        if (!$orderService->cancel($order, $orderReturnReasonId)) {
+        if (!$orderService->cancel($order, $data['orderReturnReason'])) {
             throw new HttpException(500);
         }
 

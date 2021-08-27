@@ -16,6 +16,7 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -279,9 +280,9 @@ class Order extends OmsModel
         return $this->morphToMany(History::class, 'main_entity', (new HistoryMainEntity())->getTable());
     }
 
-    public function returnReason(): HasOne
+    public function orderReturnReason(): BelongsTo
     {
-        return $this->hasOne(OrderReturnReason::class, 'return_reason_id');
+        return $this->belongsTo(OrderReturnReason::class, 'return_reason_id');
     }
 
     /**

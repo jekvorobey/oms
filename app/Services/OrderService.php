@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order\Order;
+use App\Models\Order\OrderReturnReason;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -74,7 +75,14 @@ class OrderService
         }
 
         $order->is_canceled = true;
-        $order->orderReturnReason = $orderReturnReasonId;
+
+        $orderReturnReason = OrderReturnReason::find($orderReturnReasonId);
+
+        if (!$orderReturnReason) {
+            throw new \Exception('Причина отмены не найдена');
+        }
+
+        $order->orderReturnReason()->associate($orderReturnReason);
 
         return $order->save();
     }

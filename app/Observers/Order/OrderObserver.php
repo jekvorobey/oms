@@ -319,10 +319,11 @@ class OrderObserver
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
             foreach ($order->deliveries as $delivery) {
-                $deliveryService->cancelDelivery($delivery);
+                $deliveryService->cancelDelivery($delivery, $delivery->orderReturnReason ? $delivery->orderReturnReason->id : $order->orderReturnReason->id);
+                $delivery->orderReturnReason = $order->orderReturnReason;
 
                 foreach ($delivery->shipments as $shipment) {
-                    $deliveryService->cancelShipment($shipment);
+                    $deliveryService->cancelShipment($shipment, $shipment->orderReturnReason ? $shipment->orderReturnReason->id : $delivery->orderReturnReason->id);
                 }
             }
         }

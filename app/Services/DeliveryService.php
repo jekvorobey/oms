@@ -11,6 +11,7 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
+use App\Models\Order\OrderReturnReason;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
 use Exception;
@@ -910,13 +911,21 @@ class DeliveryService
      * Отменить отправление
      * @throws Exception
      */
-    public function cancelShipment(Shipment $shipment): bool
+    public function cancelShipment(Shipment $shipment, int $orderReturnReasonId): bool
     {
         if ($shipment->status >= ShipmentStatus::DONE) {
             throw new \Exception(
                 'Отправление, начиная со статуса "Доставлено получателю", нельзя отменить'
             );
         }
+
+        $orderReturnReason = OrderReturnReason::find($orderReturnReasonId);
+
+        if (!$orderReturnReason) {
+            throw new \Exception('Причина отмены не найдена');
+        }
+
+        $shipment->orderReturnReason()->associate($orderReturnReason);
 
         $shipment->is_canceled = true;
         $shipment->cargo_id = null;
@@ -928,7 +937,7 @@ class DeliveryService
      * Отменить доставку
      * @throws Exception
      */
-    public function cancelDelivery(Delivery $delivery): bool
+    public function cancelDelivery(Delivery $delivery, int $orderReturnReasonId): bool
     {
         if ($delivery->status >= DeliveryStatus::DONE) {
             throw new \Exception(
@@ -937,6 +946,15 @@ class DeliveryService
         }
 
         $delivery->is_canceled = true;
+
+        $orderReturnReason = OrderReturnReason::find($orderReturnReasonId);
+
+        if (!$orderReturnReason) {
+            throw new \Exception('Причина отмены не найдена');
+        }
+
+        $delivery->orderReturnReason()->associate($orderReturnReason);
+
         if ($delivery->save()) {
             $this->cancelDeliveryOrder($delivery);
 
