@@ -165,6 +165,7 @@ use Pim\Services\ProductService\ProductService;
  * @property int $is_problem - флаг, что отправление проблемное
  * @property Carbon|null $is_problem_at - дата установки флага проблемного отправления
  * @property int $is_canceled - флаг, что отправление отменено
+ * @property int $return_reason_id - id причины отмены доставки
  * @property OrderReturnReason $orderReturnReason - причина возврата заказа
  * @property Carbon|null $is_canceled_at - дата установки флага отмены отправления
  *

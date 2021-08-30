@@ -27,7 +27,7 @@ class AddReturnReasonIdToDeliveryTable extends Migration
     public function down()
     {
         Schema::table('delivery', function (Blueprint $table) {
-            $table->dropForeign('delivery_return_reason_id_foreign');
+            $table->dropForeign(['return_reason_id']);
             $table->dropColumn('return_reason_id');
         });
     }

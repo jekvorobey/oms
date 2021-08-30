@@ -210,6 +210,7 @@ use Illuminate\Support\Collection;
  * @property int $is_problem - флаг, что доставка проблемная
  * @property Carbon|null $is_problem_at - дата установки флага проблемной доставки
  * @property int $is_canceled - флаг, что доставка отменена
+ * @property int $return_reason_id - id причины отмены доставки
  * @property Carbon|null $is_canceled_at - дата установки флага отмены доставки
  * @property int $tariff_id - идентификатор тарифа на доставку из сервиса логистики
  * @property int $point_id - идентификатор пункта самовывоза из сервиса логистики

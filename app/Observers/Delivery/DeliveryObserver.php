@@ -342,7 +342,7 @@ class DeliveryObserver
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
             foreach ($delivery->shipments as $shipment) {
-                $deliveryService->cancelShipment($shipment, $shipment->orderReturnReason ? $shipment->orderReturnReason->id : $delivery->orderReturnReason->id);
+                $deliveryService->cancelShipment($shipment, $delivery->return_reason_id);
             }
         }
     }
