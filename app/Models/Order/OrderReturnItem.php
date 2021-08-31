@@ -4,6 +4,7 @@ namespace App\Models\Order;
 
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
+use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**

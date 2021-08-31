@@ -25,7 +25,7 @@ class OrderReturnService
     public function createOrderReturn(OrderReturnDto $orderReturnDto): array
     {
         /** @var Order $order */
-        $order = Order::query()->where('id', $orderReturnDto->order_id)->with('basket.items')->get();
+        $order = Order::query()->where('id', $orderReturnDto->order_id)->with('basket.items')->get()->first();
         if (!$order) {
             throw new \Exception("Order by id={$orderReturnDto->order_id} not found");
         }
@@ -81,7 +81,7 @@ class OrderReturnService
                 }
                 $orderReturnItem->price = $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
                 $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии
-                $orderReturn->save();
+                $orderReturnItem->save();
             }
 
             $orderReturn->priceRecalc(false);
