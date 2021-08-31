@@ -4,7 +4,9 @@ namespace App\Http\Controllers\V1\Delivery;
 
 use App\Http\Controllers\Controller;
 use App\Services\DeliveryService;
-use App\Services\DocumentService;
+use App\Services\DocumentService\ShipmentAcceptanceActCreator;
+use App\Services\DocumentService\ShipmentAssemblingCardCreator;
+use App\Services\DocumentService\ShipmentInventoryCreator;
 use App\Services\Dto\Out\DocumentDto;
 use Greensight\CommonMsa\Dto\FileDto;
 use Greensight\CommonMsa\Services\FileService\FileService;
@@ -38,14 +40,14 @@ class ShipmentDocumentsController extends Controller
     public function acceptanceAct(
         int $shipmentId,
         DeliveryService $deliveryService,
-        DocumentService $documentService
+        ShipmentAcceptanceActCreator $shipmentAcceptanceActCreator
     ): JsonResponse {
         $shipment = $deliveryService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
 
-        $documentDto = $documentService->getShipmentAcceptanceAct($shipment);
+        $documentDto = $shipmentAcceptanceActCreator->setShipment($shipment)->create();
 
         return $this->getResponse($documentDto);
     }
@@ -70,14 +72,14 @@ class ShipmentDocumentsController extends Controller
     public function assemblingCard(
         int $shipmentId,
         DeliveryService $deliveryService,
-        DocumentService $documentService
+        ShipmentAssemblingCardCreator $shipmentAssemblingCardCreator
     ): JsonResponse {
         $shipment = $deliveryService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
 
-        $documentDto = $documentService->getShipmentAssemblingCard($shipment);
+        $documentDto = $shipmentAssemblingCardCreator->setShipment($shipment)->create();
 
         return $this->getResponse($documentDto);
     }
@@ -102,33 +104,33 @@ class ShipmentDocumentsController extends Controller
     public function inventory(
         int $shipmentId,
         DeliveryService $deliveryService,
-        DocumentService $documentService
+        ShipmentInventoryCreator $shipmentInventoryCreator
     ): JsonResponse {
         $shipment = $deliveryService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
 
-        $documentDto = $documentService->getShipmentInventory($shipment);
+        $documentDto = $shipmentInventoryCreator->setShipment($shipment)->create();
 
         return $this->getResponse($documentDto);
     }
 
     protected function getResponse(DocumentDto $documentDto): JsonResponse
     {
-        if ($documentDto->success && $documentDto->file_id) {
-            /** @var FileService $fileService */
-            $fileService = resolve(FileService::class);
-            /** @var FileDto $fileDto */
-            $fileDto = $fileService->getFiles([$documentDto->file_id])->first();
-
-            return response()->json([
-                'absolute_url' => $fileDto->absoluteUrl(),
-                'original_name' => $fileDto->original_name,
-                'size' => $fileDto->size,
-            ]);
-        } else {
+        if (!$documentDto->success || !$documentDto->file_id) {
             throw new HttpException(500, $documentDto->message);
         }
+
+        /** @var FileService $fileService */
+        $fileService = resolve(FileService::class);
+        /** @var FileDto $fileDto */
+        $fileDto = $fileService->getFiles([$documentDto->file_id])->first();
+
+        return response()->json([
+            'absolute_url' => $fileDto->absoluteUrl(),
+            'original_name' => $fileDto->original_name,
+            'size' => $fileDto->size,
+        ]);
     }
 }

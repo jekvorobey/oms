@@ -16,7 +16,7 @@ use App\Models\Order\OrderConfirmationType;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
-use App\Services\DocumentService;
+use App\Services\DocumentService\OrderTicketsCreator;
 use App\Services\OrderService;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -121,7 +121,7 @@ class OrdersController extends Controller
      * )
      * @throws \Throwable
      */
-    public function tickets(int $id, Request $request, DocumentService $documentService): JsonResponse
+    public function tickets(int $id, Request $request, OrderTicketsCreator $orderTicketsCreator): JsonResponse
     {
         $data = $request->validate([
             'basket_item_id' => 'sometimes|integer',
@@ -133,7 +133,7 @@ class OrdersController extends Controller
             throw new \Exception("Order by id={$id} not found");
         }
 
-        $documentDto = $documentService->getOrderPdfTickets($order, $data['basket_item_id'] ?? null);
+        $documentDto = $orderTicketsCreator->setOrder($order)->setBasketItemId($data['basket_item_id'] ?? null)->create();
         if (!$documentDto->success) {
             throw new \Exception('Tickets not formed');
         }

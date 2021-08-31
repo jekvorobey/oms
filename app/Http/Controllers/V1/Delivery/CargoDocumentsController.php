@@ -4,7 +4,7 @@ namespace App\Http\Controllers\V1\Delivery;
 
 use App\Http\Controllers\Controller;
 use App\Services\DeliveryService;
-use App\Services\DocumentService;
+use App\Services\DocumentService\CargoAcceptanceActCreator;
 use App\Services\Dto\Out\DocumentDto;
 use Greensight\CommonMsa\Dto\FileDto;
 use Greensight\CommonMsa\Services\FileService\FileService;
@@ -39,33 +39,33 @@ class CargoDocumentsController extends Controller
     public function acceptanceAct(
         int $cargoId,
         DeliveryService $deliveryService,
-        DocumentService $documentService
+        CargoAcceptanceActCreator $cargoAcceptanceActCreator
     ): JsonResponse {
         $cargo = $deliveryService->getCargo($cargoId);
         if (!$cargo) {
             throw new NotFoundHttpException('cargo not found');
         }
 
-        $documentDto = $documentService->getCargoAcceptanceAct($cargo);
+        $documentDto = $cargoAcceptanceActCreator->setCargo($cargo)->create();
 
         return $this->getResponse($documentDto);
     }
 
     protected function getResponse(DocumentDto $documentDto): JsonResponse
     {
-        if ($documentDto->success && $documentDto->file_id) {
-            /** @var FileService $fileService */
-            $fileService = resolve(FileService::class);
-            /** @var FileDto $fileDto */
-            $fileDto = $fileService->getFiles([$documentDto->file_id])->first();
-
-            return response()->json([
-                'absolute_url' => $fileDto->absoluteUrl(),
-                'original_name' => $fileDto->original_name,
-                'size' => $fileDto->size,
-            ]);
-        } else {
+        if (!$documentDto->success || !$documentDto->file_id) {
             throw new HttpException(500, $documentDto->message);
         }
+
+        /** @var FileService $fileService */
+        $fileService = resolve(FileService::class);
+        /** @var FileDto $fileDto */
+        $fileDto = $fileService->getFiles([$documentDto->file_id])->first();
+
+        return response()->json([
+            'absolute_url' => $fileDto->absoluteUrl(),
+            'original_name' => $fileDto->original_name,
+            'size' => $fileDto->size,
+        ]);
     }
 }

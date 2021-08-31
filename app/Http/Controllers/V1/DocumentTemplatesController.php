@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
-use App\Services\DocumentService;
+use App\Services\DocumentService\ClaimActCreator;
+use App\Services\DocumentService\ShipmentAcceptanceActCreator;
+use App\Services\DocumentService\ShipmentAssemblingCardCreator;
+use App\Services\DocumentService\ShipmentInventoryCreator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
@@ -30,9 +33,9 @@ class DocumentTemplatesController extends Controller
      * )
      * Получить шаблон "Акт-претензия по отправлению"
      */
-    public function claimAct(): JsonResponse
+    public function claimAct(ClaimActCreator $creator): JsonResponse
     {
-        return $this->getResponse(DocumentService::CLAIM_ACT);
+        return $this->getResponse($creator->documentName());
     }
 
     /**
@@ -52,9 +55,9 @@ class DocumentTemplatesController extends Controller
      * )
      * Получить шаблон "Акт приема-передачи по отправлению/грузу"
      */
-    public function acceptanceAct(): JsonResponse
+    public function acceptanceAct(ShipmentAcceptanceActCreator $creator): JsonResponse
     {
-        return $this->getResponse(DocumentService::ACCEPTANCE_ACT);
+        return $this->getResponse($creator->documentName());
     }
 
     /**
@@ -74,9 +77,9 @@ class DocumentTemplatesController extends Controller
      * )
      * Получить шаблон "Опись отправления заказа"
      */
-    public function inventory(): JsonResponse
+    public function inventory(ShipmentInventoryCreator $creator): JsonResponse
     {
-        return $this->getResponse(DocumentService::INVENTORY);
+        return $this->getResponse($creator->documentName());
     }
 
     /**
@@ -97,9 +100,9 @@ class DocumentTemplatesController extends Controller
      *
      * Получить шаблон "Карточка сборки отправления"
      */
-    public function assemblingCard(): JsonResponse
+    public function assemblingCard(ShipmentAssemblingCardCreator $creator): JsonResponse
     {
-        return $this->getResponse(DocumentService::ASSEMBLING_CARD);
+        return $this->getResponse($creator->documentName());
     }
 
     protected function getResponse(string $template): JsonResponse

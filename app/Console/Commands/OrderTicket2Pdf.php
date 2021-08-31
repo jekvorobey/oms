@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Order\Order;
-use App\Services\DocumentService;
+use App\Services\DocumentService\OrderTicketsCreator;
 use Illuminate\Console\Command;
 
 /**
@@ -31,7 +31,7 @@ class OrderTicket2Pdf extends Command
      * Execute the console command.
      * @throws \Throwable
      */
-    public function handle(DocumentService $documentService)
+    public function handle(OrderTicketsCreator $orderTicketsCreator)
     {
         $orderId = $this->argument('orderId');
         /** @var Order $order */
@@ -40,7 +40,8 @@ class OrderTicket2Pdf extends Command
             throw new \Exception("Заказ с id=$orderId не найден");
         }
 
-        $documentDto = $documentService->getOrderPdfTickets($order);
+        $documentDto = $orderTicketsCreator->setOrder($order)->create();
+
         $this->output->writeln($documentDto->success ? $documentDto->file_id : $documentDto->message);
     }
 }
