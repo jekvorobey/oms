@@ -919,13 +919,7 @@ class DeliveryService
             );
         }
 
-        $orderReturnReason = OrderReturnReason::find($shipment->return_reason_id ??= $orderReturnReasonId);
-
-        if (!$orderReturnReason) {
-            throw new \Exception('Причина отмены не найдена');
-        }
-
-        $shipment->orderReturnReason()->associate($orderReturnReason);
+        $shipment->return_reason_id ??= $orderReturnReasonId;
 
         $shipment->is_canceled = true;
         $shipment->cargo_id = null;
@@ -947,13 +941,7 @@ class DeliveryService
 
         $delivery->is_canceled = true;
 
-        $orderReturnReason = OrderReturnReason::find($delivery->return_reason_id ??= $orderReturnReasonId);
-
-        if (!$orderReturnReason) {
-            throw new \Exception('Причина отмены не найдена');
-        }
-
-        $delivery->orderReturnReason()->associate($orderReturnReason);
+        $delivery->return_reason_id ??= $orderReturnReasonId;
 
         if ($delivery->save()) {
             $this->cancelDeliveryOrder($delivery);

@@ -409,7 +409,7 @@ class DeliveryObserver
             if ($allDeliveriesIsCanceled) {
                 /** @var OrderService $orderService */
                 $orderService = resolve(OrderService::class);
-                $orderService->cancel($order, $order->orderReturnReason ? $order->orderReturnReason->id : $delivery->orderReturnReason->id);
+                $orderService->cancel($order, $delivery->return_reason_id);
             }
         }
     }
