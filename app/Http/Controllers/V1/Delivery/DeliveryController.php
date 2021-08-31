@@ -342,7 +342,7 @@ class DeliveryController extends Controller
     public function cancel(int $id, Request $request, OmsDeliveryService $deliveryService): Response
     {
         $data = $this->validate($request, [
-            'orderReturnReason' => 'required|integer|exists:order_return_reasons',
+            'orderReturnReason' => 'required|integer|exists:order_return_reasons,id',
         ]);
         $delivery = $deliveryService->getDelivery($id);
         if (!$delivery) {

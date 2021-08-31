@@ -430,7 +430,7 @@ class OrdersController extends Controller
     public function cancel(int $id, Request $request, OrderService $orderService): Response
     {
         $data = $this->validate($request, [
-            'orderReturnReason' => 'required|integer',
+            'orderReturnReason' => 'required|integer|exists:order_return_reasons,id',
         ]);
 
         $order = $orderService->getOrder($id);
