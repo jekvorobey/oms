@@ -342,7 +342,7 @@ class DeliveryObserver
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
             foreach ($delivery->shipments as $shipment) {
-                $deliveryService->cancelShipment($shipment);
+                $deliveryService->cancelShipment($shipment, $delivery->return_reason_id);
             }
         }
     }
@@ -409,7 +409,7 @@ class DeliveryObserver
             if ($allDeliveriesIsCanceled) {
                 /** @var OrderService $orderService */
                 $orderService = resolve(OrderService::class);
-                $orderService->cancel($order);
+                $orderService->cancel($order, $delivery->return_reason_id);
             }
         }
     }
