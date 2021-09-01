@@ -11,6 +11,7 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
+use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
 use Exception;
@@ -923,7 +924,17 @@ class DeliveryService
         $shipment->is_canceled = true;
         $shipment->cargo_id = null;
 
-        return $shipment->save();
+        if ($shipment->save()) {
+            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
+
+            /** @var OrderReturnService $orderReturnService */
+            $orderReturnService = resolve(OrderReturnService::class);
+            $orderReturnService->createOrderReturn($orderReturnDto);
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -944,6 +955,12 @@ class DeliveryService
 
         if ($delivery->save()) {
             $this->cancelDeliveryOrder($delivery);
+
+            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromDelivery($delivery);
+
+            /** @var OrderReturnService $orderReturnService */
+            $orderReturnService = resolve(OrderReturnService::class);
+            $orderReturnService->createOrderReturn($orderReturnDto);
 
             return true;
         } else {

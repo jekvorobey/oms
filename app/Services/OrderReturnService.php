@@ -7,6 +7,7 @@ use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderReturnItem;
+use App\Models\Payment\PaymentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDto;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -19,15 +20,17 @@ class OrderReturnService
 {
     /**
      * Создать возврат по заказу
-     * @return array - [id, number]
      * @throws \Exception
      */
-    public function createOrderReturn(OrderReturnDto $orderReturnDto): array
+    public function createOrderReturn(OrderReturnDto $orderReturnDto): ?OrderReturn
     {
-        /** @var Order $order */
-        $order = Order::query()->where('id', $orderReturnDto->order_id)->with('basket.items')->get();
+        $order = Order::find($orderReturnDto->order_id)->load('basket.items');
         if (!$order) {
             throw new \Exception("Order by id={$orderReturnDto->order_id} not found");
+        }
+
+        if ($order->payment_status === PaymentStatus::PAID && $order->payment_status === PaymentStatus::HOLD) {
+            return null;
         }
 
         return DB::transaction(function () use ($orderReturnDto, $order) {
@@ -81,13 +84,13 @@ class OrderReturnService
                 }
                 $orderReturnItem->price = $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
                 $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии
-                $orderReturn->save();
+                $orderReturnItem->save();
             }
 
             $orderReturn->priceRecalc(false);
             $orderReturn->commissionRecalc();
 
-            return [$orderReturn->id, $orderReturn->number];
+            return $orderReturn;
         });
     }
 

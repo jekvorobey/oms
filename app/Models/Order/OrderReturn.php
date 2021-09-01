@@ -44,6 +44,10 @@ use Illuminate\Support\Collection;
  */
 class OrderReturn extends OmsModel
 {
+    public const STATUS_CREATED = 1;
+    public const STATUS_DONE = 2;
+    public const STATUS_FAILED = 3;
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderReturnItem::class);
@@ -64,8 +68,7 @@ class OrderReturn extends OmsModel
      */
     public static function makeNumber(int $orderId): string
     {
-        /** @var Order $order */
-        $order = Order::query()->where('id', $orderId)->with('orderReturns')->get();
+        $order = Order::find($orderId)->load('orderReturns');
 
         return $order->number . '-return-' . ($order->orderReturns->count() + 1);
     }
