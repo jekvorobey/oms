@@ -22,7 +22,7 @@ class OrderReturnService
      * Создать возврат по заказу
      * @throws \Exception
      */
-    public function createOrderReturn(OrderReturnDto $orderReturnDto): ?OrderReturn
+    public function createOrderReturn(OrderReturnDto $orderReturnDto, bool $isPartiallyCancelled = false): ?OrderReturn
     {
         $order = Order::find($orderReturnDto->order_id)->load('basket.items');
         if (!$order) {
@@ -32,6 +32,9 @@ class OrderReturnService
         if ($order->payment_status === PaymentStatus::PAID && $order->payment_status === PaymentStatus::HOLD) {
             return null;
         }
+
+        $order->is_partially_cancelled = $isPartiallyCancelled;
+        $order->save();
 
         return DB::transaction(function () use ($orderReturnDto, $order) {
             $orderReturn = new OrderReturn();
@@ -92,6 +95,8 @@ class OrderReturnService
 
             return $orderReturn;
         });
+
+
     }
 
     public function updateOrderReturn(int $id, OrderReturnDto $orderReturnDto): void
