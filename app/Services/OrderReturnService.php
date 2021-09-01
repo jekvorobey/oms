@@ -20,7 +20,6 @@ class OrderReturnService
 {
     /**
      * Создать возврат по заказу
-     * @return OrderReturn
      * @throws \Exception
      */
     public function createOrderReturn(OrderReturnDto $orderReturnDto): ?OrderReturn
@@ -31,7 +30,6 @@ class OrderReturnService
         }
 
         if ($order->payment_status !== PaymentStatus::PAID && $order->payment_status !== PaymentStatus::HOLD) {
-
             return DB::transaction(function () use ($orderReturnDto, $order) {
                 $orderReturn = new OrderReturn();
                 $orderReturn->order_id = $order->id;
