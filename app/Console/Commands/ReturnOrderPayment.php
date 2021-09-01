@@ -29,20 +29,24 @@ class ReturnOrderPayment extends Command
         foreach ($orderReturns as $orderReturn) {
             $payment = $orderReturn->order->payments->first();
 
-            if ($payment) {
-                $paymentId = $payment->data['externalPaymentId'];
-                $paymentSystem = $payment->paymentSystem();
-
-                if ($paymentSystem) {
-                    $refundResponse = $paymentSystem->refund($paymentId, $orderReturn->price);
-
-                    $orderReturn->status =
-                        $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS
-                            ? OrderReturn::STATUS_DONE
-                            : OrderReturn::STATUS_FAILED;
-                    $orderReturn->save();
-                }
+            if (!$payment) {
+                continue;
             }
+
+            $paymentId = $payment->data['externalPaymentId'];
+            $paymentSystem = $payment->paymentSystem();
+
+            if (!$paymentSystem) {
+                continue;
+            }
+
+            $refundResponse = $paymentSystem->refund($paymentId, $orderReturn->price);
+
+            $orderReturn->status =
+                $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS
+                    ? OrderReturn::STATUS_DONE
+                    : OrderReturn::STATUS_FAILED;
+            $orderReturn->save();
         }
     }
 }
