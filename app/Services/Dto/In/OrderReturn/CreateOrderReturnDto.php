@@ -18,7 +18,6 @@ class CreateOrderReturnDto
 {
     /**
      * Создание dto возврата заказа
-     *
      */
     public function getFromOrder(Order $order): OrderReturnDto
     {
@@ -39,7 +38,6 @@ class CreateOrderReturnDto
 
     /**
      * Создание dto возврата доставки
-     *
      */
     public function getFromDelivery(Delivery $delivery): OrderReturnDto
     {
@@ -60,7 +58,6 @@ class CreateOrderReturnDto
 
     /**
      * Создание dto возврата отправления
-     *
      */
     public function getFromShipment(Shipment $shipment): OrderReturnDto
     {
