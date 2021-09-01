@@ -46,9 +46,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OrderReturnItem extends OmsModel
 {
     protected $casts = [
-        'product' => 'json'
+        'product' => 'json',
     ];
-    
+
     public function orderReturn(): BelongsTo
     {
         return $this->belongsTo(OrderReturn::class);
