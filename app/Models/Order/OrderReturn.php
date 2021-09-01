@@ -68,8 +68,7 @@ class OrderReturn extends OmsModel
      */
     public static function makeNumber(int $orderId): string
     {
-        /** @var Order $order */
-        $order = Order::query()->where('id', $orderId)->with('orderReturns')->get()->first();
+        $order = Order::find($orderId)->load('orderReturns');
 
         return $order->number . '-return-' . ($order->orderReturns->count() + 1);
     }

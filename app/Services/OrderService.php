@@ -6,7 +6,7 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
-use App\Services\Dto\In\OrderReturn\CreateOrderReturnDto;
+use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
 use App\Services\Dto\Internal\PublicEventOrder;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
@@ -78,7 +78,7 @@ class OrderService
         $order->return_reason_id ??= $orderReturnReasonId;
 
         if ($order->save()) {
-            $orderReturnDto = (new CreateOrderReturnDto())->getFromOrder($order);
+            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrder($order);
 
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);

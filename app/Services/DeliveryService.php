@@ -11,7 +11,7 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
-use App\Services\Dto\In\OrderReturn\CreateOrderReturnDto;
+use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
 use Exception;
@@ -925,7 +925,7 @@ class DeliveryService
         $shipment->cargo_id = null;
 
         if ($shipment->save()) {
-            $orderReturnDto = (new CreateOrderReturnDto())->getFromShipment($shipment);
+            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
 
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);
@@ -956,7 +956,7 @@ class DeliveryService
         if ($delivery->save()) {
             $this->cancelDeliveryOrder($delivery);
 
-            $orderReturnDto = (new CreateOrderReturnDto())->getFromDelivery($delivery);
+            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromDelivery($delivery);
 
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);

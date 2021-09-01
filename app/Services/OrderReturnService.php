@@ -24,8 +24,7 @@ class OrderReturnService
      */
     public function createOrderReturn(OrderReturnDto $orderReturnDto): array
     {
-        /** @var Order $order */
-        $order = Order::query()->where('id', $orderReturnDto->order_id)->with('basket.items')->get()->first();
+        $order = Order::find($orderReturnDto->order_id)->load('basket.items');
         if (!$order) {
             throw new \Exception("Order by id={$orderReturnDto->order_id} not found");
         }
