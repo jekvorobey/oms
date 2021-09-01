@@ -258,4 +258,33 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
         return $items;
     }
+
+    /**
+     * @inheritDoc
+     * @throws \YooKassa\Common\Exceptions\ApiException
+     * @throws \YooKassa\Common\Exceptions\BadApiRequestException
+     * @throws \YooKassa\Common\Exceptions\ExtensionNotFoundException
+     * @throws \YooKassa\Common\Exceptions\ForbiddenException
+     * @throws \YooKassa\Common\Exceptions\InternalServerError
+     * @throws \YooKassa\Common\Exceptions\NotFoundException
+     * @throws \YooKassa\Common\Exceptions\ResponseProcessingException
+     * @throws \YooKassa\Common\Exceptions\TooManyRequestsException
+     * @throws \YooKassa\Common\Exceptions\UnauthorizedException
+     */
+    public function refund(string $paymentId, int $amount): array
+    {
+        $captureData = [
+            'amount' => [
+                'value' => $amount,
+                'currency' => self::CURRENCY_RUB,
+            ],
+            'payment_id' => $paymentId,
+        ];
+        $this->logger->info('Start return payment', $captureData);
+        $response = $this->yandexService->createRefund($captureData, uniqid('', true));
+
+        $this->logger->info('Return payment result', $response->jsonSerialize());
+
+        return $response->jsonSerialize();
+    }
 }

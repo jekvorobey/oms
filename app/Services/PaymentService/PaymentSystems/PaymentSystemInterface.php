@@ -11,6 +11,11 @@ use App\Models\Payment\Payment;
 interface PaymentSystemInterface
 {
     /**
+     * Статус успешного возврата оплаты
+     */
+    public const STATUS_REFUND_SUCCESS = 'succeeded';
+
+    /**
      * Обратиться к внешней системы оплаты для создания платежа.
      *
      * @param string $returnLink ссылка на страницу, на которую пользователь должен попасть после оплаты
@@ -47,4 +52,9 @@ interface PaymentSystemInterface
      * Если не указано, то время бесконечно.
      */
     public function duration(): ?int;
+
+    /**
+     * Сформировать запрос на возврат средств
+     */
+    public function refund(string $paymentId, int $amount): array;
 }
