@@ -278,7 +278,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'value' => $amount,
                 'currency' => self::CURRENCY_RUB,
             ],
-            'payment_id' => $paymentId
+            'payment_id' => $paymentId,
         ];
         $this->logger->info('Start return payment', $captureData);
         $response = $this->yandexService->createRefund($captureData, uniqid('', true));

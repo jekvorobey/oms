@@ -36,7 +36,10 @@ class ReturnOrderPayment extends Command
                 if ($paymentSystem) {
                     $refundResponse = $paymentSystem->refund($paymentId, $orderReturn->price);
 
-                    $orderReturn->status = $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS ? OrderReturn::STATUS_DONE : OrderReturn::STATUS_FAILED;
+                    $orderReturn->status =
+                        ($refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS)
+                            ? OrderReturn::STATUS_DONE
+                            : OrderReturn::STATUS_FAILED;
                     $orderReturn->save();
                 }
             }
