@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Basket\Basket;
 use App\Models\Order\OrderReturnReason;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
@@ -21,6 +22,7 @@ class OrderReturnReasonTest extends TestCase
     public function testSuccessCancelOrderWithReturnReason(): void
     {
         $orderReturnReasons = $this->createOrderReturnReasons();
+        $basket = factory(Basket::class)->create();
     }
 
     public function testFailedCancelOrderWithReturnReason(): void
