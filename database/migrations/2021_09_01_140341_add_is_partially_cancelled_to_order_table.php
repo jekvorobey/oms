@@ -14,7 +14,7 @@ class AddIsPartiallyCancelledToOrderTable extends Migration
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->boolean('is_partially_cancelled')->unsigned()->nullable()->default(null)->after('is_canceled');
+            $table->boolean('is_partially_cancelled')->nullable()->after('is_canceled');
         });
     }
 

@@ -960,7 +960,7 @@ class DeliveryService
 
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);
-            $orderReturnService->createOrderReturn($orderReturnDto, true);
+            $orderReturnService->createOrderReturn($orderReturnDto);
 
             return true;
         } else {
