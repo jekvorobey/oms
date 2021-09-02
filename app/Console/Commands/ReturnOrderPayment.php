@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Order\OrderReturn;
+use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use Illuminate\Console\Command;
 
@@ -27,6 +29,7 @@ class ReturnOrderPayment extends Command
         $orderReturns = OrderReturn::query()->where('status', OrderReturn::STATUS_CREATED)->with('order.payments')->get();
 
         foreach ($orderReturns as $orderReturn) {
+            /** @var Payment $payment */
             $payment = $orderReturn->order->payments->last();
 
             if (!$payment) {
@@ -40,12 +43,17 @@ class ReturnOrderPayment extends Command
                 continue;
             }
 
-            $refundResponse = $paymentSystem->refund($paymentId, $orderReturn->price);
+            if ($payment->status === PaymentStatus::PAID) {
+                $orderReturn->status = OrderReturn::STATUS_DONE;
+            } else {
+                $refundResponse = $paymentSystem->refund($paymentId, $orderReturn->price);
 
-            $orderReturn->status =
-                $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS
-                    ? OrderReturn::STATUS_DONE
-                    : OrderReturn::STATUS_FAILED;
+                $orderReturn->status =
+                    $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS
+                        ? OrderReturn::STATUS_DONE
+                        : OrderReturn::STATUS_FAILED;
+            }
+
             $orderReturn->save();
         }
     }

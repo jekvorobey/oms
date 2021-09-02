@@ -22,7 +22,7 @@ class OrderReturnDtoBuilder
      */
     public function buildFromOrder(Order $order): OrderReturnDto
     {
-        return $this->buildBase($order->id, $order->basket->items);
+        return $this->buildBase($order->id, null, $order->deliveries()->sum('cost'));
     }
 
     /**
@@ -44,19 +44,23 @@ class OrderReturnDtoBuilder
     /**
      * Формирование базового объекта возврата заказа
      */
-    protected function buildBase(int $orderId, Collection $basketItems): OrderReturnDto
+    protected function buildBase(int $orderId, ?Collection $basketItems, ?int $price = null): OrderReturnDto
     {
         $orderReturnDto = new OrderReturnDto();
         $orderReturnDto->order_id = $orderId;
         $orderReturnDto->status = OrderReturn::STATUS_CREATED;
-        $orderReturnDto->items = collect($basketItems->transform(static function (BasketItem $item) {
-            $orderReturnItemDto = new OrderReturnItemDto();
-            $orderReturnItemDto->basket_item_id = $item->id;
-            $orderReturnItemDto->qty = $item->qty;
-            $orderReturnItemDto->ticket_ids = $item->getTicketIds();
+        $orderReturnDto->price = $price;
 
-            return $orderReturnItemDto;
-        }));
+        if ($basketItems) {
+            $orderReturnDto->items = collect($basketItems->transform(static function (BasketItem $item) {
+                $orderReturnItemDto = new OrderReturnItemDto();
+                $orderReturnItemDto->basket_item_id = $item->id;
+                $orderReturnItemDto->qty = $item->qty;
+                $orderReturnItemDto->ticket_ids = $item->getTicketIds();
+
+                return $orderReturnItemDto;
+            }));
+        }
 
         return $orderReturnDto;
     }

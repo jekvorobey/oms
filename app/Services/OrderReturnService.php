@@ -29,22 +29,30 @@ class OrderReturnService
             throw new \Exception("Order by id={$orderReturnDto->order_id} not found");
         }
 
-        if ($order->payment_status === PaymentStatus::PAID && $order->payment_status === PaymentStatus::HOLD) {
+        if ($order->payment_status !== PaymentStatus::PAID && $order->payment_status !== PaymentStatus::HOLD) {
             return null;
         }
 
         return DB::transaction(function () use ($orderReturnDto, $order) {
+            $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
+            /** @var Collection|BasketItem[] $basketItems */
+            $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->get()->keyBy('id');
+            $existOrderReturnItems = OrderReturnItem::query()
+                ->whereIn('basket_item_id', $basketItemIds)
+                ->first();
+
+            if ($existOrderReturnItems) {
+                return null;
+            }
+
             $orderReturn = new OrderReturn();
             $orderReturn->order_id = $order->id;
             $orderReturn->customer_id = $order->customer_id;
             $orderReturn->type = $order->type;
             $orderReturn->number = OrderReturn::makeNumber($order->id);
             $orderReturn->status = $orderReturnDto->status;
+            $orderReturn->price = 0;
             $orderReturn->save();
-
-            $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
-            /** @var Collection|BasketItem[] $basketItems */
-            $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->get()->keyBy('id');
 
             foreach ($orderReturnDto->items as $item) {
                 $orderReturnItem = new OrderReturnItem();
@@ -87,8 +95,13 @@ class OrderReturnService
                 $orderReturnItem->save();
             }
 
-            $orderReturn->priceRecalc(false);
+            if ($orderReturnDto->price) {
+                $orderReturn->price = $orderReturnDto->price;
+            } else {
+                $orderReturn->priceRecalc(false);
+            }
             $orderReturn->commissionRecalc();
+            $orderReturn->save();
 
             return $orderReturn;
         });

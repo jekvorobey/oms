@@ -85,12 +85,25 @@ class LocalPaymentSystem implements PaymentSystemInterface
         return $payment->data['paymentId'] ?? null;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function refund(string $paymentId, int $amount): array
     {
         return [
             'paymentId' => $paymentId,
             'amount' => $amount,
             'status' => self::STATUS_REFUND_SUCCESS,
+        ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function cancel(string $paymentId): array
+    {
+        return [
+            'status' => self::STATUS_CANCELLED
         ];
     }
 }

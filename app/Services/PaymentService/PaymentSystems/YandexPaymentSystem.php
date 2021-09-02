@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
 use YooKassa\Client;
+use YooKassa\Model\Notification\NotificationCanceled;
 use YooKassa\Model\Notification\NotificationSucceeded;
 use YooKassa\Model\Notification\NotificationWaitingForCapture;
 use YooKassa\Model\NotificationEventType;
@@ -110,9 +111,19 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function handlePushPayment(array $data): void
     {
         $this->logger->info('Handle external payment');
-        $notification = $data['event'] === NotificationEventType::PAYMENT_SUCCEEDED
-            ? new NotificationSucceeded($data)
-            : new NotificationWaitingForCapture($data);
+        switch ($data['event']) {
+            case NotificationEventType::PAYMENT_SUCCEEDED:
+                $notification = new NotificationSucceeded($data);
+                break;
+            case NotificationEventType::PAYMENT_CANCELED:
+                $notification = new NotificationCanceled($data);
+                break;
+            case NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE:
+                $notification = new NotificationWaitingForCapture($data);
+                break;
+            default:
+                return;
+        }
 
         $this->logger->info('External event data', $notification->jsonSerialize());
 
@@ -286,5 +297,22 @@ class YandexPaymentSystem implements PaymentSystemInterface
         $this->logger->info('Return payment result', $response->jsonSerialize());
 
         return $response->jsonSerialize();
+    }
+
+    /**
+     * @inheritDoc
+     * @throws \YooKassa\Common\Exceptions\ApiException
+     * @throws \YooKassa\Common\Exceptions\BadApiRequestException
+     * @throws \YooKassa\Common\Exceptions\ExtensionNotFoundException
+     * @throws \YooKassa\Common\Exceptions\ForbiddenException
+     * @throws \YooKassa\Common\Exceptions\InternalServerError
+     * @throws \YooKassa\Common\Exceptions\NotFoundException
+     * @throws \YooKassa\Common\Exceptions\ResponseProcessingException
+     * @throws \YooKassa\Common\Exceptions\TooManyRequestsException
+     * @throws \YooKassa\Common\Exceptions\UnauthorizedException
+     */
+    public function cancel(string $paymentId): array
+    {
+        return $this->yandexService->cancelPayment($paymentId)->jsonSerialize();
     }
 }

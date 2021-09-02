@@ -11,6 +11,7 @@ use Illuminate\Support\Fluent;
  *
  * @property int $order_id - id заказа*
  * @property int $status - статус (см. константы App\Models\Order\OrderReturn)
+ * @property ?int $price - стоимость возврата
  * @property Collection|OrderReturnItemDto[] $items - состав возврата*
  */
 class OrderReturnDto extends Fluent

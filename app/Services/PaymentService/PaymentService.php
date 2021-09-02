@@ -2,10 +2,12 @@
 
 namespace App\Services\PaymentService;
 
+use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Класс-бизнес логики по работе с оплатами заказа
@@ -93,5 +95,13 @@ class PaymentService
         return Payment::query()->whereIn('status', [PaymentStatus::NOT_PAID, PaymentStatus::WAITING])
             ->where('expires_at', '<', Carbon::now()->format('Y-m-d H:i:s'))
             ->get(['id', 'order_id']);
+    }
+
+    public function refund(Order $order, int $sum): void
+    {
+        /** @var Payment $payment */
+        $payment = $order->payments->last();
+        $payment->refund_sum = $sum;
+        $payment->save();
     }
 }

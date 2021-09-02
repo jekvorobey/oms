@@ -11,6 +11,7 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
+use App\Models\Payment\PaymentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
@@ -40,6 +41,7 @@ use Greensight\Store\Services\StoreService\StoreService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use MerchantManagement\Services\MerchantService\MerchantService;
 
 /**
@@ -925,6 +927,11 @@ class DeliveryService
         $shipment->cargo_id = null;
 
         if ($shipment->save()) {
+
+            if ($shipment->payment_status !== PaymentStatus::PAID) {
+                return true;
+            }
+
             $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
 
             /** @var OrderReturnService $orderReturnService */
@@ -955,12 +962,6 @@ class DeliveryService
 
         if ($delivery->save()) {
             $this->cancelDeliveryOrder($delivery);
-
-            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromDelivery($delivery);
-
-            /** @var OrderReturnService $orderReturnService */
-            $orderReturnService = resolve(OrderReturnService::class);
-            $orderReturnService->createOrderReturn($orderReturnDto);
 
             return true;
         } else {
