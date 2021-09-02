@@ -27,7 +27,7 @@ class ReturnOrderPayment extends Command
         $orderReturns = OrderReturn::query()->where('status', OrderReturn::STATUS_CREATED)->with('order.payments')->get();
 
         foreach ($orderReturns as $orderReturn) {
-            $payment = $orderReturn->order->payments->first();
+            $payment = $orderReturn->order->payments->last();
 
             if (!$payment) {
                 continue;
