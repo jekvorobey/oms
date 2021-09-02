@@ -384,7 +384,8 @@ class ShipmentObserver
      */
     protected function setIsCanceledToDelivery(Shipment $shipment): void
     {
-        if ($shipment->wasChanged('is_canceled')
+        if (
+            $shipment->wasChanged('is_canceled')
             && $shipment->is_canceled
             && $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION
         ) {
@@ -414,7 +415,8 @@ class ShipmentObserver
      */
     protected function setOrderIsPartiallyCancelled(Shipment $shipment): void
     {
-        if ($shipment->wasChanged('is_canceled')
+        if (
+            $shipment->wasChanged('is_canceled')
             && $shipment->is_canceled
             && $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION
         ) {
