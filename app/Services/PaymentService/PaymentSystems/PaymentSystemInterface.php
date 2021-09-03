@@ -2,6 +2,7 @@
 
 namespace App\Services\PaymentService\PaymentSystems;
 
+use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 
 /**
@@ -61,7 +62,7 @@ interface PaymentSystemInterface
     /**
      * Сформировать запрос на возврат средств
      */
-    public function refund(string $paymentId, int $amount): array;
+    public function refund(string $paymentId, OrderReturn $orderReturn): array;
 
     /**
      * Сформировать запрос на отмену оплаты

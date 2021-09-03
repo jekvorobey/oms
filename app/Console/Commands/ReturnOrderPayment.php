@@ -44,7 +44,7 @@ class ReturnOrderPayment extends Command
             }
 
             if ($payment->status === PaymentStatus::PAID) {
-                $refundResponse = $paymentSystem->refund($paymentId, $orderReturn->price);
+                $refundResponse = $paymentSystem->refund($paymentId, $orderReturn);
 
                 $orderReturn->status =
                     $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS
