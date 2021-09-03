@@ -44,14 +44,14 @@ class ReturnOrderPayment extends Command
             }
 
             if ($payment->status === PaymentStatus::PAID) {
-                $orderReturn->status = OrderReturn::STATUS_DONE;
-            } else {
                 $refundResponse = $paymentSystem->refund($paymentId, $orderReturn->price);
 
                 $orderReturn->status =
                     $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS
                         ? OrderReturn::STATUS_DONE
                         : OrderReturn::STATUS_FAILED;
+            } else {
+                $orderReturn->status = OrderReturn::STATUS_DONE;
             }
 
             $orderReturn->save();

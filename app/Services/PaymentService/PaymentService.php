@@ -7,7 +7,6 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Класс-бизнес логики по работе с оплатами заказа
@@ -101,7 +100,10 @@ class PaymentService
     {
         /** @var Payment $payment */
         $payment = $order->payments->last();
-        $payment->refund_sum = $sum;
+        $refundSum = $payment->refund_sum + $sum;
+        if ($payment->sum >= $refundSum) {
+            $payment->refund_sum = $refundSum;
+        }
         $payment->save();
     }
 }

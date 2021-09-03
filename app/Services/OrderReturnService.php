@@ -37,11 +37,16 @@ class OrderReturnService
             $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
             /** @var Collection|BasketItem[] $basketItems */
             $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->get()->keyBy('id');
+            //TODO Предусмотреть в дальнейшем условие возврата неполного количества одного товара
             $existOrderReturnItems = OrderReturnItem::query()
                 ->whereIn('basket_item_id', $basketItemIds)
-                ->first();
+                ->exists();
+            $existOrderReturnDelivery = OrderReturn::query()
+                ->where('order_id', $order->id)
+                ->where('is_delivery', true)
+                ->exists();
 
-            if ($existOrderReturnItems) {
+            if ($existOrderReturnItems || $existOrderReturnDelivery) {
                 return null;
             }
 
@@ -52,6 +57,7 @@ class OrderReturnService
             $orderReturn->number = OrderReturn::makeNumber($order->id);
             $orderReturn->status = $orderReturnDto->status;
             $orderReturn->price = 0;
+            $orderReturn->is_delivery = $orderReturnDto->is_delivery;
             $orderReturn->save();
 
             foreach ($orderReturnDto->items as $item) {
@@ -95,6 +101,7 @@ class OrderReturnService
                 $orderReturnItem->save();
             }
 
+            //Усилить условие - только для is_delivery
             if ($orderReturnDto->price) {
                 $orderReturn->price = $orderReturnDto->price;
             } else {

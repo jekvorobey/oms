@@ -3,7 +3,6 @@
 namespace App\Services\Dto\In\OrderReturn;
 
 use App\Models\Basket\BasketItem;
-use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
@@ -22,15 +21,7 @@ class OrderReturnDtoBuilder
      */
     public function buildFromOrder(Order $order): OrderReturnDto
     {
-        return $this->buildBase($order->id, null, $order->deliveries()->sum('cost'));
-    }
-
-    /**
-     * Создание dto возврата доставки
-     */
-    public function buildFromDelivery(Delivery $delivery): OrderReturnDto
-    {
-        return $this->buildBase($delivery->order_id, $delivery->shipments);
+        return $this->buildBase($order->id, null, $order->delivery_price);
     }
 
     /**
@@ -50,6 +41,7 @@ class OrderReturnDtoBuilder
         $orderReturnDto->order_id = $orderId;
         $orderReturnDto->status = OrderReturn::STATUS_CREATED;
         $orderReturnDto->price = $price;
+        $orderReturnDto->is_delivery = false;
 
         if ($basketItems) {
             $orderReturnDto->items = collect($basketItems->transform(static function (BasketItem $item) {
@@ -60,6 +52,8 @@ class OrderReturnDtoBuilder
 
                 return $orderReturnItemDto;
             }));
+        } else {
+            $orderReturnDto->is_delivery = true;
         }
 
         return $orderReturnDto;

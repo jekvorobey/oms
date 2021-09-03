@@ -20,7 +20,6 @@ class OrderReturnObserver
     public function created(OrderReturn $orderReturn)
     {
         History::saveEvent(HistoryType::TYPE_CREATE, $orderReturn->order, $orderReturn);
-        (new PaymentService())->refund($orderReturn->order, $orderReturn->price);
     }
 
     /**
@@ -31,7 +30,18 @@ class OrderReturnObserver
     public function updated(OrderReturn $orderReturn)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, $orderReturn->order, $orderReturn);
-        (new PaymentService())->refund($orderReturn->order, $orderReturn->price);
+    }
+
+    /**
+     * Handle the order return "saved" event.
+     * @return void
+     * @throws \Exception
+     */
+    public function saved(OrderReturn $orderReturn)
+    {
+        if ($orderReturn->wasChanged('price')) {
+            (new PaymentService())->refund($orderReturn->order, $orderReturn->price);
+        }
     }
 
     /**
