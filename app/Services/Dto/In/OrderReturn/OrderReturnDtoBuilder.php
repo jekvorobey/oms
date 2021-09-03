@@ -21,7 +21,10 @@ class OrderReturnDtoBuilder
      */
     public function buildFromOrder(Order $order): OrderReturnDto
     {
-        return $this->buildBase($order->id, null, $order->delivery_price);
+        $orderReturnDto = $this->buildBase($order->id, null, $order->delivery_price);
+        $orderReturnDto->is_delivery = true;
+
+        return $orderReturnDto;
     }
 
     /**
@@ -41,7 +44,6 @@ class OrderReturnDtoBuilder
         $orderReturnDto->order_id = $orderId;
         $orderReturnDto->status = OrderReturn::STATUS_CREATED;
         $orderReturnDto->price = $price;
-        $orderReturnDto->is_delivery = false;
 
         if ($basketItems) {
             $orderReturnDto->items = collect($basketItems->transform(static function (BasketItem $item) {
@@ -52,8 +54,6 @@ class OrderReturnDtoBuilder
 
                 return $orderReturnItemDto;
             }));
-        } else {
-            $orderReturnDto->is_delivery = true;
         }
 
         return $orderReturnDto;

@@ -41,13 +41,20 @@ class OrderReturnService
             $existOrderReturnItems = OrderReturnItem::query()
                 ->whereIn('basket_item_id', $basketItemIds)
                 ->exists();
-            $existOrderReturnDelivery = OrderReturn::query()
-                ->where('order_id', $order->id)
-                ->where('is_delivery', true)
-                ->exists();
 
-            if ($existOrderReturnItems || $existOrderReturnDelivery) {
+            if ($existOrderReturnItems) {
                 return null;
+            }
+
+            if ($orderReturnDto->is_delivery) {
+                $existOrderReturnDelivery = OrderReturn::query()
+                    ->where('order_id', $order->id)
+                    ->where('is_delivery', true)
+                    ->exists();
+
+                if ($existOrderReturnDelivery) {
+                    return null;
+                }
             }
 
             $orderReturn = new OrderReturn();
@@ -101,8 +108,7 @@ class OrderReturnService
                 $orderReturnItem->save();
             }
 
-            //Усилить условие - только для is_delivery
-            if ($orderReturnDto->price) {
+            if ($orderReturnDto->price && $orderReturnDto->is_delivery) {
                 $orderReturn->price = $orderReturnDto->price;
             } else {
                 $orderReturn->priceRecalc(false);

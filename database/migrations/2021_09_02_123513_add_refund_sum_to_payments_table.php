@@ -14,7 +14,7 @@ class AddRefundSumToPaymentsTable extends Migration
     public function up()
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->float('refund_sum')->after('sum');
+            $table->float('refund_sum')->after('sum')->default(0);
         });
     }
 
