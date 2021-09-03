@@ -24,7 +24,9 @@ class AlterOrderDiscountsTable extends Migration
             $table->boolean('promo_code_only')->after('merchant_id');
             $table->boolean('visible_in_catalog')->after('promo_code_only');
             $table->json('items')->nullable()->after('visible_in_catalog');
+        });
 
+        Schema::table('order_discounts', function (Blueprint $table) {
             $table->dropColumn('discounts');
         });
     }
