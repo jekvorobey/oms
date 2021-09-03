@@ -122,6 +122,6 @@ class Payment extends OmsModel
 
     public function commitHolded()
     {
-        $this->paymentSystem()->commitHoldedPayment($this, $this->sum - (float)$this->refund_sum);
+        $this->paymentSystem()->commitHoldedPayment($this, $this->sum - (float) $this->refund_sum);
     }
 }

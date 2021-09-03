@@ -14,6 +14,7 @@ interface PaymentSystemInterface
      * Статус успешного возврата оплаты
      */
     public const STATUS_REFUND_SUCCESS = 'succeeded';
+
     /**
      * Статус отмены оплаты
      */

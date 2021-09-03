@@ -41,7 +41,6 @@ use Greensight\Store\Services\StoreService\StoreService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use MerchantManagement\Services\MerchantService\MerchantService;
 
 /**
@@ -927,7 +926,6 @@ class DeliveryService
         $shipment->cargo_id = null;
 
         if ($shipment->save()) {
-
             if ($shipment->payment_status !== PaymentStatus::PAID) {
                 return true;
             }

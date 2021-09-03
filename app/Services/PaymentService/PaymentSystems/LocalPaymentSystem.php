@@ -103,7 +103,8 @@ class LocalPaymentSystem implements PaymentSystemInterface
     public function cancel(string $paymentId): array
     {
         return [
-            'status' => self::STATUS_CANCELLED
+            'paymentId' => $paymentId,
+            'status' => self::STATUS_CANCELLED,
         ];
     }
 }
