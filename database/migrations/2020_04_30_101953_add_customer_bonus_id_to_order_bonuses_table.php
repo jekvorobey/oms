@@ -14,7 +14,7 @@ class AddCustomerBonusIdToOrderBonusesTable extends Migration
     public function up()
     {
         Schema::table('order_bonuses', function (Blueprint $table) {
-            $table->bigInteger('customer_bonus_id')->unsigned()->after('bonus_id');
+            $table->bigInteger('customer_bonus_id')->unsigned()->after('bonus_id')->default(0);
         });
     }
 
