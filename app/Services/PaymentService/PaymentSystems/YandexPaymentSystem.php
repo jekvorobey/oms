@@ -228,7 +228,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
             }
         }
         $itemsForReturn = OrderReturnItem::query()
-            ->where('order_id', $order->id)
+            ->where('basket_item_id', $order->basket->items->pluck('id'))
             ->get()
             ->pluck('basket_item_id')
             ->toArray();
