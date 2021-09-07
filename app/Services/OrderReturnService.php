@@ -29,22 +29,43 @@ class OrderReturnService
             throw new \Exception("Order by id={$orderReturnDto->order_id} not found");
         }
 
-        if ($order->payment_status === PaymentStatus::PAID && $order->payment_status === PaymentStatus::HOLD) {
+        if ($order->payment_status !== PaymentStatus::PAID && $order->payment_status !== PaymentStatus::HOLD) {
             return null;
         }
 
         return DB::transaction(function () use ($orderReturnDto, $order) {
+            $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
+            /** @var Collection|BasketItem[] $basketItems */
+            $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->get()->keyBy('id');
+            //TODO Предусмотреть в дальнейшем условие возврата неполного количества одного товара
+            $existOrderReturnItems = OrderReturnItem::query()
+                ->whereIn('basket_item_id', $basketItemIds)
+                ->exists();
+
+            if ($existOrderReturnItems) {
+                return null;
+            }
+
+            if ($orderReturnDto->is_delivery) {
+                $existOrderReturnDelivery = OrderReturn::query()
+                    ->where('order_id', $order->id)
+                    ->where('is_delivery', true)
+                    ->exists();
+
+                if ($existOrderReturnDelivery) {
+                    return null;
+                }
+            }
+
             $orderReturn = new OrderReturn();
             $orderReturn->order_id = $order->id;
             $orderReturn->customer_id = $order->customer_id;
             $orderReturn->type = $order->type;
             $orderReturn->number = OrderReturn::makeNumber($order->id);
             $orderReturn->status = $orderReturnDto->status;
+            $orderReturn->price = 0;
+            $orderReturn->is_delivery = $orderReturnDto->is_delivery;
             $orderReturn->save();
-
-            $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
-            /** @var Collection|BasketItem[] $basketItems */
-            $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->get()->keyBy('id');
 
             foreach ($orderReturnDto->items as $item) {
                 $orderReturnItem = new OrderReturnItem();
@@ -87,8 +108,13 @@ class OrderReturnService
                 $orderReturnItem->save();
             }
 
-            $orderReturn->priceRecalc(false);
+            if ($orderReturnDto->price && $orderReturnDto->is_delivery) {
+                $orderReturn->price = $orderReturnDto->price;
+            } else {
+                $orderReturn->priceRecalc(false);
+            }
             $orderReturn->commissionRecalc();
+            $orderReturn->save();
 
             return $orderReturn;
         });

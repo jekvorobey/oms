@@ -34,6 +34,7 @@ use Illuminate\Support\Collection;
  *
  * @property string $number - номер возврата по заказу (для формирования использовать метод \App\Models\Order\OrderReturn::makeNumber())
  * @property float $price - сумма к возврату
+ * @property bool $is_delivery - флаг доставки
  * @property float $commission - сумма удержанной комиссии
  * @property int $status - статус (см. \App\Models\Order\OrderReturnStatus)
  * @property Carbon|null $status_at - дата установки статуса

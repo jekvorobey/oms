@@ -2,6 +2,7 @@
 
 namespace App\Services\PaymentService\PaymentSystems;
 
+use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Carbon\Carbon;
@@ -18,6 +19,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class LocalPaymentSystem implements PaymentSystemInterface
 {
     public const STATUS_DONE = 'done';
+    public const CURRENCY_RUB = 'RUB';
 
     /**
      * @throws Exception
@@ -85,12 +87,66 @@ class LocalPaymentSystem implements PaymentSystemInterface
         return $payment->data['paymentId'] ?? null;
     }
 
-    public function refund(string $paymentId, int $amount): array
+    /**
+     * @inheritDoc
+     */
+    public function refund(string $paymentId, OrderReturn $orderReturn): array
+    {
+        $items = [];
+        if ($orderReturn->is_delivery) {
+            $items[] = [
+                'description' => 'Доставка',
+                'quantity' => 1,
+                'amount' => [
+                    'value' => number_format($orderReturn->price, 2, '.', ''),
+                    'currency' => self::CURRENCY_RUB,
+                ],
+                'vat_code' => 1,
+            ];
+        } else {
+            foreach ($orderReturn->items as $item) {
+                $itemValue = $item->price / $item->qty;
+
+                $items[] = [
+                    'description' => $item->name,
+                    'quantity' => $item->qty,
+                    'amount' => [
+                        'value' => number_format($itemValue, 2, '.', ''),
+                        'currency' => self::CURRENCY_RUB,
+                    ],
+                    'vat_code' => 1,
+                ];
+            }
+        }
+        $captureData = [
+            'amount' => [
+                'value' => $orderReturn->price,
+                'currency' => self::CURRENCY_RUB,
+            ],
+            'payment_id' => $paymentId,
+            'receipt' => [
+                'tax_system_code' => '2',
+                'phone' => $orderReturn->order->customerPhone(),
+                'items' => $items,
+            ],
+        ];
+
+        return [
+            'paymentId' => $paymentId,
+            'amount' => $orderReturn->price,
+            'status' => self::STATUS_REFUND_SUCCESS,
+            'receipt' => $captureData['receipt'],
+        ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function cancel(string $paymentId): array
     {
         return [
             'paymentId' => $paymentId,
-            'amount' => $amount,
-            'status' => self::STATUS_REFUND_SUCCESS,
+            'status' => self::STATUS_CANCELLED,
         ];
     }
 }

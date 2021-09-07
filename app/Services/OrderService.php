@@ -84,6 +84,17 @@ class OrderService
             $orderReturnService = resolve(OrderReturnService::class);
             $orderReturnService->createOrderReturn($orderReturnDto);
 
+            if ($order->payment_status === PaymentStatus::HOLD) {
+                /** @var Payment $payment */
+                $payment = $order->payments->last();
+                $paymentSystem = $payment->paymentSystem();
+
+                if (!$paymentSystem) {
+                    return true;
+                }
+                $paymentSystem->cancel($payment->data['externalPaymentId']);
+            }
+
             return true;
         } else {
             return false;
