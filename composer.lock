@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e163872a6ff0518a3b3f683a970ae6a9",
+    "content-hash": "7d646e9799cc0a9ffa7465ab712469bf",
     "packages": [
         {
             "name": "clue/stream-filter",
@@ -985,11 +985,11 @@
         },
         {
             "name": "iwengo/ibt-cm-lib",
-            "version": "dev-master-ylab",
+            "version": "dev-feature/IBT-451-hold-bonuses",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
-                "reference": "8fa8f5b971cd97a7a2046cdbfbae4656b46d4259"
+                "reference": "5c145e677427cc46c61cb022fd721821f6e16e6e"
             },
             "require": {
                 "ext-json": "*",
@@ -1023,7 +1023,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2021-04-13T08:12:13+00:00"
+            "time": "2021-08-24T13:44:55+00:00"
         },
         {
             "name": "iwengo/ibt-cms-lib",
@@ -9962,7 +9962,7 @@
     "aliases": [
         {
             "package": "iwengo/ibt-cm-lib",
-            "version": "dev-master-ylab",
+            "version": "dev-feature/IBT-451-hold-bonuses",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         },
@@ -10035,5 +10035,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.1.0"
 }

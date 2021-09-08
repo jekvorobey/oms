@@ -5,6 +5,7 @@ namespace App\Observers\Order;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Models\Order\OrderReturn;
+use App\Services\PaymentService\PaymentService;
 
 /**
  * Class OrderReturnObserver
@@ -29,6 +30,18 @@ class OrderReturnObserver
     public function updated(OrderReturn $orderReturn)
     {
         History::saveEvent(HistoryType::TYPE_UPDATE, $orderReturn->order, $orderReturn);
+    }
+
+    /**
+     * Handle the order return "saved" event.
+     * @return void
+     * @throws \Exception
+     */
+    public function saved(OrderReturn $orderReturn)
+    {
+        if ($orderReturn->wasChanged('price')) {
+            (new PaymentService())->refund($orderReturn->order, $orderReturn->price);
+        }
     }
 
     /**

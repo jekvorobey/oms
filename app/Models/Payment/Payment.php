@@ -65,6 +65,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property int $order_id
  * @property float $sum
+ * @property float $refund_sum
  * @property Carbon $payed_at
  * @property Carbon $expires_at
  * @property Carbon $yandex_expires_at - Дата и время до которого в яндексе отменить или подтвердить платеж
@@ -121,6 +122,6 @@ class Payment extends OmsModel
 
     public function commitHolded()
     {
-        $this->paymentSystem()->commitHoldedPayment($this, $this->sum);
+        $this->paymentSystem()->commitHoldedPayment($this, $this->sum - (float) $this->refund_sum);
     }
 }

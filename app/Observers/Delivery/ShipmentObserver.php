@@ -15,6 +15,7 @@ use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\AuthService\UserService;
+use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use MerchantManagement\Dto\OperatorCommunicationMethod;
 use MerchantManagement\Dto\OperatorDto;
@@ -69,8 +70,10 @@ class ShipmentObserver
 
         $this->setStatusToDelivery($shipment);
         $this->setIsCanceledToDelivery($shipment);
+        $this->setOrderIsPartiallyCancelled($shipment);
         $this->setTakenStatusToCargo($shipment);
         $this->sendStatusNotification($shipment);
+        $this->returnBonusesWhenCancelled($shipment);
     }
 
     /**
@@ -383,7 +386,7 @@ class ShipmentObserver
      */
     protected function setIsCanceledToDelivery(Shipment $shipment): void
     {
-        if ($shipment->is_canceled && $shipment->is_canceled != $shipment->getOriginal('is_canceled')) {
+        if ($shipment->wasChanged('is_canceled') && $shipment->is_canceled) {
             $delivery = $shipment->delivery;
             if ($delivery->is_canceled) {
                 return;
@@ -402,6 +405,18 @@ class ShipmentObserver
                 $deliveryService = resolve(DeliveryService::class);
                 $deliveryService->cancelDelivery($delivery, $shipment->return_reason_id);
             }
+        }
+    }
+
+    /**
+     * Установка заказу флага частичной отмены
+     */
+    protected function setOrderIsPartiallyCancelled(Shipment $shipment): void
+    {
+        if ($shipment->wasChanged('is_canceled') && $shipment->is_canceled) {
+            $order = $shipment->delivery->order;
+            $order->is_partially_cancelled = true;
+            $order->save();
         }
     }
 
@@ -607,5 +622,19 @@ class ShipmentObserver
             'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
             'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
         ];
+    }
+
+    private function returnBonusesWhenCancelled(Shipment $shipment): void
+    {
+        if ($shipment->wasChanged('is_canceled') && $shipment->is_canceled) {
+            $spent = $shipment->basketItems()->sum('bonus_spent');
+
+            $order = $shipment->delivery->order;
+
+            /** @var CustomerService $customerService */
+            $customerService = resolve(CustomerService::class);
+
+            $customerService->returnDebitingBonus($order->customer_id, $order->id, $spent);
+        }
     }
 }

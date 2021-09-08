@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Order\OrderReturn;
+use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use Illuminate\Console\Command;
 
@@ -27,22 +29,32 @@ class ReturnOrderPayment extends Command
         $orderReturns = OrderReturn::query()->where('status', OrderReturn::STATUS_CREATED)->with('order.payments')->get();
 
         foreach ($orderReturns as $orderReturn) {
-            $payment = $orderReturn->order->payments->first();
+            /** @var Payment $payment */
+            $payment = $orderReturn->order->payments->last();
 
-            if ($payment) {
-                $paymentId = $payment->data['externalPaymentId'];
-                $paymentSystem = $payment->paymentSystem();
-
-                if ($paymentSystem) {
-                    $refundResponse = $paymentSystem->refund($paymentId, $orderReturn->price);
-
-                    $orderReturn->status =
-                        $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS
-                            ? OrderReturn::STATUS_DONE
-                            : OrderReturn::STATUS_FAILED;
-                    $orderReturn->save();
-                }
+            if (!$payment) {
+                continue;
             }
+
+            $paymentId = $payment->data['externalPaymentId'];
+            $paymentSystem = $payment->paymentSystem();
+
+            if (!$paymentSystem) {
+                continue;
+            }
+
+            if ($payment->status === PaymentStatus::PAID) {
+                $refundResponse = $paymentSystem->refund($paymentId, $orderReturn);
+
+                $orderReturn->status =
+                    $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS
+                        ? OrderReturn::STATUS_DONE
+                        : OrderReturn::STATUS_FAILED;
+            } else {
+                $orderReturn->status = OrderReturn::STATUS_DONE;
+            }
+
+            $orderReturn->save();
         }
     }
 }
