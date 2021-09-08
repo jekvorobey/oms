@@ -85,6 +85,25 @@ class CreateOrderReturnTest extends TestCase
         $response = $this->putJson("api/v1/deliveries/{$delivery->id}/cancel", [
             'orderReturnReason' => $randomReason->id,
         ]);
-        dd($response);
+        $response->assertStatus(204);
+
+        $existDelivery = Delivery::find($delivery->id)->first();
+        $this->assertEquals($randomReason->id, $existDelivery->return_reason_id);
+        $this->assertEquals(1, $existDelivery->is_canceled);
+
+        if (!empty($shipmentItems)) {
+
+            foreach ($shipmentItems as $shipment) {
+                $randomReason = $orderReturnReasons->random();
+                $response = $this->putJson("api/v1/shipments/{$shipment->id}/cancel", [
+                    'orderReturnReason' => $randomReason->id,
+                ]);
+                dd($response);
+                $response->assertStatus(204);
+                $existShipment = Shipment::find($shipment->id)->first();
+//                $this->assertEquals($randomReason->id, $existShipment->return_reason_id);
+//                $this->assertEquals(1, $existShipment->is_canceled);
+            }
+        }
     }
 }
