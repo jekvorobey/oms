@@ -100,12 +100,16 @@ class CreateOrderReturnTest extends TestCase
         $response = $this->putJson("api/v1/shipments/{$shipment->id}/cancel", [
             'orderReturnReason' => $randomReason->id,
         ]);
-        $orderReturns = OrderReturn::all();
-        dd($orderReturns);
         $response->assertStatus(204);
+
         $existShipment = Shipment::find($shipment->id)->first();
         $this->assertEquals($randomReason->id, $existShipment->return_reason_id);
         $this->assertEquals(1, $existShipment->is_canceled);
+        $orderReturn = OrderReturn::query()
+            ->where('order_id', $order->id)
+            ->where('is_delivery', false)
+            ->first();
+        $this->assertEquals($orderReturn->price, $basketItemsPrice);
 
         $randomReason = $orderReturnReasons->random();
         $response = $this->putJson("api/v1/orders/{$order->id}/cancel", [
@@ -113,7 +117,10 @@ class CreateOrderReturnTest extends TestCase
         ]);
         $response->assertStatus(204);
 
-        $orderReturns = OrderReturn::all();
-        dd($orderReturns);
+        $orderReturn = OrderReturn::query()
+            ->where('order_id', $order->id)
+            ->where('is_delivery', true)
+            ->first();
+        $this->assertEquals($orderReturn->price, $deliveryPrice);
     }
 }
