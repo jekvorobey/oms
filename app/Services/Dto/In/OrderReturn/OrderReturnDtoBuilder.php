@@ -32,7 +32,10 @@ class OrderReturnDtoBuilder
      */
     public function buildFromShipment(Shipment $shipment): OrderReturnDto
     {
-        return $this->buildBase($shipment->delivery->order_id, $shipment->basketItems);
+        $orderReturnDto = $this->buildBase($shipment->delivery->order_id, $shipment->basketItems);
+        $orderReturnDto->is_delivery = false;
+
+        return $orderReturnDto;
     }
 
     /**
