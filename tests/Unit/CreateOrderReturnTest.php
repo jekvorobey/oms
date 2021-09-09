@@ -76,6 +76,7 @@ class CreateOrderReturnTest extends TestCase
             'created_at' => $delivery->delivery_at->modify('+' . random_int(1, 7) . ' minutes'),
             'required_shipping_at' => $delivery->delivery_at->modify('+3 hours'),
             'status' => ShipmentStatus::CREATED,
+            'payment_status' => PaymentStatus::PAID,
         ]);
 
         foreach ($basketItems as $basketItem) {
@@ -99,6 +100,8 @@ class CreateOrderReturnTest extends TestCase
         $response = $this->putJson("api/v1/shipments/{$shipment->id}/cancel", [
             'orderReturnReason' => $randomReason->id,
         ]);
+        $orderReturns = OrderReturn::all();
+        dd($orderReturns);
         $response->assertStatus(204);
         $existShipment = Shipment::find($shipment->id)->first();
         $this->assertEquals($randomReason->id, $existShipment->return_reason_id);
