@@ -29,7 +29,7 @@ class OrderReturnService
             throw new \Exception("Order by id={$orderReturnDto->order_id} not found");
         }
 
-        if ($order->payment_status != PaymentStatus::PAID && $order->payment_status != PaymentStatus::HOLD) {
+        if ((int) $order->payment_status !== PaymentStatus::PAID && (int) $order->payment_status !== PaymentStatus::HOLD) {
             return null;
         }
 
