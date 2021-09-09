@@ -7,6 +7,7 @@ use App\Models\Delivery\DeliveryType;
 use App\Models\Order\OrderStatus;
 use Faker\Generator as Faker;
 use App\Models\Order\Order;
+use App\Models\Payment\PaymentStatus;
 
 $factory->define(Order::class, function (Faker $faker) {
     $basket = factory(Basket::class)->create();
@@ -32,5 +33,6 @@ $factory->define(Order::class, function (Faker $faker) {
         'cost' => $cost,
         'price' => $price,
         'is_require_check' => $faker->boolean(),
+        'payment_status' => $faker->randomElement(PaymentStatus::validValues()),
     ];
 });

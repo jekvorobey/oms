@@ -7,9 +7,12 @@ use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
+use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
+use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderReturnReason;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
@@ -42,11 +45,13 @@ class CreateOrderReturnTest extends TestCase
             'delivery_price' => $deliveryPrice,
             'cost' => $basketItemsCost + $deliveryCost,
             'price' => $basketItemsPrice + $deliveryPrice,
+            'payment_status' => PaymentStatus::PAID,
         ]);
 
         factory(Payment::class)->create([
             'order_id' => $order->id,
             'sum' => $basketItemsCost + $deliveryCost,
+            'status' => PaymentStatus::PAID,
         ]);
 
         $deliveryDt = $faker->randomFloat(0, 1, 7);
@@ -70,12 +75,11 @@ class CreateOrderReturnTest extends TestCase
             'number' => Shipment::makeNumber((int) $delivery->order->number, 1, 1),
             'created_at' => $delivery->delivery_at->modify('+' . random_int(1, 7) . ' minutes'),
             'required_shipping_at' => $delivery->delivery_at->modify('+3 hours'),
+            'status' => ShipmentStatus::CREATED,
         ]);
 
-        $shipmentItems = [];
-
         foreach ($basketItems as $basketItem) {
-            $shipmentItems[] = factory(ShipmentItem::class)->create([
+            factory(ShipmentItem::class)->create([
                 'shipment_id' => $shipment->id,
                 'basket_item_id' => $basketItem->id,
             ]);
@@ -91,19 +95,22 @@ class CreateOrderReturnTest extends TestCase
         $this->assertEquals($randomReason->id, $existDelivery->return_reason_id);
         $this->assertEquals(1, $existDelivery->is_canceled);
 
-        if (!empty($shipmentItems)) {
+        $randomReason = $orderReturnReasons->random();
+        $response = $this->putJson("api/v1/shipments/{$shipment->id}/cancel", [
+            'orderReturnReason' => $randomReason->id,
+        ]);
+        $response->assertStatus(204);
+        $existShipment = Shipment::find($shipment->id)->first();
+        $this->assertEquals($randomReason->id, $existShipment->return_reason_id);
+        $this->assertEquals(1, $existShipment->is_canceled);
 
-            foreach ($shipmentItems as $shipment) {
-                $randomReason = $orderReturnReasons->random();
-                $response = $this->putJson("api/v1/shipments/{$shipment->id}/cancel", [
-                    'orderReturnReason' => $randomReason->id,
-                ]);
-                dd($response);
-                $response->assertStatus(204);
-                $existShipment = Shipment::find($shipment->id)->first();
-//                $this->assertEquals($randomReason->id, $existShipment->return_reason_id);
-//                $this->assertEquals(1, $existShipment->is_canceled);
-            }
-        }
+        $randomReason = $orderReturnReasons->random();
+        $response = $this->putJson("api/v1/orders/{$order->id}/cancel", [
+            'orderReturnReason' => $randomReason->id,
+        ]);
+        $response->assertStatus(204);
+
+        $orderReturns = OrderReturn::all();
+        dd($orderReturns);
     }
 }
