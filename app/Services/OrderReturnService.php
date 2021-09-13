@@ -9,8 +9,10 @@ use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderReturnItem;
 use App\Models\Payment\PaymentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDto;
+use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use MerchantManagement\Services\MerchantService\MerchantService;
 
 /**
  * Class OrderReturnService
@@ -36,7 +38,7 @@ class OrderReturnService
         return DB::transaction(function () use ($orderReturnDto, $order) {
             $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
             /** @var Collection|BasketItem[] $basketItems */
-            $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->get()->keyBy('id');
+            $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->with('shipmentItem.shipment')->get()->keyBy('id');
             //TODO Предусмотреть в дальнейшем условие возврата неполного количества одного товара
             $existOrderReturnItems = OrderReturnItem::query()
                 ->whereIn('basket_item_id', $basketItemIds)
@@ -66,6 +68,8 @@ class OrderReturnService
             $orderReturn->price = 0;
             $orderReturn->is_delivery = $orderReturnDto->is_delivery;
             $orderReturn->save();
+
+            $billingListByMerchants = $this->getMerchantBillings($basketItems, $order);
 
             foreach ($orderReturnDto->items as $item) {
                 $orderReturnItem = new OrderReturnItem();
@@ -106,6 +110,15 @@ class OrderReturnService
                 $orderReturnItem->price = $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
                 $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии
                 $orderReturnItem->save();
+
+                if ($billingListByMerchants[$orderReturnItem->offer_id]) {
+                    /** @var MerchantService $merchantService */
+                    $merchantService = resolve(MerchantService::class);
+                    $merchantService->addReturn(
+                        $billingListByMerchants[$orderReturnItem->offer_id]['merchant_id'],
+                        $billingListByMerchants[$orderReturnItem->offer_id]['id']
+                    );
+                }
             }
 
             if ($orderReturnDto->price && $orderReturnDto->is_delivery) {
@@ -161,5 +174,43 @@ class OrderReturnService
                 }
             }
         });
+    }
+
+    /**
+     * Получить записи биллинга элементов корзины
+     *
+     * @return array
+     */
+    private function getMerchantBillings(Collection $basketItems, Order $order): array
+    {
+        /** @var MerchantService $merchantService */
+        $merchantService = resolve(MerchantService::class);
+        $basketItemsByMerchants = [];
+        $billingListByMerchants = [];
+        foreach ($basketItems as $basketItem) {
+            if ($basketItem->shipmentItem->shipment->merchant_id) {
+                $basketItemsByMerchants[$basketItem->shipmentItem->shipment->merchant_id][] = $basketItem;
+            }
+        }
+        if (!empty($basketItemsByMerchants)) {
+            foreach ($basketItemsByMerchants as $merchantId => $merchantBasketItems) {
+                $restQuery = (new RestQuery())
+                    ->setFilter('merchant_id', $merchantId)
+                    ->setFilter('offer_id', $merchantBasketItems->pluck('offer_id'))
+                    ->setFilter('order_id', $order->id);
+                $billingList = $merchantService->merchantBillingList($restQuery, $merchantId);
+
+                if ($billingList['items']) {
+                    foreach ($billingList['items'] as $billingItem) {
+                        $billingListByMerchants[$billingItem['offer_id']] = [
+                            'id' => $billingList['items']['id'],
+                            'merchant_id' => $merchantId,
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $billingListByMerchants;
     }
 }
