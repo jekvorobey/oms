@@ -274,6 +274,9 @@ class CheckoutOrder
         $order->spent_bonus = $this->spentBonus;
         $order->added_bonus = $this->addedBonus;
         $order->certificates = $this->certificates;
+        if ($order->certificates) {
+            $order->spent_certificate = array_sum(array_column((array) $order->certificates, 'amount'));
+        }
 
         $order->delivery_type = $this->deliveryTypeId;
         $order->delivery_cost = $this->deliveryCost;
