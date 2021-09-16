@@ -209,10 +209,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         $items = [];
         $certificatesDiscount = 0;
-        if (!empty($order->certificates)) {
-            foreach ($order->certificates as $certificate) {
-                $certificatesDiscount += $certificate['amount'];
-            }
+
+        if ($order->spent_certificate > 0) {
+            $certificatesDiscount = $order->spent_certificate;
         }
         foreach ($order->basket->items as $item) {
             $itemValue = $item->price / $item->qty;
