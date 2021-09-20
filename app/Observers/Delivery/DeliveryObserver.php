@@ -360,6 +360,9 @@ class DeliveryObserver
 
             $allDeliveriesHasStatus = true;
             foreach ($order->deliveries as $orderDelivery) {
+                if ($orderDelivery->is_canceled) {
+                    continue;
+                }
                 /**
                  * Для статуса доставки "Находится в Пункте Выдачи" проверяем,
                  * что все доставки заказа находятся строго в этом статусе,
