@@ -25,7 +25,7 @@ $factory->define(Order::class, function (Faker $faker) {
         'customer_id' => $faker->randomNumber(),
         'type' => Basket::TYPE_PRODUCT,
         'number' => Order::makeNumber(),
-        'status' => $faker->randomElement(OrderStatus::validValues()),
+        'status' => $faker->randomElement([OrderStatus::CREATED, OrderStatus::AWAITING_CHECK, OrderStatus::CHECKING, OrderStatus::AWAITING_CONFIRMATION]),
         'created_at' => $faker->dateTimeThisYear(),
         'delivery_type' => $faker->randomElement(DeliveryType::validValues()),
         'delivery_cost' => $deliveryCost,

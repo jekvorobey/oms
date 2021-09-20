@@ -14,31 +14,58 @@ class OrderReturnReasonTest extends TestCase
     /**
      * @dataProvider correctOrderReturnReasonProvider
      */
-    public function testSuccessOrderReturnReasonCrud($orderReturnReason): void
+    public function createOrderReturn($orderReturnReason): void
+    {
+        $this->addOrderReturn($orderReturnReason);
+        $this->assertDatabaseHas((new OrderReturnReason())->getTable(), ['text' => $orderReturnReason]);
+    }
+
+    /**
+     * @dataProvider correctOrderReturnReasonProvider
+     */
+    public function deleteOrderReturn($orderReturnReason): void
+    {
+        Event::fake();
+        $orderReturnReasonId = $this->addOrderReturn($orderReturnReason);
+        $response = $this->delete('api/v1/orders/return-reasons/' . $orderReturnReasonId);
+        $response->assertStatus(204);
+        $this->assertDatabaseMissing((new OrderReturnReason())->getTable(), ['text' => $orderReturnReason]);
+    }
+
+    /**
+     * @dataProvider correctOrderReturnReasonProvider
+     */
+    public function updateOrderReturn($orderReturnReason): void
+    {
+        Event::fake();
+        $orderReturnReasonId = $this->addOrderReturn($orderReturnReason);
+        $response = $this->putJson('api/v1/orders/return-reasons/' . $orderReturnReasonId, [
+            'text' => $orderReturnReason . ' updated',
+        ]);
+        $response->assertStatus(204);
+    }
+
+    /**
+     * @dataProvider correctOrderReturnReasonProvider
+     */
+    public function readOrderReturn($orderReturnReason): void
+    {
+        Event::fake();
+        $orderReturnReasonId = $this->addOrderReturn($orderReturnReason);
+        $response = $this->get('api/v1/orders/return-reasons/' . $orderReturnReasonId);
+        $response->assertJsonFragment([
+            'text' => $orderReturnReason . ' updated',
+        ]);
+    }
+
+    public function addOrderReturn($orderReturnReason): int
     {
         Event::fake();
         $response = $this->postJson('api/v1/orders/return-reasons', [
             'text' => $orderReturnReason,
         ]);
-        $response->assertStatus(201);
-        $savedOrderReturnReason = OrderReturnReason::all()->first();
-        $this->assertEquals($savedOrderReturnReason->text, $orderReturnReason);
 
-        $response = $this->putJson('api/v1/orders/return-reasons/' . $savedOrderReturnReason->id, [
-            'text' => $orderReturnReason . ' updated',
-        ]);
-        $response->assertStatus(204);
-
-        $response = $this->get('api/v1/orders/return-reasons/' . $savedOrderReturnReason->id);
-        $response->assertJsonFragment([
-            'text' => $orderReturnReason . ' updated',
-        ]);
-
-        $response = $this->delete('api/v1/orders/return-reasons/' . $savedOrderReturnReason->id);
-        $response->assertStatus(204);
-
-        $deletedOrderReturnReason = OrderReturnReason::find($savedOrderReturnReason->id);
-        $this->assertNull($deletedOrderReturnReason);
+        return $response->original['id'];
     }
 
     /**

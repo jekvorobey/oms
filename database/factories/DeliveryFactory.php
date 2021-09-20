@@ -12,14 +12,12 @@ use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 $factory->define(Delivery::class, function (Faker $faker) {
     $order = factory(Order::class)->create();
     $deliveryDt = $faker->randomFloat(0, 1, 7);
-    $deliveryAt = $order->created_at->modify('+' . $deliveryDt . ' days')->setTime(0, 0);
+    $deliveryAt = $order->created_at->addDays($deliveryDt)->setTime(0, 0);
 
     return [
         'order_id' => $order->id,
         'delivery_method' => $faker->randomElement(array_keys(DeliveryMethod::allMethods())),
-        'delivery_service' => $faker->randomElement([
-            LogisticsDeliveryService::SERVICE_B2CPL,
-        ]),
+        'delivery_service' => $faker->randomElement(array_keys(LogisticsDeliveryService::allServices())),
         'status' => DeliveryStatus::CREATED,
         'tariff_id' => 0,
         'number' => Delivery::makeNumber($order->number, 1),
