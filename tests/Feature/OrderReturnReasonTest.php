@@ -4,88 +4,69 @@ namespace Tests\Feature;
 
 use App\Models\Order\OrderReturnReason;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Event;
+use Illuminate\Foundation\Testing\WithoutEvents;
 use Tests\TestCase;
 
 class OrderReturnReasonTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, WithoutEvents;
 
     /**
-     * @dataProvider correctOrderReturnReasonProvider
+     * @dataProvider correctProvider
      */
-    public function createOrderReturn($orderReturnReason): void
+    public function testCreate($orderReturnReason): void
     {
-        $this->addOrderReturn($orderReturnReason);
-        $this->assertDatabaseHas((new OrderReturnReason())->getTable(), ['text' => $orderReturnReason]);
-    }
-
-    /**
-     * @dataProvider correctOrderReturnReasonProvider
-     */
-    public function deleteOrderReturn($orderReturnReason): void
-    {
-        Event::fake();
-        $orderReturnReasonId = $this->addOrderReturn($orderReturnReason);
-        $response = $this->delete('api/v1/orders/return-reasons/' . $orderReturnReasonId);
-        $response->assertStatus(204);
-        $this->assertDatabaseMissing((new OrderReturnReason())->getTable(), ['text' => $orderReturnReason]);
-    }
-
-    /**
-     * @dataProvider correctOrderReturnReasonProvider
-     */
-    public function updateOrderReturn($orderReturnReason): void
-    {
-        Event::fake();
-        $orderReturnReasonId = $this->addOrderReturn($orderReturnReason);
-        $response = $this->putJson('api/v1/orders/return-reasons/' . $orderReturnReasonId, [
-            'text' => $orderReturnReason . ' updated',
-        ]);
-        $response->assertStatus(204);
-    }
-
-    /**
-     * @dataProvider correctOrderReturnReasonProvider
-     */
-    public function readOrderReturn($orderReturnReason): void
-    {
-        Event::fake();
-        $orderReturnReasonId = $this->addOrderReturn($orderReturnReason);
-        $response = $this->get('api/v1/orders/return-reasons/' . $orderReturnReasonId);
-        $response->assertJsonFragment([
-            'text' => $orderReturnReason . ' updated',
-        ]);
-    }
-
-    public function addOrderReturn($orderReturnReason): int
-    {
-        Event::fake();
         $response = $this->postJson('api/v1/orders/return-reasons', [
             'text' => $orderReturnReason,
         ]);
+        $this->assertDatabaseHas((new OrderReturnReason())->getTable(), ['text' => $orderReturnReason]);
+        $response->assertJsonStructure(['id']);
+    }
 
-        return $response->original['id'];
+    public function testDelete(): void
+    {
+        $orderReturnReason = factory(OrderReturnReason::class)->create();
+        $response = $this->delete('api/v1/orders/return-reasons/' . $orderReturnReason->id);
+        $response->assertStatus(204);
+        $this->assertDatabaseMissing((new OrderReturnReason())->getTable(), ['id' => $orderReturnReason->id]);
+    }
+
+    public function testUpdate(): void
+    {
+        $orderReturnReason = factory(OrderReturnReason::class)->create();
+        $response = $this->putJson('api/v1/orders/return-reasons/' . $orderReturnReason->id, [
+            'text' => $orderReturnReason->text . ' updated',
+        ]);
+        $response->assertStatus(204);
+        $this->assertDatabaseHas((new OrderReturnReason())->getTable(), ['text' => $orderReturnReason->text . ' updated']);
+    }
+
+    public function testRead(): void
+    {
+        $orderReturnReason = factory(OrderReturnReason::class)->create();
+        $response = $this->get('api/v1/orders/return-reasons/' . $orderReturnReason->id);
+        $response->assertJsonFragment([
+            'text' => $orderReturnReason->text,
+        ]);
     }
 
     /**
-     * @dataProvider inCorrectOrderReturnReasonProvider
+     * @dataProvider inCorrectProvider
      */
-    public function testFailedOrderReturnReasonCrud($orderReturnReason): void
+    public function testFailedAdd($orderReturnReason): void
     {
-        Event::fake();
         $response = $this->postJson('api/v1/orders/return-reasons', [
             'text' => $orderReturnReason,
         ]);
         $response->assertStatus(400);
     }
 
-    public function correctOrderReturnReasonProvider()
+    public function correctProvider()
     {
         return [['First reason'], ['Second reason'], ['Third reason'], ['Fourth reason']];
     }
 
-    public function inCorrectOrderReturnReasonProvider()
+    public function inCorrectProvider()
     {
         return [[222], [false], [3.14]];
     }

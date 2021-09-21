@@ -7,9 +7,11 @@ use Faker\Generator as Faker;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\Delivery;
 use App\Models\Payment\PaymentStatus;
+use App\Models\Delivery\Cargo;
 
 $factory->define(Shipment::class, function (Faker $faker) {
     $delivery = factory(Delivery::class)->create();
+    $cargo = factory(Cargo::class)->create();
     return [
         'status' => $faker->randomElement(ShipmentStatus::validValues()),
         'delivery_id' => $delivery->id,
@@ -20,5 +22,7 @@ $factory->define(Shipment::class, function (Faker $faker) {
         'created_at' => $delivery->delivery_at->modify('+' . random_int(1, 7) . ' minutes'),
         'required_shipping_at' => $delivery->delivery_at->modify('+3 hours'),
         'payment_status' => $faker->randomElement(PaymentStatus::validValues()),
+        'cargo_id' => $cargo->id,
+        'return_reason_id' => null,
     ];
 });

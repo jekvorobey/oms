@@ -14,18 +14,70 @@ use App\Models\Order\OrderReturnReason;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Event;
+use Illuminate\Foundation\Testing\WithoutEvents;
 use Tests\TestCase;
 use Faker\Factory;
 
 class CreateOrderReturnTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, WithoutEvents;
+
+    public function testCancelDelivery(): void
+    {
+        $initData = $this->getInitData();
+        $randomReason = $initData['orderReturnReasons']->random();
+        $response = $this->putJson("api/v1/deliveries/{$initData['delivery']->id}/cancel", [
+            'orderReturnReason' => $randomReason->id,
+        ]);
+        $response->assertStatus(204);
+
+        $this->assertDatabaseHas(
+            (new Delivery())->getTable(),
+            ['id' => $initData['delivery']->id, 'return_reason_id' => $randomReason->id, 'is_canceled' => 1]
+        );
+    }
+
+    public function testCancelShipment(): void
+    {
+        $initData = $this->getInitData();
+        $randomReason = $initData['orderReturnReasons']->random();
+        $shipment = $initData['shipment'];
+
+        $response = $this->putJson("api/v1/shipments/{$shipment->id}/cancel", [
+            'orderReturnReason' => $randomReason->id,
+        ]);
+        $response->assertStatus(204);
+
+        $this->assertDatabaseHas(
+            (new Shipment())->getTable(),
+            ['id' => $shipment->id, 'return_reason_id' => $randomReason->id, 'is_canceled' => 1]
+        );
+
+        $this->assertDatabaseHas(
+            (new OrderReturn())->getTable(),
+            ['order_id' => $initData['order']->id, 'is_delivery' => false, 'price' => $initData['basketItemsPrice']]
+        );
+    }
 
     public function testCancelOrder()
     {
-        Event::fake();
+        $initData = $this->getInitData();
+        $randomReason = $initData['orderReturnReasons']->random();
+        $order = $initData['order'];
 
+        $response = $this->putJson("api/v1/orders/{$order->id}/cancel", [
+            'orderReturnReason' => $randomReason->id,
+        ]);
+        $response->assertStatus(204);
+
+        $this->assertDatabaseHas(
+            (new OrderReturn())->getTable(),
+            ['order_id' => $initData['order']->id, 'is_delivery' => true, 'price' => $initData['deliveryPrice']]
+        );
+    }
+
+    public function getInitData(): array
+    {
         $faker = Factory::create('ru_RU');
 
         $orderReturnReasons = factory(OrderReturnReason::class, 5)->create();
@@ -86,41 +138,14 @@ class CreateOrderReturnTest extends TestCase
             ]);
         }
 
-        $randomReason = $orderReturnReasons->random();
-        $response = $this->putJson("api/v1/deliveries/{$delivery->id}/cancel", [
-            'orderReturnReason' => $randomReason->id,
-        ]);
-        $response->assertStatus(204);
-
-        $existDelivery = Delivery::find($delivery->id)->first();
-        $this->assertEquals($randomReason->id, $existDelivery->return_reason_id);
-        $this->assertEquals(1, $existDelivery->is_canceled);
-
-        $randomReason = $orderReturnReasons->random();
-        $response = $this->putJson("api/v1/shipments/{$shipment->id}/cancel", [
-            'orderReturnReason' => $randomReason->id,
-        ]);
-        $response->assertStatus(204);
-
-        $existShipment = Shipment::find($shipment->id)->first();
-        $this->assertEquals($randomReason->id, $existShipment->return_reason_id);
-        $this->assertEquals(1, $existShipment->is_canceled);
-        $orderReturn = OrderReturn::query()
-            ->where('order_id', $order->id)
-            ->where('is_delivery', false)
-            ->first();
-        $this->assertEquals($orderReturn->price, $basketItemsPrice);
-
-        $randomReason = $orderReturnReasons->random();
-        $response = $this->putJson("api/v1/orders/{$order->id}/cancel", [
-            'orderReturnReason' => $randomReason->id,
-        ]);
-        $response->assertStatus(204);
-
-        $orderReturn = OrderReturn::query()
-            ->where('order_id', $order->id)
-            ->where('is_delivery', true)
-            ->first();
-        $this->assertEquals($orderReturn->price, $deliveryPrice);
+        return [
+            'orderReturnReasons' => $orderReturnReasons,
+            'basket' => $basket,
+            'order' => $order,
+            'delivery' => $delivery,
+            'shipment' => $shipment,
+            'basketItemsPrice' => $basketItemsPrice,
+            'deliveryPrice' => $deliveryPrice,
+        ];
     }
 }
