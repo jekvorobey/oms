@@ -14,6 +14,7 @@ use YooKassa\Model\Notification\NotificationWaitingForCapture;
 use YooKassa\Model\NotificationEventType;
 use YooKassa\Model\PaymentStatus;
 use GuzzleHttp\Client as GuzzleClient;
+use App\Models\Basket\Basket;
 
 /**
  * Class YandexPaymentSystem
@@ -57,7 +58,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
             ],
             'description' => "Заказ №{$order->id}",
             'receipt' => [
-                'tax_system_code' => '2',
+                'tax_system_code' => '3',
                 'phone' => $order->customerPhone(),
                 'items' => $this->generateItems($order),
             ],
@@ -183,7 +184,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'currency' => self::CURRENCY_RUB,
             ],
             'receipt' => [
-                'tax_system_code' => '2',
+                'tax_system_code' => '3',
                 'phone' => $localPayment->order->customerPhone(),
                 'items' => $this->generateItems($localPayment->order),
             ],
@@ -227,6 +228,24 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 }
             }
 
+            $paymentSubject = 'commodity';
+            switch ($item->type) {
+                case Basket::TYPE_MASTER:
+                    $paymentSubject = 'service';
+                    break;
+                case Basket::TYPE_CERTIFICATE:
+                    $paymentSubject = 'payment';
+                    break;
+                case Basket::TYPE_PRODUCT:
+                    $paymentSubject = 'commodity';
+                    break;
+            }
+
+            $vatCode = 1;
+            if ($item->type === Basket::TYPE_PRODUCT) {
+
+            }
+
             $items[] = [
                 'description' => $item->name,
                 'quantity' => $item->qty,
@@ -234,9 +253,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     'value' => number_format($itemValue, 2, '.', ''),
                     'currency' => self::CURRENCY_RUB,
                 ],
-                'vat_code' => 1,
+                'vat_code' => $vatCode,
                 'payment_mode' => 'full_prepayment',
-                'payment_subject' => 'commodity',
+                'payment_subject' => $paymentSubject,
             ];
         }
         if ((float) $order->delivery_price > 0) {
