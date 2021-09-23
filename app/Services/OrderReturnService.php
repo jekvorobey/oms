@@ -31,34 +31,15 @@ class OrderReturnService
             throw new \Exception("Order by id={$orderReturnDto->order_id} not found");
         }
 
-        if ((int) $order->payment_status !== PaymentStatus::PAID && (int) $order->payment_status !== PaymentStatus::HOLD) {
+        $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
+        /** @var Collection|BasketItem[] $basketItems */
+        $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->with('shipmentItem.shipment')->get()->keyBy('id');
+
+        if (!$this->needCreateOrderReturn($order, $orderReturnDto, $basketItemIds)) {
             return null;
         }
 
-        return DB::transaction(function () use ($orderReturnDto, $order) {
-            $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
-            /** @var Collection|BasketItem[] $basketItems */
-            $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->with('shipmentItem.shipment')->get()->keyBy('id');
-            //TODO Предусмотреть в дальнейшем условие возврата неполного количества одного товара
-            $existOrderReturnItems = OrderReturnItem::query()
-                ->whereIn('basket_item_id', $basketItemIds)
-                ->exists();
-
-            if ($existOrderReturnItems) {
-                return null;
-            }
-
-            if ($orderReturnDto->is_delivery) {
-                $existOrderReturnDelivery = OrderReturn::query()
-                    ->where('order_id', $order->id)
-                    ->where('is_delivery', true)
-                    ->exists();
-
-                if ($existOrderReturnDelivery) {
-                    return null;
-                }
-            }
-
+        return DB::transaction(function () use ($orderReturnDto, $order, $basketItems) {
             $orderReturn = new OrderReturn();
             $orderReturn->order_id = $order->id;
             $orderReturn->customer_id = $order->customer_id;
@@ -111,7 +92,7 @@ class OrderReturnService
                 $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии
                 $orderReturnItem->save();
 
-                if ($billingListByMerchants[$orderReturnItem->offer_id]) {
+                if (isset($billingListByMerchants[$orderReturnItem->offer_id])) {
                     /** @var MerchantService $merchantService */
                     $merchantService = resolve(MerchantService::class);
                     $merchantService->addReturn(
@@ -196,7 +177,7 @@ class OrderReturnService
             foreach ($basketItemsByMerchants as $merchantId => $merchantBasketItems) {
                 $restQuery = (new RestQuery())
                     ->setFilter('merchant_id', $merchantId)
-                    ->setFilter('offer_id', $merchantBasketItems->pluck('offer_id'))
+                    ->setFilter('offer_id', array_column($merchantBasketItems, 'offer_id'))
                     ->setFilter('order_id', $order->id);
                 $billingList = $merchantService->merchantBillingList($restQuery, $merchantId);
 
@@ -212,5 +193,34 @@ class OrderReturnService
         }
 
         return $billingListByMerchants;
+    }
+
+    private function needCreateOrderReturn(Order $order, OrderReturnDto $orderReturnDto, array $basketItemIds): bool
+    {
+        if (!in_array((int) $order->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD])) {
+            return false;
+        }
+
+        //TODO Предусмотреть в дальнейшем условие возврата неполного количества одного товара
+        $existOrderReturnItems = OrderReturnItem::query()
+            ->whereIn('basket_item_id', $basketItemIds)
+            ->exists();
+
+        if ($existOrderReturnItems) {
+            return false;
+        }
+
+        if ($orderReturnDto->is_delivery) {
+            $existOrderReturnDelivery = OrderReturn::query()
+                ->where('order_id', $order->id)
+                ->where('is_delivery', true)
+                ->exists();
+
+            if ($existOrderReturnDelivery) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

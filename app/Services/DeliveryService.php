@@ -926,7 +926,7 @@ class DeliveryService
         $shipment->cargo_id = null;
 
         if ($shipment->save()) {
-            if ((int) $shipment->payment_status !== PaymentStatus::PAID) {
+            if (!in_array((int) $shipment->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD])) {
                 return true;
             }
 
