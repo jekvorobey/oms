@@ -7,7 +7,13 @@ use App\Models\Payment\Payment;
 use App\Models;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use MerchantManagement\Dto\MerchantDto;
+use MerchantManagement\Dto\VatDto;
+use MerchantManagement\Services\MerchantService\Dto\GetVatDto;
+use MerchantManagement\Services\MerchantService\MerchantService;
 use Monolog\Logger;
+use Pim\Dto\Offer\OfferDto;
+use Pim\Services\OfferService\OfferService;
 use YooKassa\Client;
 use YooKassa\Model\Notification\NotificationSucceeded;
 use YooKassa\Model\Notification\NotificationWaitingForCapture;
@@ -28,6 +34,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
     private $yandexService;
     /** @var Logger */
     private $logger;
+    /** @var MerchantService */
+    private $merchantService;
+    /** @var OfferService */
+    private $offerService;
 
     /**
      * YandexPaymentSystem constructor.
@@ -36,6 +46,8 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         $this->yandexService = resolve(Client::class);
         $this->logger = Log::channel('payments');
+        $this->merchantService = resolve(MerchantService::class);
+        $this->offerService = resolve(OfferService::class);
     }
 
     /**
@@ -215,6 +227,29 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $certificatesDiscount += $certificate['amount'];
             }
         }
+
+        $merchantIds = $order->basket->items->where('type', Basket::TYPE_PRODUCT)->pluck('product.merchant_id');
+        if (!empty($merchantIds)) {
+            $merchantIds = $merchantIds->toArray();
+            $merchantIds[] = 1;
+            $merchantQuery = $this->merchantService->newQuery()
+                ->addFields(MerchantDto::entity(), 'id')
+                ->include('vats')
+                ->setFilter('id', $merchantIds);
+            $merchants = $this->merchantService->merchants($merchantQuery)->keyBy('id');
+        }
+
+        $productOfferIds = $order->basket->items->where('type', Basket::TYPE_PRODUCT)->pluck('offer_id');
+        
+        if ($productOfferIds) {
+            $productOfferQuery = $this->offerService->newQuery();
+            $productOfferQuery->addFields(OfferDto::entity(), 'id', 'product_id')
+                ->include('product')
+                ->setFilter('id', $productOfferIds->toArray());
+            $offers = $this->offerService->offers($productOfferQuery)->keyBy('id');
+            Log::debug(json_encode($offers));
+        }
+
         foreach ($order->basket->items as $item) {
             $itemValue = $item->price / $item->qty;
             if (($certificatesDiscount > 0) && ($itemValue > 1)) {
