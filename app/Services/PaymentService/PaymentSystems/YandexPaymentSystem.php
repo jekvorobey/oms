@@ -240,7 +240,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
 
         $productOfferIds = $order->basket->items->where('type', Basket::TYPE_PRODUCT)->pluck('offer_id');
-        
+
         if ($productOfferIds) {
             $productOfferQuery = $this->offerService->newQuery();
             $productOfferQuery->addFields(OfferDto::entity(), 'id', 'product_id')
