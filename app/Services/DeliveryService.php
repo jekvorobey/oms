@@ -926,10 +926,6 @@ class DeliveryService
         $shipment->cargo_id = null;
 
         if ($shipment->save()) {
-            if (!in_array((int) $shipment->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD])) {
-                return true;
-            }
-
             $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
 
             /** @var OrderReturnService $orderReturnService */

@@ -49,14 +49,14 @@ class OrderReturnDtoBuilder
         $orderReturnDto->price = $price;
 
         if ($basketItems) {
-            $orderReturnDto->items = collect($basketItems->transform(static function (BasketItem $item) {
+            $orderReturnDto->items = $basketItems->transform(static function (BasketItem $item) {
                 $orderReturnItemDto = new OrderReturnItemDto();
                 $orderReturnItemDto->basket_item_id = $item->id;
                 $orderReturnItemDto->qty = $item->qty;
                 $orderReturnItemDto->ticket_ids = $item->getTicketIds();
 
                 return $orderReturnItemDto;
-            }));
+            });
         }
 
         return $orderReturnDto;

@@ -32,12 +32,13 @@ class OrderReturnService
         }
 
         $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
-        /** @var Collection|BasketItem[] $basketItems */
-        $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->with('shipmentItem.shipment')->get()->keyBy('id');
 
         if (!$this->needCreateOrderReturn($order, $orderReturnDto, $basketItemIds)) {
             return null;
         }
+
+        /** @var Collection|BasketItem[] $basketItems */
+        $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->with('shipmentItem.shipment')->get()->keyBy('id');
 
         return DB::transaction(function () use ($orderReturnDto, $order, $basketItems) {
             $orderReturn = new OrderReturn();
@@ -195,8 +196,11 @@ class OrderReturnService
         return $billingListByMerchants;
     }
 
-    private function needCreateOrderReturn(Order $order, OrderReturnDto $orderReturnDto, array $basketItemIds): bool
-    {
+    private function needCreateOrderReturn(
+        Order $order,
+        OrderReturnDto $orderReturnDto,
+        Collection $basketItemIds
+    ): bool {
         if (!in_array((int) $order->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD])) {
             return false;
         }
