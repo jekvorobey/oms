@@ -185,7 +185,7 @@ class OrderReturnService
                 if ($billingList['items']) {
                     foreach ($billingList['items'] as $billingItem) {
                         $billingListByMerchants[$billingItem['offer_id']] = [
-                            'id' => $billingList['items']['id'],
+                            'id' => $billingItem['id'],
                             'merchant_id' => $merchantId,
                         ];
                     }
