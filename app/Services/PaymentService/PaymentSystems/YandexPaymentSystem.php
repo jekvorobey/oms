@@ -309,6 +309,20 @@ class YandexPaymentSystem implements PaymentSystemInterface
                                     break;
                             }
                         }
+
+                        if ($vatValue) {
+                            switch ($vatValue) {
+                                case 0:
+
+                                    break;
+                                case 10:
+
+                                    break;
+                                case 20:
+
+                                    break;
+                            }
+                        }
                     }
 
                     break;
