@@ -280,9 +280,16 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
                     if (isset($offers) && isset($offers[$item->offer_id]) && isset($merchants)) {
                         $offerInfo = $offers[$item->offer_id];
-                        $itemMerchant = $merchants[$offers['merchant_id']];
+                        $itemMerchant = $merchants[$offerInfo['merchant_id']];
                         $vatValue = null;
-                        foreach ($itemMerchant['vats'] as $vat) {
+                        $itemMerchantVats = $itemMerchant['vats'];
+                        Log::debug(json_encode($itemMerchantVats));
+                        uasort($itemMerchantVats, static function ($a, $b) {
+                            return $b['type'] - $a['type'];
+                        });
+                        Log::debug(json_encode($itemMerchantVats));
+                        Log::debug(json_encode($offerInfo));
+                        foreach ($itemMerchantVats as $vat) {
                             switch ($vat['type']) {
                                 case VatDto::TYPE_GLOBAL:
                                     break;
@@ -313,18 +320,17 @@ class YandexPaymentSystem implements PaymentSystemInterface
                         if ($vatValue) {
                             switch ($vatValue) {
                                 case 0:
-
+                                    $vatCode = 2;
                                     break;
                                 case 10:
-
+                                    $vatCode = 3;
                                     break;
                                 case 20:
-
+                                    $vatCode = 4;
                                     break;
                             }
                         }
                     }
-
                     break;
             }
 
@@ -357,6 +363,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'payment_subject' => 'service',
             ];
         }
+
+        Log::debug(json_encode($items));
+        die();
         return $items;
     }
 }
