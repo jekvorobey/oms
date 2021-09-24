@@ -231,19 +231,20 @@ class YandexPaymentSystem implements PaymentSystemInterface
         $merchantIds = $order->basket->items->where('type', Basket::TYPE_PRODUCT)->pluck('product.merchant_id');
         if (!empty($merchantIds)) {
             $merchantIds = $merchantIds->toArray();
-            $merchantIds[] = 1;
+            $merchantIds[] = 1; //TODO::убрать
             $merchantQuery = $this->merchantService->newQuery()
                 ->addFields(MerchantDto::entity(), 'id')
                 ->include('vats')
                 ->setFilter('id', $merchantIds);
             $merchants = $this->merchantService->merchants($merchantQuery)->keyBy('id');
+            Log::debug(json_encode($merchants));
         }
 
         $productOfferIds = $order->basket->items->where('type', Basket::TYPE_PRODUCT)->pluck('offer_id');
 
         if ($productOfferIds) {
             $productOfferQuery = $this->offerService->newQuery();
-            $productOfferQuery->addFields(OfferDto::entity(), 'id', 'product_id')
+            $productOfferQuery->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
                 ->include('product')
                 ->setFilter('id', $productOfferIds->toArray());
             $offers = $this->offerService->offers($productOfferQuery)->keyBy('id');
@@ -264,21 +265,53 @@ class YandexPaymentSystem implements PaymentSystemInterface
             }
 
             $paymentSubject = 'commodity';
+            $paymentMode = 'full_prepayment';
+            $vatCode = 1;
             switch ($item->type) {
                 case Basket::TYPE_MASTER:
                     $paymentSubject = 'service';
                     break;
                 case Basket::TYPE_CERTIFICATE:
                     $paymentSubject = 'payment';
+                    $paymentMode = 'advance';
                     break;
                 case Basket::TYPE_PRODUCT:
                     $paymentSubject = 'commodity';
+
+                    if (isset($offers) && isset($offers[$item->offer_id]) && isset($merchants)) {
+                        $offerInfo = $offers[$item->offer_id];
+                        $itemMerchant = $merchants[$offers['merchant_id']];
+                        $vatValue = null;
+                        foreach ($itemMerchant['vats'] as $vat) {
+                            switch ($vat['type']) {
+                                case VatDto::TYPE_GLOBAL:
+                                    break;
+                                case VatDto::TYPE_MERCHANT:
+                                    $vatValue = $vat['value'];
+                                    break 2;
+                                case VatDto::TYPE_BRAND:
+                                    if ($offerInfo['brand_id'] === $vat['brand_id']) {
+                                        $vatValue = $vat['value'];
+                                        break 2;
+                                    }
+                                    break;
+                                case VatDto::TYPE_CATEGORY:
+                                    if ($offerInfo['category_id'] === $vat['category_id']) {
+                                        $vatValue = $vat['value'];
+                                        break 2;
+                                    }
+                                    break;
+                                case VatDto::TYPE_SKU:
+                                    if ($offerInfo['product_id'] === $vat['product_id']) {
+                                        $vatValue = $vat['value'];
+                                        break 2;
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+
                     break;
-            }
-
-            $vatCode = 1;
-            if ($item->type === Basket::TYPE_PRODUCT) {
-
             }
 
             $items[] = [
@@ -289,7 +322,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     'currency' => self::CURRENCY_RUB,
                 ],
                 'vat_code' => $vatCode,
-                'payment_mode' => 'full_prepayment',
+                'payment_mode' => $paymentMode,
                 'payment_subject' => $paymentSubject,
             ];
         }
