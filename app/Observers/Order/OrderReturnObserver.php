@@ -20,6 +20,7 @@ class OrderReturnObserver
     public function created(OrderReturn $orderReturn)
     {
         History::saveEvent(HistoryType::TYPE_CREATE, $orderReturn->order, $orderReturn);
+        (new PaymentService())->refund($orderReturn->order, $orderReturn->price);
     }
 
     /**
