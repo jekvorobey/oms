@@ -248,20 +248,23 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
 
         foreach ($order->basket->items as $item) {
+            $paymentMode = 'full_payment';
+
             $itemValue = $item->price / $item->qty;
             if (($certificatesDiscount > 0) && ($itemValue > 1)) {
                 $discountPrice = $itemValue - 1;
                 if ($discountPrice > $certificatesDiscount) {
                     $itemValue -= $certificatesDiscount;
                     $certificatesDiscount = 0;
+                    $paymentMode = 'partial_prepayment';
                 } else {
                     $itemValue -= $discountPrice;
                     $certificatesDiscount -= $discountPrice;
+                    $paymentMode = 'full_prepayment';
                 }
             }
 
             $paymentSubject = 'commodity';
-            $paymentMode = 'full_prepayment';
             $vatCode = 1;
             switch ($item->type) {
                 case Basket::TYPE_MASTER:
@@ -297,9 +300,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
             ];
         }
         if ((float) $order->delivery_price > 0) {
+            $paymentMode = 'full_payment';
             $deliveryPrice = $order->delivery_price;
             if (($certificatesDiscount > 0) && ($deliveryPrice >= $certificatesDiscount)) {
                 $deliveryPrice -= $certificatesDiscount;
+                $paymentMode = $deliveryPrice > $certificatesDiscount ? 'partial_prepayment' : 'full_prepayment';
             }
             $items[] = [
                 'description' => 'Доставка',
@@ -309,7 +314,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     'currency' => self::CURRENCY_RUB,
                 ],
                 'vat_code' => 1,
-                'payment_mode' => 'full_prepayment',
+                'payment_mode' => $paymentMode,
                 'payment_subject' => 'service',
             ];
         }
