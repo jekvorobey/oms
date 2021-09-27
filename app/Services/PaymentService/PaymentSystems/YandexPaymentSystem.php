@@ -9,7 +9,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Dto\VatDto;
-use MerchantManagement\Services\MerchantService\Dto\GetVatDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Monolog\Logger;
 use Pim\Dto\Offer\OfferDto;
@@ -216,9 +215,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * @return array
+     * Get receipt items from order
      */
-    protected function generateItems(Order $order)
+    protected function generateItems(Order $order): array
     {
         $items = [];
         $certificatesDiscount = 0;
@@ -231,13 +230,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
         $merchantIds = $order->basket->items->where('type', Basket::TYPE_PRODUCT)->pluck('product.merchant_id');
         if (!empty($merchantIds)) {
             $merchantIds = $merchantIds->toArray();
-            $merchantIds[] = 1; //TODO::убрать
             $merchantQuery = $this->merchantService->newQuery()
                 ->addFields(MerchantDto::entity(), 'id')
                 ->include('vats')
                 ->setFilter('id', $merchantIds);
             $merchants = $this->merchantService->merchants($merchantQuery)->keyBy('id');
-            Log::debug(json_encode($merchants));
         }
 
         $productOfferIds = $order->basket->items->where('type', Basket::TYPE_PRODUCT)->pluck('offer_id');
@@ -248,7 +245,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 ->include('product')
                 ->setFilter('id', $productOfferIds->toArray());
             $offers = $this->offerService->offers($productOfferQuery)->keyBy('id');
-            Log::debug(json_encode($offers));
         }
 
         foreach ($order->basket->items as $item) {
@@ -270,67 +266,21 @@ class YandexPaymentSystem implements PaymentSystemInterface
             switch ($item->type) {
                 case Basket::TYPE_MASTER:
                     $paymentSubject = 'service';
-                    break;
-                case Basket::TYPE_CERTIFICATE:
-                    $paymentSubject = 'payment';
-                    $paymentMode = 'advance';
+
+                    if (isset($offers, $offers[$item->offer_id], $merchants)) {
+                        $vatCode = $this->getVatCode($offers[$item->offer_id], $merchants[$offers[$item->offer_id]['merchant_id']]);
+                    }
                     break;
                 case Basket::TYPE_PRODUCT:
                     $paymentSubject = 'commodity';
 
-                    if (isset($offers) && isset($offers[$item->offer_id]) && isset($merchants)) {
-                        $offerInfo = $offers[$item->offer_id];
-                        $itemMerchant = $merchants[$offerInfo['merchant_id']];
-                        $vatValue = null;
-                        $itemMerchantVats = $itemMerchant['vats'];
-                        Log::debug(json_encode($itemMerchantVats));
-                        uasort($itemMerchantVats, static function ($a, $b) {
-                            return $b['type'] - $a['type'];
-                        });
-                        Log::debug(json_encode($itemMerchantVats));
-                        Log::debug(json_encode($offerInfo));
-                        foreach ($itemMerchantVats as $vat) {
-                            switch ($vat['type']) {
-                                case VatDto::TYPE_GLOBAL:
-                                    break;
-                                case VatDto::TYPE_MERCHANT:
-                                    $vatValue = $vat['value'];
-                                    break 2;
-                                case VatDto::TYPE_BRAND:
-                                    if ($offerInfo['brand_id'] === $vat['brand_id']) {
-                                        $vatValue = $vat['value'];
-                                        break 2;
-                                    }
-                                    break;
-                                case VatDto::TYPE_CATEGORY:
-                                    if ($offerInfo['category_id'] === $vat['category_id']) {
-                                        $vatValue = $vat['value'];
-                                        break 2;
-                                    }
-                                    break;
-                                case VatDto::TYPE_SKU:
-                                    if ($offerInfo['product_id'] === $vat['product_id']) {
-                                        $vatValue = $vat['value'];
-                                        break 2;
-                                    }
-                                    break;
-                            }
-                        }
-
-                        if ($vatValue) {
-                            switch ($vatValue) {
-                                case 0:
-                                    $vatCode = 2;
-                                    break;
-                                case 10:
-                                    $vatCode = 3;
-                                    break;
-                                case 20:
-                                    $vatCode = 4;
-                                    break;
-                            }
-                        }
+                    if (isset($offers, $offers[$item->offer_id], $merchants)) {
+                        $vatCode = $this->getVatCode($offers[$item->offer_id], $merchants[$offers[$item->offer_id]['merchant_id']]);
                     }
+                    break;
+                case Basket::TYPE_CERTIFICATE:
+                    $paymentSubject = 'payment';
+                    $paymentMode = 'advance';
                     break;
             }
 
@@ -364,8 +314,59 @@ class YandexPaymentSystem implements PaymentSystemInterface
             ];
         }
 
-        Log::debug(json_encode($items));
-        die();
         return $items;
+    }
+
+    private function getVatCode(object $offerInfo, object $merchant): ?int
+    {
+        $vatCode = 1;
+        $vatValue = null;
+        $itemMerchantVats = $merchant['vats'];
+        usort($itemMerchantVats, static function ($a, $b) {
+            return $b['type'] - $a['type'];
+        });
+        foreach ($itemMerchantVats as $vat) {
+            switch ($vat['type']) {
+                case VatDto::TYPE_GLOBAL:
+                    break;
+                case VatDto::TYPE_MERCHANT:
+                    $vatValue = $vat['value'];
+                    break 2;
+                case VatDto::TYPE_BRAND:
+                    if ($offerInfo['product']['brand_id'] === $vat['brand_id']) {
+                        $vatValue = $vat['value'];
+                        break 2;
+                    }
+                    break;
+                case VatDto::TYPE_CATEGORY:
+                    if ($offerInfo['product']['category_id'] === $vat['category_id']) {
+                        $vatValue = $vat['value'];
+                        break 2;
+                    }
+                    break;
+                case VatDto::TYPE_SKU:
+                    if ($offerInfo['product_id'] === $vat['product_id']) {
+                        $vatValue = $vat['value'];
+                        break 2;
+                    }
+                    break;
+            }
+        }
+
+        if (isset($vatValue)) {
+            switch ($vatValue) {
+                case 0:
+                    $vatCode = 2;
+                    break;
+                case 10:
+                    $vatCode = 3;
+                    break;
+                case 20:
+                    $vatCode = 4;
+                    break;
+            }
+        }
+
+        return $vatCode;
     }
 }
