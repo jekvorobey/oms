@@ -6,6 +6,7 @@ use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use App\Models;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Dto\VatDto;
@@ -28,6 +29,19 @@ use App\Models\Basket\Basket;
 class YandexPaymentSystem implements PaymentSystemInterface
 {
     public const CURRENCY_RUB = 'RUB';
+
+    public const TAX_SYSTEM_CODE = 3;
+
+    public const PAYMENT_MODE_FULL_PAYMENT = 'full_payment';
+    public const PAYMENT_MODE_FULL_PREPAYMENT = 'full_prepayment';
+    public const PAYMENT_MODE_PARTIAL_PREPAYMENT = 'partial_prepayment';
+    public const PAYMENT_MODE_ADVANCE = 'advance';
+
+    public const PAYMENT_SUBJECT_SERVICE = 'service';
+    public const PAYMENT_SUBJECT_PRODUCT = 'commodity';
+    public const PAYMENT_SUBJECT_PAYMENT = 'payment';
+
+    public const VAT_CODE_DEFAULT = 1;
 
     /** @var Client */
     private $yandexService;
@@ -69,7 +83,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
             ],
             'description' => "Заказ №{$order->id}",
             'receipt' => [
-                'tax_system_code' => '3',
+                'tax_system_code' => self::TAX_SYSTEM_CODE,
                 'phone' => $order->customerPhone(),
                 'items' => $this->generateItems($order),
             ],
@@ -195,7 +209,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'currency' => self::CURRENCY_RUB,
             ],
             'receipt' => [
-                'tax_system_code' => '3',
+                'tax_system_code' => self::TAX_SYSTEM_CODE,
                 'phone' => $localPayment->order->customerPhone(),
                 'items' => $this->generateItems($localPayment->order),
             ],
@@ -227,7 +241,8 @@ class YandexPaymentSystem implements PaymentSystemInterface
             }
         }
 
-        $merchantIds = $order->basket->items->where('type', Basket::TYPE_PRODUCT)->pluck('product.merchant_id');
+        $merchants = collect();
+        $merchantIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('product.merchant_id');
         if (!empty($merchantIds)) {
             $merchantIds = $merchantIds->toArray();
             $merchantQuery = $this->merchantService->newQuery()
@@ -237,8 +252,8 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $merchants = $this->merchantService->merchants($merchantQuery)->keyBy('id');
         }
 
-        $productOfferIds = $order->basket->items->where('type', Basket::TYPE_PRODUCT)->pluck('offer_id');
-
+        $offers = collect();
+        $productOfferIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_PRODUCT])->pluck('offer_id');
         if ($productOfferIds) {
             $productOfferQuery = $this->offerService->newQuery();
             $productOfferQuery->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
@@ -248,7 +263,8 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
 
         foreach ($order->basket->items as $item) {
-            $paymentMode = 'full_payment';
+            $paymentMode = self::PAYMENT_MODE_FULL_PREPAYMENT;
+            //$paymentMode = self::PAYMENT_MODE_FULL_PAYMENT; //TODO::Закомментировано до реализации IBT-433
 
             $itemValue = $item->price / $item->qty;
             if (($certificatesDiscount > 0) && ($itemValue > 1)) {
@@ -256,36 +272,14 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 if ($discountPrice > $certificatesDiscount) {
                     $itemValue -= $certificatesDiscount;
                     $certificatesDiscount = 0;
-                    $paymentMode = 'partial_prepayment';
+//                    $paymentMode = self::PAYMENT_MODE_PARTIAL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
                 } else {
                     $itemValue -= $discountPrice;
                     $certificatesDiscount -= $discountPrice;
-                    $paymentMode = 'full_prepayment';
+//                    $paymentMode = self::PAYMENT_MODE_FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
                 }
             }
-
-            $paymentSubject = 'commodity';
-            $vatCode = 1;
-            switch ($item->type) {
-                case Basket::TYPE_MASTER:
-                    $paymentSubject = 'service';
-
-                    if (isset($offers, $offers[$item->offer_id], $merchants)) {
-                        $vatCode = $this->getVatCode($offers[$item->offer_id], $merchants[$offers[$item->offer_id]['merchant_id']]);
-                    }
-                    break;
-                case Basket::TYPE_PRODUCT:
-                    $paymentSubject = 'commodity';
-
-                    if (isset($offers, $offers[$item->offer_id], $merchants)) {
-                        $vatCode = $this->getVatCode($offers[$item->offer_id], $merchants[$offers[$item->offer_id]['merchant_id']]);
-                    }
-                    break;
-                case Basket::TYPE_CERTIFICATE:
-                    $paymentSubject = 'payment';
-                    $paymentMode = 'advance';
-                    break;
-            }
+            $receiptItemInfo = $this->getReceiptItemInfo($item, $offers, $merchants);
 
             $items[] = [
                 'description' => $item->name,
@@ -294,67 +288,80 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     'value' => number_format($itemValue, 2, '.', ''),
                     'currency' => self::CURRENCY_RUB,
                 ],
-                'vat_code' => $vatCode,
-                'payment_mode' => $paymentMode,
-                'payment_subject' => $paymentSubject,
+                'vat_code' => $receiptItemInfo['vat_code'],
+                'payment_mode' => $receiptItemInfo['payment_mode'],
+                'payment_subject' => $receiptItemInfo['payment_subject'],
             ];
         }
         if ((float) $order->delivery_price > 0) {
-            $paymentMode = 'full_payment';
+            $paymentMode = self::PAYMENT_MODE_FULL_PAYMENT;
             $deliveryPrice = $order->delivery_price;
             if (($certificatesDiscount > 0) && ($deliveryPrice >= $certificatesDiscount)) {
                 $deliveryPrice -= $certificatesDiscount;
-                $paymentMode = $deliveryPrice > $certificatesDiscount ? 'partial_prepayment' : 'full_prepayment';
+//                $paymentMode = $deliveryPrice > $certificatesDiscount ? self::PAYMENT_MODE_PARTIAL_PREPAYMENT : self::PAYMENT_MODE_FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
             }
             $items[] = [
                 'description' => 'Доставка',
-                'quantity' => 1,
+                'quantity' => self::VAT_CODE_DEFAULT,
                 'amount' => [
                     'value' => number_format($deliveryPrice, 2, '.', ''),
                     'currency' => self::CURRENCY_RUB,
                 ],
                 'vat_code' => 1,
                 'payment_mode' => $paymentMode,
-                'payment_subject' => 'service',
+                'payment_subject' => self::PAYMENT_SUBJECT_SERVICE,
             ];
         }
 
         return $items;
     }
 
+    private function getReceiptItemInfo(object $item, Collection $offers, Collection $merchants): array
+    {
+        $paymentMode = self::PAYMENT_MODE_FULL_PREPAYMENT;
+        $paymentSubject = self::PAYMENT_SUBJECT_PRODUCT;
+        $vatCode = self::VAT_CODE_DEFAULT;
+        switch ($item->type) {
+            case Basket::TYPE_MASTER:
+                $paymentSubject = self::PAYMENT_SUBJECT_SERVICE;
+
+                if (isset($offers[$item->offer_id], $merchants)) {
+                    $vatCode = $this->getVatCode($offers[$item->offer_id], $merchants[$offers[$item->offer_id]['merchant_id']]);
+                }
+                break;
+            case Basket::TYPE_PRODUCT:
+                $paymentSubject = self::PAYMENT_SUBJECT_PRODUCT;
+
+                if (isset($offers[$item->offer_id], $merchants)) {
+                    $vatCode = $this->getVatCode($offers[$item->offer_id], $merchants[$offers[$item->offer_id]['merchant_id']]);
+                }
+                break;
+            case Basket::TYPE_CERTIFICATE:
+                $paymentSubject = self::PAYMENT_SUBJECT_PAYMENT;
+                $paymentMode = self::PAYMENT_MODE_ADVANCE;
+                break;
+        }
+
+        return [
+            'vat_code' => $vatCode,
+            'payment_mode' => $paymentMode,
+            'payment_subject' => $paymentSubject,
+        ];
+    }
+
     private function getVatCode(object $offerInfo, object $merchant): ?int
     {
-        $vatCode = 1;
+        $vatCode = self::VAT_CODE_DEFAULT;
         $vatValue = null;
         $itemMerchantVats = $merchant['vats'];
         usort($itemMerchantVats, static function ($a, $b) {
             return $b['type'] - $a['type'];
         });
         foreach ($itemMerchantVats as $vat) {
-            switch ($vat['type']) {
-                case VatDto::TYPE_GLOBAL:
-                    break;
-                case VatDto::TYPE_MERCHANT:
-                    $vatValue = $vat['value'];
-                    break 2;
-                case VatDto::TYPE_BRAND:
-                    if ($offerInfo['product']['brand_id'] === $vat['brand_id']) {
-                        $vatValue = $vat['value'];
-                        break 2;
-                    }
-                    break;
-                case VatDto::TYPE_CATEGORY:
-                    if ($offerInfo['product']['category_id'] === $vat['category_id']) {
-                        $vatValue = $vat['value'];
-                        break 2;
-                    }
-                    break;
-                case VatDto::TYPE_SKU:
-                    if ($offerInfo['product_id'] === $vat['product_id']) {
-                        $vatValue = $vat['value'];
-                        break 2;
-                    }
-                    break;
+            $vatValue = $this->getVatValue($vat, $offerInfo);
+
+            if ($vatValue) {
+                break;
             }
         }
 
@@ -373,5 +380,32 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
 
         return $vatCode;
+    }
+
+    private function getVatValue(array $vat, object $offerInfo): ?int
+    {
+        switch ($vat['type']) {
+            case VatDto::TYPE_GLOBAL:
+                break;
+            case VatDto::TYPE_MERCHANT:
+                return $vat['value'];
+            case VatDto::TYPE_BRAND:
+                if ($offerInfo['product']['brand_id'] === $vat['brand_id']) {
+                    return $vat['value'];
+                }
+                break;
+            case VatDto::TYPE_CATEGORY:
+                if ($offerInfo['product']['category_id'] === $vat['category_id']) {
+                    return $vat['value'];
+                }
+                break;
+            case VatDto::TYPE_SKU:
+                if ($offerInfo['product_id'] === $vat['product_id']) {
+                    return $vat['value'];
+                }
+                break;
+        }
+
+        return null;
     }
 }
