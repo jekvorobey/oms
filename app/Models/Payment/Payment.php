@@ -72,6 +72,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $status
  * @property int $payment_method
  * @property int $payment_system
+ * @property string $payment_type
  * @property array $data
  *
  * @property-read Order $order

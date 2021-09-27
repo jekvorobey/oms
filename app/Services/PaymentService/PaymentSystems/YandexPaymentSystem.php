@@ -17,6 +17,7 @@ use YooKassa\Model\NotificationEventType;
 use YooKassa\Model\PaymentStatus;
 use GuzzleHttp\Client as GuzzleClient;
 use App\Models\Order\OrderReturnItem;
+use App\Models\Payment\PaymentType;
 
 /**
  * Class YandexPaymentSystem
@@ -152,6 +153,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 ->where('data->externalPaymentId', $payment->id)
                 ->firstOrFail();
 
+            $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
             switch ($payment->getStatus()) {
                 case PaymentStatus::WAITING_FOR_CAPTURE:
                     $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
@@ -170,6 +172,12 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
                     $localPayment->save();
                     break;
+            }
+
+            if (in_array($payment->getStatus(), [PaymentStatus::WAITING_FOR_CAPTURE, PaymentStatus::SUCCEEDED, PaymentStatus::CANCELED], true)) {
+                $order = $localPayment->order;
+                $order->can_partially_cancelled = !in_array($localPayment->payment_type, PaymentType::typesWithoutPartiallyCancel(), true);
+                $order->save();
             }
         }
     }

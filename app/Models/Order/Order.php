@@ -197,6 +197,7 @@ use Illuminate\Support\Collection;
  * @property Carbon|null $is_problem_at - дата установки флага проблемного заказа
  * @property int $is_canceled - флаг, что заказ отменен
  * @property bool $is_partially_cancelled - флаг, что заказ отменен частично
+ * @property bool $can_partially_cancelled - флаг, что заказ отменен частично
  * @property int $return_reason_id - id причины отмены доставки
  * @property Carbon|null $is_canceled_at - дата установки флага отмены заказа
  * @property int $is_require_check - флаг, что заказ требует проверки
