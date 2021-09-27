@@ -282,7 +282,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
 //                    $paymentMode = self::PAYMENT_MODE_FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
                 }
             }
-            $receiptItemInfo = $this->getReceiptItemInfo($item, $offers[$item->offer_id] ?? null, $merchants[$offers[$item->offer_id]['merchant_id']] ?? null);
+            $offer = $offers[$item->offer_id] ?? null;
+            $merchantId = $offer['merchant_id'] ?? null;
+            $merchant = $merchants[$merchantId] ?? null;
+
+            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant);
 
             $items[] = [
                 'description' => $item->name,
