@@ -266,7 +266,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
 
         foreach ($order->basket->items as $item) {
-            $paymentMode = self::PAYMENT_MODE_FULL_PREPAYMENT;
             //$paymentMode = self::PAYMENT_MODE_FULL_PAYMENT; //TODO::Закомментировано до реализации IBT-433
 
             $itemValue = $item->price / $item->qty;
