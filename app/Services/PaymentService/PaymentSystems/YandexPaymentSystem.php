@@ -174,11 +174,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     break;
             }
 
-            if (in_array($payment->getStatus(), [PaymentStatus::WAITING_FOR_CAPTURE, PaymentStatus::SUCCEEDED, PaymentStatus::CANCELED], true)) {
-                $order = $localPayment->order;
-                $order->can_partially_cancelled = !in_array($localPayment->payment_type, PaymentType::typesWithoutPartiallyCancel(), true);
-                $order->save();
-            }
+            $order = $localPayment->order;
+            $order->can_partially_cancelled = !in_array($localPayment->payment_type, PaymentType::typesWithoutPartiallyCancel(), true);
+            $order->save();
         }
     }
 
