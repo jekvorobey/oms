@@ -6,7 +6,6 @@ use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use App\Models;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Dto\VatDto;
@@ -21,6 +20,7 @@ use YooKassa\Model\NotificationEventType;
 use YooKassa\Model\PaymentStatus;
 use GuzzleHttp\Client as GuzzleClient;
 use App\Models\Basket\Basket;
+use App\Models\Basket\BasketItem;
 
 /**
  * Class YandexPaymentSystem
@@ -42,6 +42,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public const PAYMENT_SUBJECT_PAYMENT = 'payment';
 
     public const VAT_CODE_DEFAULT = 1;
+    public const VAT_CODE_0_PERCENT = 2;
+    public const VAT_CODE_10_PERCENT = 3;
+    public const VAT_CODE_20_PERCENT = 4;
 
     /** @var Client */
     private $yandexService;
@@ -279,7 +282,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
 //                    $paymentMode = self::PAYMENT_MODE_FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
                 }
             }
-            $receiptItemInfo = $this->getReceiptItemInfo($item, $offers, $merchants);
+            $receiptItemInfo = $this->getReceiptItemInfo($item, $offers[$item->offer_id] ?? null, $merchants[$offers[$item->offer_id]['merchant_id']] ?? null);
 
             $items[] = [
                 'description' => $item->name,
@@ -316,7 +319,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         return $items;
     }
 
-    private function getReceiptItemInfo(object $item, Collection $offers, Collection $merchants): array
+    private function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant): array
     {
         $paymentMode = self::PAYMENT_MODE_FULL_PREPAYMENT;
         $paymentSubject = self::PAYMENT_SUBJECT_PRODUCT;
@@ -325,15 +328,15 @@ class YandexPaymentSystem implements PaymentSystemInterface
             case Basket::TYPE_MASTER:
                 $paymentSubject = self::PAYMENT_SUBJECT_SERVICE;
 
-                if (isset($offers[$item->offer_id], $merchants)) {
-                    $vatCode = $this->getVatCode($offers[$item->offer_id], $merchants[$offers[$item->offer_id]['merchant_id']]);
+                if (isset($offerInfo, $merchant)) {
+                    $vatCode = $this->getVatCode($offerInfo, $merchant);
                 }
                 break;
             case Basket::TYPE_PRODUCT:
                 $paymentSubject = self::PAYMENT_SUBJECT_PRODUCT;
 
-                if (isset($offers[$item->offer_id], $merchants)) {
-                    $vatCode = $this->getVatCode($offers[$item->offer_id], $merchants[$offers[$item->offer_id]['merchant_id']]);
+                if (isset($offerInfo, $merchant)) {
+                    $vatCode = $this->getVatCode($offerInfo, $merchant);
                 }
                 break;
             case Basket::TYPE_CERTIFICATE:
@@ -351,7 +354,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
     private function getVatCode(object $offerInfo, object $merchant): ?int
     {
-        $vatCode = self::VAT_CODE_DEFAULT;
         $vatValue = null;
         $itemMerchantVats = $merchant['vats'];
         usort($itemMerchantVats, static function ($a, $b) {
@@ -365,21 +367,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
             }
         }
 
-        if (isset($vatValue)) {
-            switch ($vatValue) {
-                case 0:
-                    $vatCode = 2;
-                    break;
-                case 10:
-                    $vatCode = 3;
-                    break;
-                case 20:
-                    $vatCode = 4;
-                    break;
-            }
-        }
-
-        return $vatCode;
+        return [
+            0 => self::VAT_CODE_0_PERCENT,
+            10 => self::VAT_CODE_10_PERCENT,
+            20 => self::VAT_CODE_20_PERCENT,
+        ][$vatValue] ?? self::VAT_CODE_DEFAULT;
     }
 
     private function getVatValue(array $vat, object $offerInfo): ?int
