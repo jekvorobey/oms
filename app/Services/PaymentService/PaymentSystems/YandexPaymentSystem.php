@@ -325,7 +325,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
     private function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant): array
     {
-        $paymentMode = self::PAYMENT_MODE_FULL_PREPAYMENT;
+        $paymentMode = self::PAYMENT_MODE_FULL_PAYMENT;
         $paymentSubject = self::PAYMENT_SUBJECT_PRODUCT;
         $vatCode = self::VAT_CODE_DEFAULT;
         switch ($item->type) {
