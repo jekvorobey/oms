@@ -9,6 +9,7 @@ use App\Services\Dto\Out\DocumentDto;
 use Greensight\CommonMsa\Dto\FileDto;
 use Greensight\CommonMsa\Services\FileService\FileService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -38,6 +39,7 @@ class CargoDocumentsController extends Controller
      */
     public function acceptanceAct(
         int $cargoId,
+        Request $request,
         DeliveryService $deliveryService,
         CargoAcceptanceActCreator $cargoAcceptanceActCreator
     ): JsonResponse {
@@ -46,7 +48,7 @@ class CargoDocumentsController extends Controller
             throw new NotFoundHttpException('cargo not found');
         }
 
-        $documentDto = $cargoAcceptanceActCreator->setCargo($cargo)->create();
+        $documentDto = $cargoAcceptanceActCreator->setCargo($cargo)->setAsPdf($request->as_pdf ?: false)->create();
 
         return $this->getResponse($documentDto);
     }

@@ -2,24 +2,27 @@
 
 namespace App\Http\Controllers\V1\Delivery;
 
-use App\Http\Controllers\Controller;
 use App\Services\DeliveryService;
 use App\Services\DocumentService\ShipmentAcceptanceActCreator;
 use App\Services\DocumentService\ShipmentAssemblingCardCreator;
 use App\Services\DocumentService\ShipmentInventoryCreator;
-use App\Services\Dto\Out\DocumentDto;
-use Greensight\CommonMsa\Dto\FileDto;
-use Greensight\CommonMsa\Services\FileService\FileService;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class ShipmentDocumentsController
  * @package App\Http\Controllers\V1\Delivery
  */
-class ShipmentDocumentsController extends Controller
+class ShipmentDocumentsController extends DocumentController
 {
+    protected DeliveryService $deliveryService;
+
+    public function __construct(DeliveryService $deliveryService)
+    {
+        $this->deliveryService = $deliveryService;
+    }
+
     /**
      * @OA\Get(
      *     path="api/v1/shipments/{id}/documents/acceptance-act",
@@ -39,17 +42,17 @@ class ShipmentDocumentsController extends Controller
      */
     public function acceptanceAct(
         int $shipmentId,
-        DeliveryService $deliveryService,
+        Request $request,
         ShipmentAcceptanceActCreator $shipmentAcceptanceActCreator
     ): JsonResponse {
-        $shipment = $deliveryService->getShipment($shipmentId);
+        $shipment = $this->deliveryService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
 
-        $documentDto = $shipmentAcceptanceActCreator->setShipment($shipment)->create();
+        $documentDto = $shipmentAcceptanceActCreator->setShipment($shipment)->setAsPdf($request->as_pdf ?: false)->create();
 
-        return $this->getResponse($documentDto);
+        return $this->documentResponse($documentDto);
     }
 
     /**
@@ -71,17 +74,17 @@ class ShipmentDocumentsController extends Controller
      */
     public function assemblingCard(
         int $shipmentId,
-        DeliveryService $deliveryService,
+        Request $request,
         ShipmentAssemblingCardCreator $shipmentAssemblingCardCreator
     ): JsonResponse {
-        $shipment = $deliveryService->getShipment($shipmentId);
+        $shipment = $this->deliveryService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
 
-        $documentDto = $shipmentAssemblingCardCreator->setShipment($shipment)->create();
+        $documentDto = $shipmentAssemblingCardCreator->setShipment($shipment)->setAsPdf($request->as_pdf ?: false)->create();
 
-        return $this->getResponse($documentDto);
+        return $this->documentResponse($documentDto);
     }
 
     /**
@@ -103,34 +106,16 @@ class ShipmentDocumentsController extends Controller
      */
     public function inventory(
         int $shipmentId,
-        DeliveryService $deliveryService,
+        Request $request,
         ShipmentInventoryCreator $shipmentInventoryCreator
     ): JsonResponse {
-        $shipment = $deliveryService->getShipment($shipmentId);
+        $shipment = $this->deliveryService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
 
-        $documentDto = $shipmentInventoryCreator->setShipment($shipment)->create();
+        $documentDto = $shipmentInventoryCreator->setShipment($shipment)->setAsPdf($request->as_pdf ?: false)->create();
 
-        return $this->getResponse($documentDto);
-    }
-
-    protected function getResponse(DocumentDto $documentDto): JsonResponse
-    {
-        if (!$documentDto->success || !$documentDto->file_id) {
-            throw new HttpException(500, $documentDto->message);
-        }
-
-        /** @var FileService $fileService */
-        $fileService = resolve(FileService::class);
-        /** @var FileDto $fileDto */
-        $fileDto = $fileService->getFiles([$documentDto->file_id])->first();
-
-        return response()->json([
-            'absolute_url' => $fileDto->absoluteUrl(),
-            'original_name' => $fileDto->original_name,
-            'size' => $fileDto->size,
-        ]);
+        return $this->documentResponse($documentDto);
     }
 }

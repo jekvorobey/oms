@@ -4,6 +4,7 @@ namespace App\Services\DocumentService;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use NcJoes\OfficeConverter\OfficeConverter;
 use PhpOffice\PhpWord\TemplateProcessor;
 use Pim\Dto\Product\ProductByOfferDto;
 use Pim\Dto\Product\ProductDto;
@@ -13,6 +14,16 @@ abstract class TemplatedDocumentCreator extends DocumentCreator
 {
     /** окончание в имени файла с шаблоном для программного заполнения данными */
     public const TEMPLATE_SUFFIX = 'template';
+
+    protected bool $asPdf = false;
+
+    /** @return static */
+    public function setAsPdf(bool $asPdf): self
+    {
+        $this->asPdf = $asPdf;
+
+        return $this;
+    }
 
     protected function createTemplate(): TemplateProcessor
     {
@@ -54,7 +65,18 @@ abstract class TemplatedDocumentCreator extends DocumentCreator
     {
         $template->saveAs($path);
 
-//      $converter = new OfficeConverter($documentPath, null, '/Applications/LibreOffice.app/Contents/MacOS/soffice', false);
-//      $converter->convertTo($documentPath . '.pdf');
+        if ($this->asPdf) {
+            $this->convertToPdf($path);
+        }
+    }
+
+    protected function convertToPdf(string $path): void
+    {
+        if (!$bin = config('libreoffice.bin')) {
+            throw new \Exception('libreoffice.bin is empty!');
+        }
+
+        $converter = new OfficeConverter($path, null, $bin, false);
+        $converter->convertTo("$path.pdf");
     }
 }
