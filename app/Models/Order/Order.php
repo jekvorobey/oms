@@ -184,6 +184,7 @@ use Illuminate\Support\Collection;
  * @property int $spent_bonus
  * @property int $added_bonus
  * @property array $certificates
+ * @property float $spent_certificate
  *
  * @property int $delivery_type - тип доставки (см. \App\Models\Delivery\DeliveryType)
  * @property float $delivery_price - стоимость доставки iBT (с учетом скидки)

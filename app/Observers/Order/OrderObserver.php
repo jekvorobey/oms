@@ -454,13 +454,8 @@ class OrderObserver
     protected function setCanceledCertificates(Order $order): void
     {
         if ($order->is_canceled != $order->getOriginal('is_canceled')) {
-            $amount = 0;
-            $certificates = (array) $order->certificates;
-            foreach ($certificates as $certificate) {
-                $amount += $certificate['amount'];
-            }
-            if ($amount > 0) {
-                resolve(CertificateService::class)->rollback($amount, $order->customer_id, $order->id, $order->number);
+            if ($order->spent_certificate > 0) {
+                resolve(CertificateService::class)->rollback($order->spent_certificate, $order->customer_id, $order->id, $order->number);
             }
         }
     }

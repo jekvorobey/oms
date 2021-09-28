@@ -228,10 +228,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         $items = [];
         $certificatesDiscount = 0;
-        if (!empty($order->certificates)) {
-            foreach ($order->certificates as $certificate) {
-                $certificatesDiscount += $certificate['amount'];
-            }
+
+        if ($order->spent_certificate > 0) {
+            $certificatesDiscount = $order->spent_certificate;
         }
         $itemsForReturn = OrderReturnItem::query()
             ->whereIn('basket_item_id', $order->basket->items->pluck('id'))
