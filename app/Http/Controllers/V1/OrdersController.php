@@ -419,6 +419,7 @@ class OrdersController extends Controller
      *     tags={"Заказы"},
      *     description="Отменить заказ.",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="orderReturnReasonId", required=true, @OA\Schema(type="integer")),
      *     @OA\Response(response="204", description=""),
      *     @OA\Response(response="404", description="cargo not found"),
      * )
@@ -426,13 +427,17 @@ class OrdersController extends Controller
      * Отменить заказ
      * @throws \Exception
      */
-    public function cancel(int $id, OrderService $orderService): Response
+    public function cancel(int $id, Request $request, OrderService $orderService): Response
     {
+        $data = $this->validate($request, [
+            'orderReturnReason' => 'required|integer|exists:order_return_reasons,id',
+        ]);
+
         $order = $orderService->getOrder($id);
         if (!$order) {
             throw new NotFoundHttpException('order not found');
         }
-        if (!$orderService->cancel($order)) {
+        if (!$orderService->cancel($order, $data['orderReturnReason'])) {
             throw new HttpException(500);
         }
 

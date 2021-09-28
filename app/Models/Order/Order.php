@@ -16,6 +16,7 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -195,6 +196,9 @@ use Illuminate\Support\Collection;
  * @property int $is_problem - флаг, что заказ проблемный
  * @property Carbon|null $is_problem_at - дата установки флага проблемного заказа
  * @property int $is_canceled - флаг, что заказ отменен
+ * @property bool $is_partially_cancelled - флаг, что заказ отменен частично
+ * @property bool $can_partially_cancelled - флаг, что заказ отменен частично
+ * @property int $return_reason_id - id причины отмены доставки
  * @property Carbon|null $is_canceled_at - дата установки флага отмены заказа
  * @property int $is_require_check - флаг, что заказ требует проверки
  * @property string $manager_comment - комментарий менеджера
@@ -211,6 +215,7 @@ use Illuminate\Support\Collection;
  * @property Collection|OrderBonus[] $bonuses - бонусы применённые к заказу
  * @property Collection|OrderReturn[] $orderReturns - возвраты по заказу
  * @property Collection|History[] $history - история изменений
+ * @property OrderReturnReason $orderReturnReason - причина возврата заказа
  */
 class Order extends OmsModel
 {
@@ -276,6 +281,11 @@ class Order extends OmsModel
     public function history(): MorphToMany
     {
         return $this->morphToMany(History::class, 'main_entity', (new HistoryMainEntity())->getTable());
+    }
+
+    public function orderReturnReason(): BelongsTo
+    {
+        return $this->belongsTo(OrderReturnReason::class, 'return_reason_id');
     }
 
     /**

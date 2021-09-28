@@ -4,6 +4,7 @@ namespace App\Models\Delivery;
 
 use App\Models\OmsModel;
 use App\Models\Order\Order;
+use App\Models\Order\OrderReturnReason;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Services\ListsService\ListsService;
@@ -209,6 +210,7 @@ use Illuminate\Support\Collection;
  * @property int $is_problem - флаг, что доставка проблемная
  * @property Carbon|null $is_problem_at - дата установки флага проблемной доставки
  * @property int $is_canceled - флаг, что доставка отменена
+ * @property int $return_reason_id - id причины отмены доставки
  * @property Carbon|null $is_canceled_at - дата установки флага отмены доставки
  * @property int $tariff_id - идентификатор тарифа на доставку из сервиса логистики
  * @property int $point_id - идентификатор пункта самовывоза из сервиса логистики
@@ -233,6 +235,7 @@ use Illuminate\Support\Collection;
  * @property Carbon $status_xml_id_at
  * @property-read Order $order
  * @property-read Collection|Shipment[] $shipments
+ * @property OrderReturnReason $orderReturnReason - причина возврата заказа
  */
 class Delivery extends OmsModel
 {
@@ -302,6 +305,11 @@ class Delivery extends OmsModel
     public function shipments(): HasMany
     {
         return $this->hasMany(Shipment::class);
+    }
+
+    public function orderReturnReason(): BelongsTo
+    {
+        return $this->belongsTo(OrderReturnReason::class, 'return_reason_id');
     }
 
     protected function setDeliveryAddressAttribute($value)

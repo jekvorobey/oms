@@ -7,9 +7,12 @@ use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderReturnItem;
+use App\Models\Payment\PaymentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDto;
+use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use MerchantManagement\Services\MerchantService\MerchantService;
 
 /**
  * Class OrderReturnService
@@ -19,29 +22,36 @@ class OrderReturnService
 {
     /**
      * Создать возврат по заказу
-     * @return array - [id, number]
      * @throws \Exception
      */
-    public function createOrderReturn(OrderReturnDto $orderReturnDto): array
+    public function createOrderReturn(OrderReturnDto $orderReturnDto): ?OrderReturn
     {
-        /** @var Order $order */
-        $order = Order::query()->where('id', $orderReturnDto->order_id)->with('basket.items')->get();
+        $order = Order::find($orderReturnDto->order_id)->load('basket.items');
         if (!$order) {
             throw new \Exception("Order by id={$orderReturnDto->order_id} not found");
         }
 
-        return DB::transaction(function () use ($orderReturnDto, $order) {
+        $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
+
+        if (!$this->needCreateOrderReturn($order, $orderReturnDto, $basketItemIds)) {
+            return null;
+        }
+
+        /** @var Collection|BasketItem[] $basketItems */
+        $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->with('shipmentItem.shipment')->get()->keyBy('id');
+
+        return DB::transaction(function () use ($orderReturnDto, $order, $basketItems) {
             $orderReturn = new OrderReturn();
             $orderReturn->order_id = $order->id;
             $orderReturn->customer_id = $order->customer_id;
             $orderReturn->type = $order->type;
             $orderReturn->number = OrderReturn::makeNumber($order->id);
             $orderReturn->status = $orderReturnDto->status;
+            $orderReturn->price = 0;
+            $orderReturn->is_delivery = $orderReturnDto->is_delivery;
             $orderReturn->save();
 
-            $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
-            /** @var Collection|BasketItem[] $basketItems */
-            $basketItems = BasketItem::query()->whereIn('id', $basketItemIds)->get()->keyBy('id');
+            $billingListByMerchants = $this->getMerchantBillings($basketItems, $order);
 
             foreach ($orderReturnDto->items as $item) {
                 $orderReturnItem = new OrderReturnItem();
@@ -81,13 +91,27 @@ class OrderReturnService
                 }
                 $orderReturnItem->price = $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
                 $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии
-                $orderReturn->save();
+                $orderReturnItem->save();
+
+                if (isset($billingListByMerchants[$orderReturnItem->offer_id])) {
+                    /** @var MerchantService $merchantService */
+                    $merchantService = resolve(MerchantService::class);
+                    $merchantService->addReturn(
+                        $billingListByMerchants[$orderReturnItem->offer_id]['merchant_id'],
+                        $billingListByMerchants[$orderReturnItem->offer_id]['id']
+                    );
+                }
             }
 
-            $orderReturn->priceRecalc(false);
+            if ($orderReturnDto->price && $orderReturnDto->is_delivery) {
+                $orderReturn->price = $orderReturnDto->price;
+            } else {
+                $orderReturn->priceRecalc(false);
+            }
             $orderReturn->commissionRecalc();
+            $orderReturn->save();
 
-            return [$orderReturn->id, $orderReturn->number];
+            return $orderReturn;
         });
     }
 
@@ -132,5 +156,75 @@ class OrderReturnService
                 }
             }
         });
+    }
+
+    /**
+     * Получить записи биллинга элементов корзины
+     *
+     * @return array
+     */
+    private function getMerchantBillings(Collection $basketItems, Order $order): array
+    {
+        /** @var MerchantService $merchantService */
+        $merchantService = resolve(MerchantService::class);
+        $basketItemsByMerchants = [];
+        $billingListByMerchants = [];
+        foreach ($basketItems as $basketItem) {
+            if ($basketItem->shipmentItem->shipment->merchant_id) {
+                $basketItemsByMerchants[$basketItem->shipmentItem->shipment->merchant_id][] = $basketItem;
+            }
+        }
+        if (!empty($basketItemsByMerchants)) {
+            foreach ($basketItemsByMerchants as $merchantId => $merchantBasketItems) {
+                $restQuery = (new RestQuery())
+                    ->setFilter('merchant_id', $merchantId)
+                    ->setFilter('offer_id', array_column($merchantBasketItems, 'offer_id'))
+                    ->setFilter('order_id', $order->id);
+                $billingList = $merchantService->merchantBillingList($restQuery, $merchantId);
+
+                if ($billingList['items']) {
+                    foreach ($billingList['items'] as $billingItem) {
+                        $billingListByMerchants[$billingItem['offer_id']] = [
+                            'id' => $billingItem['id'],
+                            'merchant_id' => $merchantId,
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $billingListByMerchants;
+    }
+
+    private function needCreateOrderReturn(
+        Order $order,
+        OrderReturnDto $orderReturnDto,
+        Collection $basketItemIds
+    ): bool {
+        if (!in_array((int) $order->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD])) {
+            return false;
+        }
+
+        //TODO Предусмотреть в дальнейшем условие возврата неполного количества одного товара
+        $existOrderReturnItems = OrderReturnItem::query()
+            ->whereIn('basket_item_id', $basketItemIds)
+            ->exists();
+
+        if ($existOrderReturnItems) {
+            return false;
+        }
+
+        if ($orderReturnDto->is_delivery) {
+            $existOrderReturnDelivery = OrderReturn::query()
+                ->where('order_id', $order->id)
+                ->where('is_delivery', true)
+                ->exists();
+
+            if ($existOrderReturnDelivery) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

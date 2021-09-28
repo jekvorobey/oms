@@ -827,13 +827,17 @@ class ShipmentsController extends Controller
      * Отменить отправление
      * @throws \Exception
      */
-    public function cancel(int $id, DeliveryService $deliveryService): Response
+    public function cancel(int $id, Request $request, DeliveryService $deliveryService): Response
     {
+        $data = $this->validate($request, [
+            'orderReturnReason' => 'required|integer|exists:order_return_reasons,id',
+        ]);
+
         $shipment = $deliveryService->getShipment($id);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
-        if (!$deliveryService->cancelShipment($shipment)) {
+        if (!$deliveryService->cancelShipment($shipment, $data['orderReturnReason'])) {
             throw new HttpException(500);
         }
 
