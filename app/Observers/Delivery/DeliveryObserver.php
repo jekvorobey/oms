@@ -342,7 +342,7 @@ class DeliveryObserver
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
             foreach ($delivery->shipments as $shipment) {
-                $deliveryService->cancelShipment($shipment);
+                $deliveryService->cancelShipment($shipment, $delivery->return_reason_id);
             }
         }
     }
@@ -360,6 +360,9 @@ class DeliveryObserver
 
             $allDeliveriesHasStatus = true;
             foreach ($order->deliveries as $orderDelivery) {
+                if ($orderDelivery->is_canceled) {
+                    continue;
+                }
                 /**
                  * Для статуса доставки "Находится в Пункте Выдачи" проверяем,
                  * что все доставки заказа находятся строго в этом статусе,
@@ -409,7 +412,7 @@ class DeliveryObserver
             if ($allDeliveriesIsCanceled) {
                 /** @var OrderService $orderService */
                 $orderService = resolve(OrderService::class);
-                $orderService->cancel($order);
+                $orderService->cancel($order, $delivery->return_reason_id);
             }
         }
     }

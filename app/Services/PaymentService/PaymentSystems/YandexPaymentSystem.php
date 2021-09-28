@@ -3,17 +3,21 @@
 namespace App\Services\PaymentService\PaymentSystems;
 
 use App\Models\Order\Order;
+use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
 use YooKassa\Client;
+use YooKassa\Model\Notification\NotificationCanceled;
 use YooKassa\Model\Notification\NotificationSucceeded;
 use YooKassa\Model\Notification\NotificationWaitingForCapture;
 use YooKassa\Model\NotificationEventType;
 use YooKassa\Model\PaymentStatus;
 use GuzzleHttp\Client as GuzzleClient;
+use App\Models\Order\OrderReturnItem;
+use App\Models\Payment\PaymentType;
 
 /**
  * Class YandexPaymentSystem
@@ -110,9 +114,19 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function handlePushPayment(array $data): void
     {
         $this->logger->info('Handle external payment');
-        $notification = $data['event'] === NotificationEventType::PAYMENT_SUCCEEDED
-            ? new NotificationSucceeded($data)
-            : new NotificationWaitingForCapture($data);
+        switch ($data['event']) {
+            case NotificationEventType::PAYMENT_SUCCEEDED:
+                $notification = new NotificationSucceeded($data);
+                break;
+            case NotificationEventType::PAYMENT_CANCELED:
+                $notification = new NotificationCanceled($data);
+                break;
+            case NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE:
+                $notification = new NotificationWaitingForCapture($data);
+                break;
+            default:
+                return;
+        }
 
         $this->logger->info('External event data', $notification->jsonSerialize());
 
@@ -139,6 +153,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 ->where('data->externalPaymentId', $payment->id)
                 ->firstOrFail();
 
+            $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
             switch ($payment->getStatus()) {
                 case PaymentStatus::WAITING_FOR_CAPTURE:
                     $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
@@ -158,6 +173,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     $localPayment->save();
                     break;
             }
+
+            $order = $localPayment->order;
+            $order->can_partially_cancelled = !in_array($localPayment->payment_type, PaymentType::typesWithoutPartiallyCancel(), true);
+            $order->save();
         }
     }
 
@@ -214,32 +233,43 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $certificatesDiscount += $certificate['amount'];
             }
         }
-        foreach ($order->basket->items as $item) {
-            $itemValue = $item->price / $item->qty;
-            if (($certificatesDiscount > 0) && ($itemValue > 1)) {
-                $discountPrice = $itemValue - 1;
-                if ($discountPrice > $certificatesDiscount) {
-                    $itemValue -= $certificatesDiscount;
-                    $certificatesDiscount = 0;
-                } else {
-                    $itemValue -= $discountPrice;
-                    $certificatesDiscount -= $discountPrice;
-                }
-            }
+        $itemsForReturn = OrderReturnItem::query()
+            ->whereIn('basket_item_id', $order->basket->items->pluck('id'))
+            ->pluck('basket_item_id')
+            ->toArray();
+        $deliveryForReturn = OrderReturn::query()
+            ->where('order_id', $order->id)
+            ->where('is_delivery', true)
+            ->exists();
 
-            $items[] = [
-                'description' => $item->name,
-                'quantity' => $item->qty,
-                'amount' => [
-                    'value' => number_format($itemValue, 2, '.', ''),
-                    'currency' => self::CURRENCY_RUB,
-                ],
-                'vat_code' => 1,
-                'payment_mode' => 'full_prepayment',
-                'payment_subject' => 'commodity',
-            ];
+        foreach ($order->basket->items as $item) {
+            if (!in_array($item->id, $itemsForReturn)) {
+                $itemValue = $item->price / $item->qty;
+                if (($certificatesDiscount > 0) && ($itemValue > 1)) {
+                    $discountPrice = $itemValue - 1;
+                    if ($discountPrice > $certificatesDiscount) {
+                        $itemValue -= $certificatesDiscount;
+                        $certificatesDiscount = 0;
+                    } else {
+                        $itemValue -= $discountPrice;
+                        $certificatesDiscount -= $discountPrice;
+                    }
+                }
+
+                $items[] = [
+                    'description' => $item->name,
+                    'quantity' => $item->qty,
+                    'amount' => [
+                        'value' => number_format($itemValue, 2, '.', ''),
+                        'currency' => self::CURRENCY_RUB,
+                    ],
+                    'vat_code' => 1,
+                    'payment_mode' => 'full_prepayment',
+                    'payment_subject' => 'commodity',
+                ];
+            }
         }
-        if ((float) $order->delivery_price > 0) {
+        if ((float) $order->delivery_price > 0 && !$deliveryForReturn) {
             $deliveryPrice = $order->delivery_price;
             if (($certificatesDiscount > 0) && ($deliveryPrice >= $certificatesDiscount)) {
                 $deliveryPrice -= $certificatesDiscount;
@@ -257,5 +287,83 @@ class YandexPaymentSystem implements PaymentSystemInterface
             ];
         }
         return $items;
+    }
+
+    /**
+     * @inheritDoc
+     * @throws \YooKassa\Common\Exceptions\ApiException
+     * @throws \YooKassa\Common\Exceptions\BadApiRequestException
+     * @throws \YooKassa\Common\Exceptions\ExtensionNotFoundException
+     * @throws \YooKassa\Common\Exceptions\ForbiddenException
+     * @throws \YooKassa\Common\Exceptions\InternalServerError
+     * @throws \YooKassa\Common\Exceptions\NotFoundException
+     * @throws \YooKassa\Common\Exceptions\ResponseProcessingException
+     * @throws \YooKassa\Common\Exceptions\TooManyRequestsException
+     * @throws \YooKassa\Common\Exceptions\UnauthorizedException
+     */
+    public function refund(string $paymentId, OrderReturn $orderReturn): array
+    {
+        $items = [];
+
+        if ($orderReturn->is_delivery) {
+            $items[] = [
+                'description' => 'Доставка',
+                'quantity' => 1,
+                'amount' => [
+                    'value' => number_format($orderReturn->price, 2, '.', ''),
+                    'currency' => self::CURRENCY_RUB,
+                ],
+                'vat_code' => 1,
+            ];
+        } else {
+            foreach ($orderReturn->items as $item) {
+                $itemValue = $item->price / $item->qty;
+
+                $items[] = [
+                    'description' => $item->name,
+                    'quantity' => $item->qty,
+                    'amount' => [
+                        'value' => number_format($itemValue, 2, '.', ''),
+                        'currency' => self::CURRENCY_RUB,
+                    ],
+                    'vat_code' => 1,
+                ];
+            }
+        }
+        $captureData = [
+            'amount' => [
+                'value' => $orderReturn->price,
+                'currency' => self::CURRENCY_RUB,
+            ],
+            'payment_id' => $paymentId,
+            'receipt' => [
+                'tax_system_code' => '2',
+                'phone' => $orderReturn->order->customerPhone(),
+                'items' => $items,
+            ],
+        ];
+        $this->logger->info('Start return payment', $captureData);
+        $response = $this->yandexService->createRefund($captureData, uniqid('', true));
+
+        $this->logger->info('Return payment result', $response->jsonSerialize());
+
+        return $response->jsonSerialize();
+    }
+
+    /**
+     * @inheritDoc
+     * @throws \YooKassa\Common\Exceptions\ApiException
+     * @throws \YooKassa\Common\Exceptions\BadApiRequestException
+     * @throws \YooKassa\Common\Exceptions\ExtensionNotFoundException
+     * @throws \YooKassa\Common\Exceptions\ForbiddenException
+     * @throws \YooKassa\Common\Exceptions\InternalServerError
+     * @throws \YooKassa\Common\Exceptions\NotFoundException
+     * @throws \YooKassa\Common\Exceptions\ResponseProcessingException
+     * @throws \YooKassa\Common\Exceptions\TooManyRequestsException
+     * @throws \YooKassa\Common\Exceptions\UnauthorizedException
+     */
+    public function cancel(string $paymentId): array
+    {
+        return $this->yandexService->cancelPayment($paymentId)->jsonSerialize();
     }
 }
