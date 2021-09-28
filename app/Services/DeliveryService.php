@@ -500,7 +500,6 @@ class DeliveryService
                     $deliveryOrderInputDto
                 );
                 if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->xml_id) {
-                    $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
                     if ($deliveryOrderOutputDto->tracknumber) {
                         $delivery->tracknumber = $deliveryOrderOutputDto->tracknumber;
                     }
@@ -510,6 +509,9 @@ class DeliveryService
                     $delivery->error_xml_id = '';
                 } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
+                }
+                if ($deliveryOrderOutputDto->xml_id) {
+                    $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
                 }
                 $delivery->save();
                 foreach ($delivery->shipments as $shipment) {
