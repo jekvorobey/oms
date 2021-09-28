@@ -41,7 +41,7 @@ class OrderReturnReasonController extends Controller
      */
     use DeleteAction;
     /** @OA\Post (
-     *     path="/api/v1/orders/return-reasons/{id}",
+     *     path="/api/v1/orders/return-reasons",
      *     operationId="return_reasons_add",
      *     tags={"Причины отмены заказа"},
      *     summary="Добавление причины отмены заказа",
