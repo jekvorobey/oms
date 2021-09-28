@@ -400,10 +400,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
 
         return [
-                0 => self::VAT_CODE_0_PERCENT,
-                10 => self::VAT_CODE_10_PERCENT,
-                20 => self::VAT_CODE_20_PERCENT,
-            ][$vatValue] ?? self::VAT_CODE_DEFAULT;
+            0 => self::VAT_CODE_0_PERCENT,
+            10 => self::VAT_CODE_10_PERCENT,
+            20 => self::VAT_CODE_20_PERCENT,
+        ][$vatValue] ?? self::VAT_CODE_DEFAULT;
     }
 
     private function getVatValue(array $vat, object $offerInfo): ?int
