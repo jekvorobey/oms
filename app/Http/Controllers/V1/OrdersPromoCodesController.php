@@ -8,11 +8,6 @@ use App\Models\Order\OrderPromoCode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 
-/**
- * Class OrdersPromoCodesController
- * @package App\Http\Controllers\V1
- */
-
 class OrdersPromoCodesController extends Controller
 {
     /**
@@ -55,6 +50,7 @@ class OrdersPromoCodesController extends Controller
                 ->whereHas('promoCodes', function (Builder $query) use ($promoCodeId) {
                     $query->where('promo_code_id', $promoCodeId);
                 })
+                ->where('is_canceled', false)
                 ->count();
         }
 

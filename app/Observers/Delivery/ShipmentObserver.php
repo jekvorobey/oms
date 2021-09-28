@@ -70,6 +70,7 @@ class ShipmentObserver
 
         $this->setStatusToDelivery($shipment);
         $this->setIsCanceledToDelivery($shipment);
+        $this->setOrderIsPartiallyCancelled($shipment);
         $this->setTakenStatusToCargo($shipment);
         $this->sendStatusNotification($shipment);
         $this->returnBonusesWhenCancelled($shipment);
@@ -385,7 +386,7 @@ class ShipmentObserver
      */
     protected function setIsCanceledToDelivery(Shipment $shipment): void
     {
-        if ($shipment->is_canceled && $shipment->is_canceled != $shipment->getOriginal('is_canceled')) {
+        if ($shipment->wasChanged('is_canceled') && $shipment->is_canceled) {
             $delivery = $shipment->delivery;
             if ($delivery->is_canceled) {
                 return;
@@ -402,8 +403,20 @@ class ShipmentObserver
             if ($allShipmentsIsCanceled) {
                 /** @var DeliveryService $deliveryService */
                 $deliveryService = resolve(DeliveryService::class);
-                $deliveryService->cancelDelivery($delivery);
+                $deliveryService->cancelDelivery($delivery, $shipment->return_reason_id);
             }
+        }
+    }
+
+    /**
+     * Установка заказу флага частичной отмены
+     */
+    protected function setOrderIsPartiallyCancelled(Shipment $shipment): void
+    {
+        if ($shipment->wasChanged('is_canceled') && $shipment->is_canceled) {
+            $order = $shipment->delivery->order;
+            $order->is_partially_cancelled = true;
+            $order->save();
         }
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\PaymentService\PaymentSystems;
 
+use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 
 /**
@@ -10,6 +11,16 @@ use App\Models\Payment\Payment;
  */
 interface PaymentSystemInterface
 {
+    /**
+     * Статус успешного возврата оплаты
+     */
+    public const STATUS_REFUND_SUCCESS = 'succeeded';
+
+    /**
+     * Статус отмены оплаты
+     */
+    public const STATUS_CANCELLED = 'canceled';
+
     /**
      * Обратиться к внешней системы оплаты для создания платежа.
      *
@@ -47,4 +58,14 @@ interface PaymentSystemInterface
      * Если не указано, то время бесконечно.
      */
     public function duration(): ?int;
+
+    /**
+     * Сформировать запрос на возврат средств
+     */
+    public function refund(string $paymentId, OrderReturn $orderReturn): array;
+
+    /**
+     * Сформировать запрос на отмену оплаты
+     */
+    public function cancel(string $paymentId): array;
 }

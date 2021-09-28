@@ -5,6 +5,7 @@ namespace App\Models\Delivery;
 use App\Core\Notifications\ShipmentNotification;
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
+use App\Models\Order\OrderReturnReason;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -164,6 +165,8 @@ use Pim\Services\ProductService\ProductService;
  * @property int $is_problem - флаг, что отправление проблемное
  * @property Carbon|null $is_problem_at - дата установки флага проблемного отправления
  * @property int $is_canceled - флаг, что отправление отменено
+ * @property int $return_reason_id - id причины отмены доставки
+ * @property OrderReturnReason $orderReturnReason - причина возврата заказа
  * @property Carbon|null $is_canceled_at - дата установки флага отмены отправления
  *
  * @property string $number - номер отправления (номер_доставки/порядковый_номер_отправления)
@@ -247,6 +250,11 @@ class Shipment extends OmsModel
     public function packages(): HasMany
     {
         return $this->hasMany(ShipmentPackage::class);
+    }
+
+    public function orderReturnReason(): BelongsTo
+    {
+        return $this->belongsTo(OrderReturnReason::class, 'return_reason_id');
     }
 
     public function cargo(): BelongsTo

@@ -87,6 +87,17 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('tickets', 'OrdersController@tickets');
         });
 
+        Route::prefix('return-reasons')->group(function () {
+            Route::get('count', 'OrderReturnReasonController@count');
+            Route::prefix('{id}')->group(function () {
+                Route::get('', 'OrderReturnReasonController@read');
+                Route::put('', 'OrderReturnReasonController@update');
+                Route::delete('', 'OrderReturnReasonController@delete');
+            });
+            Route::get('', 'OrderReturnReasonController@read');
+            Route::post('', 'OrderReturnReasonController@create');
+        });
+
         Route::get('', 'OrdersController@read');
     });
 

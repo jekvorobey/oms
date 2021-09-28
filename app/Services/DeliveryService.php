@@ -11,6 +11,7 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
+use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
 use Exception;
@@ -499,7 +500,6 @@ class DeliveryService
                     $deliveryOrderInputDto
                 );
                 if ($deliveryOrderOutputDto->success && $deliveryOrderOutputDto->xml_id) {
-                    $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
                     if ($deliveryOrderOutputDto->tracknumber) {
                         $delivery->tracknumber = $deliveryOrderOutputDto->tracknumber;
                     }
@@ -509,6 +509,9 @@ class DeliveryService
                     $delivery->error_xml_id = '';
                 } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
+                }
+                if ($deliveryOrderOutputDto->xml_id) {
+                    $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
                 }
                 $delivery->save();
                 foreach ($delivery->shipments as $shipment) {
@@ -910,7 +913,7 @@ class DeliveryService
      * Отменить отправление
      * @throws Exception
      */
-    public function cancelShipment(Shipment $shipment): bool
+    public function cancelShipment(Shipment $shipment, int $orderReturnReasonId): bool
     {
         if ($shipment->status >= ShipmentStatus::DONE) {
             throw new \Exception(
@@ -918,17 +921,29 @@ class DeliveryService
             );
         }
 
+        $shipment->return_reason_id ??= $orderReturnReasonId;
+
         $shipment->is_canceled = true;
         $shipment->cargo_id = null;
 
-        return $shipment->save();
+        if ($shipment->save()) {
+            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
+
+            /** @var OrderReturnService $orderReturnService */
+            $orderReturnService = resolve(OrderReturnService::class);
+            $orderReturnService->createOrderReturn($orderReturnDto);
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
      * Отменить доставку
      * @throws Exception
      */
-    public function cancelDelivery(Delivery $delivery): bool
+    public function cancelDelivery(Delivery $delivery, int $orderReturnReasonId): bool
     {
         if ($delivery->status >= DeliveryStatus::DONE) {
             throw new \Exception(
@@ -937,6 +952,9 @@ class DeliveryService
         }
 
         $delivery->is_canceled = true;
+
+        $delivery->return_reason_id ??= $orderReturnReasonId;
+
         if ($delivery->save()) {
             $this->cancelDeliveryOrder($delivery);
 
