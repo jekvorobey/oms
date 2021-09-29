@@ -37,7 +37,7 @@ class OrderTicketsCreator extends DocumentCreator
         return 'order-tickets.pdf';
     }
 
-    protected function createTemplate(): Pdf
+    protected function createDocument(): string
     {
         if (!$this->order->isPaid()) {
             throw new \Exception('Order is not paid');
@@ -57,15 +57,11 @@ class OrderTicketsCreator extends DocumentCreator
 
         $pdf->addPage($html, [], Pdf::TYPE_HTML);
 
-        return $pdf;
-    }
+        $path = $this->generateDocumentPath();
 
-    /**
-     * @param Pdf $template
-     */
-    protected function saveTmpDoc($template, string $path): void
-    {
-        $template->saveAs($path);
+        $pdf->saveAs($path);
+
+        return $path;
     }
 
     protected function resultDocSuffix(): string

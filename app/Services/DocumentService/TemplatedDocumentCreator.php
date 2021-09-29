@@ -25,13 +25,21 @@ abstract class TemplatedDocumentCreator extends DocumentCreator
         return $this;
     }
 
-    protected function createTemplate(): TemplateProcessor
+    protected function createDocument(): string
     {
         $templateProcessor = $this->initTemplateProcessor();
 
         $this->fillTemplate($templateProcessor);
 
-        return $templateProcessor;
+        $path = $this->generateDocumentPath();
+
+        $templateProcessor->saveAs($path);
+
+        if ($this->asPdf) {
+            $path = $this->convertToPdf($path);
+        }
+
+        return $path;
     }
 
     /** Инициализация сервиса для работы с docx-шаблоном */
@@ -58,25 +66,20 @@ abstract class TemplatedDocumentCreator extends DocumentCreator
         return $productService->productsByOffers($productQuery, $offersIds);
     }
 
-    /**
-     * @param TemplateProcessor $template
-     */
-    protected function saveTmpDoc($template, string $path): void
-    {
-        $template->saveAs($path);
-
-        if ($this->asPdf) {
-            $this->convertToPdf($path);
-        }
-    }
-
-    protected function convertToPdf(string $path): void
+    protected function convertToPdf(string $path): string
     {
         if (!$bin = config('libreoffice.bin')) {
             throw new \Exception('libreoffice.bin is empty!');
         }
 
         $converter = new OfficeConverter($path, null, $bin, false);
-        $converter->convertTo("$path.pdf");
+
+        $filename = pathinfo($path, PATHINFO_FILENAME);
+
+        $pdfPath = $converter->convertTo("$filename.pdf");
+
+        Storage::delete($path);
+
+        return $pdfPath;
     }
 }

@@ -10,10 +10,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/**
- * Class ShipmentDocumentsController
- * @package App\Http\Controllers\V1\Delivery
- */
 class ShipmentDocumentsController extends DocumentController
 {
     protected DeliveryService $deliveryService;
@@ -28,6 +24,7 @@ class ShipmentDocumentsController extends DocumentController
      *     path="api/v1/shipments/{id}/documents/acceptance-act",
      *     tags={"Документы"},
      *     description="Сформировать Акт приема-передачи по отправлению",
+     *     @OA\Parameter(name="as_pdf", required=false, in="query", @OA\Schema(type="boolean"),
      *     @OA\Response(response="200", description="",
      *          @OA\JsonContent(
      *             @OA\Property(property="absolute_url", type="string"),
@@ -60,6 +57,7 @@ class ShipmentDocumentsController extends DocumentController
      *     path="api/v1/shipments/{id}/documents/assembling-card",
      *     tags={"Документы"},
      *     description="Сформировать Карточку сборки отправления",
+     *     @OA\Parameter(name="as_pdf", required=false, in="query", @OA\Schema(type="boolean"),
      *     @OA\Response(response="200", description="",
      *          @OA\JsonContent(
      *             @OA\Property(property="absolute_url", type="string"),
@@ -92,6 +90,7 @@ class ShipmentDocumentsController extends DocumentController
      *     path="api/v1/shipments/{id}/documents/inventory",
      *     tags={"Документы"},
      *     description="Сформировать Опись отправления заказа",
+     *     @OA\Parameter(name="as_pdf", required=false, in="query", @OA\Schema(type="boolean"),
      *     @OA\Response(response="200", description="",
      *          @OA\JsonContent(
      *             @OA\Property(property="absolute_url", type="string"),
