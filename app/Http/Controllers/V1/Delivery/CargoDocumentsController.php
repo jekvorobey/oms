@@ -2,21 +2,13 @@
 
 namespace App\Http\Controllers\V1\Delivery;
 
-use App\Http\Controllers\Controller;
 use App\Services\DeliveryService;
-use App\Services\DocumentService;
-use App\Services\Dto\Out\DocumentDto;
-use Greensight\CommonMsa\Dto\FileDto;
-use Greensight\CommonMsa\Services\FileService\FileService;
+use App\Services\DocumentService\CargoAcceptanceActCreator;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/**
- * Class CargoDocumentsController
- * @package App\Http\Controllers\V1\Delivery
- */
-class CargoDocumentsController extends Controller
+class CargoDocumentsController extends DocumentController
 {
     /**
      * @OA\Get(
@@ -24,6 +16,7 @@ class CargoDocumentsController extends Controller
      *     tags={"Акт приема-передачи по грузу"},
      *     description="Сформировать акт приема-передачи по грузу",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="as_pdf", required=false, in="query", @OA\Schema(type="boolean"),
      *     @OA\Response(
      *         response="200",
      *         description="",
@@ -38,34 +31,17 @@ class CargoDocumentsController extends Controller
      */
     public function acceptanceAct(
         int $cargoId,
+        Request $request,
         DeliveryService $deliveryService,
-        DocumentService $documentService
+        CargoAcceptanceActCreator $cargoAcceptanceActCreator
     ): JsonResponse {
         $cargo = $deliveryService->getCargo($cargoId);
         if (!$cargo) {
             throw new NotFoundHttpException('cargo not found');
         }
 
-        $documentDto = $documentService->getCargoAcceptanceAct($cargo);
+        $documentDto = $cargoAcceptanceActCreator->setCargo($cargo)->setAsPdf($request->as_pdf ?: false)->create();
 
-        return $this->getResponse($documentDto);
-    }
-
-    protected function getResponse(DocumentDto $documentDto): JsonResponse
-    {
-        if ($documentDto->success && $documentDto->file_id) {
-            /** @var FileService $fileService */
-            $fileService = resolve(FileService::class);
-            /** @var FileDto $fileDto */
-            $fileDto = $fileService->getFiles([$documentDto->file_id])->first();
-
-            return response()->json([
-                'absolute_url' => $fileDto->absoluteUrl(),
-                'original_name' => $fileDto->original_name,
-                'size' => $fileDto->size,
-            ]);
-        } else {
-            throw new HttpException(500, $documentDto->message);
-        }
+        return $this->documentResponse($documentDto);
     }
 }
