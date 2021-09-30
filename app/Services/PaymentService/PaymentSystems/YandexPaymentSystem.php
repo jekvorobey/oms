@@ -15,6 +15,10 @@ use Monolog\Logger;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Services\OfferService\OfferService;
 use YooKassa\Client;
+use YooKassa\Common\AbstractRequestBuilder;
+use YooKassa\Model\ConfirmationType;
+use YooKassa\Model\CurrencyCode;
+use YooKassa\Model\MonetaryAmount;
 use YooKassa\Model\Notification\NotificationCanceled;
 use YooKassa\Model\Notification\NotificationSucceeded;
 use YooKassa\Model\Notification\NotificationWaitingForCapture;
@@ -25,6 +29,10 @@ use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Order\OrderReturnItem;
 use App\Models\Payment\PaymentType;
+use YooKassa\Model\Receipt\PaymentMode;
+use YooKassa\Model\Receipt\PaymentSubject;
+use YooKassa\Request\Payments\CreatePaymentRequest;
+use YooKassa\Request\Payments\CreatePaymentRequestBuilder;
 
 /**
  * Class YandexPaymentSystem
@@ -35,15 +43,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public const CURRENCY_RUB = 'RUB';
 
     public const TAX_SYSTEM_CODE = 3;
-
-    public const PAYMENT_MODE_FULL_PAYMENT = 'full_payment';
-    public const PAYMENT_MODE_FULL_PREPAYMENT = 'full_prepayment';
-    public const PAYMENT_MODE_PARTIAL_PREPAYMENT = 'partial_prepayment';
-    public const PAYMENT_MODE_ADVANCE = 'advance';
-
-    public const PAYMENT_SUBJECT_SERVICE = 'service';
-    public const PAYMENT_SUBJECT_PRODUCT = 'commodity';
-    public const PAYMENT_SUBJECT_PAYMENT = 'payment';
 
     public const VAT_CODE_DEFAULT = 1;
     public const VAT_CODE_0_PERCENT = 2;
@@ -77,6 +76,15 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         $order = $payment->order;
         $idempotenceKey = uniqid('', true);
+        $builder = CreatePaymentRequest::builder();
+        $builder->setAmount(new MonetaryAmount(number_format($order->price, 2, '.', ''), CurrencyCode::RUB))
+            ->setCapture(false)
+            ->setConfirmation([
+                'type' => ConfirmationType::REDIRECT,
+                'returnUrl' => $returnLink,
+            ])
+            ->setDescription("Заказ №{$order->id}")
+            ->setMetadata(['source' => config('app.url')]);
 
         $paymentData = [
             'amount' => [
@@ -253,7 +261,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     /**
      * Get receipt items from order
      */
-    protected function generateItems(Order $order): array
+    protected function generateItems(Order $order, CreatePaymentRequestBuilder $builder): array
     {
         $items = [];
         $certificatesDiscount = 0;
@@ -305,7 +313,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     } else {
                         $itemValue -= $discountPrice;
                         $certificatesDiscount -= $discountPrice;
-                        $paymentMode = self::PAYMENT_MODE_FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
+                        $paymentMode = PaymentMode::FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
                     }
                 }
                 $offer = $offers[$item->offer_id] ?? null;
@@ -325,10 +333,18 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     'payment_mode' => $receiptItemInfo['payment_mode'],
                     'payment_subject' => $receiptItemInfo['payment_subject'],
                 ];
+                $builder->addReceiptItem(
+                    $item->name,
+                    $itemValue,
+                    $item->qty,
+                    $receiptItemInfo['vat_code'],
+                    $receiptItemInfo['payment_mode'],
+                    $receiptItemInfo['payment_subject']
+                );
             }
         }
         if ((float) $order->delivery_price > 0 && !$deliveryForReturn) {
-            $paymentMode = self::PAYMENT_MODE_FULL_PAYMENT;
+            $paymentMode = PaymentMode::FULL_PAYMENT;
             $deliveryPrice = $order->delivery_price;
             if (($certificatesDiscount > 0) && ($deliveryPrice >= $certificatesDiscount)) {
                 $deliveryPrice -= $certificatesDiscount;
@@ -343,8 +359,16 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 ],
                 'vat_code' => 1,
                 'payment_mode' => $paymentMode,
-                'payment_subject' => self::PAYMENT_SUBJECT_SERVICE,
+                'payment_subject' => PaymentSubject::SERVICE,
             ];
+            $builder->addReceiptShipping(
+                'Доставка',
+                $itemValue,
+                $item->qty,
+                $receiptItemInfo['vat_code'],
+                $receiptItemInfo['payment_mode'],
+                $receiptItemInfo['payment_subject']
+            );
         }
 
         return $items;
@@ -352,27 +376,27 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
     private function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant): array
     {
-        $paymentMode = self::PAYMENT_MODE_FULL_PAYMENT;
-        $paymentSubject = self::PAYMENT_SUBJECT_PRODUCT;
+        $paymentMode = PaymentMode::FULL_PAYMENT;
+        $paymentSubject = PaymentSubject::COMMODITY;
         $vatCode = self::VAT_CODE_DEFAULT;
         switch ($item->type) {
             case Basket::TYPE_MASTER:
-                $paymentSubject = self::PAYMENT_SUBJECT_SERVICE;
+                $paymentSubject = PaymentSubject::SERVICE;
 
                 if (isset($offerInfo, $merchant)) {
                     $vatCode = $this->getVatCode($offerInfo, $merchant);
                 }
                 break;
             case Basket::TYPE_PRODUCT:
-                $paymentSubject = self::PAYMENT_SUBJECT_PRODUCT;
+                $paymentSubject = PaymentSubject::COMMODITY;
 
                 if (isset($offerInfo, $merchant)) {
                     $vatCode = $this->getVatCode($offerInfo, $merchant);
                 }
                 break;
             case Basket::TYPE_CERTIFICATE:
-                $paymentSubject = self::PAYMENT_SUBJECT_PAYMENT;
-                $paymentMode = self::PAYMENT_MODE_ADVANCE;
+                $paymentSubject = PaymentSubject::PAYMENT;
+                $paymentMode = PaymentMode::ADVANCE;
                 break;
         }
 
