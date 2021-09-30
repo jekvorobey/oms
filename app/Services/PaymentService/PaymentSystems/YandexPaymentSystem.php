@@ -270,25 +270,24 @@ class YandexPaymentSystem implements PaymentSystemInterface
             ->where('is_delivery', true)
             ->exists();
 
+        $offers = collect();
+        $offerIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('offer_id')->toArray();
+        if ($offerIds) {
+            $offersQuery = $this->offerService->newQuery()
+                ->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
+                ->include('product')
+                ->setFilter('id', $offerIds);
+            $offers = $this->offerService->offers($offersQuery)->keyBy('id');
+        }
+
         $merchants = collect();
-        $merchantIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('product.merchant_id');
-        if (!empty($merchantIds)) {
-            $merchantIds = $merchantIds->toArray();
+        $merchantIds = $offers->pluck('merchant_id')->toArray();
+        if ($merchantIds) {
             $merchantQuery = $this->merchantService->newQuery()
                 ->addFields(MerchantDto::entity(), 'id')
                 ->include('vats')
                 ->setFilter('id', $merchantIds);
             $merchants = $this->merchantService->merchants($merchantQuery)->keyBy('id');
-        }
-
-        $offers = collect();
-        $offerIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('offer_id');
-        if ($offerIds) {
-            $offersQuery = $this->offerService->newQuery();
-            $offersQuery->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
-                ->include('product')
-                ->setFilter('id', $offerIds->toArray());
-            $offers = $this->offerService->offers($offersQuery)->keyBy('id');
         }
 
         foreach ($order->basket->items as $item) {
