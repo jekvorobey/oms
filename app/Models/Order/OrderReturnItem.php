@@ -4,6 +4,7 @@ namespace App\Models\Order;
 
 use App\Models\Basket\BasketItem;
 use App\Models\OmsModel;
+use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -44,6 +45,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class OrderReturnItem extends OmsModel
 {
+    protected $casts = [
+        'product' => 'json',
+    ];
+
     public function orderReturn(): BelongsTo
     {
         return $this->belongsTo(OrderReturn::class);

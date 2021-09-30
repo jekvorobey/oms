@@ -16,7 +16,7 @@ use App\Models\Order\OrderConfirmationType;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
-use App\Services\DocumentService;
+use App\Services\DocumentService\OrderTicketsCreator;
 use App\Services\OrderService;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -121,7 +121,7 @@ class OrdersController extends Controller
      * )
      * @throws \Throwable
      */
-    public function tickets(int $id, Request $request, DocumentService $documentService): JsonResponse
+    public function tickets(int $id, Request $request, OrderTicketsCreator $orderTicketsCreator): JsonResponse
     {
         $data = $request->validate([
             'basket_item_id' => 'sometimes|integer',
@@ -133,7 +133,7 @@ class OrdersController extends Controller
             throw new \Exception("Order by id={$id} not found");
         }
 
-        $documentDto = $documentService->getOrderPdfTickets($order, $data['basket_item_id'] ?? null);
+        $documentDto = $orderTicketsCreator->setOrder($order)->setBasketItemId($data['basket_item_id'] ?? null)->create();
         if (!$documentDto->success) {
             throw new \Exception('Tickets not formed');
         }
@@ -419,6 +419,7 @@ class OrdersController extends Controller
      *     tags={"Заказы"},
      *     description="Отменить заказ.",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="orderReturnReasonId", required=true, @OA\Schema(type="integer")),
      *     @OA\Response(response="204", description=""),
      *     @OA\Response(response="404", description="cargo not found"),
      * )
@@ -426,13 +427,17 @@ class OrdersController extends Controller
      * Отменить заказ
      * @throws \Exception
      */
-    public function cancel(int $id, OrderService $orderService): Response
+    public function cancel(int $id, Request $request, OrderService $orderService): Response
     {
+        $data = $this->validate($request, [
+            'orderReturnReason' => 'required|integer|exists:order_return_reasons,id',
+        ]);
+
         $order = $orderService->getOrder($id);
         if (!$order) {
             throw new NotFoundHttpException('order not found');
         }
-        if (!$orderService->cancel($order)) {
+        if (!$orderService->cancel($order, $data['orderReturnReason'])) {
             throw new HttpException(500);
         }
 

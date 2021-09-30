@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Order\Order;
 use App\Observers\Order\OrderObserver;
+use App\Services\DocumentService\OrderTicketsCreator;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Services\FileService\FileService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
@@ -64,8 +65,8 @@ class TicketNotifierService
     /** @var PublicEventTypeService */
     protected $publicEventTypeService;
 
-    /** @var DocumentService */
-    protected $documentService;
+    /** @var OrderTicketsCreator */
+    protected $orderTicketsCreator;
 
     public function __construct(
         PublicEventService $publicEventService,
@@ -80,7 +81,7 @@ class TicketNotifierService
         PublicEventTypeService $publicEventTypeService,
         FileService $fileService,
         ServiceNotificationService $serviceNotificationService,
-        DocumentService $documentService,
+        OrderTicketsCreator $orderTicketsCreator,
         CustomerService $customerService
     ) {
         $this->publicEventService = $publicEventService;
@@ -95,7 +96,7 @@ class TicketNotifierService
         $this->publicEventTypeService = $publicEventTypeService;
         $this->fileService = $fileService;
         $this->serviceNotificationService = $serviceNotificationService;
-        $this->documentService = $documentService;
+        $this->orderTicketsCreator = $orderTicketsCreator;
         $this->customerService = $customerService;
     }
 
@@ -338,7 +339,7 @@ class TicketNotifierService
         )->first();
 
         $firstItem = $basketItems->first()->id;
-        $document = $this->documentService->getOrderPdfTickets($order, $firstItem);
+        $document = $this->orderTicketsCreator->setOrder($order)->setBasketItemId($firstItem)->create();
 
         $data = [
             'menu' => [

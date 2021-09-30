@@ -6,6 +6,7 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
 use App\Services\Dto\Internal\PublicEventOrder;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
@@ -67,15 +68,37 @@ class OrderService
      * Отменить заказ
      * @throws \Exception
      */
-    public function cancel(Order $order): bool
+    public function cancel(Order $order, int $orderReturnReasonId): bool
     {
         if ($order->status >= OrderStatus::DONE) {
             throw new \Exception('Заказ, начиная со статуса "Выполнен", нельзя отменить');
         }
 
         $order->is_canceled = true;
+        $order->return_reason_id ??= $orderReturnReasonId;
 
-        return $order->save();
+        if ($order->save()) {
+            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrder($order);
+
+            /** @var OrderReturnService $orderReturnService */
+            $orderReturnService = resolve(OrderReturnService::class);
+            $orderReturnService->createOrderReturn($orderReturnDto);
+
+            if ($order->payment_status === PaymentStatus::HOLD) {
+                /** @var Payment $payment */
+                $payment = $order->payments->last();
+                $paymentSystem = $payment->paymentSystem();
+
+                if (!$paymentSystem) {
+                    return true;
+                }
+                $paymentSystem->cancel($payment->data['externalPaymentId']);
+            }
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**

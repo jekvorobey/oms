@@ -2,6 +2,7 @@
 
 namespace App\Services\PaymentService;
 
+use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Carbon\Carbon;
@@ -93,5 +94,16 @@ class PaymentService
         return Payment::query()->whereIn('status', [PaymentStatus::NOT_PAID, PaymentStatus::WAITING])
             ->where('expires_at', '<', Carbon::now()->format('Y-m-d H:i:s'))
             ->get(['id', 'order_id']);
+    }
+
+    public function refund(Order $order, int $sum): void
+    {
+        /** @var Payment $payment */
+        $payment = $order->payments->last();
+        $refundSum = $payment->refund_sum + $sum;
+        if ($payment->sum >= $refundSum && $refundSum > 0) {
+            $payment->refund_sum = $refundSum;
+            $payment->save();
+        }
     }
 }

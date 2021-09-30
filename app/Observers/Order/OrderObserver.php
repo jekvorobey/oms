@@ -319,10 +319,10 @@ class OrderObserver
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
             foreach ($order->deliveries as $delivery) {
-                $deliveryService->cancelDelivery($delivery);
+                $deliveryService->cancelDelivery($delivery, $order->return_reason_id);
 
                 foreach ($delivery->shipments as $shipment) {
-                    $deliveryService->cancelShipment($shipment);
+                    $deliveryService->cancelShipment($shipment, $delivery->return_reason_id);
                 }
             }
         }
@@ -454,13 +454,8 @@ class OrderObserver
     protected function setCanceledCertificates(Order $order): void
     {
         if ($order->is_canceled != $order->getOriginal('is_canceled')) {
-            $amount = 0;
-            $certificates = (array) $order->certificates;
-            foreach ($certificates as $certificate) {
-                $amount += $certificate['amount'];
-            }
-            if ($amount > 0) {
-                resolve(CertificateService::class)->rollback($amount, $order->customer_id, $order->id, $order->number);
+            if ($order->spent_certificate > 0) {
+                resolve(CertificateService::class)->rollback($order->spent_certificate, $order->customer_id, $order->id, $order->number);
             }
         }
     }
