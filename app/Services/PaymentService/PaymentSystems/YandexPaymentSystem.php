@@ -282,13 +282,13 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
 
         $offers = collect();
-        $productOfferIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_PRODUCT])->pluck('offer_id');
-        if ($productOfferIds) {
-            $productOfferQuery = $this->offerService->newQuery();
-            $productOfferQuery->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
+        $offerIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('offer_id');
+        if ($offerIds) {
+            $offersQuery = $this->offerService->newQuery();
+            $offersQuery->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
                 ->include('product')
-                ->setFilter('id', $productOfferIds->toArray());
-            $offers = $this->offerService->offers($productOfferQuery)->keyBy('id');
+                ->setFilter('id', $offerIds->toArray());
+            $offers = $this->offerService->offers($offersQuery)->keyBy('id');
         }
 
         foreach ($order->basket->items as $item) {
