@@ -336,12 +336,12 @@ class YandexPaymentSystem implements PaymentSystemInterface
             }
             $items[] = [
                 'description' => 'Доставка',
-                'quantity' => self::VAT_CODE_DEFAULT,
+                'quantity' => 1,
                 'amount' => [
                     'value' => number_format($deliveryPrice, 2, '.', ''),
                     'currency' => self::CURRENCY_RUB,
                 ],
-                'vat_code' => 1,
+                'vat_code' => self::VAT_CODE_DEFAULT,
                 'payment_mode' => $paymentMode,
                 'payment_subject' => self::PAYMENT_SUBJECT_SERVICE,
             ];
