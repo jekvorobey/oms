@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\PaymentService\PaymentSystems;
+namespace App\Services\PaymentService\PaymentSystems\Yandex;
 
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
@@ -15,6 +15,7 @@ use Monolog\Logger;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Services\OfferService\OfferService;
 use YooKassa\Client;
+use YooKassa\Common\AbstractPaymentRequestBuilder;
 use YooKassa\Common\AbstractRequestBuilder;
 use YooKassa\Model\ConfirmationType;
 use YooKassa\Model\CurrencyCode;
@@ -33,6 +34,7 @@ use YooKassa\Model\Receipt\PaymentMode;
 use YooKassa\Model\Receipt\PaymentSubject;
 use YooKassa\Request\Payments\CreatePaymentRequest;
 use YooKassa\Request\Payments\CreatePaymentRequestBuilder;
+use YooKassa\Request\Payments\Payment\CreateCaptureRequest;
 
 /**
  * Class YandexPaymentSystem
@@ -77,53 +79,39 @@ class YandexPaymentSystem implements PaymentSystemInterface
         $order = $payment->order;
         $idempotenceKey = uniqid('', true);
         $builder = CreatePaymentRequest::builder();
-        $builder->setAmount(new MonetaryAmount(number_format($order->price, 2, '.', ''), CurrencyCode::RUB))
+        $builder
+            ->setAmount(new MonetaryAmount(number_format($order->price, 2, '.', ''), CurrencyCode::RUB))
             ->setCapture(false)
             ->setConfirmation([
                 'type' => ConfirmationType::REDIRECT,
                 'returnUrl' => $returnLink,
             ])
             ->setDescription("Заказ №{$order->id}")
-            ->setMetadata(['source' => config('app.url')]);
+            ->setMetadata(['source' => config('app.url')])
+            ->setReceiptPhone($order->customerPhone())
+            ->setTaxSystemCode(self::TAX_SYSTEM_CODE);
+        $this->addReceiptItems($order, $builder);
 
-        $paymentData = [
-            'amount' => [
-                'value' => number_format($order->price, 2, '.', ''),
-                'currency' => self::CURRENCY_RUB,
-            ],
-            'capture' => false,
-            'confirmation' => [
-                'type' => 'redirect',
-                'return_url' => $returnLink,
-            ],
-            'description' => "Заказ №{$order->id}",
-            'receipt' => [
-                'tax_system_code' => self::TAX_SYSTEM_CODE,
-                'phone' => $order->customerPhone(),
-                'items' => $this->generateItems($order),
-            ],
-            'metadata' => [
-                'source' => config('app.url'),
-            ],
-        ];
-        /*$email = $order->customerEmail();
-        if ($email) {
-            $paymentData['receipt']['email'] = $email;
-        }*/
-        $this->logger->info('Create payment data', $paymentData);
-        $response = $this->yandexService->createPayment($paymentData, $idempotenceKey);
-        $this->logger->info('Create payment result', $response->jsonSerialize());
+        $request = $builder->build();
+        $this->logger->info('Create payment data', $request->toArray());
 
-        $data = $payment->data;
-        $data['externalPaymentId'] = $response['id'];
-        $data['paymentUrl'] = $response['confirmation']['confirmation_url'];
-        $payment->data = $data;
+        try {
+            $response = $this->yandexService->createPayment($request, $idempotenceKey);
+            $this->logger->info('Create payment result', $response->jsonSerialize());
 
-        $ok = $payment->save();
-        if (!$ok) {
-            $this->logger->error('Payment not saved after create', [
-                'payment_id' => $payment->id,
-            ]);
+            $data = $payment->data;
+            $data['externalPaymentId'] = $response['id'];
+            $data['paymentUrl'] = $response['confirmation']['confirmation_url'];
+            $payment->data = $data;
+
+            $ok = $payment->save();
+            if (!$ok) {
+                $this->logger->error('Payment not saved after create', [
+                    'payment_id' => $payment->id,
+                ]);
+            }
+        } catch (\Throwable $exception) {
+            $this->logger->error('Error from payment system', ['message' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()]);
         }
     }
 
@@ -228,42 +216,42 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * @param $amount
-     * @throws \Exception
+     * Подтверждение холдированной оплаты
      */
-    public function commitHoldedPayment(Payment $localPayment, $amount)
+    public function commitHoldedPayment(Payment $localPayment, $amount): void
     {
-        $captureData = [
-            'amount' => [
-                'value' => $amount,
-                'currency' => self::CURRENCY_RUB,
-            ],
-            'receipt' => [
-                'tax_system_code' => self::TAX_SYSTEM_CODE,
-                'phone' => $localPayment->order->customerPhone(),
-                'items' => $this->generateItems($localPayment->order),
-            ],
-        ];
-        /*$email = $localPayment->order->customerEmail();
-        if ($email) {
-            $captureData['receipt']['email'] = $email;
-        }*/
-        $this->logger->info('Start commit holded payment', $captureData);
-        $response = $this->yandexService->capturePayment(
-            $captureData,
-            $this->externalPaymentId($localPayment),
-            uniqid('', true)
-        );
+        $idempotenceKey = uniqid('', true);
+        $builder = CreateCaptureRequest::builder();
+        $builder
+            ->setAmount(new MonetaryAmount(number_format($amount, 2, '.', ''), CurrencyCode::RUB))
+            ->setReceiptPhone($localPayment->order->customerPhone())
+            ->setTaxSystemCode(self::TAX_SYSTEM_CODE);
+//        $email = $localPayment->order->customerEmail();
+//        if ($email) {
+//            $builder->setReceiptEmail($email);
+//        }
+        $this->addReceiptItems($localPayment->order, $builder);
 
-        $this->logger->info('Commit result', $response->jsonSerialize());
+        $request = $builder->build();
+        $this->logger->info('Start commit holded payment', $request->toArray());
+
+        try {
+            $response = $this->yandexService->capturePayment(
+                $request,
+                $this->externalPaymentId($localPayment),
+                $idempotenceKey
+            );
+            $this->logger->info('Commit result', $response->jsonSerialize());
+        } catch (\Throwable $exception) {
+            $this->logger->error('Error from payment system', ['message' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()]);
+        }
     }
 
     /**
      * Get receipt items from order
      */
-    protected function generateItems(Order $order, CreatePaymentRequestBuilder $builder): array
+    protected function addReceiptItems(Order $order, AbstractPaymentRequestBuilder $builder): void
     {
-        $items = [];
         $certificatesDiscount = 0;
 
         if ($order->spent_certificate > 0) {
@@ -321,21 +309,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $merchant = $merchants[$merchantId] ?? null;
 
                 $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant);
-
-                $items[] = [
-                    'description' => $item->name,
-                    'quantity' => $item->qty,
-                    'amount' => [
-                        'value' => number_format($itemValue, 2, '.', ''),
-                        'currency' => self::CURRENCY_RUB,
-                    ],
-                    'vat_code' => $receiptItemInfo['vat_code'],
-                    'payment_mode' => $receiptItemInfo['payment_mode'],
-                    'payment_subject' => $receiptItemInfo['payment_subject'],
-                ];
                 $builder->addReceiptItem(
                     $item->name,
-                    $itemValue,
+                    number_format($itemValue, 2, '.', ''),
                     $item->qty,
                     $receiptItemInfo['vat_code'],
                     $receiptItemInfo['payment_mode'],
@@ -350,28 +326,14 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $deliveryPrice -= $certificatesDiscount;
 //                $paymentMode = $deliveryPrice > $certificatesDiscount ? self::PAYMENT_MODE_PARTIAL_PREPAYMENT : self::PAYMENT_MODE_FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
             }
-            $items[] = [
-                'description' => 'Доставка',
-                'quantity' => self::VAT_CODE_DEFAULT,
-                'amount' => [
-                    'value' => number_format($deliveryPrice, 2, '.', ''),
-                    'currency' => self::CURRENCY_RUB,
-                ],
-                'vat_code' => 1,
-                'payment_mode' => $paymentMode,
-                'payment_subject' => PaymentSubject::SERVICE,
-            ];
             $builder->addReceiptShipping(
                 'Доставка',
-                $itemValue,
-                $item->qty,
-                $receiptItemInfo['vat_code'],
-                $receiptItemInfo['payment_mode'],
-                $receiptItemInfo['payment_subject']
+                number_format($deliveryPrice, 2, '.', ''),
+                self::VAT_CODE_DEFAULT,
+                $paymentMode,
+                PaymentSubject::SERVICE,
             );
         }
-
-        return $items;
     }
 
     private function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant): array
