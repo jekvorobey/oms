@@ -6,6 +6,7 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models;
+use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use MerchantManagement\Dto\MerchantDto;
@@ -16,7 +17,6 @@ use Pim\Dto\Offer\OfferDto;
 use Pim\Services\OfferService\OfferService;
 use YooKassa\Client;
 use YooKassa\Common\AbstractPaymentRequestBuilder;
-use YooKassa\Common\AbstractRequestBuilder;
 use YooKassa\Model\ConfirmationType;
 use YooKassa\Model\CurrencyCode;
 use YooKassa\Model\MonetaryAmount;
@@ -33,8 +33,8 @@ use App\Models\Payment\PaymentType;
 use YooKassa\Model\Receipt\PaymentMode;
 use YooKassa\Model\Receipt\PaymentSubject;
 use YooKassa\Request\Payments\CreatePaymentRequest;
-use YooKassa\Request\Payments\CreatePaymentRequestBuilder;
 use YooKassa\Request\Payments\Payment\CreateCaptureRequest;
+use YooKassa\Request\Refunds\CreateRefundRequest;
 
 /**
  * Class YandexPaymentSystem
@@ -42,8 +42,6 @@ use YooKassa\Request\Payments\Payment\CreateCaptureRequest;
  */
 class YandexPaymentSystem implements PaymentSystemInterface
 {
-    public const CURRENCY_RUB = 'RUB';
-
     public const TAX_SYSTEM_CODE = 3;
 
     public const VAT_CODE_DEFAULT = 1;
@@ -432,48 +430,36 @@ class YandexPaymentSystem implements PaymentSystemInterface
      */
     public function refund(string $paymentId, OrderReturn $orderReturn): array
     {
+        $builder = CreateRefundRequest::builder();
+        $builder->setAmount(new MonetaryAmount(number_format($orderReturn->price, 2, '.', ''), CurrencyCode::RUB))
+            ->setPaymentId($paymentId)
+            ->setReceiptPhone($orderReturn->order->customerPhone())
+            ->setTaxSystemCode(self::TAX_SYSTEM_CODE);
         $items = [];
 
         if ($orderReturn->is_delivery) {
-            $items[] = [
-                'description' => 'Доставка',
-                'quantity' => 1,
-                'amount' => [
-                    'value' => number_format($orderReturn->price, 2, '.', ''),
-                    'currency' => self::CURRENCY_RUB,
-                ],
-                'vat_code' => 1,
-            ];
+            $builder->addReceiptShipping(
+                'Доставка',
+                number_format($orderReturn->price, 2, '.', ''),
+                self::VAT_CODE_DEFAULT,
+                PaymentMode::FULL_PAYMENT,
+                PaymentSubject::SERVICE,
+            );
         } else {
             foreach ($orderReturn->items as $item) {
                 $itemValue = $item->price / $item->qty;
-
-                $items[] = [
-                    'description' => $item->name,
-                    'quantity' => $item->qty,
-                    'amount' => [
-                        'value' => number_format($itemValue, 2, '.', ''),
-                        'currency' => self::CURRENCY_RUB,
-                    ],
-                    'vat_code' => 1,
-                ];
+                $builder->addReceiptItem( //@TODO:: Сделать по аналогии с созданием платежа
+                    $item->name,
+                    number_format($itemValue, 2, '.', ''),
+                    $item->qty,
+                    self::VAT_CODE_DEFAULT
+                );
             }
         }
-        $captureData = [
-            'amount' => [
-                'value' => $orderReturn->price,
-                'currency' => self::CURRENCY_RUB,
-            ],
-            'payment_id' => $paymentId,
-            'receipt' => [
-                'tax_system_code' => '2',
-                'phone' => $orderReturn->order->customerPhone(),
-                'items' => $items,
-            ],
-        ];
-        $this->logger->info('Start return payment', $captureData);
-        $response = $this->yandexService->createRefund($captureData, uniqid('', true));
 
+        $request = $builder->build();
+        $this->logger->info('Start return payment', $request->toArray());
+        $response = $this->yandexService->createRefund($request, uniqid('', true));
         $this->logger->info('Return payment result', $response->jsonSerialize());
 
         return $response->jsonSerialize();
