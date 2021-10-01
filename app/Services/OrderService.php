@@ -68,7 +68,7 @@ class OrderService
      * Отменить заказ
      * @throws \Exception
      */
-    public function cancel(Order $order, ?int $orderReturnReasonId): bool
+    public function cancel(Order $order, ?int $orderReturnReasonId = null): bool
     {
         if ($order->status >= OrderStatus::DONE) {
             throw new \Exception('Заказ, начиная со статуса "Выполнен", нельзя отменить');
