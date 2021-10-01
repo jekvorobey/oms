@@ -13,7 +13,9 @@ use MerchantManagement\Dto\VatDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Monolog\Logger;
 use Pim\Dto\Offer\OfferDto;
+use Pim\Dto\PublicEvent\PublicEventDto;
 use Pim\Services\OfferService\OfferService;
+use Pim\Services\PublicEventService\PublicEventService;
 use YooKassa\Client;
 use YooKassa\Model\Notification\NotificationCanceled;
 use YooKassa\Model\Notification\NotificationSucceeded;
@@ -58,6 +60,8 @@ class YandexPaymentSystem implements PaymentSystemInterface
     private $merchantService;
     /** @var OfferService */
     private $offerService;
+    /** @var PublicEventService */
+    private $publicEventService;
 
     /**
      * YandexPaymentSystem constructor.
@@ -68,6 +72,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         $this->logger = Log::channel('payments');
         $this->merchantService = resolve(MerchantService::class);
         $this->offerService = resolve(OfferService::class);
+        $this->publicEventService = resolve(PublicEventService::class);
     }
 
     /**
@@ -270,25 +275,47 @@ class YandexPaymentSystem implements PaymentSystemInterface
             ->where('is_delivery', true)
             ->exists();
 
+        $offers = collect();
+        $offerIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('offer_id')->toArray();
+        if ($offerIds) {
+            if ($order->isPublicEventOrder()) {
+                $publicEventQuery = $this->publicEventService->query()
+                    ->addFields(PublicEventDto::class)
+                    ->setFilter('offer_id', $offerIds)
+                    ->include('organizer', 'sprints.ticketTypes.offer');
+                $publicEvents = $this->publicEventService->findPublicEvents($publicEventQuery);
+
+                if ($publicEvents) {
+                    $offers = $publicEvents->map(function (PublicEventDto $publicEvent) {
+                        $offerInfo = [];
+                        collect($publicEvent->sprints)->map(function ($sprint) use ($publicEvent, &$offerInfo) {
+                            array_map(function ($ticketType) use ($publicEvent, &$offerInfo) {
+                                $offerInfo = new OfferDto([
+                                    'id' => $ticketType['offer']['id'],
+                                    'merchant_id' => $publicEvent->organizer->merchant_id,
+                                ]);
+                            }, $sprint['ticketTypes']);
+                        });
+                        return $offerInfo;
+                    })->keyBy('id');
+                }
+            } else {
+                $offersQuery = $this->offerService->newQuery()
+                    ->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
+                    ->include('product')
+                    ->setFilter('id', $offerIds);
+                $offers = $this->offerService->offers($offersQuery)->keyBy('id');
+            }
+        }
+
         $merchants = collect();
-        $merchantIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('product.merchant_id');
-        if (!empty($merchantIds)) {
-            $merchantIds = $merchantIds->toArray();
+        $merchantIds = $offers->pluck('merchant_id')->toArray();
+        if ($merchantIds) {
             $merchantQuery = $this->merchantService->newQuery()
                 ->addFields(MerchantDto::entity(), 'id')
                 ->include('vats')
                 ->setFilter('id', $merchantIds);
             $merchants = $this->merchantService->merchants($merchantQuery)->keyBy('id');
-        }
-
-        $offers = collect();
-        $offerIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('offer_id');
-        if ($offerIds) {
-            $offersQuery = $this->offerService->newQuery();
-            $offersQuery->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
-                ->include('product')
-                ->setFilter('id', $offerIds->toArray());
-            $offers = $this->offerService->offers($offersQuery)->keyBy('id');
         }
 
         foreach ($order->basket->items as $item) {
