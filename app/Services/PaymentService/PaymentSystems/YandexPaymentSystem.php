@@ -290,10 +290,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
                         $offerInfo = [];
                         collect($publicEvent->sprints)->map(function ($sprint) use ($publicEvent, &$offerInfo) {
                             array_map(function ($ticketType) use ($publicEvent, &$offerInfo) {
-                                $offerInfo = [
+                                $offerInfo = new OfferDto([
                                     'id' => $ticketType['offer']['id'],
                                     'merchant_id' => $publicEvent->organizer->merchant_id,
-                                ];
+                                ]);
                             }, $sprint['ticketTypes']);
                         });
                         return $offerInfo;
