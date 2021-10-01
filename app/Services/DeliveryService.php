@@ -913,7 +913,7 @@ class DeliveryService
      * Отменить отправление
      * @throws Exception
      */
-    public function cancelShipment(Shipment $shipment, int $orderReturnReasonId): bool
+    public function cancelShipment(Shipment $shipment, ?int $orderReturnReasonId): bool
     {
         if ($shipment->status >= ShipmentStatus::DONE) {
             throw new \Exception(
@@ -943,7 +943,7 @@ class DeliveryService
      * Отменить доставку
      * @throws Exception
      */
-    public function cancelDelivery(Delivery $delivery, int $orderReturnReasonId): bool
+    public function cancelDelivery(Delivery $delivery, ?int $orderReturnReasonId): bool
     {
         if ($delivery->status >= DeliveryStatus::DONE) {
             throw new \Exception(
