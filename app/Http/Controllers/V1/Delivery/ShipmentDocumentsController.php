@@ -2,27 +2,29 @@
 
 namespace App\Http\Controllers\V1\Delivery;
 
-use App\Http\Controllers\Controller;
 use App\Services\DeliveryService;
-use App\Services\DocumentService;
-use App\Services\Dto\Out\DocumentDto;
-use Greensight\CommonMsa\Dto\FileDto;
-use Greensight\CommonMsa\Services\FileService\FileService;
+use App\Services\DocumentService\ShipmentAcceptanceActCreator;
+use App\Services\DocumentService\ShipmentAssemblingCardCreator;
+use App\Services\DocumentService\ShipmentInventoryCreator;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/**
- * Class ShipmentDocumentsController
- * @package App\Http\Controllers\V1\Delivery
- */
-class ShipmentDocumentsController extends Controller
+class ShipmentDocumentsController extends DocumentController
 {
+    protected DeliveryService $deliveryService;
+
+    public function __construct(DeliveryService $deliveryService)
+    {
+        $this->deliveryService = $deliveryService;
+    }
+
     /**
      * @OA\Get(
      *     path="api/v1/shipments/{id}/documents/acceptance-act",
      *     tags={"Документы"},
      *     description="Сформировать Акт приема-передачи по отправлению",
+     *     @OA\Parameter(name="as_pdf", required=false, in="query", @OA\Schema(type="boolean"),
      *     @OA\Response(response="200", description="",
      *          @OA\JsonContent(
      *             @OA\Property(property="absolute_url", type="string"),
@@ -37,17 +39,17 @@ class ShipmentDocumentsController extends Controller
      */
     public function acceptanceAct(
         int $shipmentId,
-        DeliveryService $deliveryService,
-        DocumentService $documentService
+        Request $request,
+        ShipmentAcceptanceActCreator $shipmentAcceptanceActCreator
     ): JsonResponse {
-        $shipment = $deliveryService->getShipment($shipmentId);
+        $shipment = $this->deliveryService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
 
-        $documentDto = $documentService->getShipmentAcceptanceAct($shipment);
+        $documentDto = $shipmentAcceptanceActCreator->setShipment($shipment)->setAsPdf($request->as_pdf ?: false)->create();
 
-        return $this->getResponse($documentDto);
+        return $this->documentResponse($documentDto);
     }
 
     /**
@@ -55,6 +57,7 @@ class ShipmentDocumentsController extends Controller
      *     path="api/v1/shipments/{id}/documents/assembling-card",
      *     tags={"Документы"},
      *     description="Сформировать Карточку сборки отправления",
+     *     @OA\Parameter(name="as_pdf", required=false, in="query", @OA\Schema(type="boolean"),
      *     @OA\Response(response="200", description="",
      *          @OA\JsonContent(
      *             @OA\Property(property="absolute_url", type="string"),
@@ -69,17 +72,17 @@ class ShipmentDocumentsController extends Controller
      */
     public function assemblingCard(
         int $shipmentId,
-        DeliveryService $deliveryService,
-        DocumentService $documentService
+        Request $request,
+        ShipmentAssemblingCardCreator $shipmentAssemblingCardCreator
     ): JsonResponse {
-        $shipment = $deliveryService->getShipment($shipmentId);
+        $shipment = $this->deliveryService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
 
-        $documentDto = $documentService->getShipmentAssemblingCard($shipment);
+        $documentDto = $shipmentAssemblingCardCreator->setShipment($shipment)->setAsPdf($request->as_pdf ?: false)->create();
 
-        return $this->getResponse($documentDto);
+        return $this->documentResponse($documentDto);
     }
 
     /**
@@ -87,6 +90,7 @@ class ShipmentDocumentsController extends Controller
      *     path="api/v1/shipments/{id}/documents/inventory",
      *     tags={"Документы"},
      *     description="Сформировать Опись отправления заказа",
+     *     @OA\Parameter(name="as_pdf", required=false, in="query", @OA\Schema(type="boolean"),
      *     @OA\Response(response="200", description="",
      *          @OA\JsonContent(
      *             @OA\Property(property="absolute_url", type="string"),
@@ -101,34 +105,16 @@ class ShipmentDocumentsController extends Controller
      */
     public function inventory(
         int $shipmentId,
-        DeliveryService $deliveryService,
-        DocumentService $documentService
+        Request $request,
+        ShipmentInventoryCreator $shipmentInventoryCreator
     ): JsonResponse {
-        $shipment = $deliveryService->getShipment($shipmentId);
+        $shipment = $this->deliveryService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
 
-        $documentDto = $documentService->getShipmentInventory($shipment);
+        $documentDto = $shipmentInventoryCreator->setShipment($shipment)->setAsPdf($request->as_pdf ?: false)->create();
 
-        return $this->getResponse($documentDto);
-    }
-
-    protected function getResponse(DocumentDto $documentDto): JsonResponse
-    {
-        if ($documentDto->success && $documentDto->file_id) {
-            /** @var FileService $fileService */
-            $fileService = resolve(FileService::class);
-            /** @var FileDto $fileDto */
-            $fileDto = $fileService->getFiles([$documentDto->file_id])->first();
-
-            return response()->json([
-                'absolute_url' => $fileDto->absoluteUrl(),
-                'original_name' => $fileDto->original_name,
-                'size' => $fileDto->size,
-            ]);
-        } else {
-            throw new HttpException(500, $documentDto->message);
-        }
+        return $this->documentResponse($documentDto);
     }
 }
