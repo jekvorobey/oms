@@ -24,13 +24,6 @@ use App\Models\Payment\PaymentType;
  */
 class YandexPaymentSystem implements PaymentSystemInterface
 {
-    public const TAX_SYSTEM_CODE = 3;
-
-    public const VAT_CODE_DEFAULT = 1;
-    public const VAT_CODE_0_PERCENT = 2;
-    public const VAT_CODE_10_PERCENT = 3;
-    public const VAT_CODE_20_PERCENT = 4;
-
     /** @var Client */
     private $yandexService;
     /** @var Logger */

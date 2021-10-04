@@ -12,6 +12,9 @@ use MerchantManagement\Dto\VatDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Services\OfferService\OfferService;
+use YooKassa\Model\CurrencyCode;
+use YooKassa\Model\MonetaryAmount;
+use YooKassa\Model\Receipt\AgentType;
 use YooKassa\Model\Receipt\PaymentMode;
 use YooKassa\Model\Receipt\PaymentSubject;
 use YooKassa\Model\ReceiptCustomer;
@@ -47,7 +50,8 @@ class ReceiptData
             ->setObjectId($paymentId)
             ->setCustomer(new ReceiptCustomer([
                 'phone' => $order->customerPhone(),
-            ]));
+            ]))
+            ->setSend(true);
         $this->addReceiptItems($order);
 
 
@@ -123,6 +127,7 @@ class ReceiptData
                     'vat_code' => $receiptItemInfo['vat_code'],
                     'payment_mode' => $receiptItemInfo['payment_mode'],
                     'payment_subject' => $receiptItemInfo['payment_subject'],
+                    'agent_type' => $receiptItemInfo['agent_type'],
                 ]));
             }
         }
@@ -133,6 +138,7 @@ class ReceiptData
                 $deliveryPrice -= $certificatesDiscount;
 //                $paymentMode = $deliveryPrice > $certificatesDiscount ? self::PAYMENT_MODE_PARTIAL_PREPAYMENT : self::PAYMENT_MODE_FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
             }
+
             $this->builder->addItem(new ReceiptItem([
                 'description' => 'Доставка',
                 'quantity' => 1,
@@ -140,6 +146,7 @@ class ReceiptData
                 'vat_code' => self::VAT_CODE_DEFAULT,
                 'payment_mode' => $paymentMode,
                 'payment_subject' => PaymentSubject::SERVICE,
+                'agent_type' => false,
             ]));
         }
 
@@ -151,6 +158,7 @@ class ReceiptData
         $paymentMode = PaymentMode::FULL_PAYMENT;
         $paymentSubject = PaymentSubject::COMMODITY;
         $vatCode = self::VAT_CODE_DEFAULT;
+        $agentType = false;
         switch ($item->type) {
             case Basket::TYPE_MASTER:
                 $paymentSubject = PaymentSubject::SERVICE;
@@ -158,6 +166,7 @@ class ReceiptData
                 if (isset($offerInfo, $merchant)) {
                     $vatCode = $this->getVatCode($offerInfo, $merchant);
                 }
+                $agentType = AgentType::AGENT;
                 break;
             case Basket::TYPE_PRODUCT:
                 $paymentSubject = PaymentSubject::COMMODITY;
@@ -165,6 +174,7 @@ class ReceiptData
                 if (isset($offerInfo, $merchant)) {
                     $vatCode = $this->getVatCode($offerInfo, $merchant);
                 }
+                $agentType = AgentType::COMMISSIONER;
                 break;
             case Basket::TYPE_CERTIFICATE:
                 $paymentSubject = PaymentSubject::PAYMENT;
@@ -176,6 +186,7 @@ class ReceiptData
             'vat_code' => $vatCode,
             'payment_mode' => $paymentMode,
             'payment_subject' => $paymentSubject,
+            'agent_type' => $agentType,
         ];
     }
 
