@@ -137,18 +137,22 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
             switch ($payment->getStatus()) {
                 case PaymentStatus::WAITING_FOR_CAPTURE:
-                    $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
+                    try {
+                        $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
 
-                    $receiptData = new ReceiptData();
-                    $builder = $receiptData->getReceiptData($order, $payment->id);
-                    $request = $builder->build();
-                    $this->logger->info('Start create receipt', $request->toArray());
-                    $idempotenceKey = uniqid('', true);
-                    $this->yandexService->createReceipt($request, $idempotenceKey);
+                        $receiptData = new ReceiptData();
+                        $builder = $receiptData->getReceiptData($order, $payment->id);
+                        $request = $builder->build();
+                        $this->logger->info('Start create receipt', $request->toArray());
+                        $idempotenceKey = uniqid('', true);
+                        $this->yandexService->createReceipt($request, $idempotenceKey);
 
-                    $localPayment->status = Models\Payment\PaymentStatus::HOLD;
-                    $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
-                    $localPayment->save();
+                        $localPayment->status = Models\Payment\PaymentStatus::HOLD;
+                        $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
+                        $localPayment->save();
+                    } catch (\Throwable $exception) {
+                        $this->logger->error('Error creating receipt', ['local_payment_id' => $localPayment->id, 'error' => $exception->getMessage()]);
+                    }
                     break;
                 case PaymentStatus::SUCCEEDED:
                     try {

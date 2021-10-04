@@ -14,6 +14,7 @@ use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\PublicEvent\PublicEventDto;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\PublicEventService\PublicEventService;
+use YooKassa\Model\CurrencyCode;
 use YooKassa\Model\Receipt\AgentType;
 use YooKassa\Model\Receipt\PaymentMode;
 use YooKassa\Model\Receipt\PaymentSubject;
@@ -55,7 +56,7 @@ class ReceiptData
             ]))
             ->setSend(true);
         $this->addReceiptItems($order);
-
+        $this->addSettlements($order);
 
         return $this->builder;
     }
@@ -63,7 +64,7 @@ class ReceiptData
     /**
      * Get receipt items from order
      */
-    protected function addReceiptItems(Order $order): CreatePostReceiptRequestBuilder
+    protected function addReceiptItems(Order $order): void
     {
         $certificatesDiscount = 0;
 
@@ -148,7 +149,10 @@ class ReceiptData
                 $this->builder->addItem(new ReceiptItem([
                     'description' => $item->name,
                     'quantity' => $item->qty,
-                    'amount' => number_format($itemValue, 2, '.', ''),
+                    'amount' => [
+                        'value' => number_format($itemValue, 2, '.', ''),
+                        'currency' => CurrencyCode::RUB,
+                    ],
                     'vat_code' => $receiptItemInfo['vat_code'],
                     'payment_mode' => $receiptItemInfo['payment_mode'],
                     'payment_subject' => $receiptItemInfo['payment_subject'],
@@ -167,15 +171,16 @@ class ReceiptData
             $this->builder->addItem(new ReceiptItem([
                 'description' => 'Доставка',
                 'quantity' => 1,
-                'amount' => number_format($deliveryPrice, 2, '.', ''),
+                'amount' => [
+                    'value' => number_format($deliveryPrice, 2, '.', ''),
+                    'currency' => CurrencyCode::RUB,
+                ],
                 'vat_code' => self::VAT_CODE_DEFAULT,
                 'payment_mode' => $paymentMode,
                 'payment_subject' => PaymentSubject::SERVICE,
                 'agent_type' => false,
             ]));
         }
-
-        return $this->builder;
     }
 
     private function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant): array
@@ -262,5 +267,42 @@ class ReceiptData
         }
 
         return null;
+    }
+
+    /**
+     * Добавление признаков оплаты (чек зачета предоплаты и обычная оплата)
+     */
+    private function addSettlements(Order $order): void
+    {
+        $settlements = [];
+        if ($order->spent_certificate > 0) {
+            $settlements[] = [
+                'type' => 'prepayment',
+                'amount' => [
+                    'value' => $order->spent_certificate,
+                    'currency' => CurrencyCode::RUB,
+                ],
+            ];
+
+            if ($order->price > $order->spent_certificate) {
+                $settlements[] = [
+                    'type' => 'cashless',
+                    'amount' => [
+                        'value' => $order->price,
+                        'currency' => CurrencyCode::RUB,
+                    ],
+                ];
+            }
+        } else {
+            $settlements[] = [
+                'type' => 'cashless',
+                'amount' => [
+                    'value' => $order->price,
+                    'currency' => CurrencyCode::RUB,
+                ],
+            ];
+        }
+
+        $this->builder->setSettlements($settlements);
     }
 }
