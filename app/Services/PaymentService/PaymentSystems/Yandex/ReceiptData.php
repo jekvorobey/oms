@@ -1,55 +1,63 @@
 <?php
 
-namespace App\Services\PaymentService\PaymentSystems\Yandex\Yandex;
+namespace App\Services\PaymentService\PaymentSystems\Yandex;
 
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderReturnItem;
-use Illuminate\Support\Facades\Log;
 use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Dto\VatDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
-use Monolog\Logger;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Services\OfferService\OfferService;
-use YooKassa\Client;
-use YooKassa\Common\AbstractPaymentRequestBuilder;
 use YooKassa\Model\Receipt\PaymentMode;
 use YooKassa\Model\Receipt\PaymentSubject;
+use YooKassa\Model\ReceiptCustomer;
+use YooKassa\Request\Receipts\CreatePostReceiptRequest;
+use YooKassa\Model\ReceiptItem;
+use YooKassa\Request\Receipts\CreatePostReceiptRequestBuilder;
+use YooKassa\Model\ReceiptType;
 
-class Receipt
+class ReceiptData
 {
     public const VAT_CODE_DEFAULT = 1;
     public const VAT_CODE_0_PERCENT = 2;
     public const VAT_CODE_10_PERCENT = 3;
     public const VAT_CODE_20_PERCENT = 4;
 
-    /** @var Client */
-    private $yandexService;
-    /** @var Logger */
-    private $logger;
-    /** @var MerchantService */
-    private $merchantService;
-    /** @var OfferService */
-    private $offerService;
+    private MerchantService $merchantService;
+    private OfferService $offerService;
+    private CreatePostReceiptRequestBuilder $builder;
 
     /**
      * YandexPaymentSystem constructor.
      */
     public function __construct()
     {
-        $this->yandexService = resolve(Client::class);
-        $this->logger = Log::channel('payments');
         $this->merchantService = resolve(MerchantService::class);
         $this->offerService = resolve(OfferService::class);
+        $this->builder = CreatePostReceiptRequest::builder();
+    }
+
+    public function getReceiptData(Order $order, string $paymentId): CreatePostReceiptRequestBuilder
+    {
+        $this->builder->setType(ReceiptType::PAYMENT)
+            ->setObjectId($paymentId)
+            ->setCustomer(new ReceiptCustomer([
+                'phone' => $order->customerPhone(),
+            ]));
+        $this->addReceiptItems($order);
+        
+
+        return $this->builder;
     }
 
     /**
      * Get receipt items from order
      */
-    protected function addReceiptItems(Order $order, AbstractPaymentRequestBuilder $builder): void
+    protected function addReceiptItems(Order $order): CreatePostReceiptRequestBuilder
     {
         $certificatesDiscount = 0;
 
@@ -108,14 +116,14 @@ class Receipt
                 $merchant = $merchants[$merchantId] ?? null;
 
                 $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant);
-                $builder->addReceiptItem(
-                    $item->name,
-                    number_format($itemValue, 2, '.', ''),
-                    $item->qty,
-                    $receiptItemInfo['vat_code'],
-                    $receiptItemInfo['payment_mode'],
-                    $receiptItemInfo['payment_subject']
-                );
+                $this->builder->addItem(new ReceiptItem([
+                    'description' => $item->name,
+                    'quantity' => $item->qty,
+                    'amount' => number_format($itemValue, 2, '.', ''),
+                    'vat_code' => $receiptItemInfo['vat_code'],
+                    'payment_mode' => $receiptItemInfo['payment_mode'],
+                    'payment_subject' => $receiptItemInfo['payment_subject'],
+                ]));
             }
         }
         if ((float) $order->delivery_price > 0 && !$deliveryForReturn) {
@@ -125,14 +133,17 @@ class Receipt
                 $deliveryPrice -= $certificatesDiscount;
 //                $paymentMode = $deliveryPrice > $certificatesDiscount ? self::PAYMENT_MODE_PARTIAL_PREPAYMENT : self::PAYMENT_MODE_FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
             }
-            $builder->addReceiptShipping(
-                'Доставка',
-                number_format($deliveryPrice, 2, '.', ''),
-                self::VAT_CODE_DEFAULT,
-                $paymentMode,
-                PaymentSubject::SERVICE,
-            );
+            $this->builder->addItem(new ReceiptItem([
+                'description' => 'Доставка',
+                'quantity' => 1,
+                'amount' => number_format($deliveryPrice, 2, '.', ''),
+                'vat_code' => self::VAT_CODE_DEFAULT,
+                'payment_mode' => $paymentMode,
+                'payment_subject' => PaymentSubject::SERVICE,
+            ]));
         }
+
+        return $this->builder;
     }
 
     private function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant): array
@@ -184,10 +195,10 @@ class Receipt
         }
 
         return [
-                0 => self::VAT_CODE_0_PERCENT,
-                10 => self::VAT_CODE_10_PERCENT,
-                20 => self::VAT_CODE_20_PERCENT,
-            ][$vatValue] ?? self::VAT_CODE_DEFAULT;
+            0 => self::VAT_CODE_0_PERCENT,
+            10 => self::VAT_CODE_10_PERCENT,
+            20 => self::VAT_CODE_20_PERCENT,
+        ][$vatValue] ?? self::VAT_CODE_DEFAULT;
     }
 
     private function getVatValue(array $vat, object $offerInfo): ?int
