@@ -49,7 +49,7 @@ class ReceiptData
                 'phone' => $order->customerPhone(),
             ]));
         $this->addReceiptItems($order);
-        
+
 
         return $this->builder;
     }
