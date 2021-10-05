@@ -49,7 +49,8 @@ class ReceiptData
 
     public function getReceiptData(Order $order, string $paymentId): CreatePostReceiptRequestBuilder
     {
-        $this->builder->setType(ReceiptType::PAYMENT)
+        $this->builder
+            ->setType(ReceiptType::PAYMENT)
             ->setObjectId($paymentId)
             ->setCustomer(new ReceiptCustomer([
                 'phone' => $order->customerPhone(),
@@ -156,7 +157,7 @@ class ReceiptData
                     'vat_code' => $receiptItemInfo['vat_code'],
                     'payment_mode' => $receiptItemInfo['payment_mode'],
                     'payment_subject' => $receiptItemInfo['payment_subject'],
-                    'agent_type' => $receiptItemInfo['agent_type'],
+//                    'agent_type' => $receiptItemInfo['agent_type'],
                 ]));
             }
         }
@@ -178,7 +179,7 @@ class ReceiptData
                 'vat_code' => self::VAT_CODE_DEFAULT,
                 'payment_mode' => $paymentMode,
                 'payment_subject' => PaymentSubject::SERVICE,
-                'agent_type' => false,
+//                'agent_type' => false,
             ]));
         }
     }
