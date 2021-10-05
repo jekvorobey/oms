@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
 use YooKassa\Client;
+use YooKassa\Model\Notification\AbstractNotification;
 use YooKassa\Model\Notification\NotificationCanceled;
 use YooKassa\Model\Notification\NotificationSucceeded;
 use YooKassa\Model\Notification\NotificationWaitingForCapture;
@@ -67,6 +68,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
             }
         } catch (\Throwable $exception) {
             $this->logger->error('Error from payment system', ['message' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()]);
+            report($exception);
         }
     }
 
@@ -94,19 +96,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function handlePushPayment(array $data): void
     {
         $this->logger->info('Handle external payment');
-        switch ($data['event']) {
-            case NotificationEventType::PAYMENT_SUCCEEDED:
-                $notification = new NotificationSucceeded($data);
-                break;
-            case NotificationEventType::PAYMENT_CANCELED:
-                $notification = new NotificationCanceled($data);
-                break;
-            case NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE:
-                $notification = new NotificationWaitingForCapture($data);
-                break;
-            default:
-                return;
-        }
+        $notification = $this->getNotification($data);
 
         $this->logger->info('External event data', $notification->jsonSerialize());
 
@@ -159,6 +149,18 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
             $order->can_partially_cancelled = !in_array($localPayment->payment_type, PaymentType::typesWithoutPartiallyCancel(), true);
             $order->save();
+        }
+    }
+
+    private function getNotification(array $data): AbstractNotification
+    {
+        switch ($data['event']) {
+            case NotificationEventType::PAYMENT_SUCCEEDED:
+                return new NotificationSucceeded($data);
+            case NotificationEventType::PAYMENT_CANCELED:
+                return new NotificationCanceled($data);
+            case NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE:
+                return new NotificationWaitingForCapture($data);
         }
     }
 

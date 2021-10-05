@@ -7,6 +7,7 @@ use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderReturnItem;
+use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
 use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Dto\VatDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
@@ -18,6 +19,7 @@ use YooKassa\Model\CurrencyCode;
 use YooKassa\Model\Receipt\AgentType;
 use YooKassa\Model\Receipt\PaymentMode;
 use YooKassa\Model\Receipt\PaymentSubject;
+use YooKassa\Model\Receipt\SettlementType;
 use YooKassa\Model\ReceiptCustomer;
 use YooKassa\Request\Receipts\CreatePostReceiptRequest;
 use YooKassa\Model\ReceiptItem;
@@ -26,11 +28,6 @@ use YooKassa\Model\ReceiptType;
 
 class ReceiptData
 {
-    public const VAT_CODE_DEFAULT = 1;
-    public const VAT_CODE_0_PERCENT = 2;
-    public const VAT_CODE_10_PERCENT = 3;
-    public const VAT_CODE_20_PERCENT = 4;
-
     private MerchantService $merchantService;
     private OfferService $offerService;
     private PublicEventService $publicEventService;
@@ -176,7 +173,7 @@ class ReceiptData
                     'value' => number_format($deliveryPrice, 2, '.', ''),
                     'currency' => CurrencyCode::RUB,
                 ],
-                'vat_code' => self::VAT_CODE_DEFAULT,
+                'vat_code' => VatCode::CODE_DEFAULT,
                 'payment_mode' => $paymentMode,
                 'payment_subject' => PaymentSubject::SERVICE,
 //                'agent_type' => false,
@@ -188,7 +185,7 @@ class ReceiptData
     {
         $paymentMode = PaymentMode::FULL_PAYMENT;
         $paymentSubject = PaymentSubject::COMMODITY;
-        $vatCode = self::VAT_CODE_DEFAULT;
+        $vatCode = VatCode::CODE_DEFAULT;
         $agentType = false;
         switch ($item->type) {
             case Basket::TYPE_MASTER:
@@ -237,10 +234,10 @@ class ReceiptData
         }
 
         return [
-            0 => self::VAT_CODE_0_PERCENT,
-            10 => self::VAT_CODE_10_PERCENT,
-            20 => self::VAT_CODE_20_PERCENT,
-        ][$vatValue] ?? self::VAT_CODE_DEFAULT;
+            0 => VatCode::CODE_0_PERCENT,
+            10 => VatCode::CODE_10_PERCENT,
+            20 => VatCode::CODE_20_PERCENT,
+        ][$vatValue] ?? VatCode::CODE_DEFAULT;
     }
 
     private function getVatValue(array $vat, object $offerInfo): ?int
@@ -278,7 +275,7 @@ class ReceiptData
         $settlements = [];
         if ($order->spent_certificate > 0) {
             $settlements[] = [
-                'type' => 'prepayment',
+                'type' => SettlementType::PREPAYMENT,
                 'amount' => [
                     'value' => $order->spent_certificate,
                     'currency' => CurrencyCode::RUB,
@@ -287,16 +284,16 @@ class ReceiptData
 
             if ($order->price > $order->spent_certificate) {
                 $settlements[] = [
-                    'type' => 'cashless',
+                    'type' => SettlementType::CASHLESS,
                     'amount' => [
-                        'value' => $order->price,
+                        'value' => $order->price - $order->spent_certificate,
                         'currency' => CurrencyCode::RUB,
                     ],
                 ];
             }
         } else {
             $settlements[] = [
-                'type' => 'cashless',
+                'type' => SettlementType::CASHLESS,
                 'amount' => [
                     'value' => $order->price,
                     'currency' => CurrencyCode::RUB,

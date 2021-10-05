@@ -3,6 +3,7 @@
 namespace App\Services\PaymentService\PaymentSystems\Yandex;
 
 use App\Models\Order\Order;
+use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\Tax;
 use YooKassa\Model\ConfirmationType;
 use YooKassa\Model\CurrencyCode;
 use YooKassa\Model\MonetaryAmount;
@@ -14,8 +15,6 @@ use YooKassa\Request\Payments\Payment\CreateCaptureRequestBuilder;
 
 class PaymentData
 {
-    public const TAX_SYSTEM_CODE = 3;
-
     /**
      * Формирование данных для создания платежа
      */
@@ -23,7 +22,8 @@ class PaymentData
     {
         $builder = CreatePaymentRequest::builder();
         return $builder
-            ->setAmount(new MonetaryAmount(number_format($order->price, 2, '.', ''), CurrencyCode::RUB))
+            ->setAmount(new MonetaryAmount($order->price))
+            ->setCurrency(CurrencyCode::RUB)
             ->setCapture(false)
             ->setConfirmation([
                 'type' => ConfirmationType::REDIRECT,
@@ -32,7 +32,7 @@ class PaymentData
             ->setDescription("Заказ №{$order->id}")
             ->setMetadata(['source' => config('app.url')])
             ->setReceiptPhone($order->customerPhone())
-            ->setTaxSystemCode(self::TAX_SYSTEM_CODE);
+            ->setTaxSystemCode(Tax::TAX_SYSTEM_CODE_SIMPLE_MINUS_INCOME);
     }
 
     /**
@@ -46,8 +46,9 @@ class PaymentData
 //            $builder->setReceiptEmail($email);
 //        }
         return $builder
-            ->setAmount(new MonetaryAmount(number_format($amount, 2, '.', ''), CurrencyCode::RUB))
+            ->setAmount(new MonetaryAmount($amount))
+            ->setCurrency(CurrencyCode::RUB)
             ->setReceiptPhone($localPayment->order->customerPhone())
-            ->setTaxSystemCode(self::TAX_SYSTEM_CODE);
+            ->setTaxSystemCode(Tax::TAX_SYSTEM_CODE_SIMPLE_MINUS_INCOME);
     }
 }

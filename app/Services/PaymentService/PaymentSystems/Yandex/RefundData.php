@@ -3,6 +3,8 @@
 namespace App\Services\PaymentService\PaymentSystems\Yandex;
 
 use App\Models\Order\OrderReturn;
+use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\Tax;
+use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
 use YooKassa\Model\CurrencyCode;
 use YooKassa\Model\MonetaryAmount;
 use YooKassa\Model\Receipt\PaymentMode;
@@ -12,13 +14,6 @@ use YooKassa\Request\Refunds\CreateRefundRequestBuilder;
 
 class RefundData
 {
-    public const TAX_SYSTEM_CODE = 3;
-
-    public const VAT_CODE_DEFAULT = 1;
-    public const VAT_CODE_0_PERCENT = 2;
-    public const VAT_CODE_10_PERCENT = 3;
-    public const VAT_CODE_20_PERCENT = 4;
-
     /**
      * Формирование данных для возврата платежа
      */
@@ -29,13 +24,13 @@ class RefundData
             ->setAmount(new MonetaryAmount(number_format($orderReturn->price, 2, '.', ''), CurrencyCode::RUB))
             ->setPaymentId($paymentId)
             ->setReceiptPhone($orderReturn->order->customerPhone())
-            ->setTaxSystemCode(self::TAX_SYSTEM_CODE);
+            ->setTaxSystemCode(Tax::TAX_SYSTEM_CODE_SIMPLE_MINUS_INCOME);
 
         if ($orderReturn->is_delivery) {
             $builder->addReceiptShipping(
                 'Доставка',
                 number_format($orderReturn->price, 2, '.', ''),
-                self::VAT_CODE_DEFAULT,
+                VatCode::CODE_DEFAULT,
                 PaymentMode::FULL_PAYMENT,
                 PaymentSubject::SERVICE,
             );
@@ -46,7 +41,7 @@ class RefundData
                     $item->name,
                     number_format($itemValue, 2, '.', ''),
                     $item->qty,
-                    self::VAT_CODE_DEFAULT
+                    VatCode::CODE_DEFAULT
                 );
             }
         }
