@@ -7,7 +7,7 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
-use App\Services\PaymentService\PaymentSystems\YandexPaymentSystem;
+use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;

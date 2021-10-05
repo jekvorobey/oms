@@ -6,7 +6,7 @@ use App\Models\OmsModel;
 use App\Models\Order\Order;
 use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
-use App\Services\PaymentService\PaymentSystems\YandexPaymentSystem;
+use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -73,6 +73,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $payment_method
  * @property int $payment_system
  * @property string $payment_type
+ * @property bool $is_receipt_sent
  * @property array $data
  *
  * @property-read Order $order

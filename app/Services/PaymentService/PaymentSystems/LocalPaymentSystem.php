@@ -2,6 +2,7 @@
 
 namespace App\Services\PaymentService\PaymentSystems;
 
+use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -147,6 +148,15 @@ class LocalPaymentSystem implements PaymentSystemInterface
         return [
             'paymentId' => $paymentId,
             'status' => self::STATUS_CANCELLED,
+        ];
+    }
+
+    public function createIncomeReceipt(Order $order, Payment $payment): array
+    {
+        return [
+            'status' => 'waiting_for_capture',
+            'order_id' => $order->id,
+            'payment_id' => $payment->id,
         ];
     }
 }
