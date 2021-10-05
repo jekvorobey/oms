@@ -2,6 +2,7 @@
 
 namespace App\Services\PaymentService\PaymentSystems;
 
+use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 
@@ -68,4 +69,9 @@ interface PaymentSystemInterface
      * Сформировать запрос на отмену оплаты
      */
     public function cancel(string $paymentId): array;
+
+    /**
+     * Создание чека прихода
+     */
+    public function createIncomeReceipt(Order $order, Payment $payment): array;
 }

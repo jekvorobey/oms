@@ -137,40 +137,18 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
             switch ($payment->getStatus()) {
                 case PaymentStatus::WAITING_FOR_CAPTURE:
-                    try {
-                        $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
+                    $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
 
-                        $receiptData = new ReceiptData();
-                        $builder = $receiptData->getReceiptData($order, $payment->id);
-                        $request = $builder->build();
-                        $this->logger->info('Start create receipt', $request->toArray());
-                        $idempotenceKey = uniqid('', true);
-                        $this->yandexService->createReceipt($request, $idempotenceKey);
-
-                        $localPayment->status = Models\Payment\PaymentStatus::HOLD;
-                        $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
-                        $localPayment->save();
-                    } catch (\Throwable $exception) {
-                        $this->logger->error('Error creating receipt', ['local_payment_id' => $localPayment->id, 'error' => $exception->getMessage()]);
-                    }
+                    $localPayment->status = Models\Payment\PaymentStatus::HOLD;
+                    $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
+                    $localPayment->save();
                     break;
                 case PaymentStatus::SUCCEEDED:
-                    try {
-                        $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
+                    $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
 
-                        $receiptData = new ReceiptData();
-                        $builder = $receiptData->getReceiptData($order, $payment->id);
-                        $request = $builder->build();
-                        $this->logger->info('Start create receipt', $request->toArray());
-                        $idempotenceKey = uniqid('', true);
-                        $this->yandexService->createReceipt($request, $idempotenceKey);
-
-                        $localPayment->status = Models\Payment\PaymentStatus::PAID;
-                        $localPayment->payed_at = Carbon::now();
-                        $localPayment->save();
-                    } catch (\Throwable $exception) {
-                        $this->logger->error('Error creating receipt', ['local_payment_id' => $localPayment->id, 'error' => $exception->getMessage()]);
-                    }
+                    $localPayment->status = Models\Payment\PaymentStatus::PAID;
+                    $localPayment->payed_at = Carbon::now();
+                    $localPayment->save();
                     break;
                 case PaymentStatus::CANCELED:
                     $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
@@ -258,5 +236,34 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function cancel(string $paymentId): array
     {
         return $this->yandexService->cancelPayment($paymentId)->jsonSerialize();
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @throws \YooKassa\Common\Exceptions\ApiException
+     * @throws \YooKassa\Common\Exceptions\AuthorizeException
+     * @throws \YooKassa\Common\Exceptions\BadApiRequestException
+     * @throws \YooKassa\Common\Exceptions\ExtensionNotFoundException
+     * @throws \YooKassa\Common\Exceptions\ForbiddenException
+     * @throws \YooKassa\Common\Exceptions\InternalServerError
+     * @throws \YooKassa\Common\Exceptions\NotFoundException
+     * @throws \YooKassa\Common\Exceptions\ResponseProcessingException
+     * @throws \YooKassa\Common\Exceptions\TooManyRequestsException
+     * @throws \YooKassa\Common\Exceptions\UnauthorizedException
+     */
+    public function createIncomeReceipt(Models\Order\Order $order, Payment $payment): array
+    {
+        try {
+            $receiptData = new ReceiptData();
+            $builder = $receiptData->getReceiptData($order, $payment->data['externalPaymentId']);
+            $request = $builder->build();
+            $this->logger->info('Start create receipt', $request->toArray());
+            $idempotenceKey = uniqid('', true);
+
+            return $this->yandexService->createReceipt($request, $idempotenceKey)->jsonSerialize();
+        } catch (\Throwable $exception) {
+            $this->logger->error('Error creating receipt', ['local_payment_id' => $payment->id, 'error' => $exception->getMessage()]);
+        }
     }
 }
