@@ -148,7 +148,7 @@ class ReceiptData
                     'description' => $item->name,
                     'quantity' => $item->qty,
                     'amount' => [
-                        'value' => number_format($itemValue, 2, '.', ''),
+                        'value' => $itemValue,
                         'currency' => CurrencyCode::RUB,
                     ],
                     'vat_code' => $receiptItemInfo['vat_code'],
@@ -170,7 +170,7 @@ class ReceiptData
                 'description' => 'Доставка',
                 'quantity' => 1,
                 'amount' => [
-                    'value' => number_format($deliveryPrice, 2, '.', ''),
+                    'value' => $deliveryPrice,
                     'currency' => CurrencyCode::RUB,
                 ],
                 'vat_code' => VatCode::CODE_DEFAULT,

@@ -21,7 +21,8 @@ class RefundData
     {
         $builder = CreateRefundRequest::builder();
         $builder
-            ->setAmount(new MonetaryAmount(number_format($orderReturn->price, 2, '.', ''), CurrencyCode::RUB))
+            ->setAmount(new MonetaryAmount($orderReturn->price))
+            ->setCurrency(CurrencyCode::RUB)
             ->setPaymentId($paymentId)
             ->setReceiptPhone($orderReturn->order->customerPhone())
             ->setTaxSystemCode(Tax::TAX_SYSTEM_CODE_SIMPLE_MINUS_INCOME);
@@ -29,7 +30,7 @@ class RefundData
         if ($orderReturn->is_delivery) {
             $builder->addReceiptShipping(
                 'Доставка',
-                number_format($orderReturn->price, 2, '.', ''),
+                $orderReturn->price,
                 VatCode::CODE_DEFAULT,
                 PaymentMode::FULL_PAYMENT,
                 PaymentSubject::SERVICE,
@@ -39,7 +40,7 @@ class RefundData
                 $itemValue = $item->price / $item->qty;
                 $builder->addReceiptItem( //@TODO:: Сделать по аналогии с созданием платежа
                     $item->name,
-                    number_format($itemValue, 2, '.', ''),
+                    $itemValue,
                     $item->qty,
                     VatCode::CODE_DEFAULT
                 );
