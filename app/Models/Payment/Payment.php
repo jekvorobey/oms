@@ -73,7 +73,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $payment_method
  * @property int $payment_system
  * @property string $payment_type
- * @property boolean $is_receipt_sent
+ * @property bool $is_receipt_sent
  * @property array $data
  *
  * @property-read Order $order

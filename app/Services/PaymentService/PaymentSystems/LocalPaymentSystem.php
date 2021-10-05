@@ -153,6 +153,10 @@ class LocalPaymentSystem implements PaymentSystemInterface
 
     public function createIncomeReceipt(Order $order, Payment $payment): array
     {
-        return [];
+        return [
+            'status' => 'waiting_for_capture',
+            'order_id' => $order->id,
+            'payment_id' => $payment->id,
+        ];
     }
 }
