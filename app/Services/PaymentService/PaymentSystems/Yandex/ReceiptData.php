@@ -8,6 +8,8 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderReturnItem;
 use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
+use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequest;
+use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequestBuilder;
 use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Dto\VatDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
@@ -21,9 +23,7 @@ use YooKassa\Model\Receipt\PaymentMode;
 use YooKassa\Model\Receipt\PaymentSubject;
 use YooKassa\Model\Receipt\SettlementType;
 use YooKassa\Model\ReceiptCustomer;
-use YooKassa\Request\Receipts\CreatePostReceiptRequest;
 use YooKassa\Model\ReceiptItem;
-use YooKassa\Request\Receipts\CreatePostReceiptRequestBuilder;
 use YooKassa\Model\ReceiptType;
 
 class ReceiptData
@@ -48,7 +48,7 @@ class ReceiptData
     {
         $this->builder
             ->setType(ReceiptType::PAYMENT)
-            ->setObjectId($paymentId)
+            ->setPaymentId($paymentId)
             ->setCustomer(new ReceiptCustomer([
                 'phone' => $order->customerPhone(),
             ]))
