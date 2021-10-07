@@ -7,6 +7,8 @@ use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
+use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\ReceiptData;
+use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\RefundData;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
@@ -18,6 +20,7 @@ use YooKassa\Model\Notification\NotificationWaitingForCapture;
 use YooKassa\Model\NotificationEventType;
 use YooKassa\Model\PaymentStatus;
 use App\Models\Payment\PaymentType;
+use YooKassa\Model\Payment as YooKassaPayment;
 
 /**
  * Class YandexPaymentSystem
@@ -100,70 +103,21 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
         $this->logger->info('External event data', $notification->jsonSerialize());
 
-        if ($data['event'] === NotificationEventType::REFUND_SUCCEEDED) {
-            $refundId = $notification->getObject()->getId();
-            $paymentId = $notification->getObject()->getPaymentId();
-        } else {
-            $paymentId = $notification->getObject()->getId();
-        }
+        $paymentId = $notification->getEvent() === NotificationEventType::REFUND_SUCCEEDED
+            ? $notification->getObject()->getPaymentId()
+            : $notification->getObject()->getId();
+
         $payment = $this->localYandexService->getPaymentInfo($paymentId);
 
         if ($payment) {
             $metadata = $payment->metadata ? $payment->metadata->toArray() : null;
-
             $this->logger->info('Metadata', $metadata);
-
             $this->logger->info('Process payment', [
                 'external_payment_id' => $paymentId,
                 'status' => $payment->getStatus(),
             ]);
-            /** @var Payment $localPayment */
-            $localPayment = Payment::query()
-                ->where('data->externalPaymentId', $paymentId)
-                ->firstOrFail();
-            $order = $localPayment->order;
 
-            $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
-            switch ($payment->getStatus()) {
-                case PaymentStatus::WAITING_FOR_CAPTURE:
-                    $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
-
-                    $localPayment->status = Models\Payment\PaymentStatus::HOLD;
-                    $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
-                    $localPayment->save();
-                    break;
-                case PaymentStatus::SUCCEEDED:
-                    $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
-
-                    $localPayment->status = Models\Payment\PaymentStatus::PAID;
-                    $localPayment->payed_at = Carbon::now();
-                    $localPayment->save();
-
-                    switch ($data['event']) {
-                        case NotificationEventType::PAYMENT_SUCCEEDED:
-                            if ($localPayment->refund_sum) {
-                                $this->createRefundAllItemsReceipt($order, $this->externalPaymentId($localPayment));
-                                $this->createIncomeReceipt($order, $localPayment);
-                            }
-                            break;
-                        case NotificationEventType::REFUND_SUCCEEDED:
-                            if ($refundId) {
-                                $this->createRefundReceipt($paymentId, $refundId);
-                            }
-                            break;
-                    }
-                    break;
-                case PaymentStatus::CANCELED:
-                    $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
-                    $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
-                    $localPayment->save();
-
-                    $this->createRefundAllItemsReceipt($order, $payment->id);
-                    break;
-            }
-
-            $order->can_partially_cancelled = !in_array($localPayment->payment_type, PaymentType::typesWithoutPartiallyCancel(), true);
-            $order->save();
+            $this->processExternalPayment($paymentId, $payment, $notification);
         }
     }
 
@@ -179,6 +133,63 @@ class YandexPaymentSystem implements PaymentSystemInterface
             case NotificationEventType::REFUND_SUCCEEDED:
                 return new NotificationRefundSucceeded($data);
         }
+    }
+
+    private function processExternalPayment(
+        string $paymentId,
+        YooKassaPayment $payment,
+        AbstractNotification $notification
+    ): void
+    {
+        /** @var Payment $localPayment */
+        $localPayment = Payment::query()
+            ->where('data->externalPaymentId', $paymentId)
+            ->firstOrFail();
+        $order = $localPayment->order;
+
+        $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
+
+        switch ($payment->getStatus()) {
+            case PaymentStatus::WAITING_FOR_CAPTURE:
+                $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
+
+                $localPayment->status = Models\Payment\PaymentStatus::HOLD;
+                $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
+                $localPayment->save();
+                break;
+            case PaymentStatus::SUCCEEDED:
+                $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
+
+                $localPayment->status = Models\Payment\PaymentStatus::PAID;
+                $localPayment->payed_at = Carbon::now();
+                $localPayment->save();
+
+                switch ($notification->getEvent()) {
+                    case NotificationEventType::PAYMENT_SUCCEEDED:
+                        if ($localPayment->refund_sum > 0) {
+                            $this->createRefundAllItemsReceipt($order, $this->externalPaymentId($localPayment));
+                            $this->createIncomeReceipt($order, $localPayment);
+                        }
+                        break;
+                    case NotificationEventType::REFUND_SUCCEEDED:
+                        $refundId = $notification->getObject()->getId();
+                        if ($refundId) {
+                            $this->createRefundReceipt($paymentId, $refundId);
+                        }
+                        break;
+                }
+                break;
+            case PaymentStatus::CANCELED:
+                $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
+                $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
+                $localPayment->save();
+
+                $this->createRefundAllItemsReceipt($order, $payment->id);
+                break;
+        }
+
+        $order->can_partially_cancelled = !in_array($localPayment->payment_type, PaymentType::typesWithoutPartiallyCancel(), true);
+        $order->save();
     }
 
     /**
