@@ -273,29 +273,37 @@ class ReceiptData
     private function addSettlements(Order $order): void
     {
         $settlements = [];
-        if ($order->spent_certificate > 0) {
-            $settlements[] = [
-                'type' => SettlementType::PREPAYMENT,
-                'amount' => [
-                    'value' => $order->spent_certificate,
-                    'currency' => CurrencyCode::RUB,
-                ],
-            ];
 
-            if ($order->price > $order->spent_certificate) {
+        $refundSum = 0;
+        $refundSum += (int) OrderReturn::query()
+            ->where('order_id', $order->id)
+            ->sum('price');
+
+        if ($order->spent_certificate > 0) {
+            $cashlessPrice = $order->price - $order->spent_certificate - $refundSum;
+            $refundSum -= $order->price - $order->spent_certificate;
+            if ($cashlessPrice > 0) {
                 $settlements[] = [
                     'type' => SettlementType::CASHLESS,
                     'amount' => [
-                        'value' => $order->price - $order->spent_certificate,
+                        'value' => $cashlessPrice,
                         'currency' => CurrencyCode::RUB,
                     ],
                 ];
             }
+
+            $settlements[] = [
+                'type' => SettlementType::PREPAYMENT,
+                'amount' => [
+                    'value' => $order->spent_certificate - $refundSum,
+                    'currency' => CurrencyCode::RUB,
+                ],
+            ];
         } else {
             $settlements[] = [
                 'type' => SettlementType::CASHLESS,
                 'amount' => [
-                    'value' => $order->price,
+                    'value' => $order->price - $refundSum,
                     'currency' => CurrencyCode::RUB,
                 ],
             ];

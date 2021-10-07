@@ -65,16 +65,28 @@ class RefundData
     /**
      * Сформировать чек возврата всех позиций
      */
-    public function getReturnReceiptAllItemdData(Order $order, string $paymentId): CreatePostReceiptRequestBuilder
+    public function getRefundReceiptAllItemsData(Order $order, string $paymentId): CreatePostReceiptRequestBuilder
     {
-        $receiptData = new ReceiptData();
-        $builder = $receiptData->getReceiptData($order, $paymentId);
-        $builder->setType(ReceiptType::REFUND);
+        $builder = CreatePostReceiptRequest::builder();
+
+        $builder
+            ->setType(ReceiptType::REFUND)
+            ->setPaymentId($paymentId)
+            ->setCustomer(new ReceiptCustomer([
+                'phone' => $order->customerPhone(),
+            ]))
+            ->setSend(true);
+
+        $builder->setItems($this->getReceiptItemsForFullRefund($order));
+        $builder->setSettlements($this->getSettlements($order));
 
         return $builder;
     }
 
-    public function getReturnReceiptData(string $paymentId, OrderReturn $orderReturn): CreatePostReceiptRequestBuilder
+    public function getRefundReceiptPartiallyData(
+        string $paymentId,
+        OrderReturn $orderReturn
+    ): CreatePostReceiptRequestBuilder
     {
         $builder = CreatePostReceiptRequest::builder();
         $order = $orderReturn->order;
@@ -86,16 +98,131 @@ class RefundData
             ]))
             ->setSend(true);
 
-        $builder->setItems($this->getReceiptItems($orderReturn));
-        $this->addSettlements($order);
+        $builder->setItems($this->getReceiptItemsForPartiallyRefund($orderReturn));
+        $builder->setSettlements($this->getSettlements($order, $orderReturn));
 
         return $builder;
     }
 
     /**
+     * Сформировать позиции для возврата всех позиций заказа
+     */
+    protected function getReceiptItemsForFullRefund(Order $order): array
+    {
+        $receiptItems = [];
+        $certificatesDiscount = 0;
+
+        if ($order->spent_certificate > 0) {
+            $certificatesDiscount = $order->spent_certificate;
+        }
+
+        $merchants = collect();
+        $merchantIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('product.merchant_id');
+        if (!empty($merchantIds)) {
+            $merchantIds = $merchantIds->toArray();
+            $merchantQuery = $this->merchantService->newQuery()
+                ->addFields(MerchantDto::entity(), 'id')
+                ->include('vats')
+                ->setFilter('id', $merchantIds);
+            $merchants = $this->merchantService->merchants($merchantQuery)->keyBy('id');
+        }
+
+        $offers = collect();
+        $offerIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('offer_id')->toArray();
+        if ($offerIds) {
+            if ($order->isPublicEventOrder()) {
+                $publicEventQuery = $this->publicEventService->query()
+                    ->addFields(PublicEventDto::class)
+                    ->setFilter('offer_id', $offerIds)
+                    ->include('organizer', 'sprints.ticketTypes.offer');
+                $publicEvents = $this->publicEventService->findPublicEvents($publicEventQuery);
+
+                if ($publicEvents) {
+                    $offers = $publicEvents->map(function (PublicEventDto $publicEvent) {
+                        $offerInfo = [];
+                        collect($publicEvent->sprints)->map(function ($sprint) use ($publicEvent, &$offerInfo) {
+                            array_map(function ($ticketType) use ($publicEvent, &$offerInfo) {
+                                $offerInfo = new OfferDto([
+                                    'id' => $ticketType['offer']['id'],
+                                    'merchant_id' => $publicEvent->organizer->merchant_id,
+                                ]);
+                            }, $sprint['ticketTypes']);
+                        });
+                        return $offerInfo;
+                    })->keyBy('id');
+                }
+            } else {
+                $offersQuery = $this->offerService->newQuery()
+                    ->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
+                    ->include('product')
+                    ->setFilter('id', $offerIds);
+                $offers = $this->offerService->offers($offersQuery)->keyBy('id');
+            }
+        }
+
+        foreach ($order->basket->items as $item) {
+            //$paymentMode = self::PAYMENT_MODE_FULL_PAYMENT; //TODO::Закомментировано до реализации IBT-433
+
+            $itemValue = $item->price / $item->qty;
+            if (($certificatesDiscount > 0) && ($itemValue > 1)) {
+                $discountPrice = $itemValue - 1;
+                if ($discountPrice > $certificatesDiscount) {
+                    $itemValue -= $certificatesDiscount;
+                    $certificatesDiscount = 0;
+                    //$paymentMode = self::PAYMENT_MODE_PARTIAL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
+                } else {
+                    $itemValue -= $discountPrice;
+                    $certificatesDiscount -= $discountPrice;
+                    $paymentMode = PaymentMode::FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
+                }
+            }
+            $offer = $offers[$item->offer_id] ?? null;
+            $merchantId = $offer['merchant_id'] ?? null;
+            $merchant = $merchants[$merchantId] ?? null;
+
+            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant);
+            $receiptItems[] = new ReceiptItem([
+                'description' => $item->name,
+                'quantity' => $item->qty,
+                'amount' => [
+                    'value' => $itemValue,
+                    'currency' => CurrencyCode::RUB,
+                ],
+                'vat_code' => $receiptItemInfo['vat_code'],
+                'payment_mode' => $receiptItemInfo['payment_mode'],
+                'payment_subject' => $receiptItemInfo['payment_subject'],
+//                    'agent_type' => $receiptItemInfo['agent_type'],
+            ]);
+        }
+        if ((float) $order->delivery_price > 0) {
+            $paymentMode = PaymentMode::FULL_PAYMENT;
+            $deliveryPrice = $order->delivery_price;
+            if (($certificatesDiscount > 0) && ($deliveryPrice >= $certificatesDiscount)) {
+                $deliveryPrice -= $certificatesDiscount;
+//                $paymentMode = $deliveryPrice > $certificatesDiscount ? self::PAYMENT_MODE_PARTIAL_PREPAYMENT : self::PAYMENT_MODE_FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
+            }
+
+            $receiptItems[] = new ReceiptItem([
+                'description' => 'Доставка',
+                'quantity' => 1,
+                'amount' => [
+                    'value' => $deliveryPrice,
+                    'currency' => CurrencyCode::RUB,
+                ],
+                'vat_code' => VatCode::CODE_DEFAULT,
+                'payment_mode' => $paymentMode,
+                'payment_subject' => PaymentSubject::SERVICE,
+//                'agent_type' => false,
+            ]);
+        }
+
+        return $receiptItems;
+    }
+
+    /**
      * Get receipt items from order
      */
-    protected function getReceiptItems(OrderReturn $orderReturn): array
+    protected function getReceiptItemsForPartiallyRefund(OrderReturn $orderReturn): array
     {
         $receiptItems = [];
         $order = $orderReturn->order;
@@ -151,16 +278,16 @@ class RefundData
 
         foreach ($orderReturn->items as $item) {
             //$paymentMode = self::PAYMENT_MODE_FULL_PAYMENT; //TODO::Закомментировано до реализации IBT-433
-
+            $basketItem = $item->basketItem;
             $itemValue = $item->price / $item->qty;
-            $offer = $offers[$item->offer_id] ?? null;
+            $offer = $offers[$basketItem->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant);
+            $receiptItemInfo = $this->getReceiptItemInfo($basketItem, $offer, $merchant);
             $receiptItems[] = new ReceiptItem([
-                'description' => $item->name,
-                'quantity' => $item->qty,
+                'description' => $basketItem->name,
+                'quantity' => $basketItem->qty,
                 'amount' => [
                     'value' => $itemValue,
                     'currency' => CurrencyCode::RUB,
@@ -279,18 +406,13 @@ class RefundData
     /**
      * Добавление признаков оплаты (чек зачета предоплаты и обычная оплата)
      */
-    private function addSettlements(Order $order): void
+    private function getSettlements(Order $order, OrderReturn $orderReturn = null): array
     {
         $settlements = [];
-        if ($order->spent_certificate > 0) {
-            $settlements[] = [
-                'type' => SettlementType::PREPAYMENT,
-                'amount' => [
-                    'value' => $order->spent_certificate,
-                    'currency' => CurrencyCode::RUB,
-                ],
-            ];
+        $refundSum = $orderReturn->price ?? 0;
 
+        if ($order->spent_certificate > 0) {
+            //@TODO::Доработать возврат при оплате с помощью ПС
             if ($order->price > $order->spent_certificate) {
                 $settlements[] = [
                     'type' => SettlementType::CASHLESS,
@@ -300,16 +422,24 @@ class RefundData
                     ],
                 ];
             }
+
+            $settlements[] = [
+                'type' => SettlementType::PREPAYMENT,
+                'amount' => [
+                    'value' => $order->spent_certificate,
+                    'currency' => CurrencyCode::RUB,
+                ],
+            ];
         } else {
             $settlements[] = [
                 'type' => SettlementType::CASHLESS,
                 'amount' => [
-                    'value' => $order->price,
+                    'value' => $refundSum ?: $order->price,
                     'currency' => CurrencyCode::RUB,
                 ],
             ];
         }
 
-        $this->builder->setSettlements($settlements);
+        return $settlements;
     }
 }

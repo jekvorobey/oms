@@ -73,5 +73,5 @@ interface PaymentSystemInterface
     /**
      * Создание чека прихода
      */
-    public function createIncomeReceipt(Order $order, Payment $payment): array;
+    public function createIncomeReceipt(Order $order, Payment $payment): void;
 }
