@@ -394,4 +394,12 @@ class Order extends OmsModel
     {
         return $this->deliveries()->count() == 1;
     }
+
+    /**
+     * Заказ оплачен полностью сертификатом?
+     */
+    public function isFullyPaidByCertificate(): bool
+    {
+        return $this->spent_certificate > 0 && ($this->price - $this->spent_certificate) === 0.0;
+    }
 }

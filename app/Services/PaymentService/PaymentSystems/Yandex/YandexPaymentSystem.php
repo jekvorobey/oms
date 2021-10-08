@@ -48,6 +48,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
         $order = $payment->order;
+
+        // Если заказ был оплачен полностью подарочным сертификатом, нужно сформировать платеж на 1 рубль с дальнейшей отменой
+        $order->price = $order->isFullyPaidByCertificate() ? 1 : $order->price;
+
         $paymentData = new PaymentData();
         $builder = $paymentData->getCreateData($order, $returnLink);
         $request = $builder->build();
@@ -67,6 +71,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $this->logger->error('Payment not saved after create', [
                     'payment_id' => $payment->id,
                 ]);
+            }
+
+            // Отменим платеж заказа, полностью оплаченного подарочным сертификатом
+            if ($order->isFullyPaidByCertificate()) {
+                $this->cancel($data['externalPaymentId']);
             }
         } catch (\Throwable $exception) {
             $this->logger->error('Error from payment system', ['message' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()]);
@@ -154,6 +163,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $localPayment->status = Models\Payment\PaymentStatus::HOLD;
                 $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
                 $localPayment->save();
+
                 break;
             case PaymentStatus::SUCCEEDED:
                 $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);

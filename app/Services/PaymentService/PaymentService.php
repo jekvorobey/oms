@@ -7,6 +7,7 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Класс-бизнес логики по работе с оплатами заказа
@@ -36,6 +37,14 @@ class PaymentService
         }
 
         if ($payment->sum == 0) {
+            $paymentSystem = $payment->paymentSystem();
+            $hours = $paymentSystem->duration();
+            if ($hours) {
+                $payment->expires_at = Carbon::now()->addHours($hours);
+            }
+            $payment->save();
+            $paymentSystem->createExternalPayment($payment, $returnUrl);
+
             if (!$this->pay($payment)) {
                 throw new \Exception('Ошибка при автоматической оплате');
             }

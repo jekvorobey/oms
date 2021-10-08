@@ -61,7 +61,9 @@ class OrderService
             return;
         }
 
-        $this->setPaymentStatus($order, $payment->status, true);
+        if ($payment->status !== PaymentStatus::TIMEOUT && ($order->price - $order->spent_certificate) > 0) {
+            $this->setPaymentStatus($order, $payment->status, true);
+        }
     }
 
     /**
