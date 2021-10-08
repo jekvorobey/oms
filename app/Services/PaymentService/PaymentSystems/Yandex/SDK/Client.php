@@ -7,8 +7,32 @@ use YooKassa\Common\HttpVerb;
 use YooKassa\Helpers\UUID;
 use YooKassa\Request\Receipts\ReceiptResponseFactory;
 
+/**
+ * Class Client
+ *
+ * @package App\Services\PaymentService\PaymentSystems\Yandex\SDK
+ */
 class Client extends BaseClient
 {
+    /**
+     * Переопределение запроса создания чека
+     * В некоторых ситуациях необходимо прикреплять чек возврата к payment_id, что не поддерживает метод SDK
+     *
+     * @param array|\YooKassa\Request\Receipts\CreatePostReceiptRequestInterface $receipt
+     * @param null $idempotenceKey
+     * @return \YooKassa\Request\Receipts\AbstractReceiptResponse|\YooKassa\Request\Receipts\PaymentReceiptResponse|\YooKassa\Request\Receipts\RefundReceiptResponse|\YooKassa\Request\Receipts\SimpleReceiptResponse|null
+     * @throws \YooKassa\Common\Exceptions\ApiConnectionException
+     * @throws \YooKassa\Common\Exceptions\ApiException
+     * @throws \YooKassa\Common\Exceptions\AuthorizeException
+     * @throws \YooKassa\Common\Exceptions\BadApiRequestException
+     * @throws \YooKassa\Common\Exceptions\ExtensionNotFoundException
+     * @throws \YooKassa\Common\Exceptions\ForbiddenException
+     * @throws \YooKassa\Common\Exceptions\InternalServerError
+     * @throws \YooKassa\Common\Exceptions\NotFoundException
+     * @throws \YooKassa\Common\Exceptions\ResponseProcessingException
+     * @throws \YooKassa\Common\Exceptions\TooManyRequestsException
+     * @throws \YooKassa\Common\Exceptions\UnauthorizedException
+     */
     public function createReceipt($receipt, $idempotenceKey = null)
     {
         $path = self::RECEIPTS_PATH;

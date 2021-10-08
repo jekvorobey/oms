@@ -32,7 +32,7 @@ class PaymentData
             ->setDescription("Заказ №{$order->id}")
             ->setMetadata(['source' => config('app.url')])
             ->setReceiptPhone($order->customerPhone())
-            ->setTaxSystemCode(Tax::TAX_SYSTEM_CODE_SIMPLE_MINUS_INCOME);
+            ->setTaxSystemCode(Tax::SIMPLE_MINUS_INCOME);
     }
 
     /**
@@ -49,6 +49,6 @@ class PaymentData
             ->setAmount(new MonetaryAmount($amount))
             ->setCurrency(CurrencyCode::RUB)
             ->setReceiptPhone($localPayment->order->customerPhone())
-            ->setTaxSystemCode(Tax::TAX_SYSTEM_CODE_SIMPLE_MINUS_INCOME);
+            ->setTaxSystemCode(Tax::SIMPLE_MINUS_INCOME);
     }
 }

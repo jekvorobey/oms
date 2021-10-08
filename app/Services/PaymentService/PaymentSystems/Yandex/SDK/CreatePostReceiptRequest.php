@@ -10,7 +10,7 @@ class CreatePostReceiptRequest extends BaseCreatePostReceiptRequest
     private ?string $paymentId = null;
 
     /**
-     * Возвращает Id объекта чека
+     * Возвращает Id платежа чека
      */
     public function getPaymentId(): ?string
     {

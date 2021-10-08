@@ -24,7 +24,7 @@ use YooKassa\Model\ReceiptType;
 use YooKassa\Request\Refunds\CreateRefundRequest;
 use YooKassa\Request\Refunds\CreateRefundRequestBuilder;
 
-class RefundData extends BaseReceiptData
+class RefundReceiptData extends ReceiptData
 {
     /**
      * Формирование данных для возврата платежа
@@ -37,7 +37,7 @@ class RefundData extends BaseReceiptData
             ->setCurrency(CurrencyCode::RUB)
             ->setPaymentId($paymentId)
             ->setReceiptPhone($orderReturn->order->customerPhone())
-            ->setTaxSystemCode(Tax::TAX_SYSTEM_CODE_SIMPLE_MINUS_INCOME);
+            ->setTaxSystemCode(Tax::SIMPLE_MINUS_INCOME);
 
         return $builder;
     }
