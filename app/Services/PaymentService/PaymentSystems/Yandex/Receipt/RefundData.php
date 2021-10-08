@@ -66,8 +66,7 @@ class RefundData extends BaseReceiptData
     public function getRefundReceiptPartiallyData(
         string $paymentId,
         OrderReturn $orderReturn
-    ): CreatePostReceiptRequestBuilder
-    {
+    ): CreatePostReceiptRequestBuilder {
         $builder = CreatePostReceiptRequest::builder();
         $order = $orderReturn->order;
         $builder
@@ -268,7 +267,7 @@ class RefundData extends BaseReceiptData
     /**
      * Добавление признаков оплаты (чек зачета предоплаты и обычная оплата)
      */
-    private function getSettlements(Order $order, OrderReturn $orderReturn = null): array
+    private function getSettlements(Order $order, ?OrderReturn $orderReturn = null): array
     {
         $settlements = [];
         $refundSum = $orderReturn->price ?? 0;

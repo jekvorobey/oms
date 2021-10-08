@@ -139,8 +139,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         string $paymentId,
         YooKassaPayment $payment,
         AbstractNotification $notification
-    ): void
-    {
+    ): void {
         /** @var Payment $localPayment */
         $localPayment = Payment::query()
             ->where('data->externalPaymentId', $paymentId)

@@ -30,7 +30,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use L5Swagger\L5SwaggerServiceProvider;
 use YooKassa\Client;
-use \App\Services\PaymentService\PaymentSystems\Yandex\SDK\Client as LocalYandexClient;
+use App\Services\PaymentService\PaymentSystems\Yandex\SDK\Client as LocalYandexClient;
 
 /**
  * Class AppServiceProvider

@@ -151,8 +151,12 @@ class LocalPaymentSystem implements PaymentSystemInterface
         ];
     }
 
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
     public function createIncomeReceipt(Order $order, Payment $payment): void
     {
-        //Send request to create income receipt
+        // TODO: Implement createIncomeReceipt() method.
     }
 }
