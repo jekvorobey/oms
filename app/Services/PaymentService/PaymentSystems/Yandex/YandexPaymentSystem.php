@@ -34,8 +34,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
     private $yandexService;
     /** @var Logger */
     private $logger;
-    /** @var CertificateService */
-    private $certificateService;
 
     /**
      * YandexPaymentSystem constructor.
@@ -44,7 +42,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         $this->yandexService = resolve(SDK\Client::class);
         $this->logger = Log::channel('payments');
-        $this->certificateService = resolve(CertificateService::class);
     }
 
     /**
@@ -290,9 +287,8 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function createIncomeReceipt(Models\Order\Order $order, Payment $payment): void
     {
         try {
-            $paymentId = $order->isFullyPaidByCertificate() ? $this->getCertificatePaymentId($order) : $payment->data['externalPaymentId'];
             $receiptData = new IncomeReceiptData();
-            $builder = $receiptData->getReceiptData($order, $paymentId);
+            $builder = $receiptData->getReceiptData($order, $payment->data['externalPaymentId']);
             $request = $builder->build();
             $this->logger->info('Start create receipt', $request->toArray());
 
@@ -344,43 +340,5 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $this->logger->error('Error creating refund receipt', ['yandex_payment_id' => $paymentId, 'error' => $exception->getMessage()]);
             report($exception);
         }
-    }
-
-    /**
-     * Получение id платежа юкассы покупки подарочного сертификата
-     */
-    private function getCertificatePaymentId(Order $order): ?string
-    {
-        $certificate = current($order->certificates);
-
-        if ($certificate['id']) {
-            $this->logger->info('Fully payed by certificate', ['certificate_id' => $certificate['id'], 'order_id' => $order->id]);
-
-            $certificateQuery = $this->certificateService->certificateQuery();
-            $certificateQuery->id($certificate['id']);
-            $certificateInfo = $this->certificateService->certificates($certificateQuery);
-
-            if ($certificateInfo) {
-                $this->logger->info('Certificate info', ['certificate_info' => $certificateInfo]);
-                $certificateRequests = $certificateInfo->pluck('request_id')->toArray();
-
-                /** @var Models\Basket\BasketItem $certificateBasketItem */
-                $certificateBasketItem = Models\Basket\BasketItem::query()
-                    ->whereIn('product->request_id', $certificateRequests)
-                    ->with('basket.order.payments')
-                    ->firstOrFail();
-
-                $certificatePayment = $certificateBasketItem->basket->order->payments->first();
-                $result = $certificatePayment->data['externalPaymentId'];
-
-                $this->logger->info('Certificate payment id', ['payment_id' => $result]);
-            } else {
-                throw new Receipt('Certificates not found');
-            }
-        } else {
-            throw new Receipt('Certificate id in order not found');
-        }
-
-        return $result;
     }
 }
