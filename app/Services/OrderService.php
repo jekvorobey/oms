@@ -60,10 +60,6 @@ class OrderService
             logger('refreshPaymentStatus without payment', ['orderId' => $order->id]);
             return;
         }
-
-        if ($payment->status !== PaymentStatus::TIMEOUT && ($order->price - $order->spent_certificate) > 0) {
-            $this->setPaymentStatus($order, $payment->status, true);
-        }
     }
 
     /**
