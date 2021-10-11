@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2785dfa035a6fea8f9a7f84e9e0a0699",
+    "content-hash": "9837221ef869f29ccadfcaf777190ad6",
     "packages": [
         {
             "name": "clue/stream-filter",
@@ -985,11 +985,11 @@
         },
         {
             "name": "iwengo/ibt-cm-lib",
-            "version": "dev-feature/IBT-538-decline-bonus-by-cancelled-order",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
-                "reference": "0fb150dd5ff1b9a84c69d61226e23a5f03b90d28"
+                "reference": "2b64d9e380790ae3b2f630776d15cfe91a8e13c0"
             },
             "require": {
                 "ext-json": "*",
@@ -1023,7 +1023,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2021-10-07T11:12:28+00:00"
+            "time": "2021-10-11T08:44:12+00:00"
         },
         {
             "name": "iwengo/ibt-cms-lib",
@@ -10011,7 +10011,7 @@
     "aliases": [
         {
             "package": "iwengo/ibt-cm-lib",
-            "version": "dev-feature/IBT-538-decline-bonus-by-cancelled-order",
+            "version": "dev-master-ylab",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         },

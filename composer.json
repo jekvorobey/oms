@@ -54,7 +54,7 @@
         "ext-json": "*",
         "darkaonline/l5-swagger": "5.8.*",
         "fideloper/proxy": "^4.0",
-        "iwengo/ibt-cm-lib": "dev-feature/IBT-538-decline-bonus-by-cancelled-order as dev-master",
+        "iwengo/ibt-cm-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-cms-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-common-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-logistics-lib": "dev-master-ylab as dev-master",
