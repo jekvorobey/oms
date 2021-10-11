@@ -64,9 +64,8 @@ class OrderBonus extends OmsModel
 
     /**
      * Подтверждение удержанных бонусов
-     * @return bool
      */
-    public function approveBonus()
+    public function approveBonus(): bool
     {
         try {
             /** @var CustomerService $customerService */
@@ -86,6 +85,13 @@ class OrderBonus extends OmsModel
         } catch (\Throwable $exception) {
             return false;
         }
+    }
+
+    public function cancel(): void
+    {
+        $this->update([
+            'status' => self::STATUS_CANCEL,
+        ]);
     }
 
     /**

@@ -247,6 +247,7 @@ class OrderObserver
         $this->sendTicketsEmail($order);
         $this->returnTickets($order);
         $this->setCanceledCertificates($order);
+        $this->cancelBonuses($order);
 
         //Данная команда должна быть в самом низу перед всеми $this->set*Status()
         $this->setStatusAt($order);
@@ -449,9 +450,24 @@ class OrderObserver
      */
     protected function setCanceledCertificates(Order $order): void
     {
-        if ($order->is_canceled != $order->getOriginal('is_canceled')) {
+        if ($order->is_canceled && $order->wasChanged('is_canceled')) {
             if ($order->spent_certificate > 0) {
                 resolve(CertificateService::class)->rollback($order->spent_certificate, $order->customer_id, $order->id, $order->number);
+            }
+        }
+    }
+
+    /**
+     * Отклонение начисленных бонусов за заказ
+     */
+    protected function cancelBonuses(Order $order): void
+    {
+        if ($order->is_canceled && $order->wasChanged('is_canceled')) {
+            $customerService = resolve(CustomerService::class);
+            $customerService->declineByOrder($order->customer_id, $order->id);
+
+            foreach ($order->bonuses as $bonus) {
+                $bonus->cancel();
             }
         }
     }

@@ -10,6 +10,7 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Services\DeliveryService;
+use App\Services\DeliveryServiceInvalidConditions;
 use App\Services\OrderService;
 use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
@@ -241,8 +242,9 @@ class ShipmentObserver
                 /** @var DeliveryService $deliveryService */
                 $deliveryService = resolve(DeliveryService::class);
                 $deliveryService->saveDeliveryOrder($delivery);
+            } catch (DeliveryServiceInvalidConditions $e) {
+                logger(['saveDeliveryOrder error' => $e->getMessage()]);
             } catch (\Throwable $e) {
-                logger(['upsertDeliveryOrder error' => $e->getMessage()]);
                 report($e);
             }
         }
@@ -257,6 +259,8 @@ class ShipmentObserver
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
             $deliveryService->addShipment2Cargo($shipment);
+        } catch (DeliveryServiceInvalidConditions $e) {
+            logger(['addShipment2Cargo error' => $e->getMessage()]);
         } catch (\Throwable $e) {
             report($e);
         }
