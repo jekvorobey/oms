@@ -60,6 +60,8 @@ class OrderService
             logger('refreshPaymentStatus without payment', ['orderId' => $order->id]);
             return;
         }
+        
+        $this->setPaymentStatus($order, $payment->status, true);
     }
 
     /**
