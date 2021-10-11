@@ -31,6 +31,7 @@ use Illuminate\Support\Collection;
  * @property int $order_id - id заказа
  * @property int $customer_id - id покупателя
  * @property int $type - тип возвращаемого заказа (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)
+ * @property string $refund_id - ID возврата из платежной системы
  *
  * @property string $number - номер возврата по заказу (для формирования использовать метод \App\Models\Order\OrderReturn::makeNumber())
  * @property float $price - сумма к возврату

@@ -151,12 +151,12 @@ class LocalPaymentSystem implements PaymentSystemInterface
         ];
     }
 
-    public function createIncomeReceipt(Order $order, Payment $payment): array
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function createIncomeReceipt(Order $order, Payment $payment): void
     {
-        return [
-            'status' => 'waiting_for_capture',
-            'order_id' => $order->id,
-            'payment_id' => $payment->id,
-        ];
+        // TODO: Implement createIncomeReceipt() method.
     }
 }
