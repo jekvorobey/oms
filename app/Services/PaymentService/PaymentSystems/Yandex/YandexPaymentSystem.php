@@ -48,6 +48,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
         $order = $payment->order;
+
         $paymentData = new PaymentData();
         $builder = $paymentData->getCreateData($order, $returnLink);
         $request = $builder->build();
@@ -154,6 +155,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $localPayment->status = Models\Payment\PaymentStatus::HOLD;
                 $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
                 $localPayment->save();
+
                 break;
             case PaymentStatus::SUCCEEDED:
                 $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);

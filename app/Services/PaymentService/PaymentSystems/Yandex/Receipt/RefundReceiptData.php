@@ -89,11 +89,6 @@ class RefundReceiptData extends ReceiptData
     protected function getReceiptItemsForFullRefund(Order $order): array
     {
         $receiptItems = [];
-        $certificatesDiscount = 0;
-
-        if ($order->spent_certificate > 0) {
-            $certificatesDiscount = $order->spent_certificate;
-        }
 
         $merchantIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('product.merchant_id')->toArray();
         $merchants = collect();
@@ -111,18 +106,6 @@ class RefundReceiptData extends ReceiptData
             //$paymentMode = self::PAYMENT_MODE_FULL_PAYMENT; //TODO::Закомментировано до реализации IBT-433
 
             $itemValue = $item->price / $item->qty;
-            if (($certificatesDiscount > 0) && ($itemValue > 1)) {
-                $discountPrice = $itemValue - 1;
-                if ($discountPrice > $certificatesDiscount) {
-                    $itemValue -= $certificatesDiscount;
-                    $certificatesDiscount = 0;
-                    //$paymentMode = self::PAYMENT_MODE_PARTIAL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
-                } else {
-                    $itemValue -= $discountPrice;
-                    $certificatesDiscount -= $discountPrice;
-                    $paymentMode = PaymentMode::FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
-                }
-            }
             $offer = $offers[$item->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
@@ -144,10 +127,6 @@ class RefundReceiptData extends ReceiptData
         if ((float) $order->delivery_price > 0) {
             $paymentMode = PaymentMode::FULL_PAYMENT;
             $deliveryPrice = $order->delivery_price;
-            if (($certificatesDiscount > 0) && ($deliveryPrice >= $certificatesDiscount)) {
-                $deliveryPrice -= $certificatesDiscount;
-//                $paymentMode = $deliveryPrice > $certificatesDiscount ? self::PAYMENT_MODE_PARTIAL_PREPAYMENT : self::PAYMENT_MODE_FULL_PREPAYMENT;//TODO::Закомментировано до реализации IBT-433
-            }
 
             $receiptItems[] = new ReceiptItem([
                 'description' => 'Доставка',
