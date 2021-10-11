@@ -37,11 +37,6 @@ class PaymentService
 
         if ($payment->sum == 0) {
             $paymentSystem = $payment->paymentSystem();
-            $hours = $paymentSystem->duration();
-            if ($hours) {
-                $payment->expires_at = Carbon::now()->addHours($hours);
-            }
-            $payment->save();
 
             if ($paymentSystem) {
                 $paymentSystem->createIncomeReceipt($payment->order, $payment);

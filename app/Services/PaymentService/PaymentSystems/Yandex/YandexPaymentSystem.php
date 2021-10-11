@@ -7,7 +7,7 @@ use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
-use App\Services\PaymentService\PaymentSystems\Yandex\Exceptions\ReceiptException;
+use App\Services\PaymentService\PaymentSystems\Yandex\Exceptions\Receipt;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\IncomeReceiptData;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\RefundReceiptData;
 use Carbon\Carbon;
@@ -30,9 +30,9 @@ use YooKassa\Model\Payment as YooKassaPayment;
  */
 class YandexPaymentSystem implements PaymentSystemInterface
 {
-    /** @var SDK\Client  */
+    /** @var SDK\Client */
     private $yandexService;
-    /** @var Logger mixed  */
+    /** @var Logger */
     private $logger;
     /** @var CertificateService */
     private $certificateService;
@@ -375,10 +375,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
                 $this->logger->info('Certificate payment id', ['payment_id' => $result]);
             } else {
-                throw new ReceiptException('Certificates not found');
+                throw new Receipt('Certificates not found');
             }
         } else {
-            throw new ReceiptException('Certificate id in order not found');
+            throw new Receipt('Certificate id in order not found');
         }
 
         return $result;
