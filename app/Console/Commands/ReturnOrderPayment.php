@@ -28,6 +28,7 @@ class ReturnOrderPayment extends Command
     {
         $orderReturns = OrderReturn::query()->where('status', OrderReturn::STATUS_CREATED)->with('order.payments')->get();
 
+        /** @var OrderReturn $orderReturn */
         foreach ($orderReturns as $orderReturn) {
             /** @var Payment $payment */
             $payment = $orderReturn->order->payments->last();
@@ -43,7 +44,7 @@ class ReturnOrderPayment extends Command
                 continue;
             }
 
-            if ($payment->status === PaymentStatus::PAID) {
+            if ($payment->status === PaymentStatus::PAID && $orderReturn->price > 0) {
                 $refundResponse = $paymentSystem->refund($paymentId, $orderReturn);
 
                 $orderReturn->status =

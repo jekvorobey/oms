@@ -249,15 +249,25 @@ class RefundReceiptData extends ReceiptData
     private function getSettlements(Order $order, ?OrderReturn $orderReturn = null): array
     {
         $settlements = [];
-        $refundSum = $orderReturn->price ?? 0;
+
+        if ($orderReturn) {
+            $refundSum = $orderReturn->price > 0 ? $orderReturn->price : $orderReturn->items->sum('price');
+        } else {
+            $refundSum = 0;
+        }
 
         if ($order->spent_certificate > 0) {
-            //@TODO::Доработать возврат при оплате с помощью ПС
-            if ($order->price > $order->spent_certificate) {
+            $restReturnPrice = $order->price - $order->done_return_sum;
+            $restCashlessReturnPrice = min(0, $restReturnPrice - $order->spent_certificate);
+            $priceToReturn = $orderReturn->price ?? $order->price;
+            $returnPrepayment = min(0, $priceToReturn - $restCashlessReturnPrice);
+            $returnCashless = min(0, $priceToReturn - $returnPrepayment);
+
+            if ($returnCashless > 0) {
                 $settlements[] = [
                     'type' => SettlementType::CASHLESS,
                     'amount' => [
-                        'value' => $order->price - $order->spent_certificate,
+                        'value' => $returnCashless,
                         'currency' => CurrencyCode::RUB,
                     ],
                 ];
@@ -266,7 +276,7 @@ class RefundReceiptData extends ReceiptData
             $settlements[] = [
                 'type' => SettlementType::PREPAYMENT,
                 'amount' => [
-                    'value' => $order->spent_certificate,
+                    'value' => $returnPrepayment,
                     'currency' => CurrencyCode::RUB,
                 ],
             ];

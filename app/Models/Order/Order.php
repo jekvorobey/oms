@@ -183,8 +183,9 @@ use Illuminate\Support\Collection;
  * @property float $price
  * @property int $spent_bonus
  * @property int $added_bonus
- * @property array $certificates
- * @property float $spent_certificate
+ * @property array $certificates - json-массив примененных Подарочных сертификатов к заказу
+ * @property float $spent_certificate - Потрачено с помощью Подарочного сертификата
+ * @property float $done_return_sum - Сумма, которая уже была возвращена
  *
  * @property int $delivery_type - тип доставки (см. \App\Models\Delivery\DeliveryType)
  * @property float $delivery_price - стоимость доставки iBT (с учетом скидки)

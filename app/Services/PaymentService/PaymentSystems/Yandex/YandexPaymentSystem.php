@@ -334,6 +334,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
             $response = $this->yandexService->createReceipt($request);
             $this->logger->info('Return receipt', $response->jsonSerialize());
+
+            $order = $orderReturn->order;
+            $order->done_return_sum = $orderReturn->price + $orderReturn->items->sum('price');
+            $order->save();
         } catch (\Throwable $exception) {
             $this->logger->error('Error creating refund receipt', ['yandex_payment_id' => $paymentId, 'error' => $exception->getMessage()]);
             report($exception);

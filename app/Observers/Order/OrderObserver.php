@@ -97,6 +97,7 @@ class OrderObserver
             $this->sendNotification($order);
         }
         $this->setPaymentStatusToCertificateRequest($order);
+        $this->returnCertificateSum($order);
     }
 
     protected function sendCreatedNotification(Order $order)
@@ -1251,6 +1252,20 @@ class OrderObserver
             $certificateService->updateRequest($certificateRequestId, new CertificateRequestDto([
                 'status' => CertificateRequestStatusDto::STATUS_PAID,
             ]));
+        }
+    }
+
+    protected function returnCertificateSum(Order $order): void
+    {
+        if ($order->wasChanged('done_return_sum') && $order->spent_certificate > 0) {
+            $restReturnPrice = $order->price - $order->done_return_sum;
+            $restCashlessReturnPrice = min(0, $restReturnPrice - $order->spent_certificate);
+            $priceToReturn = $order->done_return_sum - $order->getOriginal('done_return_sum');
+            $returnPrepayment = min(0, $priceToReturn - $restCashlessReturnPrice);
+
+            if ($returnPrepayment > 0) {
+                resolve(CertificateService::class)->rollback($returnPrepayment, $order->basket->customer_id, $order->id, $order->number);
+            }
         }
     }
 }
