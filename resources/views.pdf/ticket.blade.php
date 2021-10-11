@@ -1,7 +1,9 @@
 @extends('pdf::layouts.main')
+
 @php
     /** @var \App\Services\Dto\Internal\PublicEventOrder\OrderInfoDto $order */
 @endphp
+
 @section('content')
     <style>
         @font-face {
@@ -306,6 +308,7 @@
             opacity: .1;
         }
     </style>
+
     @foreach($order->publicEvents as $publicEvent)
         @foreach($publicEvent->ticketsInfo as $ticketsInfo)
             @foreach($ticketsInfo->tickets as $ticket)
@@ -314,119 +317,120 @@
                 @else
                     <div class="wrapper">
                 @endif
-                    <div class="head">
-                        <div class="head-body">
-                            <img class="logo" src="{{ public_path() }}/img/logo.svg">
-                            <div class="title space">
-                                {{$ticketsInfo->name}}<br>
-                                ({{$ticketsInfo->ticketTypeName}})
-                            </div>
-                            <p style="margin-top: -8px;">
-                                <div class="text-small">
-                                    Дата и время мастер-класса
-                                </div>
-                                <div class="text">
-                                    <ul class="dates">
-                                        @foreach($publicEvent->stages as $stage)
-                                            <li>
-                                                {{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}} ({{short_day_of_week($stage->date->dayOfWeek)}}), {{$stage->timeFrom->format('H:i')}}-{{$stage->timeTo->format('H:i')}}
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            </p>
-                            <p style="margin-top: -8px;">
-                                <div class="text-small">
-                                    Место проведения
-                                </div>
-                                <div class="text">
-                                    @if ($publicEvent->places->count() > 1)
-                                    <ol>
-                                        @foreach($publicEvent->places as $place)
-                                            <li>{{$place->name}}, {{$place->address}}</li>
-                                        @endforeach
-                                    </ol>
-                                    @else
-                                        @foreach($publicEvent->places as $place)
-                                            {{$place->name}}, {{$place->address}}
-                                        @endforeach
-                                    @endif
-                                </div>
-                            </p>
-                            <p style="margin-top: -8px;">
-                                <div class="text-small">
-                                    Участник
-                                </div>
-                                <div class="text">
-                                    <b>{{$ticket->lastName}} {{$ticket->firstName}}, </b>{{$ticket->email}}, {{$ticket->phone}}
-                                </div>
-                            </p>
+
+                <div class="head">
+                    <div class="head-body">
+                        <img class="logo" src="{{ public_path() }}/img/logo.svg">
+                        <div class="title space">
+                            {{$ticketsInfo->name}}<br>
+                            ({{$ticketsInfo->ticketTypeName}})
                         </div>
-                        <div class="head-sidebar">
-                            <div class="id">{{$ticket->code}}</div>
-                            @if ($ticketsInfo->pricePerOne > 0)
+                        <p style="margin-top: -8px;">
+                            <div class="text-small">
+                                Дата и время мастер-класса
+                            </div>
+                            <div class="text">
+                                <ul class="dates">
+                                    @foreach($publicEvent->stages as $stage)
+                                        <li>
+                                            {{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}} ({{short_day_of_week($stage->date->dayOfWeek)}}), {{$stage->timeFrom->format('H:i')}}-{{$stage->timeTo->format('H:i')}}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </p>
+                        <p style="margin-top: -8px;">
+                            <div class="text-small">
+                                Место проведения
+                            </div>
+                            <div class="text">
+                                @if ($publicEvent->places->count() > 1)
+                                <ol>
+                                    @foreach($publicEvent->places as $place)
+                                        <li>{{$place->name}}, {{$place->address}}</li>
+                                    @endforeach
+                                </ol>
+                                @else
+                                    @foreach($publicEvent->places as $place)
+                                        {{$place->name}}, {{$place->address}}
+                                    @endforeach
+                                @endif
+                            </div>
+                        </p>
+                        <p style="margin-top: -8px;">
+                            <div class="text-small">
+                                Участник
+                            </div>
+                            <div class="text">
+                                <b>{{$ticket->lastName}} {{$ticket->firstName}}, </b>{{$ticket->email}}, {{$ticket->phone}}
+                            </div>
+                        </p>
+                    </div>
+                    <div class="head-sidebar">
+                        <div class="id">{{$ticket->code}}</div>
+                        @if ($ticketsInfo->pricePerOne > 0)
                             <div class="cost">{{price_format($ticketsInfo->pricePerOne)}} &#8381;</div>
-                            @else
+                        @else
                             <div class="cost">Бесплатно</div>
+                        @endif
+                        <p>
+                            <div class="text-small">
+                            Номер заказа
+                            </div>
+                            <div class="text">
+                                {{$order->number}}
+                            </div>
+                        </p>
+                        <p>
+                            <div class="text-small">
+                            Дата и время покупки
+                            </div>
+                            <div class="text">
+                                {{\Jenssegers\Date\Date::parse($order->createdAt)->format('j F')}}, {{$order->createdAt->format('H:i')}}
+                            </div>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="box">
+                    <div class="box-body">
+                        <div class="title">По всем вопросам и предложениям обращаться к организатору</div>
+                        <p style="margin-top: 12.75px">
+                            <div class="sub-title">{{$publicEvent->organizer->name}}</div>
+                            <div class="text-small">{{$publicEvent->organizer->description}}</div>
+                        </p>
+                        <div class="box-body-row" style="margin-top: 12.75px;">
+                            @if ($publicEvent->organizer->phone)
+                            <div class="box-body-item">
+                                <div class="text-small" style="line-height: 1.5">Телефон</div>
+                                <div class="text">{{$publicEvent->organizer->phone}}</div>
+                            </div>
                             @endif
-                            <p>
-                                <div class="text-small">
-                                Номер заказа
-                                </div>
-                                <div class="text">
-                                    {{$order->number}}
-                                </div>
-                            </p>
-                            <p>
-                                <div class="text-small">
-                                Дата и время покупки
-                                </div>
-                                <div class="text">
-                                    {{\Jenssegers\Date\Date::parse($order->createdAt)->format('j F')}}, {{$order->createdAt->format('H:i')}}
-                                </div>
-                            </p>
+                            @if ($publicEvent->organizer->email)
+                            <div class="box-body-item">
+                                <div class="text-small" style="line-height: 1.5">Email</div>
+                                <div class="text">{{$publicEvent->organizer->email}}</div>
+                            </div>
+                            @endif
+                        </div>
+                        <div class="box-body-row">
+                            @if ($publicEvent->organizer->messengerPhone)
+                            <div class="box-body-item">
+                                <div class="text-small" style="line-height: 1.5">WhatsApp, Viber, Telegram</div>
+                                <div class="text">{{$publicEvent->organizer->messengerPhone}}</div>
+                            </div>
+                            @endif
+                            @if ($publicEvent->organizer->site)
+                            <div class="box-body-item">
+                                <div class="text-small" style="line-height: 1.5">Сайт</div>
+                                <div class="text">{{$publicEvent->organizer->site}}</div>
+                            </div>
+                            @endif
                         </div>
                     </div>
+                </div>
 
-                    <div class="box">
-                        <div class="box-body">
-                            <div class="title">По всем вопросам и предложениям обращаться к организатору</div>
-                            <p style="margin-top: 12.75px">
-                                <div class="sub-title">{{$publicEvent->organizer->name}}</div>
-                                <div class="text-small">{{$publicEvent->organizer->description}}</div>
-                            </p>
-                            <div class="box-body-row" style="margin-top: 12.75px;">
-                                @if ($publicEvent->organizer->phone)
-                                <div class="box-body-item">
-                                    <div class="text-small" style="line-height: 1.5">Телефон</div>
-                                    <div class="text">{{$publicEvent->organizer->phone}}</div>
-                                </div>
-                                @endif
-                                @if ($publicEvent->organizer->email)
-                                <div class="box-body-item">
-                                    <div class="text-small" style="line-height: 1.5">Email</div>
-                                    <div class="text">{{$publicEvent->organizer->email}}</div>
-                                </div>
-                                @endif
-                            </div>
-                            <div class="box-body-row">
-                                @if ($publicEvent->organizer->messengerPhone)
-                                <div class="box-body-item">
-                                    <div class="text-small" style="line-height: 1.5">WhatsApp, Viber, Telegram</div>
-                                    <div class="text">{{$publicEvent->organizer->messengerPhone}}</div>
-                                </div>
-                                @endif
-                                @if ($publicEvent->organizer->site)
-                                <div class="box-body-item">
-                                    <div class="text-small" style="line-height: 1.5">Сайт</div>
-                                    <div class="text">{{$publicEvent->organizer->site}}</div>
-                                </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="sub-title">КАК ДОБРАТЬСЯ</div>
+                <div class="sub-title">КАК ДОБРАТЬСЯ</div>
                     @foreach($publicEvent->places as $place)
                         <div class="route">
                             <div class="text"><b>{{$place->name}}, {{$place->address}}</b></div>
@@ -448,7 +452,6 @@
                             @endif
                         </div>
                     @endforeach
-
                 </div>
 
                 <div class="program page-break wrapper">
@@ -475,7 +478,8 @@
                             <div class="program-layout">
                                 <div class="speakers">
                                     @if($stage->speakerIds)
-                                    <div class="sub-title space" style="margin-bottom: 23px">СПИКЕРЫ</div>
+                                        <div class="sub-title space" style="margin-bottom: 23px">СПИКЕРЫ</div>
+
                                         @foreach($stage->speakerIds as $speakerId)
                                             @if($publicEvent->speakers->has($speakerId))
                                                 @php
@@ -499,16 +503,16 @@
                                     @endif
                                 </div>
                                 @if ($stage->raider)
-                                <div class="kit">
-                                    <div class="sub-title space">ЧТО ВЗЯТЬ С СОБОЙ</div>
-                                    <div class="text small-space" style="margin-top: 18px; line-height: 1.475!important;">{!! $stage->raider !!}</div>
-                                </div>
+                                    <div class="kit">
+                                        <div class="sub-title space">ЧТО ВЗЯТЬ С СОБОЙ</div>
+                                        <div class="text small-space" style="margin-top: 18px; line-height: 1.475!important;">{!! $stage->raider !!}</div>
+                                    </div>
                                 @endif
                             </div>
                         </div>
 
                         @if(!$loop->last)
-                        <hr>
+                            <hr>
                         @endif
                     @endforeach
                 </div>

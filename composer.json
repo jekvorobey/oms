@@ -52,6 +52,7 @@
     "require": {
         "php": "^7.4",
         "ext-json": "*",
+        "barryvdh/laravel-snappy": "^0.4.8",
         "darkaonline/l5-swagger": "5.8.*",
         "fideloper/proxy": "^4.0",
         "iwengo/ibt-cm-lib": "dev-master-ylab as dev-master",
@@ -67,7 +68,6 @@
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",
         "letsgoi/laravel-health-check": "dev-master",
-        "mikehaertl/php-pdftk": "^0.8.1",
         "ncjoes/office-converter": "^1.0",
         "phpoffice/phpword": "^0.17.0",
         "sentry/sentry-laravel": "^2.7",
