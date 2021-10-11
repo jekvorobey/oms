@@ -7,11 +7,13 @@ use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
+use App\Services\PaymentService\PaymentSystems\Yandex\Exceptions\ReceiptException;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\IncomeReceiptData;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\RefundReceiptData;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
+use Pim\Services\CertificateService\CertificateService;
 use YooKassa\Model\Notification\AbstractNotification;
 use YooKassa\Model\Notification\NotificationCanceled;
 use YooKassa\Model\Notification\NotificationRefundSucceeded;
@@ -28,10 +30,12 @@ use YooKassa\Model\Payment as YooKassaPayment;
  */
 class YandexPaymentSystem implements PaymentSystemInterface
 {
-    /** @var SDK\Client */
+    /** @var SDK\Client  */
     private $yandexService;
-    /** @var Logger */
+    /** @var Logger mixed  */
     private $logger;
+    /** @var CertificateService */
+    private $certificateService;
 
     /**
      * YandexPaymentSystem constructor.
@@ -40,6 +44,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         $this->yandexService = resolve(SDK\Client::class);
         $this->logger = Log::channel('payments');
+        $this->certificateService = resolve(CertificateService::class);
     }
 
     /**
@@ -48,9 +53,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
         $order = $payment->order;
-
-        // Если заказ был оплачен полностью подарочным сертификатом, нужно сформировать платеж на 1 рубль с дальнейшей отменой
-        $order->price = $order->isFullyPaidByCertificate() ? 1 : $order->price;
 
         $paymentData = new PaymentData();
         $builder = $paymentData->getCreateData($order, $returnLink);
@@ -71,11 +73,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $this->logger->error('Payment not saved after create', [
                     'payment_id' => $payment->id,
                 ]);
-            }
-
-            // Отменим платеж заказа, полностью оплаченного подарочным сертификатом
-            if ($order->isFullyPaidByCertificate()) {
-                $this->cancel($data['externalPaymentId']);
             }
         } catch (\Throwable $exception) {
             $this->logger->error('Error from payment system', ['message' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()]);
@@ -293,8 +290,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function createIncomeReceipt(Models\Order\Order $order, Payment $payment): void
     {
         try {
+            $paymentId = $order->isFullyPaidByCertificate() ? $this->getCertificatePaymentId($order) : $payment->data['externalPaymentId'];
             $receiptData = new IncomeReceiptData();
-            $builder = $receiptData->getReceiptData($order, $payment->data['externalPaymentId']);
+            $builder = $receiptData->getReceiptData($order, $paymentId);
             $request = $builder->build();
             $this->logger->info('Start create receipt', $request->toArray());
 
@@ -346,5 +344,43 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $this->logger->error('Error creating refund receipt', ['yandex_payment_id' => $paymentId, 'error' => $exception->getMessage()]);
             report($exception);
         }
+    }
+
+    /**
+     * Получение id платежа юкассы покупки подарочного сертификата
+     */
+    private function getCertificatePaymentId(Order $order): ?string
+    {
+        $certificate = current($order->certificates);
+
+        if ($certificate['id']) {
+            $this->logger->info('Fully payed by certificate', ['certificate_id' => $certificate['id'], 'order_id' => $order->id]);
+
+            $certificateQuery = $this->certificateService->certificateQuery();
+            $certificateQuery->id($certificate['id']);
+            $certificateInfo = $this->certificateService->certificates($certificateQuery);
+
+            if ($certificateInfo) {
+                $this->logger->info('Certificate info', ['certificate_info' => $certificateInfo]);
+                $certificateRequests = $certificateInfo->pluck('request_id')->toArray();
+
+                /** @var Models\Basket\BasketItem $certificateBasketItem */
+                $certificateBasketItem = Models\Basket\BasketItem::query()
+                    ->whereIn('product->request_id', $certificateRequests)
+                    ->with('basket.order.payments')
+                    ->firstOrFail();
+
+                $certificatePayment = $certificateBasketItem->basket->order->payments->first();
+                $result = $certificatePayment->data['externalPaymentId'];
+
+                $this->logger->info('Certificate payment id', ['payment_id' => $result]);
+            } else {
+                throw new ReceiptException('Certificates not found');
+            }
+        } else {
+            throw new ReceiptException('Certificate id in order not found');
+        }
+
+        return $result;
     }
 }
