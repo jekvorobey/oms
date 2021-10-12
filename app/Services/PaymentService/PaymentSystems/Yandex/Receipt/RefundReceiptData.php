@@ -103,8 +103,6 @@ class RefundReceiptData extends ReceiptData
         }
 
         foreach ($order->basket->items as $item) {
-            //$paymentMode = self::PAYMENT_MODE_FULL_PAYMENT; //TODO::Закомментировано до реализации IBT-433
-
             $itemValue = $item->price / $item->qty;
             $offer = $offers[$item->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
@@ -203,7 +201,6 @@ class RefundReceiptData extends ReceiptData
         }
 
         foreach ($orderReturn->items as $item) {
-            //$paymentMode = self::PAYMENT_MODE_FULL_PAYMENT; //TODO::Закомментировано до реализации IBT-433
             $basketItem = $item->basketItem;
             $itemValue = $item->price / $item->qty;
             $offer = $offers[$basketItem->offer_id] ?? null;
@@ -251,17 +248,18 @@ class RefundReceiptData extends ReceiptData
         $settlements = [];
 
         if ($orderReturn) {
-            $refundSum = $orderReturn->price > 0 ? $orderReturn->price : $orderReturn->items->sum('price');
+            $refundSum = $orderReturn->price;
         } else {
             $refundSum = 0;
         }
 
         if ($order->spent_certificate > 0) {
             $restReturnPrice = $order->price - $order->done_return_sum;
-            $restCashlessReturnPrice = min(0, $restReturnPrice - $order->spent_certificate);
             $priceToReturn = $orderReturn->price ?? $order->price;
-            $returnPrepayment = min(0, $priceToReturn - $restCashlessReturnPrice);
-            $returnCashless = min(0, $priceToReturn - $returnPrepayment);
+
+            $restCashlessReturnPrice = max(0, $restReturnPrice - $order->spent_certificate);
+            $returnPrepayment = max(0, $priceToReturn - $restCashlessReturnPrice);
+            $returnCashless = max(0, $priceToReturn - $returnPrepayment);
 
             if ($returnCashless > 0) {
                 $settlements[] = [
@@ -284,7 +282,7 @@ class RefundReceiptData extends ReceiptData
             $settlements[] = [
                 'type' => SettlementType::CASHLESS,
                 'amount' => [
-                    'value' => $refundSum ?: $order->price,
+                    'value' => $refundSum > 0 ? $refundSum : $order->price,
                     'currency' => CurrencyCode::RUB,
                 ],
             ];

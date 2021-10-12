@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use App\Services\RefundCertificateService;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use Illuminate\Console\Command;
 
@@ -53,6 +54,11 @@ class ReturnOrderPayment extends Command
                         : OrderReturn::STATUS_FAILED;
             } else {
                 $orderReturn->status = OrderReturn::STATUS_DONE;
+            }
+
+            if ($orderReturn->price > 0) {
+                $certificateRefundService = new RefundCertificateService();
+                $certificateRefundService->refundSumToCertificate($orderReturn);
             }
 
             $orderReturn->save();

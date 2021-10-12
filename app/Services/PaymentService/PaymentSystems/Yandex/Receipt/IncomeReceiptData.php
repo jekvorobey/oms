@@ -123,13 +123,22 @@ class IncomeReceiptData extends ReceiptData
             ->sum('price');
 
         if ($order->spent_certificate > 0) {
-            $cashlessPrice = $order->price - $order->spent_certificate - $refundSum;
-            $refundSum -= $order->price - $order->spent_certificate;
+            $cashlessPrice = $order->price - $order->spent_certificate;
+            $returnPrepayment = 0;
+            $returnCashless = 0;
+
+            if ($refundSum > 0) {
+                $restReturnPrice = $order->price - $order->done_return_sum;
+                $restCashlessReturnPrice = max(0, $restReturnPrice - $order->spent_certificate);
+                $returnPrepayment = max(0, $refundSum - $restCashlessReturnPrice);
+                $returnCashless = max(0, $refundSum - $returnPrepayment);
+            }
+
             if ($cashlessPrice > 0) {
                 $settlements[] = [
                     'type' => SettlementType::CASHLESS,
                     'amount' => [
-                        'value' => $cashlessPrice,
+                        'value' => $cashlessPrice - $returnCashless,
                         'currency' => CurrencyCode::RUB,
                     ],
                 ];
@@ -138,7 +147,7 @@ class IncomeReceiptData extends ReceiptData
             $settlements[] = [
                 'type' => SettlementType::PREPAYMENT,
                 'amount' => [
-                    'value' => $order->spent_certificate - $refundSum,
+                    'value' => $order->spent_certificate - $returnPrepayment,
                     'currency' => CurrencyCode::RUB,
                 ],
             ];
