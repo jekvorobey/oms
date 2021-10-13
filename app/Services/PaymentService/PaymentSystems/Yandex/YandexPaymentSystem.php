@@ -164,13 +164,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $localPayment->payed_at = Carbon::now();
                 $localPayment->save();
 
-                switch ($notification->getEvent()) {
-                    case NotificationEventType::REFUND_SUCCEEDED:
-                        $refundId = $notification->getObject()->getId();
-                        if ($refundId) {
-                            $this->createRefundReceipt($paymentId, $refundId);
-                        }
-                        break;
+                if ($notification->getEvent() === NotificationEventType::REFUND_SUCCEEDED) {
+                    $refundId = $notification->getObject()->getId();
+                    if ($refundId) {
+                        $this->createRefundReceipt($paymentId, $refundId);
+                    }
                 }
                 break;
             case PaymentStatus::CANCELED:
@@ -208,10 +206,22 @@ class YandexPaymentSystem implements PaymentSystemInterface
         $this->logger->info('Start commit holded payment', $request->toArray());
 
         try {
-            $response = $this->yandexService->capturePayment(
-                $request,
-                $this->externalPaymentId($localPayment)
-            );
+            $order = $localPayment->order;
+
+            if ($order->spent_certificate > 0 && $order->spent_certificate > $order->price - $order->done_return_sum) {
+                $localPayment->status = Models\Payment\PaymentStatus::PAID;
+                $localPayment->payed_at = Carbon::now();
+                $localPayment->save();
+
+                if ($localPayment->data['externalPaymentId']) {
+                    $this->cancel($localPayment->data['externalPaymentId']);
+                }
+            } else {
+                $response = $this->yandexService->capturePayment(
+                    $request,
+                    $this->externalPaymentId($localPayment)
+                );
+            }
 
             if ($localPayment->refund_sum > 0) {
                 $order = $localPayment->order;
@@ -219,6 +229,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $this->createIncomeReceipt($order, $localPayment);
 
                 $order->done_return_sum = $localPayment->refund_sum;
+                $order->save();
             }
             $this->logger->info('Commit result', $response->jsonSerialize());
         } catch (\Throwable $exception) {
@@ -323,8 +334,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $this->logger->info('Start creating refund receipt', $request->toArray());
             $data = $this->yandexService->createReceipt($request)->jsonSerialize();
             $this->logger->info('Return creating refund receipt result', $data);
-
-
         } catch (\Throwable $exception) {
             $this->logger->error('Error creating refund receipt', ['yandex_payment_id' => $paymentId, 'error' => $exception->getMessage()]);
             report($exception);
