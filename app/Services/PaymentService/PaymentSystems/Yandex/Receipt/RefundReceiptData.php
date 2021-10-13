@@ -103,24 +103,13 @@ class RefundReceiptData extends ReceiptData
         }
 
         foreach ($order->basket->items as $item) {
-            $itemValue = $item->price / $item->qty;
+            $itemValue = (float) $item->price / $item->qty;
             $offer = $offers[$item->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant);
-            $receiptItems[] = new ReceiptItem([
-                'description' => $item->name,
-                'quantity' => $item->qty,
-                'amount' => [
-                    'value' => $itemValue,
-                    'currency' => CurrencyCode::RUB,
-                ],
-                'vat_code' => $receiptItemInfo['vat_code'],
-                'payment_mode' => $receiptItemInfo['payment_mode'],
-                'payment_subject' => $receiptItemInfo['payment_subject'],
-//                    'agent_type' => $receiptItemInfo['agent_type'],
-            ]);
+            $receiptItemInfo = $this->getReceiptItemInfo($item, $itemValue, $offer, $merchant);
+            $receiptItems[] = new ReceiptItem($receiptItemInfo);
         }
         if ((float) $order->delivery_price > 0) {
             $paymentMode = PaymentMode::FULL_PAYMENT;
@@ -136,7 +125,7 @@ class RefundReceiptData extends ReceiptData
                 'vat_code' => VatCode::CODE_DEFAULT,
                 'payment_mode' => $paymentMode,
                 'payment_subject' => PaymentSubject::SERVICE,
-//                'agent_type' => false,
+                'agent_type' => false,
             ]);
         }
 
@@ -202,24 +191,13 @@ class RefundReceiptData extends ReceiptData
 
         foreach ($orderReturn->items as $item) {
             $basketItem = $item->basketItem;
-            $itemValue = $item->price / $item->qty;
+            $itemValue = (float) $item->price / $item->qty;
             $offer = $offers[$basketItem->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($basketItem, $offer, $merchant);
-            $receiptItems[] = new ReceiptItem([
-                'description' => $basketItem->name,
-                'quantity' => $basketItem->qty,
-                'amount' => [
-                    'value' => $itemValue,
-                    'currency' => CurrencyCode::RUB,
-                ],
-                'vat_code' => $receiptItemInfo['vat_code'],
-                'payment_mode' => $receiptItemInfo['payment_mode'],
-                'payment_subject' => $receiptItemInfo['payment_subject'],
-//                    'agent_type' => $receiptItemInfo['agent_type'],
-            ]);
+            $receiptItemInfo = $this->getReceiptItemInfo($basketItem, $itemValue, $offer, $merchant);
+            $receiptItems[] = new ReceiptItem($receiptItemInfo);
         }
         if ($orderReturn->is_delivery) {
             $paymentMode = PaymentMode::FULL_PAYMENT;
@@ -233,7 +211,7 @@ class RefundReceiptData extends ReceiptData
                 'vat_code' => VatCode::CODE_DEFAULT,
                 'payment_mode' => $paymentMode,
                 'payment_subject' => PaymentSubject::SERVICE,
-//                'agent_type' => false,
+                'agent_type' => false,
             ]);
         }
 

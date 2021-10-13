@@ -14,6 +14,7 @@ use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\PublicEvent\PublicEventDto;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\PublicEventService\PublicEventService;
+use YooKassa\Model\CurrencyCode;
 use YooKassa\Model\Receipt\AgentType;
 use YooKassa\Model\Receipt\PaymentMode;
 use YooKassa\Model\Receipt\PaymentSubject;
@@ -39,7 +40,7 @@ abstract class ReceiptData
     protected function getMerchants(array $merchantIds): Collection
     {
         $merchantQuery = $this->merchantService->newQuery()
-            ->addFields(MerchantDto::entity(), 'id')
+            ->addFields(MerchantDto::entity(), 'id', 'inn')
             ->include('vats')
             ->setFilter('id', $merchantIds);
         return $this->merchantService->merchants($merchantQuery)->keyBy('id');
@@ -78,8 +79,12 @@ abstract class ReceiptData
         }
     }
 
-    protected function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant): array
-    {
+    protected function getReceiptItemInfo(
+        BasketItem $item,
+        float $itemPrice,
+        ?object $offerInfo,
+        ?object $merchant
+    ): array {
         $paymentMode = PaymentMode::FULL_PAYMENT;
         $paymentSubject = PaymentSubject::COMMODITY;
         $vatCode = VatCode::CODE_DEFAULT;
@@ -107,12 +112,26 @@ abstract class ReceiptData
                 break;
         }
 
-        return [
+        $result = [
+            'description' => $item->name,
+            'quantity' => $item->qty,
+            'amount' => [
+                'value' => $itemPrice,
+                'currency' => CurrencyCode::RUB,
+            ],
             'vat_code' => $vatCode,
             'payment_mode' => $paymentMode,
             'payment_subject' => $paymentSubject,
             'agent_type' => $agentType,
         ];
+
+        if (isset($merchant) && $agentType) {
+            $result['supplier'] = [
+                'inn' => $merchant->inn,
+            ];
+        }
+
+        return $result;
     }
 
     protected function getVatCode(object $offerInfo, object $merchant): ?int
