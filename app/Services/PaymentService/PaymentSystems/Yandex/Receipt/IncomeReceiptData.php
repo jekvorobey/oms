@@ -65,27 +65,13 @@ class IncomeReceiptData extends ReceiptData
 
         foreach ($order->basket->items as $item) {
             if (!in_array($item->id, $itemsForReturn)) {
-                //$paymentMode = self::PAYMENT_MODE_FULL_PAYMENT; //TODO::Закомментировано до реализации IBT-433
-
-                $itemValue = $item->price / $item->qty;
-
+                $itemValue = (float) $item->price / $item->qty;
                 $offer = $offers[$item->offer_id] ?? null;
                 $merchantId = $offer['merchant_id'] ?? null;
                 $merchant = $merchants[$merchantId] ?? null;
 
-                $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant);
-                $receiptItems[] = new ReceiptItem([
-                    'description' => $item->name,
-                    'quantity' => $item->qty,
-                    'amount' => [
-                        'value' => $itemValue,
-                        'currency' => CurrencyCode::RUB,
-                    ],
-                    'vat_code' => $receiptItemInfo['vat_code'],
-                    'payment_mode' => $receiptItemInfo['payment_mode'],
-                    'payment_subject' => $receiptItemInfo['payment_subject'],
-//                    'agent_type' => $receiptItemInfo['agent_type'],
-                ]);
+                $receiptItemInfo = $this->getReceiptItemInfo($item, $itemValue, $offer, $merchant);
+                $receiptItems[] = new ReceiptItem($receiptItemInfo);
             }
         }
         if ((float) $order->delivery_price > 0 && !$deliveryForReturn) {
@@ -102,7 +88,7 @@ class IncomeReceiptData extends ReceiptData
                 'vat_code' => VatCode::CODE_DEFAULT,
                 'payment_mode' => $paymentMode,
                 'payment_subject' => PaymentSubject::SERVICE,
-//                'agent_type' => false,
+                'agent_type' => false,
             ]);
         }
 
