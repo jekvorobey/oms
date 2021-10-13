@@ -12,7 +12,6 @@ use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
 use App\Services\PublicEventService\Email\PublicEventCartStruct;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use App\Observers\Order\OrderObserver;
 
