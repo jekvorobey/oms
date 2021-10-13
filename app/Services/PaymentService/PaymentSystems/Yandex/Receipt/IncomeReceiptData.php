@@ -116,20 +116,22 @@ class IncomeReceiptData extends ReceiptData
     {
         $settlements = [];
 
-        $refundSum = 0;
-        $refundSum += (int) OrderReturn::query()
-            ->where('order_id', $order->id)
-            ->where('status', OrderReturn::STATUS_DONE)
-            ->sum('price');
-
         if ($order->spent_certificate > 0) {
-            $cashlessPrice = $order->price - $order->spent_certificate - $refundSum;
-            $refundSum -= $order->price - $order->spent_certificate;
-            if ($cashlessPrice > 0) {
+            $returnPrepayment = 0;
+            $returnCashless = 0;
+
+            if ($order->done_return_sum > 0) {
+                $restReturnPrice = $order->price - $order->done_return_sum;
+                $restCashlessReturnPrice = max(0, $restReturnPrice - $order->spent_certificate);
+                $returnPrepayment = max(0, $order->done_return_sum - $restCashlessReturnPrice);
+                $returnCashless = max(0, $order->done_return_sum - $returnPrepayment);
+            }
+
+            if ($order->cashless_price > 0) {
                 $settlements[] = [
                     'type' => SettlementType::CASHLESS,
                     'amount' => [
-                        'value' => $cashlessPrice,
+                        'value' => $order->cashless_price - $returnCashless,
                         'currency' => CurrencyCode::RUB,
                     ],
                 ];
@@ -138,7 +140,7 @@ class IncomeReceiptData extends ReceiptData
             $settlements[] = [
                 'type' => SettlementType::PREPAYMENT,
                 'amount' => [
-                    'value' => $order->spent_certificate - $refundSum,
+                    'value' => $order->spent_certificate - $returnPrepayment,
                     'currency' => CurrencyCode::RUB,
                 ],
             ];
@@ -146,7 +148,7 @@ class IncomeReceiptData extends ReceiptData
             $settlements[] = [
                 'type' => SettlementType::CASHLESS,
                 'amount' => [
-                    'value' => $order->price - $refundSum,
+                    'value' => $order->price - $order->done_return_sum,
                     'currency' => CurrencyCode::RUB,
                 ],
             ];

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use App\Services\RefundCertificateService;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use Illuminate\Console\Command;
 
@@ -28,6 +29,7 @@ class ReturnOrderPayment extends Command
     {
         $orderReturns = OrderReturn::query()->where('status', OrderReturn::STATUS_CREATED)->with('order.payments')->get();
 
+        /** @var OrderReturn $orderReturn */
         foreach ($orderReturns as $orderReturn) {
             /** @var Payment $payment */
             $payment = $orderReturn->order->payments->last();
@@ -43,7 +45,7 @@ class ReturnOrderPayment extends Command
                 continue;
             }
 
-            if ($payment->status === PaymentStatus::PAID) {
+            if ($payment->status === PaymentStatus::PAID && $orderReturn->price > 0) {
                 $refundResponse = $paymentSystem->refund($paymentId, $orderReturn);
 
                 $orderReturn->status =
@@ -52,6 +54,11 @@ class ReturnOrderPayment extends Command
                         : OrderReturn::STATUS_FAILED;
             } else {
                 $orderReturn->status = OrderReturn::STATUS_DONE;
+            }
+
+            if ($orderReturn->price > 0 && $orderReturn->order->spent_certificate > 0) {
+                $certificateRefundService = new RefundCertificateService();
+                $certificateRefundService->refundSumToCertificate($orderReturn);
             }
 
             $orderReturn->save();

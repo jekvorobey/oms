@@ -183,8 +183,9 @@ use Illuminate\Support\Collection;
  * @property float $price
  * @property int $spent_bonus
  * @property int $added_bonus
- * @property array $certificates
- * @property float $spent_certificate
+ * @property array $certificates - json-массив примененных Подарочных сертификатов к заказу
+ * @property float $spent_certificate - Потрачено с помощью Подарочного сертификата
+ * @property float $done_return_sum - Сумма, которая уже была возвращена
  *
  * @property int $delivery_type - тип доставки (см. \App\Models\Delivery\DeliveryType)
  * @property float $delivery_price - стоимость доставки iBT (с учетом скидки)
@@ -206,6 +207,9 @@ use Illuminate\Support\Collection;
  * @property int $confirmation_type - тип подтверждения заказа (см. \App\Models\Order\OrderConfirmationType)
  *
  * @property string $number - номер
+ *
+ * //dynamic attributes
+ * @property int $cashless_price - cумма заказа без учета подарочных сертификатов
  *
  * @property Basket $basket - корзина
  * @property Collection|Payment[] $payments - оплаты заказа
@@ -341,6 +345,14 @@ class Order extends OmsModel
     {
         $user = $this->getUser();
         return $user->email;
+    }
+
+    /**
+     * Сумма заказа без учета подарочных сертификатов
+     */
+    public function getCashlessPriceAttribute(): float
+    {
+        return max(0, $this->price - $this->spent_certificate);
     }
 
     /**

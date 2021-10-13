@@ -22,7 +22,7 @@ class PaymentData
     {
         $builder = CreatePaymentRequest::builder();
         return $builder
-            ->setAmount(new MonetaryAmount($order->price))
+            ->setAmount(new MonetaryAmount($order->cashless_price))
             ->setCurrency(CurrencyCode::RUB)
             ->setCapture(false)
             ->setConfirmation([
