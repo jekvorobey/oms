@@ -345,6 +345,14 @@ class Order extends OmsModel
     }
 
     /**
+     * Сумма заказа без учета подарочных сертификатов
+     */
+    public function cashlessPrice(): float
+    {
+        return max(0, $this->price - $this->spent_certificate);
+    }
+
+    /**
      * Заказ оплачен?
      */
     public function isPaid(): bool
