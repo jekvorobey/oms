@@ -56,7 +56,7 @@ class ReturnOrderPayment extends Command
                 $orderReturn->status = OrderReturn::STATUS_DONE;
             }
 
-            if ($orderReturn->price > 0) {
+            if ($orderReturn->price > 0 && $orderReturn->order->spent_certificate > 0) {
                 $certificateRefundService = new RefundCertificateService();
                 $certificateRefundService->refundSumToCertificate($orderReturn);
             }

@@ -208,6 +208,9 @@ use Illuminate\Support\Collection;
  *
  * @property string $number - номер
  *
+ * //dynamic attributes
+ * @property int $cashless_price - cумма заказа без учета подарочных сертификатов
+ *
  * @property Basket $basket - корзина
  * @property Collection|Payment[] $payments - оплаты заказа
  * @property Collection|Delivery[] $deliveries - доставка заказа
@@ -347,7 +350,7 @@ class Order extends OmsModel
     /**
      * Сумма заказа без учета подарочных сертификатов
      */
-    public function cashlessPrice(): float
+    public function getCashlessPriceAttribute(): float
     {
         return max(0, $this->price - $this->spent_certificate);
     }
