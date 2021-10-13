@@ -208,19 +208,19 @@ class YandexPaymentSystem implements PaymentSystemInterface
         try {
             $order = $localPayment->order;
 
-            if ($order->spent_certificate > 0 && $order->spent_certificate > $order->price - $order->done_return_sum) {
-                $localPayment->status = Models\Payment\PaymentStatus::PAID;
-                $localPayment->payed_at = Carbon::now();
-                $localPayment->save();
-
-                if ($localPayment->data['externalPaymentId']) {
-                    $this->cancel($localPayment->data['externalPaymentId']);
-                }
-            } else {
+            if ($amount > $order->spent_certificate) {
                 $response = $this->yandexService->capturePayment(
                     $request,
                     $this->externalPaymentId($localPayment)
                 );
+            } else {
+                $localPayment->status = Models\Payment\PaymentStatus::PAID;
+                $localPayment->payed_at = Carbon::now();
+                $localPayment->save();
+
+                if ($this->externalPaymentId($localPayment)) {
+                    $this->cancel($this->externalPaymentId($localPayment));
+                }
             }
 
             if ($localPayment->refund_sum > 0) {

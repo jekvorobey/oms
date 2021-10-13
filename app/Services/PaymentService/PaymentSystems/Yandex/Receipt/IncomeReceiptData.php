@@ -102,29 +102,22 @@ class IncomeReceiptData extends ReceiptData
     {
         $settlements = [];
 
-        $refundSum = 0;
-        $refundSum += (int) OrderReturn::query()
-            ->where('order_id', $order->id)
-            ->where('status', OrderReturn::STATUS_DONE)
-            ->sum('price');
-
         if ($order->spent_certificate > 0) {
-            $cashlessPrice = $order->price - $order->spent_certificate;
             $returnPrepayment = 0;
             $returnCashless = 0;
 
-            if ($refundSum > 0) {
+            if ($order->done_return_sum > 0) {
                 $restReturnPrice = $order->price - $order->done_return_sum;
                 $restCashlessReturnPrice = max(0, $restReturnPrice - $order->spent_certificate);
-                $returnPrepayment = max(0, $refundSum - $restCashlessReturnPrice);
-                $returnCashless = max(0, $refundSum - $returnPrepayment);
+                $returnPrepayment = max(0, $order->done_return_sum - $restCashlessReturnPrice);
+                $returnCashless = max(0, $order->done_return_sum - $returnPrepayment);
             }
 
-            if ($cashlessPrice > 0) {
+            if ($order->cashless_price > 0) {
                 $settlements[] = [
                     'type' => SettlementType::CASHLESS,
                     'amount' => [
-                        'value' => $cashlessPrice - $returnCashless,
+                        'value' => $order->cashless_price - $returnCashless,
                         'currency' => CurrencyCode::RUB,
                     ],
                 ];
@@ -141,7 +134,7 @@ class IncomeReceiptData extends ReceiptData
             $settlements[] = [
                 'type' => SettlementType::CASHLESS,
                 'amount' => [
-                    'value' => $order->price - $refundSum,
+                    'value' => $order->price - $order->done_return_sum,
                     'currency' => CurrencyCode::RUB,
                 ],
             ];
