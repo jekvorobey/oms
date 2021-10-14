@@ -2,24 +2,23 @@
 
 namespace App\Models\Order;
 
+use App\Core\Notifications\NotificationInterface;
 use App\Core\Notifications\OrderNotification;
 use App\Models\Basket\Basket;
 use App\Models\Delivery\Delivery;
-use App\Models\History\History;
-use App\Models\History\HistoryMainEntity;
-use App\Models\OmsModel;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -219,13 +218,14 @@ use Illuminate\Support\Collection;
  * @property Collection|OrderPromoCode[] $promoCodes - промокоды применённые к заказу
  * @property Collection|OrderBonus[] $bonuses - бонусы применённые к заказу
  * @property Collection|OrderReturn[] $orderReturns - возвраты по заказу
- * @property Collection|History[] $history - история изменений
  * @property OrderReturnReason $orderReturnReason - причина возврата заказа
  */
-class Order extends OmsModel
+class Order extends Model
 {
-    /** @var string */
-    public $notificator = OrderNotification::class;
+    use WithMainHistory;
+
+    /** @var bool */
+    protected static $unguarded = true;
 
     /** @var UserDto */
     protected $user;
@@ -283,14 +283,14 @@ class Order extends OmsModel
         return $this->hasMany(OrderReturn::class);
     }
 
-    public function history(): MorphToMany
-    {
-        return $this->morphToMany(History::class, 'main_entity', (new HistoryMainEntity())->getTable());
-    }
-
     public function orderReturnReason(): BelongsTo
     {
         return $this->belongsTo(OrderReturnReason::class, 'return_reason_id');
+    }
+
+    public function historyNotificator(): ?NotificationInterface
+    {
+        return resolve(OrderNotification::class);
     }
 
     /**

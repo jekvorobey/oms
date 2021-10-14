@@ -10,8 +10,6 @@ use App\Models\Delivery\DeliveryType;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 use App\Models\Order\OrderStatus;
 use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
@@ -65,22 +63,12 @@ class DeliveryObserver
     ];
 
     /**
-     * Handle the delivery "created" event.
-     * @return void
-     */
-    public function created(Delivery $delivery)
-    {
-        History::saveEvent(HistoryType::TYPE_CREATE, $delivery->order, $delivery);
-    }
-
-    /**
      * Handle the delivery "updated" event.
      * @return void
      * @throws \Exception
      */
     public function updated(Delivery $delivery)
     {
-        History::saveEvent(HistoryType::TYPE_UPDATE, $delivery->order, $delivery);
         $this->setStatusToShipments($delivery);
         $this->setIsCanceledToShipments($delivery);
         $this->setStatusToOrder($delivery);
@@ -251,15 +239,6 @@ class DeliveryObserver
         } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
         }
-    }
-
-    /**
-     * Handle the delivery "deleting" event.
-     * @throws \Exception
-     */
-    public function deleting(Delivery $delivery)
-    {
-        History::saveEvent(HistoryType::TYPE_DELETE, $delivery->order, $delivery);
     }
 
     /**

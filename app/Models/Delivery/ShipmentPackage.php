@@ -2,7 +2,8 @@
 
 namespace App\Models\Delivery;
 
-use App\Models\OmsModel;
+use App\Models\WithHistory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
@@ -38,8 +39,10 @@ use Illuminate\Support\Collection;
  * @property-read Shipment $shipment
  * @property-read Collection|ShipmentPackageItem[] $items
  */
-class ShipmentPackage extends OmsModel
+class ShipmentPackage extends Model
 {
+    use WithHistory;
+
     /**
      * Заполняемые поля модели
      */
@@ -55,6 +58,9 @@ class ShipmentPackage extends OmsModel
 
     /** @var array */
     protected $fillable = self::FILLABLE;
+
+    /** @var bool */
+    protected static $unguarded = true;
 
     /** @var string */
     protected $table = 'shipment_packages';
@@ -79,6 +85,11 @@ class ShipmentPackage extends OmsModel
     public function items(): HasMany
     {
         return $this->hasMany(ShipmentPackageItem::class);
+    }
+
+    protected function historyMainModel(): array
+    {
+        return [$this->shipment->delivery->order, $this->shipment];
     }
 
     public function recalcWeight(bool $save = true): void

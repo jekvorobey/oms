@@ -13,7 +13,7 @@ class AbstractNotification
     /**
      * @return array
      */
-    protected static function getBaseNotification(): NotificationDto
+    protected function getBaseNotification(): NotificationDto
     {
         return new NotificationDto([
             'type' => '',

@@ -3,7 +3,8 @@
 namespace App\Models\Delivery;
 
 use App\Models\Basket\BasketItem;
-use App\Models\OmsModel;
+use App\Models\WithHistory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -29,8 +30,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read ShipmentPackage $shipmentPackage
  * @property-read BasketItem $basketItem
  */
-class ShipmentPackageItem extends OmsModel
+class ShipmentPackageItem extends Model
 {
+    use WithHistory;
+
     /**
      * Заполняемые поля модели
      */
@@ -43,6 +46,9 @@ class ShipmentPackageItem extends OmsModel
 
     /** @var array */
     protected $fillable = self::FILLABLE;
+
+    /** @var bool */
+    protected static $unguarded = true;
 
     /** @var string */
     protected $table = 'shipment_package_items';
@@ -58,5 +64,10 @@ class ShipmentPackageItem extends OmsModel
     public function basketItem(): BelongsTo
     {
         return $this->belongsTo(BasketItem::class);
+    }
+
+    protected function historyMainModel()
+    {
+        return [$this->shipmentPackage->shipment->delivery->order, $this->shipmentPackage->shipment];
     }
 }

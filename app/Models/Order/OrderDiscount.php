@@ -2,8 +2,8 @@
 
 namespace App\Models\Order;
 
-use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Query\JoinClause;
 
@@ -39,7 +39,7 @@ use Illuminate\Database\Query\JoinClause;
  *
  * @property Order $order
  */
-class OrderDiscount extends OmsModel
+class OrderDiscount extends Model
 {
     /**
      * Заполняемые поля модели
@@ -61,6 +61,8 @@ class OrderDiscount extends OmsModel
 
     /** @var array */
     protected $casts = ['items' => 'array'];
+    /** @var bool */
+    protected static $unguarded = true;
 
     /**
      * Учитывать только те скидки на заказы, в которых использовалась скидка $discountId,
