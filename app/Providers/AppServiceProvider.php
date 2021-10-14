@@ -99,20 +99,21 @@ class AppServiceProvider extends ServiceProvider
             BasketItem::class,
             Cargo::class,
             Delivery::class,
-            Order::class,
-            OrderComment::class,
-            OrderReturn::class,
-            Payment::class,
             Shipment::class,
             ShipmentItem::class,
             ShipmentPackage::class,
             ShipmentPackageItem::class,
+            Order::class,
+            OrderComment::class,
+            OrderReturn::class,
+            Payment::class,
         ];
+
         $morphMap = [];
         foreach ($entitiesWithHistory as $entity) {
-            $entityClass = explode('\\', $entity);
-            $morphMap[end($entityClass)] = $entity;
+            $morphMap[class_basename($entity)] = $entity;
         }
+
         Relation::morphMap($morphMap);
     }
 }

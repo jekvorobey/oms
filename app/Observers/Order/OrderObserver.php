@@ -10,8 +10,6 @@ use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
@@ -69,8 +67,6 @@ class OrderObserver
      */
     public function created(Order $order)
     {
-        History::saveEvent(HistoryType::TYPE_CREATE, $order, $order);
-
         $order->basket->is_belongs_to_order = true;
         $order->basket->save();
 
@@ -85,8 +81,6 @@ class OrderObserver
      */
     public function updated(Order $order)
     {
-        History::saveEvent(HistoryType::TYPE_UPDATE, $order, $order);
-
         $this->setPaymentStatusToChildren($order);
         $this->setIsCanceledToChildren($order);
         $this->setIsProblemToChildren($order);
@@ -257,8 +251,6 @@ class OrderObserver
      */
     public function deleting(Order $order)
     {
-        History::saveEvent(HistoryType::TYPE_DELETE, $order, $order);
-
         //todo Поправить удаления связанных сущностей
         if ($order->basket) {
             $order->basket->delete();

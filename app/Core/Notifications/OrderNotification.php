@@ -3,10 +3,10 @@
 namespace App\Core\Notifications;
 
 use App\Models\History\HistoryType;
-use App\Models\OmsModel;
 use App\Models\Order\Order;
 use App\Models\Payment\PaymentStatus;
 use Greensight\Message\Dto\Notification\NotificationDto;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Уведомления по заказам
@@ -19,14 +19,14 @@ class OrderNotification extends AbstractNotification implements NotificationInte
      * @param Order $mainModel
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
-    public static function notify(int $type, OmsModel $mainModel, OmsModel $model): void
+    public function notify(int $type, Model $mainModel, Model $model): void
     {
-        static::notifyAdmins($type, $mainModel);
+        $this->notifyAdmins($type, $mainModel);
     }
 
-    protected static function notifyAdmins(int $type, Order $order): void
+    protected function notifyAdmins(int $type, Order $order): void
     {
-        $notification = static::getBaseNotification();
+        $notification = $this->getBaseNotification();
 
         switch ($type) {
             case HistoryType::TYPE_CREATE:

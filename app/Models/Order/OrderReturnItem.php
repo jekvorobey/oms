@@ -3,8 +3,8 @@
 namespace App\Models\Order;
 
 use App\Models\Basket\BasketItem;
-use App\Models\OmsModel;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -43,8 +43,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read OrderReturn $orderReturn - возврат по заказу
  * @property-read BasketItem $basketItem - элемент корзины
  */
-class OrderReturnItem extends OmsModel
+class OrderReturnItem extends Model
 {
+    /** @var bool */
+    protected static $unguarded = true;
+
     protected $casts = [
         'product' => 'json',
     ];

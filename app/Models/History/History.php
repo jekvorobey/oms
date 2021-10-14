@@ -2,9 +2,11 @@
 
 namespace App\Models\History;
 
-use App\Models\OmsModel;
+use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 /**
@@ -49,10 +51,14 @@ use Illuminate\Support\Collection;
  *
  * @property Collection|HistoryMainEntity[] $historyMainEntities
  */
-class History extends OmsModel
+class History extends Model
 {
     /** @var string */
     protected $table = 'history';
+
+    /** @var bool */
+    protected static $unguarded = true;
+
     /** @var array */
     protected $casts = [
         'data' => 'array',
@@ -64,39 +70,34 @@ class History extends OmsModel
     }
 
     /**
-     * @param OmsModel|array $mainModels
-     * @param OmsModel|null $model
+     * @param Model|Model[] $mainModels Привязываем событие к основным сущностям, на деталке которых оно будет выводится в истории изменения
+     * @param Model|WithMainHistory $model
      */
-    public static function saveEvent(int $type, $mainModels, OmsModel $model): void
+    public static function saveEvent(int $type, $mainModels, Model $model): void
     {
-        //Сохраняем событие в историю
-        $modelClass = explode('\\', get_class($model));
         /** @var RequestInitiator $user */
         $user = resolve(RequestInitiator::class);
         $event = new self();
         $event->type = $type;
         $event->user_id = $user->userId();
 
-        $event->entity_id = $model->id;
-        $event->entity_type = end($modelClass);
-        $event->data = $type != HistoryType::TYPE_DELETE ? $model->getDirty() : $model->toArray();
+        $event->entity_id = $model->getKey();
+        $event->entity_type = class_basename($model);
+        $event->data = $type !== HistoryType::TYPE_DELETE ? $model->getDirty() : $model->toArray();
         $event->save();
 
         //Привязываем событие к основным сущностям, деталке которых оно будет выводится в истории изменения
-        if (!is_array($mainModels)) {
-            $mainModels = [$mainModels];
-        }
+        $mainModels = Arr::wrap($mainModels);
+
+        /** @var Model|WithMainHistory $mainModel */
         foreach ($mainModels as $mainModel) {
             $historyMainEntity = new HistoryMainEntity();
             $historyMainEntity->history_id = $event->id;
-            $mainModelClass = explode('\\', get_class($mainModel));
-            $historyMainEntity->main_entity_type = end($mainModelClass);
             $historyMainEntity->main_entity_id = $mainModel->id;
+            $historyMainEntity->main_entity_type = class_basename($mainModel);
             $historyMainEntity->save();
 
-            if ($mainModel->notificator) {
-                $mainModel->notificator::notify($type, $mainModel, $model);
-            }
+            optional($mainModel->historyNotificator())->notify($type, $mainModel, $model);
         }
     }
 }

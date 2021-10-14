@@ -2,7 +2,7 @@
 
 namespace App\Models\Order;
 
-use App\Models\OmsModel;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -36,7 +36,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $owner_id - id реферального партнёра
  */
 
-class OrderPromoCode extends OmsModel
+class OrderPromoCode extends Model
 {
     /** @var string */
     protected $table = 'order_promo_codes';
@@ -68,6 +68,8 @@ class OrderPromoCode extends OmsModel
 
     /** @var array */
     protected $fillable = self::FILLABLE;
+    /** @var bool */
+    protected static $unguarded = true;
 
     public function order(): BelongsTo
     {

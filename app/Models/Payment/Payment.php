@@ -2,12 +2,13 @@
 
 namespace App\Models\Payment;
 
-use App\Models\OmsModel;
 use App\Models\Order\Order;
+use App\Models\WithHistory;
 use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
@@ -78,8 +79,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property-read Order $order
  */
-class Payment extends OmsModel
+class Payment extends Model
 {
+    use WithHistory;
+
     /** @var bool */
     public $timestamps = false;
     /** @var bool */
@@ -114,6 +117,7 @@ class Payment extends OmsModel
             case PaymentSystem::TEST:
                 return new LocalPaymentSystem();
         }
+
         return null;
     }
 
@@ -122,8 +126,13 @@ class Payment extends OmsModel
         return $this->belongsTo(Order::class);
     }
 
+    protected function historyMainModel(): ?Order
+    {
+        return $this->order;
+    }
+
     public function commitHolded()
     {
-        $this->paymentSystem()->commitHoldedPayment($this, $this->sum - (float) $this->refund_sum);
+        optional($this->paymentSystem())->commitHoldedPayment($this, $this->sum - (float) $this->refund_sum);
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Models\Payment;
 
-use App\Models\OmsModel;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * @OA\Schema(
@@ -41,10 +41,13 @@ use App\Models\OmsModel;
  * @property string|array|null $excluded_customers - Недоступен для указанных пользователей
  * @property int|bool $active - Статус метода оплаты
  */
-class PaymentMethod extends OmsModel
+class PaymentMethod extends Model
 {
     /** @deprecated ? */
     public const ONLINE = 1;
+
+    /** @var bool */
+    protected static $unguarded = true;
 
     /**
      * @return array

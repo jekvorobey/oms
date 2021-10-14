@@ -3,11 +3,10 @@
 namespace App\Models\Order;
 
 use App\Models\History\History;
-use App\Models\History\HistoryMainEntity;
-use App\Models\OmsModel;
+use App\Models\WithHistory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -44,11 +43,16 @@ use Illuminate\Support\Collection;
  * @property-read Order $order - заказ
  * @property Collection|History[] $history - история изменений
  */
-class OrderReturn extends OmsModel
+class OrderReturn extends Model
 {
+    use WithHistory;
+
     public const STATUS_CREATED = 1;
     public const STATUS_DONE = 2;
     public const STATUS_FAILED = 3;
+
+    /** @var bool */
+    protected static $unguarded = true;
 
     public function items(): HasMany
     {
@@ -60,9 +64,9 @@ class OrderReturn extends OmsModel
         return $this->belongsTo(Order::class);
     }
 
-    public function history(): MorphToMany
+    protected function historyMainModel(): ?Order
     {
-        return $this->morphToMany(History::class, 'main_entity', (new HistoryMainEntity())->getTable());
+        return $this->order;
     }
 
     /**

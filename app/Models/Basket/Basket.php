@@ -2,8 +2,8 @@
 
 namespace App\Models\Basket;
 
-use App\Models\OmsModel;
 use App\Models\Order\Order;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
@@ -39,7 +39,7 @@ use Illuminate\Support\Collection;
  * @property-read Order|null $order - заказ
  * @property-read Collection|BasketItem[] $items - элементы (товары)
  */
-class Basket extends OmsModel
+class Basket extends Model
 {
     /** корзина с товарами */
     public const TYPE_PRODUCT = 1;
