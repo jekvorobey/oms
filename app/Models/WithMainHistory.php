@@ -30,7 +30,7 @@ trait WithMainHistory
      */
     public function history(): MorphToMany
     {
-        return $this->morphToMany(History::class, 'main_entity', new HistoryMainEntity());
+        return $this->morphToMany(History::class, 'main_entity', HistoryMainEntity::class);
     }
 
     /** @return Model|WithMainHistory */
