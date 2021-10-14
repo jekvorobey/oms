@@ -27,19 +27,15 @@ class LocalPaymentSystem implements PaymentSystemInterface
      */
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
-        $uuid = Uuid::uuid1()->toString();
         $data = $payment->data;
-        $data['paymentId'] = $uuid;
         $data['returnLink'] = $returnLink;
         $data['handlerUrl'] = route('handler.localPayment');
-        $data['paymentLink'] = route('paymentPage', ['paymentId' => $uuid]);
         $payment->data = $data;
-        $payment->save();
-    }
 
-    public function paymentLink(Payment $payment): ?string
-    {
-        return $payment->data['paymentLink'] ?? null;
+        $uuid = Uuid::uuid1()->toString();
+        $payment->external_payment_id = $uuid;
+        $payment->payment_link = route('paymentPage', ['paymentId' => $uuid]);
+        $payment->save();
     }
 
     /**
@@ -64,7 +60,6 @@ class LocalPaymentSystem implements PaymentSystemInterface
         }
         if ($status == self::STATUS_DONE) {
             $payment->status = PaymentStatus::PAID;
-            $payment->payed_at = Carbon::now();
             $payment->save();
         }
     }
@@ -156,6 +151,15 @@ class LocalPaymentSystem implements PaymentSystemInterface
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public function createIncomeReceipt(Order $order, Payment $payment): void
+    {
+        // TODO: Implement createIncomeReceipt() method.
+    }
+
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function createRefundAllReceipt(Order $order, Payment $payment): void
     {
         // TODO: Implement createIncomeReceipt() method.
     }

@@ -13,15 +13,20 @@ use App\Services\OrderService;
  */
 class PaymentObserver
 {
-    /**
-     * Handle the order "saved" event.
-     * @return void
-     */
-    public function saved(Payment $payment)
+    public function saving(Payment $payment): void
+    {
+        if ($payment->wasChanged('status') && $payment->status === PaymentStatus::PAID) {
+            $payment->payed_at = now();
+        }
+    }
+
+    public function saved(Payment $payment): void
     {
         if ($payment->wasChanged('status')) {
             $this->updateOrderPaymentStatus($payment->order);
+
             $this->createIncomeReceipt($payment);
+            $this->createRefundReceipt($payment);
         }
     }
 
@@ -41,6 +46,19 @@ class PaymentObserver
             $paymentSystem = $payment->paymentSystem();
             if ($paymentSystem) {
                 $paymentSystem->createIncomeReceipt($payment->order, $payment);
+                $payment->is_receipt_sent = true;
+                $payment->save();
+            }
+        }
+    }
+
+    public function createRefundReceipt(Payment $payment): void
+    {
+        if ($payment->status === PaymentStatus::TIMEOUT) {
+            $paymentSystem = $payment->paymentSystem();
+
+            if ($paymentSystem) {
+                $paymentSystem->createRefundAllReceipt($payment->order, $payment);
                 $payment->is_receipt_sent = true;
                 $payment->save();
             }

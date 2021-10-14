@@ -63,7 +63,7 @@ class PaymentsController extends Controller
             throw new AccessDeniedHttpException();
         }
 
-        $link = $payment->paymentSystem()->paymentLink($payment);
+        $link = $payment->payment_link;
         if (!$link) {
             $link = $paymentService->start($payment->id, $returnUrl);
         }

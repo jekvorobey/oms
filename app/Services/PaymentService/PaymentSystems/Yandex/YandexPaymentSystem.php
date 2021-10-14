@@ -13,10 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
 use YooKassa\Model\Notification\AbstractNotification;
-use YooKassa\Model\Notification\NotificationCanceled;
-use YooKassa\Model\Notification\NotificationRefundSucceeded;
-use YooKassa\Model\Notification\NotificationSucceeded;
-use YooKassa\Model\Notification\NotificationWaitingForCapture;
+use YooKassa\Model\Notification\NotificationFactory;
 use YooKassa\Model\NotificationEventType;
 use YooKassa\Model\PaymentStatus;
 use App\Models\Payment\PaymentType;
@@ -49,20 +46,17 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         $order = $payment->order;
 
-        $paymentData = new PaymentData();
-        $builder = $paymentData->getCreateData($order, $returnLink);
-        $request = $builder->build();
+        $request = (new PaymentData())
+            ->getCreateData($order, $returnLink)
+            ->build();
         $this->logger->info('Create payment data', $request->toArray());
 
         try {
             $response = $this->yandexService->createPayment($request);
             $this->logger->info('Create payment result', $response->jsonSerialize());
 
-            $data = $payment->data;
-            $data['externalPaymentId'] = $response['id'];
-            $data['paymentUrl'] = $response['confirmation']['confirmation_url'];
-            $payment->data = $data;
-
+            $payment->external_payment_id = $response->getId();
+            $payment->payment_link = $response->getConfirmation()->getConfirmationUrl();
             $ok = $payment->save();
             if (!$ok) {
                 $this->logger->error('Payment not saved after create', [
@@ -76,22 +70,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * Получить от внешней системы ссылку страницы оплаты.
-     */
-    public function paymentLink(Payment $payment): ?string
-    {
-        return $payment->data['paymentUrl'] ?? null;
-    }
-
-    /**
-     * Получить от id оплаты во внешней системе.
-     */
-    public function externalPaymentId(Payment $payment): ?string
-    {
-        return $payment->data['externalPaymentId'] ?? null;
-    }
-
-    /**
      * Обработать данные от платёжной ситсемы о совершении платежа.
      * @param array $data
      * @throws \Exception
@@ -99,7 +77,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function handlePushPayment(array $data): void
     {
         $this->logger->info('Handle external payment');
-        $notification = $this->getNotification($data);
+        $notification = (new NotificationFactory())->factory($data);
 
         $this->logger->info('External event data', $notification->jsonSerialize());
 
@@ -118,20 +96,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
             ]);
 
             $this->processExternalPayment($paymentId, $payment, $notification);
-        }
-    }
-
-    private function getNotification(array $data): AbstractNotification
-    {
-        switch ($data['event']) {
-            case NotificationEventType::PAYMENT_SUCCEEDED:
-                return new NotificationSucceeded($data);
-            case NotificationEventType::PAYMENT_CANCELED:
-                return new NotificationCanceled($data);
-            case NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE:
-                return new NotificationWaitingForCapture($data);
-            case NotificationEventType::REFUND_SUCCEEDED:
-                return new NotificationRefundSucceeded($data);
         }
     }
 
@@ -161,7 +125,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
 
                 $localPayment->status = Models\Payment\PaymentStatus::PAID;
-                $localPayment->payed_at = Carbon::now();
                 $localPayment->save();
 
                 if ($notification->getEvent() === NotificationEventType::REFUND_SUCCEEDED) {
@@ -176,7 +139,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
                 $localPayment->save();
 
-                $this->createRefundAllItemsReceipt($order, $payment->id);
                 break;
         }
 
@@ -209,29 +171,25 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $order = $localPayment->order;
 
             if ($amount > $order->spent_certificate) {
-                $response = $this->yandexService->capturePayment(
-                    $request,
-                    $this->externalPaymentId($localPayment)
-                );
+                $response = $this->yandexService->capturePayment($request, $localPayment->external_payment_id);
+                $this->logger->info('Commit result', $response->jsonSerialize());
             } else {
                 $localPayment->status = Models\Payment\PaymentStatus::PAID;
-                $localPayment->payed_at = now();
                 $localPayment->save();
 
-                if ($this->externalPaymentId($localPayment)) {
-                    $this->cancel($this->externalPaymentId($localPayment));
+                if ($localPayment->external_payment_id) {
+                    $this->cancel($localPayment->external_payment_id);
                 }
             }
 
             if ($localPayment->refund_sum > 0) {
                 $order = $localPayment->order;
-                $this->createRefundAllItemsReceipt($order, $this->externalPaymentId($localPayment));
+                $this->createRefundAllReceipt($order, $localPayment);
                 $this->createIncomeReceipt($order, $localPayment);
 
                 $order->done_return_sum = $localPayment->refund_sum;
                 $order->save();
             }
-            $this->logger->info('Commit result', $response->jsonSerialize());
         } catch (\Throwable $exception) {
             $this->logger->error('Error from payment system', ['message' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()]);
             report($exception);
@@ -275,7 +233,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     $this->logger->info('refund payment result', $response->jsonSerialize());
                 }
 
-                $orderReturn->refund_id = $response->id;
+                $orderReturn->refund_id = $response->getId();
                 $orderReturn->save();
             }
 
@@ -312,7 +270,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         try {
             $receiptData = new IncomeReceiptData();
-            $builder = $receiptData->getReceiptData($order, $this->externalPaymentId($payment));
+            $builder = $receiptData->getReceiptData($order, $payment->external_payment_id);
             $request = $builder->build();
             $this->logger->info('Start create receipt', $request->toArray());
 
@@ -326,18 +284,18 @@ class YandexPaymentSystem implements PaymentSystemInterface
     /**
      * Создание чека возврата всех позиций
      */
-    public function createRefundAllItemsReceipt(Order $order, string $paymentId): void
+    public function createRefundAllReceipt(Order $order, Payment $payment): void
     {
         try {
             $refundAllItemsReceiptData = new RefundReceiptData();
-            $builder = $refundAllItemsReceiptData->getRefundReceiptAllItemsData($order, $paymentId);
+            $builder = $refundAllItemsReceiptData->getRefundReceiptAllItemsData($order, $payment->external_payment_id);
             $request = $builder->build();
 
             $this->logger->info('Start creating refund receipt', $request->toArray());
             $data = $this->yandexService->createReceipt($request)->jsonSerialize();
             $this->logger->info('Return creating refund receipt result', $data);
         } catch (\Throwable $exception) {
-            $this->logger->error('Error creating refund receipt', ['yandex_payment_id' => $paymentId, 'error' => $exception->getMessage()]);
+            $this->logger->error('Error creating refund receipt', ['yandex_payment_id' => $payment->external_payment_id, 'error' => $exception->getMessage()]);
             report($exception);
         }
     }
@@ -345,7 +303,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     /**
      * Создание чека возврата отмененных позиций
      */
-    public function createRefundReceipt(string $paymentId, string $refundId): void
+    private function createRefundReceipt(string $paymentId, string $refundId): void
     {
         try {
             /** @var OrderReturn $orderReturn */

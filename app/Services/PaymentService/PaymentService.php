@@ -59,7 +59,7 @@ class PaymentService
         $payment->save();
         $paymentSystem->createExternalPayment($payment, $returnUrl);
 
-        return $paymentSystem->paymentLink($payment);
+        return $payment->payment_link;
     }
 
     /**
@@ -92,12 +92,7 @@ class PaymentService
         /** @var Payment $certificatePayment */
         $certificatePayment = $certificateBasketItem->basket->order->payments->first();
 
-        $paymentSystem = $certificatePayment->paymentSystem();
-        if (!$paymentSystem) {
-            return null;
-        }
-
-        return $paymentSystem->externalPaymentId($certificatePayment);
+        return $certificatePayment->external_payment_id ?? null;
     }
 
     /**
@@ -106,7 +101,6 @@ class PaymentService
     public function pay(Payment $payment): bool
     {
         $payment->status = PaymentStatus::PAID;
-        $payment->payed_at = Carbon::now();
 
         return $payment->save();
     }
