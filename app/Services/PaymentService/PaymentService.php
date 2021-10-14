@@ -67,33 +67,37 @@ class PaymentService
      */
     private function getCertificatePaymentId(Order $order): ?string
     {
-        $certificate = current($order->certificates);
+        $certificate = head($order->certificates);
         $certificateService = resolve(CertificateService::class);
 
-        if ($certificate['id']) {
-            $certificateQuery = $certificateService->certificateQuery();
-            $certificateQuery->id($certificate['id']);
-            $certificateInfo = $certificateService->certificates($certificateQuery);
-
-            if ($certificateInfo) {
-                $certificateRequests = $certificateInfo->pluck('request_id')->toArray();
-
-                /** @var BasketItem $certificateBasketItem */
-                $certificateBasketItem = BasketItem::query()
-                    ->whereIn('product->request_id', $certificateRequests)
-                    ->with('basket.order.payments')
-                    ->firstOrFail();
-
-                $certificatePayment = $certificateBasketItem->basket->order->payments->first();
-                $result = $certificatePayment->data['externalPaymentId'];
-            } else {
-                throw new PaymentException('Certificates not found');
-            }
-        } else {
+        if (!isset($certificate['id'])) {
             throw new PaymentException('Certificate id in order not found');
         }
 
-        return $result;
+        $certificateQuery = $certificateService->certificateQuery()->id($certificate['id']);
+        $certificateInfo = $certificateService->certificates($certificateQuery);
+
+        if ($certificateInfo->isEmpty()) {
+            throw new PaymentException('Certificates not found');
+        }
+
+        $certificateRequests = $certificateInfo->pluck('request_id')->toArray();
+
+        /** @var BasketItem $certificateBasketItem */
+        $certificateBasketItem = BasketItem::query()
+            ->whereIn('product->request_id', $certificateRequests)
+            ->with('basket.order.payments')
+            ->firstOrFail();
+
+        /** @var Payment $certificatePayment */
+        $certificatePayment = $certificateBasketItem->basket->order->payments->first();
+
+        $paymentSystem = $certificatePayment->paymentSystem();
+        if (!$paymentSystem) {
+            return null;
+        }
+
+        return $paymentSystem->externalPaymentId($certificatePayment);
     }
 
     /**

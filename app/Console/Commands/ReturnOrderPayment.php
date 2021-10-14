@@ -33,20 +33,17 @@ class ReturnOrderPayment extends Command
         foreach ($orderReturns as $orderReturn) {
             /** @var Payment $payment */
             $payment = $orderReturn->order->payments->last();
-
             if (!$payment) {
                 continue;
             }
 
-            $paymentId = $payment->data['externalPaymentId'];
             $paymentSystem = $payment->paymentSystem();
-
             if (!$paymentSystem) {
                 continue;
             }
 
             if ($payment->status === PaymentStatus::PAID && $orderReturn->price > 0) {
-                $refundResponse = $paymentSystem->refund($paymentId, $orderReturn);
+                $refundResponse = $paymentSystem->refund($paymentSystem->externalPaymentId($payment), $orderReturn);
 
                 $orderReturn->status =
                     $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS

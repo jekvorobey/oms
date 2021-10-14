@@ -215,7 +215,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 );
             } else {
                 $localPayment->status = Models\Payment\PaymentStatus::PAID;
-                $localPayment->payed_at = Carbon::now();
+                $localPayment->payed_at = now();
                 $localPayment->save();
 
                 if ($this->externalPaymentId($localPayment)) {
@@ -234,6 +234,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $this->logger->info('Commit result', $response->jsonSerialize());
         } catch (\Throwable $exception) {
             $this->logger->error('Error from payment system', ['message' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()]);
+            report($exception);
         }
     }
 
@@ -254,16 +255,17 @@ class YandexPaymentSystem implements PaymentSystemInterface
         try {
             $order = $orderReturn->order;
 
-            $refundData = new RefundReceiptData();
             if ($order->isFullyPaidByCertificate()) {
-                $returnReceiptBuilder = $refundData->getRefundReceiptPartiallyData($paymentId, $orderReturn);
+                $refundReceiptData = new RefundReceiptData();
+                $returnReceiptBuilder = $refundReceiptData->getRefundReceiptPartiallyData($paymentId, $orderReturn);
                 $request = $returnReceiptBuilder->build();
                 $this->logger->info('Start create refund receipt', $request->toArray());
 
                 $response = $this->yandexService->createReceipt($request);
                 $this->logger->info('Return receipt', $response->jsonSerialize());
             } else {
-                $builder = $refundData->getRefundData($paymentId, $orderReturn);
+                $refundData = new RefundData();
+                $builder = $refundData->getCreateData($paymentId, $orderReturn);
                 $request = $builder->build();
 
                 $this->logger->info('Start refund payment', $request->toArray());
@@ -306,11 +308,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
     /**
      * Создание чека прихода
      */
-    public function createIncomeReceipt(Models\Order\Order $order, Payment $payment): void
+    public function createIncomeReceipt(Order $order, Payment $payment): void
     {
         try {
             $receiptData = new IncomeReceiptData();
-            $builder = $receiptData->getReceiptData($order, $payment->data['externalPaymentId']);
+            $builder = $receiptData->getReceiptData($order, $this->externalPaymentId($payment));
             $request = $builder->build();
             $this->logger->info('Start create receipt', $request->toArray());
 

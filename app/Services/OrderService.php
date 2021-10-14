@@ -88,11 +88,9 @@ class OrderService
                 /** @var Payment $payment */
                 $payment = $order->payments->last();
                 $paymentSystem = $payment->paymentSystem();
-
-                if (!$paymentSystem) {
-                    return true;
+                if ($paymentSystem) {
+                    $paymentSystem->cancel($paymentSystem->externalPaymentId($payment));
                 }
-                $paymentSystem->cancel($payment->data['externalPaymentId']);
             }
 
             return true;

@@ -208,7 +208,8 @@ use Illuminate\Support\Collection;
  * @property string $number - номер
  *
  * //dynamic attributes
- * @property int $cashless_price - cумма заказа без учета подарочных сертификатов
+ * @property-read float $cashless_price - cумма заказа без учета подарочных сертификатов
+ * @property-read float $remaining_price - cумма заказа за вычетом совершенных возвратов
  *
  * @property Basket $basket - корзина
  * @property Collection|Payment[] $payments - оплаты заказа
@@ -353,6 +354,14 @@ class Order extends Model
     public function getCashlessPriceAttribute(): float
     {
         return max(0, $this->price - $this->spent_certificate);
+    }
+
+    /**
+     * Сумма заказа за вычетом совершенных возвратов
+     */
+    public function getRemainingPriceAttribute(): float
+    {
+        return max(0, $this->price - $this->done_return_sum);
     }
 
     /**
