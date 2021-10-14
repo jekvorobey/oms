@@ -78,11 +78,6 @@ class LocalPaymentSystem implements PaymentSystemInterface
         // TODO: Implement commitHoldedPayment() method.
     }
 
-    public function externalPaymentId(Payment $payment): ?string
-    {
-        return $payment->data['paymentId'] ?? null;
-    }
-
     /**
      * @inheritDoc
      */

@@ -9,7 +9,6 @@ use App\Models;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\IncomeReceiptData;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\RefundReceiptData;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
 use YooKassa\Model\Notification\AbstractNotification;
@@ -105,9 +104,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         AbstractNotification $notification
     ): void {
         /** @var Payment $localPayment */
-        $localPayment = Payment::query()
-            ->where('data->externalPaymentId', $paymentId)
-            ->firstOrFail();
+        $localPayment = Payment::byExternalPaymentId($paymentId)->firstOrFail();
         $order = $localPayment->order;
 
         $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;

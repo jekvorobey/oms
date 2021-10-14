@@ -8,6 +8,7 @@ use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -81,6 +82,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property string|null $external_payment_id
  * @property string|null $payment_link
+ *
+ * @method static|Builder byExternalPaymentId(string|null $externalPaymentId)
  */
 class Payment extends Model
 {
@@ -145,6 +148,11 @@ class Payment extends Model
     public function setExternalPaymentIdAttribute($value): void
     {
         $this->data['externalPaymentId'] = $value;
+    }
+
+    public function scopeByExternalPaymentId(Builder $query, ?string $externalPaymentId): void
+    {
+        $query->where('data->externalPaymentId', $externalPaymentId);
     }
 
     public function getPaymentLinkAttribute(): ?string

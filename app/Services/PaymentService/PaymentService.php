@@ -39,9 +39,7 @@ class PaymentService
         }
 
         if ($payment->sum == 0) {
-            $payment->data = [
-                'externalPaymentId' => $this->getCertificatePaymentId($payment->order),
-            ];
+            $payment->external_payment_id = $this->getCertificatePaymentId($payment->order);
             $payment->save();
 
             if (!$this->pay($payment)) {

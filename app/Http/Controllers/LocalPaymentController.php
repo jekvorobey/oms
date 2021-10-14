@@ -19,7 +19,7 @@ class LocalPaymentController extends Controller
         if (!$paymentId) {
             throw new NotFoundHttpException();
         }
-        $payment = ExternalPayment::query()->where('data->paymentId', $paymentId)->first();
+        $payment = ExternalPayment::byExternalPaymentId($paymentId)->first();
         if (!$payment) {
             throw new NotFoundHttpException();
         }
