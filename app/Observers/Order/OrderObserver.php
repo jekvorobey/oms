@@ -535,7 +535,7 @@ class OrderObserver
         /** @var Payment $payment */
         $payment = $order->payments->first();
 
-        $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
+        $link = optional($payment)->payment_link;
 
         $button = (function () use ($link, $override) {
             if ($override == self::OVERRIDE_AWAITING_PAYMENT) {
