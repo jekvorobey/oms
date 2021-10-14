@@ -82,7 +82,7 @@ class OrderService
 
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);
-            $orderReturnService->createOrderReturn($orderReturnDto);
+            $orderReturnService->create($orderReturnDto);
 
             if ($order->payment_status === PaymentStatus::HOLD) {
                 /** @var Payment $payment */
