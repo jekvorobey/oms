@@ -147,7 +147,7 @@ class Payment extends AbstractModel
 
     public function setExternalPaymentIdAttribute($value): void
     {
-        $this->data['externalPaymentId'] = $value;
+        $this->data = array_merge($this->data, ['externalPaymentId' => $value]);
     }
 
     public function scopeByExternalPaymentId(Builder $query, ?string $externalPaymentId): void
@@ -162,7 +162,7 @@ class Payment extends AbstractModel
 
     public function setPaymentLinkAttribute($value): void
     {
-        $this->data['paymentLink'] = $value;
+        $this->data = array_merge($this->data, ['paymentLink' => $value]);
     }
 
     public function commitHolded()
