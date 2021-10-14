@@ -37,16 +37,6 @@ interface PaymentSystemInterface
     public function commitHoldedPayment(Payment $localPayment, $amount);
 
     /**
-     * Получить от внешней системы ссылку страницы оплаты.
-     */
-    public function paymentLink(Payment $payment): ?string;
-
-    /**
-     * Получить от id оплаты во внешней системе.
-     */
-    public function externalPaymentId(Payment $payment): ?string;
-
-    /**
      * Обработать данные от платёжной ситсемы о совершении платежа.
      *
      * @param array $data
@@ -74,4 +64,9 @@ interface PaymentSystemInterface
      * Создание чека прихода
      */
     public function createIncomeReceipt(Order $order, Payment $payment): void;
+
+    /**
+     * Создание чека возврата (при отмене всего заказа/платежа)
+     */
+    public function createRefundAllReceipt(Order $order, Payment $payment): void;
 }

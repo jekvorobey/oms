@@ -3,7 +3,7 @@
 namespace App\Models\Basket;
 
 use App\Models\Order\Order;
-use Illuminate\Database\Eloquent\Model;
+use Greensight\CommonMsa\Models\AbstractModel;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
@@ -39,7 +39,7 @@ use Illuminate\Support\Collection;
  * @property-read Order|null $order - заказ
  * @property-read Collection|BasketItem[] $items - элементы (товары)
  */
-class Basket extends Model
+class Basket extends AbstractModel
 {
     /** корзина с товарами */
     public const TYPE_PRODUCT = 1;

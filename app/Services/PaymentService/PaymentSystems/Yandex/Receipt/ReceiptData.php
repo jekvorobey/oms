@@ -18,6 +18,7 @@ use YooKassa\Model\CurrencyCode;
 use YooKassa\Model\Receipt\AgentType;
 use YooKassa\Model\Receipt\PaymentMode;
 use YooKassa\Model\Receipt\PaymentSubject;
+use YooKassa\Model\ReceiptItem;
 
 /**
  * Абстрактный класс для формирования запроса на создание чека
@@ -55,74 +56,50 @@ abstract class ReceiptData
                 ->include('organizer', 'sprints.ticketTypes.offer');
             $publicEvents = $this->publicEventService->findPublicEvents($publicEventQuery);
 
-            if ($publicEvents) {
-                return $publicEvents->map(function (PublicEventDto $publicEvent) {
-                    $offerInfo = [];
-                    collect($publicEvent->sprints)->map(function ($sprint) use ($publicEvent, &$offerInfo) {
-                        array_map(function ($ticketType) use ($publicEvent, &$offerInfo) {
-                            $offerInfo = new OfferDto([
-                                'id' => $ticketType['offer']['id'],
-                                'merchant_id' => $publicEvent->organizer->merchant_id,
-                            ]);
-                        }, $sprint['ticketTypes']);
-                    });
-                    return $offerInfo;
-                })->keyBy('id');
+            if ($publicEvents->isEmpty()) {
+                return collect();
             }
-        } else {
-            $offersQuery = $this->offerService->newQuery()
-                ->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
-                ->include('product')
-                ->setFilter('id', $offerIds);
 
-            return $this->offerService->offers($offersQuery)->keyBy('id');
+            return $publicEvents->map(function (PublicEventDto $publicEvent) {
+                $offerInfo = [];
+                collect($publicEvent->sprints)->map(function ($sprint) use ($publicEvent, &$offerInfo) {
+                    array_map(function ($ticketType) use ($publicEvent, &$offerInfo) {
+                        $offerInfo = new OfferDto([
+                            'id' => $ticketType['offer']['id'],
+                            'merchant_id' => $publicEvent->organizer->merchant_id,
+                        ]);
+                    }, $sprint['ticketTypes']);
+                });
+                return $offerInfo;
+            })->keyBy('id');
         }
+
+        $offersQuery = $this->offerService->newQuery()
+            ->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
+            ->include('product')
+            ->setFilter('id', $offerIds);
+
+        return $this->offerService->offers($offersQuery)->keyBy('id');
     }
 
-    protected function getReceiptItemInfo(
-        BasketItem $item,
-        float $itemPrice,
-        ?object $offerInfo,
-        ?object $merchant
-    ): array {
-        $paymentMode = PaymentMode::FULL_PAYMENT;
-        $paymentSubject = PaymentSubject::COMMODITY;
-        $vatCode = VatCode::CODE_DEFAULT;
-        $agentType = false;
-        switch ($item->type) {
-            case Basket::TYPE_MASTER:
-                $paymentSubject = PaymentSubject::SERVICE;
-
-                if (isset($offerInfo, $merchant)) {
-                    $vatCode = $this->getVatCode($offerInfo, $merchant);
-                }
-                $agentType = AgentType::AGENT;
-                break;
-            case Basket::TYPE_PRODUCT:
-                $paymentSubject = PaymentSubject::COMMODITY;
-
-                if (isset($offerInfo, $merchant)) {
-                    $vatCode = $this->getVatCode($offerInfo, $merchant);
-                }
-                $agentType = AgentType::COMMISSIONER;
-                break;
-            case Basket::TYPE_CERTIFICATE:
-                $paymentSubject = PaymentSubject::PAYMENT;
-                $paymentMode = PaymentMode::ADVANCE;
-                break;
-        }
+    protected function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant): array
+    {
+        $paymentMode = $this->getItemPaymentMode($item);
+        $paymentSubject = $this->getItemPaymentSubject($item);
+        $agentType = $this->getItemAgentType($item);
+        $vatCode = $this->getItemVatCode($offerInfo, $merchant);
 
         $result = [
             'description' => $item->name,
             'quantity' => $item->qty,
             'amount' => [
-                'value' => $itemPrice,
+                'value' => (float) $item->price / $item->qty,
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => $vatCode,
             'payment_mode' => $paymentMode,
             'payment_subject' => $paymentSubject,
-            'agent_type' => $agentType,
+            'agent_type' => $agentType ?: false,
         ];
 
         if (isset($merchant) && $agentType) {
@@ -134,8 +111,36 @@ abstract class ReceiptData
         return $result;
     }
 
-    protected function getVatCode(object $offerInfo, object $merchant): ?int
+    protected function getItemPaymentSubject(BasketItem $item): string
     {
+        return [
+            Basket::TYPE_MASTER => PaymentSubject::SERVICE,
+            Basket::TYPE_PRODUCT => PaymentSubject::COMMODITY,
+            Basket::TYPE_CERTIFICATE => PaymentSubject::PAYMENT,
+        ][$item->type] ?? PaymentSubject::COMMODITY;
+    }
+
+    protected function getItemPaymentMode(BasketItem $item): string
+    {
+        return [
+            Basket::TYPE_CERTIFICATE => PaymentMode::FULL_PAYMENT,
+        ][$item->type] ?? PaymentMode::ADVANCE;
+    }
+
+    protected function getItemAgentType(BasketItem $item): ?string
+    {
+        return [
+            Basket::TYPE_MASTER => AgentType::AGENT,
+            Basket::TYPE_PRODUCT => AgentType::COMMISSIONER,
+        ][$item->type] ?? null;
+    }
+
+    protected function getItemVatCode(?object $offerInfo, ?object $merchant): ?int
+    {
+        if (!isset($offerInfo, $merchant)) {
+            return VatCode::CODE_DEFAULT;
+        }
+
         $vatValue = null;
         $itemMerchantVats = $merchant['vats'];
         usort($itemMerchantVats, static function ($a, $b) {
@@ -181,5 +186,21 @@ abstract class ReceiptData
         }
 
         return null;
+    }
+
+    protected function getDeliveryReceiptItem(float $deliveryPrice): ReceiptItem
+    {
+        return new ReceiptItem([
+            'description' => 'Доставка',
+            'quantity' => 1,
+            'amount' => [
+                'value' => $deliveryPrice,
+                'currency' => CurrencyCode::RUB,
+            ],
+            'vat_code' => VatCode::CODE_DEFAULT,
+            'payment_mode' => PaymentMode::FULL_PAYMENT,
+            'payment_subject' => PaymentSubject::SERVICE,
+            'agent_type' => false,
+        ]);
     }
 }

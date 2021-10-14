@@ -2,8 +2,8 @@
 
 namespace App\Models\Order;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -36,7 +36,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $owner_id - id реферального партнёра
  */
 
-class OrderPromoCode extends Model
+class OrderPromoCode extends AbstractModel
 {
     /** @var string */
     protected $table = 'order_promo_codes';

@@ -2,12 +2,14 @@
 
 namespace App\Services\PaymentService\PaymentSystems\Yandex\Dictionary;
 
+use YooKassa\Common\AbstractEnum;
+
 /**
  * Справочник доступных систем налогообложения
  *
  * @package App\Services\PaymentService\PaymentSystems\Yandex\Dictionary
  */
-class Tax
+class Tax extends AbstractEnum
 {
     /** Общая система налогообложения */
     public const BASE = 1;
@@ -27,7 +29,7 @@ class Tax
     /** Патентная система налогообложения */
     public const PATENT = 6;
 
-    protected static array $validValues = [
+    protected static $validValues = [
         self::BASE => true,
         self::SIMPLE => true,
         self::SIMPLE_MINUS_INCOME => true,

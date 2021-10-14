@@ -10,7 +10,6 @@ use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,6 +19,7 @@ use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\ProductService\ProductService;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -189,7 +189,7 @@ use Pim\Services\ProductService\ProductService;
  * @property-read Collection|ShipmentPackage[] $packages
  * @property-read Cargo $cargo
  */
-class Shipment extends Model
+class Shipment extends AbstractModel
 {
     use WithMainHistory;
     use WithWeightAndSizes;

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -51,7 +52,7 @@ use Illuminate\Support\Collection;
  *
  * @property Collection|HistoryMainEntity[] $historyMainEntities
  */
-class History extends Model
+class History extends AbstractModel
 {
     /** @var string */
     protected $table = 'history';

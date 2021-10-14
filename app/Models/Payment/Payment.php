@@ -8,8 +8,9 @@ use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -78,8 +79,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property array $data
  *
  * @property-read Order $order
+ *
+ * @property string|null $external_payment_id
+ * @property string|null $payment_link
+ *
+ * @method static|Builder byExternalPaymentId(string|null $externalPaymentId)
  */
-class Payment extends Model
+class Payment extends AbstractModel
 {
     use WithHistory;
 
@@ -91,7 +97,10 @@ class Payment extends Model
     /** @var array */
     protected $dates = ['created_at', 'payed_at', 'expires_at', 'yandex_expires_at'];
     /** @var array */
-    protected $casts = ['data' => 'array'];
+    protected $casts = [
+        'data' => 'array',
+        'status' => 'int',
+    ];
 
     /**
      * Payment constructor.
@@ -129,6 +138,31 @@ class Payment extends Model
     protected function historyMainModel(): ?Order
     {
         return $this->order;
+    }
+
+    public function getExternalPaymentIdAttribute(): ?string
+    {
+        return $this->data['externalPaymentId'] ?? null;
+    }
+
+    public function setExternalPaymentIdAttribute($value): void
+    {
+        $this->data['externalPaymentId'] = $value;
+    }
+
+    public function scopeByExternalPaymentId(Builder $query, ?string $externalPaymentId): void
+    {
+        $query->where('data->externalPaymentId', $externalPaymentId);
+    }
+
+    public function getPaymentLinkAttribute(): ?string
+    {
+        return $this->data['paymentLink'] ?? null;
+    }
+
+    public function setPaymentLinkAttribute($value): void
+    {
+        $this->data['paymentLink'] = $value;
     }
 
     public function commitHolded()

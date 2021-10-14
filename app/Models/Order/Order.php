@@ -15,12 +15,12 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -208,7 +208,8 @@ use Illuminate\Support\Collection;
  * @property string $number - номер
  *
  * //dynamic attributes
- * @property int $cashless_price - cумма заказа без учета подарочных сертификатов
+ * @property-read float $cashless_price - cумма заказа без учета подарочных сертификатов
+ * @property-read float $remaining_price - cумма заказа за вычетом совершенных возвратов
  *
  * @property Basket $basket - корзина
  * @property Collection|Payment[] $payments - оплаты заказа
@@ -220,7 +221,7 @@ use Illuminate\Support\Collection;
  * @property Collection|OrderReturn[] $orderReturns - возвраты по заказу
  * @property OrderReturnReason $orderReturnReason - причина возврата заказа
  */
-class Order extends Model
+class Order extends AbstractModel
 {
     use WithMainHistory;
 
@@ -353,6 +354,14 @@ class Order extends Model
     public function getCashlessPriceAttribute(): float
     {
         return max(0, $this->price - $this->spent_certificate);
+    }
+
+    /**
+     * Сумма заказа за вычетом совершенных возвратов
+     */
+    public function getRemainingPriceAttribute(): float
+    {
+        return max(0, $this->price - $this->done_return_sum);
     }
 
     /**
