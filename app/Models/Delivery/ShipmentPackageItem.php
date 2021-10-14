@@ -4,8 +4,8 @@ namespace App\Models\Delivery;
 
 use App\Models\Basket\BasketItem;
 use App\Models\WithHistory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -30,7 +30,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read ShipmentPackage $shipmentPackage
  * @property-read BasketItem $basketItem
  */
-class ShipmentPackageItem extends Model
+class ShipmentPackageItem extends AbstractModel
 {
     use WithHistory;
 

@@ -3,9 +3,9 @@
 namespace App\Models\Order;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Query\JoinClause;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -39,7 +39,7 @@ use Illuminate\Database\Query\JoinClause;
  *
  * @property Order $order
  */
-class OrderDiscount extends Model
+class OrderDiscount extends AbstractModel
 {
     /**
      * Заполняемые поля модели

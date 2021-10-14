@@ -4,8 +4,8 @@ namespace App\Models\Order;
 
 use App\Models\Basket\BasketItem;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -43,7 +43,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read OrderReturn $orderReturn - возврат по заказу
  * @property-read BasketItem $basketItem - элемент корзины
  */
-class OrderReturnItem extends Model
+class OrderReturnItem extends AbstractModel
 {
     /** @var bool */
     protected static $unguarded = true;

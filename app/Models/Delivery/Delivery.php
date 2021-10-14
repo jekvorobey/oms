@@ -8,11 +8,11 @@ use App\Models\WithHistory;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Services\ListsService\ListsService;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -238,7 +238,7 @@ use Illuminate\Support\Collection;
  * @property-read Collection|Shipment[] $shipments
  * @property OrderReturnReason $orderReturnReason - причина возврата заказа
  */
-class Delivery extends Model
+class Delivery extends AbstractModel
 {
     use WithHistory;
     use WithWeightAndSizes;

@@ -11,7 +11,6 @@ use App\Services\PublicEventService\Cart\PublicEventCartRepository;
 use App\Services\PublicEventService\Cart\PublicEventCartStruct;
 use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -25,6 +24,7 @@ use Pim\Services\ProductService\ProductService;
 use Pim\Services\PublicEventMediaService\PublicEventMediaService;
 use Pim\Services\PublicEventSprintService\PublicEventSprintService;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -67,7 +67,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @property-read ShipmentItem $shipmentItem
  * @property-read ShipmentPackageItem $shipmentPackageItem
  */
-class BasketItem extends Model
+class BasketItem extends AbstractModel
 {
     use WithHistory;
 

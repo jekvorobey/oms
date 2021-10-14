@@ -9,8 +9,8 @@ use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -85,7 +85,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @method static|Builder byExternalPaymentId(string|null $externalPaymentId)
  */
-class Payment extends Model
+class Payment extends AbstractModel
 {
     use WithHistory;
 

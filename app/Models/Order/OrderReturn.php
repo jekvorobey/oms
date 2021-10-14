@@ -4,11 +4,11 @@ namespace App\Models\Order;
 
 use App\Models\History\History;
 use App\Models\WithHistory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -43,7 +43,7 @@ use Illuminate\Support\Collection;
  * @property-read Order $order - заказ
  * @property Collection|History[] $history - история изменений
  */
-class OrderReturn extends Model
+class OrderReturn extends AbstractModel
 {
     use WithHistory;
 

@@ -15,12 +15,12 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -221,7 +221,7 @@ use Illuminate\Support\Collection;
  * @property Collection|OrderReturn[] $orderReturns - возвраты по заказу
  * @property OrderReturnReason $orderReturnReason - причина возврата заказа
  */
-class Order extends Model
+class Order extends AbstractModel
 {
     use WithMainHistory;
 

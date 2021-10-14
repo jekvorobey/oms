@@ -3,10 +3,10 @@
 namespace App\Models\Delivery;
 
 use App\Models\WithHistory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -39,7 +39,7 @@ use Illuminate\Support\Collection;
  * @property-read Shipment $shipment
  * @property-read Collection|ShipmentPackageItem[] $items
  */
-class ShipmentPackage extends Model
+class ShipmentPackage extends AbstractModel
 {
     use WithHistory;
 
