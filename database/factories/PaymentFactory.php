@@ -15,6 +15,7 @@ $factory->define(Payment::class, function (Faker $faker) {
     return [
         'order_id' => $order->id,
         'sum' => $order->basket->items->sum('cost'),
+        'refund_sum' => 0,
         'payed_at' => $faker->dateTime,
         'expires_at' => $faker->dateTime('-30 days'),
         'yandex_expires_at' => $faker->dateTime('-30 days'),

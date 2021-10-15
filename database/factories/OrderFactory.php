@@ -32,6 +32,7 @@ $factory->define(Order::class, function (Faker $faker) {
         'delivery_price' => $deliveryPrice,
         'cost' => $cost,
         'price' => $price,
+        'spent_certificate' => 0,
         'is_require_check' => $faker->boolean(),
         'payment_status' => $faker->randomElement(PaymentStatus::validValues()),
     ];
