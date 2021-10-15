@@ -66,9 +66,8 @@ class OrderBonus extends AbstractModel
 
     /**
      * Подтверждение удержанных бонусов
-     * @return bool
      */
-    public function approveBonus()
+    public function approveBonus(): bool
     {
         try {
             /** @var CustomerService $customerService */
@@ -88,6 +87,13 @@ class OrderBonus extends AbstractModel
         } catch (\Throwable $exception) {
             return false;
         }
+    }
+
+    public function cancel(): void
+    {
+        $this->update([
+            'status' => self::STATUS_CANCEL,
+        ]);
     }
 
     /**

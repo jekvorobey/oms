@@ -240,6 +240,7 @@ class OrderObserver
         $this->setAwaitingConfirmationStatus($order);
         $this->sendTicketsEmail($order);
         $this->returnTickets($order);
+        $this->cancelBonuses($order);
 
         //Данная команда должна быть в самом низу перед всеми $this->set*Status()
         $this->setStatusAt($order);
@@ -432,6 +433,21 @@ class OrderObserver
             $orderService = resolve(OrderService::class);
             //Не сохраняем данные по заказу внутри метода возврата билетов, иначе будет цикл
             $orderService->returnTickets(collect()->push($order), false);
+        }
+    }
+
+    /**
+     * Отклонение начисленных бонусов за заказ
+     */
+    protected function cancelBonuses(Order $order): void
+    {
+        if ($order->is_canceled && $order->wasChanged('is_canceled')) {
+            $customerService = resolve(CustomerService::class);
+            $customerService->declineByOrder($order->customer_id, $order->id);
+
+            foreach ($order->bonuses as $bonus) {
+                $bonus->cancel();
+            }
         }
     }
 

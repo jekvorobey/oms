@@ -78,7 +78,7 @@ abstract class TemplatedDocumentCreator extends DocumentCreator
 
         $pdfPath = $converter->convertTo("$filename.pdf");
 
-        Storage::delete($path);
+        unlink($path);
 
         return $pdfPath;
     }

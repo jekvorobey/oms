@@ -52,7 +52,7 @@ abstract class DocumentCreator
     {
         $this->uploadFile($documentDto, $path, pathinfo($path, PATHINFO_BASENAME));
 
-        Storage::delete($path);
+        unlink($path);
     }
 
     /**
