@@ -115,13 +115,13 @@ abstract class ReceiptData
             'vat_code' => $vatCode,
             'payment_mode' => $paymentMode,
             'payment_subject' => $paymentSubject,
-            'agent_type' => $agentType ?: false,
         ];
 
         if (isset($merchant) && $agentType) {
             $result['supplier'] = [
                 'inn' => $merchant->inn,
             ];
+            $result['agent_type'] = $agentType;
         }
 
         return $result;
