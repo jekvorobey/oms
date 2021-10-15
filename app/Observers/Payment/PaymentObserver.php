@@ -54,13 +54,11 @@ class PaymentObserver
 
     public function createRefundReceipt(Payment $payment): void
     {
-        if ($payment->status === PaymentStatus::TIMEOUT) {
+        if ($payment->wasChanged('status') && $payment->status === PaymentStatus::TIMEOUT) {
             $paymentSystem = $payment->paymentSystem();
 
             if ($paymentSystem) {
                 $paymentSystem->createRefundAllReceipt($payment->order, $payment);
-                $payment->is_receipt_sent = true;
-                $payment->save();
             }
         }
     }
