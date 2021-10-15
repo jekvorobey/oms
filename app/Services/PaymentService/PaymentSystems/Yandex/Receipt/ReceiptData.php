@@ -216,7 +216,6 @@ abstract class ReceiptData
             'vat_code' => VatCode::CODE_DEFAULT,
             'payment_mode' => PaymentMode::FULL_PAYMENT,
             'payment_subject' => PaymentSubject::SERVICE,
-            'agent_type' => false,
         ]);
     }
 }
