@@ -188,11 +188,11 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
             if ($localPayment->refund_sum > 0) {
                 $order = $localPayment->order;
-                $this->createRefundAllReceipt($order, $localPayment);
-                $this->createIncomeReceipt($order, $localPayment);
-
                 $order->done_return_sum = $localPayment->refund_sum;
                 $order->save();
+
+                $this->createRefundAllReceipt($order, $localPayment);
+                $this->createIncomeReceipt($order, $localPayment);
             }
         } catch (\Throwable $exception) {
             $this->logger->error('Error from payment system', ['message' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()]);
