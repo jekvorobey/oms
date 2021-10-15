@@ -47,17 +47,11 @@ class IncomeReceiptData extends ReceiptData
             ->where('is_delivery', true)
             ->exists();
 
-        $merchantIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('product.merchant_id')->toArray();
-        $merchants = collect();
-        if (!empty($merchantIds)) {
-            $merchants = $this->getMerchants($merchantIds);
-        }
-
-        $offerIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('offer_id')->toArray();
-        $offers = collect();
-        if ($offerIds) {
-            $offers = $this->getOffers($offerIds, $order);
-        }
+        $offerIds = $order->basket->items
+            ->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])
+            ->pluck('offer_id')
+            ->toArray();
+        [$offers, $merchants] = $this->loadOffersAndMerchants($offerIds, $order);
 
         foreach ($order->basket->items as $item) {
             if ($returnedItemIds->contains($item->id)) {

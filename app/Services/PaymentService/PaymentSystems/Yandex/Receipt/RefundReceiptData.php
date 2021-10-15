@@ -64,17 +64,11 @@ class RefundReceiptData extends ReceiptData
     {
         $receiptItems = [];
 
-        $merchantIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('product.merchant_id')->toArray();
-        $merchants = collect();
-        if (!empty($merchantIds)) {
-            $merchants = $this->getMerchants($merchantIds);
-        }
-
-        $offers = collect();
-        $offerIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('offer_id')->toArray();
-        if ($offerIds) {
-            $offers = $this->getOffers($offerIds, $order);
-        }
+        $offerIds = $order->basket->items
+            ->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])
+            ->pluck('offer_id')
+            ->toArray();
+        [$offers, $merchants] = $this->loadOffersAndMerchants($offerIds, $order);
 
         foreach ($order->basket->items as $item) {
             $offer = $offers[$item->offer_id] ?? null;
@@ -99,27 +93,11 @@ class RefundReceiptData extends ReceiptData
         $receiptItems = [];
         $order = $orderReturn->order;
 
-        $merchants = collect();
-        $merchantIds = $orderReturn->items
-            ->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])
-            ->map(static function (OrderReturnItem $orderReturnItem) {
-                return $orderReturnItem->basketItem->product['merchant_id'];
-            })
-            ->toArray();
-
-        if ($merchantIds) {
-            $merchants = $this->getMerchants($merchantIds);
-        }
-
-        $offers = collect();
         $offerIds = $orderReturn->items
             ->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])
             ->pluck('offer_id')
             ->toArray();
-
-        if ($offerIds) {
-            $offers = $this->getOffers($offerIds, $order);
-        }
+        [$offers, $merchants] = $this->loadOffersAndMerchants($offerIds, $order);
 
         foreach ($orderReturn->items as $item) {
             $basketItem = $item->basketItem;

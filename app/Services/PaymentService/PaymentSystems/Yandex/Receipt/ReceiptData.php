@@ -38,6 +38,22 @@ abstract class ReceiptData
         $this->publicEventService = resolve(PublicEventService::class);
     }
 
+    protected function loadOffersAndMerchants(array $offerIds, Order $order): array
+    {
+        $offers = collect();
+        if ($offerIds) {
+            $offers = $this->getOffers($offerIds, $order);
+        }
+
+        $merchantIds = $offers->pluck('merchant_id')->filter()->toArray();
+        $merchants = collect();
+        if (!empty($merchantIds)) {
+            $merchants = $this->getMerchants($merchantIds);
+        }
+
+        return [$offers, $merchants];
+    }
+
     protected function getMerchants(array $merchantIds): Collection
     {
         $merchantQuery = $this->merchantService->newQuery()
@@ -50,28 +66,7 @@ abstract class ReceiptData
     protected function getOffers(array $offerIds, Order $order): Collection
     {
         if ($order->isPublicEventOrder()) {
-            $publicEventQuery = $this->publicEventService->query()
-                ->addFields(PublicEventDto::class)
-                ->setFilter('offer_id', $offerIds)
-                ->include('organizer', 'sprints.ticketTypes.offer');
-            $publicEvents = $this->publicEventService->findPublicEvents($publicEventQuery);
-
-            if ($publicEvents->isEmpty()) {
-                return collect();
-            }
-
-            return $publicEvents->map(function (PublicEventDto $publicEvent) {
-                $offerInfo = [];
-                collect($publicEvent->sprints)->map(function ($sprint) use ($publicEvent, &$offerInfo) {
-                    array_map(function ($ticketType) use ($publicEvent, &$offerInfo) {
-                        $offerInfo = new OfferDto([
-                            'id' => $ticketType['offer']['id'],
-                            'merchant_id' => $publicEvent->organizer->merchant_id,
-                        ]);
-                    }, $sprint['ticketTypes']);
-                });
-                return $offerInfo;
-            })->keyBy('id');
+            return $this->getOffersForPublicEvents($offerIds);
         }
 
         $offersQuery = $this->offerService->newQuery()
@@ -80,6 +75,27 @@ abstract class ReceiptData
             ->setFilter('id', $offerIds);
 
         return $this->offerService->offers($offersQuery)->keyBy('id');
+    }
+
+    private function getOffersForPublicEvents(array $offerIds): Collection
+    {
+        $publicEventQuery = $this->publicEventService->query()
+            ->addFields(PublicEventDto::class)
+            ->setFilter('offer_id', $offerIds)
+            ->include('organizer', 'sprints.ticketTypes.offer');
+        $publicEvents = $this->publicEventService->findPublicEvents($publicEventQuery);
+
+        return $publicEvents->groupBy('organizer.merchant_id')->flatMap(function (Collection $publicEvents, $merchantId) {
+            return $publicEvents->pluck('sprints.*.ticketTypes.*.offer.id')
+                ->collapse()
+                ->filter()
+                ->map(function ($offerId) use ($merchantId) {
+                    return new OfferDto([
+                        'id' => $offerId,
+                        'merchant_id' => $merchantId,
+                    ]);
+                });
+        })->keyBy('id');
     }
 
     protected function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant): array
