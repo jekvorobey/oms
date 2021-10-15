@@ -7,6 +7,7 @@ use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Dto\VatDto;
@@ -285,20 +286,17 @@ class YandexPaymentSystem implements PaymentSystemInterface
                     ->include('organizer', 'sprints.ticketTypes.offer');
                 $publicEvents = $this->publicEventService->findPublicEvents($publicEventQuery);
 
-                if ($publicEvents) {
-                    $offers = $publicEvents->map(function (PublicEventDto $publicEvent) {
-                        $offerInfo = [];
-                        collect($publicEvent->sprints)->map(function ($sprint) use ($publicEvent, &$offerInfo) {
-                            array_map(function ($ticketType) use ($publicEvent, &$offerInfo) {
-                                $offerInfo = new OfferDto([
-                                    'id' => $ticketType['offer']['id'],
-                                    'merchant_id' => $publicEvent->organizer->merchant_id,
-                                ]);
-                            }, $sprint['ticketTypes']);
-                        });
-                        return $offerInfo;
-                    })->keyBy('id');
-                }
+                $offers = $publicEvents->groupBy('organizer.merchant_id')->flatMap(function (Collection $publicEvents, $merchantId) {
+                    return $publicEvents->pluck('sprints.*.ticketTypes.*.offer.id')
+                       ->collapse()
+                       ->filter()
+                       ->map(function ($offerId) use ($merchantId) {
+                           return new OfferDto([
+                               'id' => (int) $offerId,
+                               'merchant_id' => (int) $merchantId,
+                           ]);
+                       });
+                })->keyBy('id');
             } else {
                 $offersQuery = $this->offerService->newQuery()
                     ->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
@@ -309,7 +307,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
 
         $merchants = collect();
-        $merchantIds = $offers->pluck('merchant_id')->toArray();
+        $merchantIds = $offers->pluck('merchant_id')->filter()->toArray();
         if ($merchantIds) {
             $merchantQuery = $this->merchantService->newQuery()
                 ->addFields(MerchantDto::entity(), 'id')
