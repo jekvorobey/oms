@@ -6,12 +6,9 @@ use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderReturnItem;
-use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
 use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequest;
 use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequestBuilder;
 use YooKassa\Model\CurrencyCode;
-use YooKassa\Model\Receipt\PaymentMode;
-use YooKassa\Model\Receipt\PaymentSubject;
 use YooKassa\Model\Receipt\SettlementType;
 use YooKassa\Model\ReceiptCustomer;
 use YooKassa\Model\ReceiptItem;
@@ -42,54 +39,35 @@ class IncomeReceiptData extends ReceiptData
     {
         $receiptItems = [];
 
-        $itemsForReturn = OrderReturnItem::query()
+        $returnedItemIds = OrderReturnItem::query()
             ->whereIn('basket_item_id', $order->basket->items->pluck('id'))
-            ->pluck('basket_item_id')
-            ->toArray();
+            ->pluck('basket_item_id');
         $deliveryForReturn = OrderReturn::query()
             ->where('order_id', $order->id)
             ->where('is_delivery', true)
             ->exists();
 
-        $merchantIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('product.merchant_id')->toArray();
-        $merchants = collect();
-        if (!empty($merchantIds)) {
-            $merchants = $this->getMerchants($merchantIds);
-        }
-
-        $offerIds = $order->basket->items->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])->pluck('offer_id')->toArray();
-        $offers = collect();
-        if ($offerIds) {
-            $offers = $this->getOffers($offerIds, $order);
-        }
+        $offerIds = $order->basket->items
+            ->whereIn('type', [Basket::TYPE_PRODUCT, Basket::TYPE_MASTER])
+            ->pluck('offer_id')
+            ->toArray();
+        [$offers, $merchants] = $this->loadOffersAndMerchants($offerIds, $order);
 
         foreach ($order->basket->items as $item) {
-            if (!in_array($item->id, $itemsForReturn)) {
-                $itemValue = (float) $item->price / $item->qty;
-                $offer = $offers[$item->offer_id] ?? null;
-                $merchantId = $offer['merchant_id'] ?? null;
-                $merchant = $merchants[$merchantId] ?? null;
-
-                $receiptItemInfo = $this->getReceiptItemInfo($item, $itemValue, $offer, $merchant);
-                $receiptItems[] = new ReceiptItem($receiptItemInfo);
+            if ($returnedItemIds->contains($item->id)) {
+                continue;
             }
-        }
-        if ((float) $order->delivery_price > 0 && !$deliveryForReturn) {
-            $paymentMode = PaymentMode::FULL_PAYMENT;
-            $deliveryPrice = $order->delivery_price;
 
-            $receiptItems[] = new ReceiptItem([
-                'description' => 'Доставка',
-                'quantity' => 1,
-                'amount' => [
-                    'value' => $deliveryPrice,
-                    'currency' => CurrencyCode::RUB,
-                ],
-                'vat_code' => VatCode::CODE_DEFAULT,
-                'payment_mode' => $paymentMode,
-                'payment_subject' => PaymentSubject::SERVICE,
-                'agent_type' => false,
-            ]);
+            $offer = $offers[$item->offer_id] ?? null;
+            $merchantId = $offer['merchant_id'] ?? null;
+            $merchant = $merchants[$merchantId] ?? null;
+
+            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant);
+            $receiptItems[] = new ReceiptItem($receiptItemInfo);
+        }
+
+        if ((float) $order->delivery_price > 0 && !$deliveryForReturn) {
+            $receiptItems[] = $this->getDeliveryReceiptItem($order->delivery_price);
         }
 
         return $receiptItems;
@@ -103,21 +81,16 @@ class IncomeReceiptData extends ReceiptData
         $settlements = [];
 
         if ($order->spent_certificate > 0) {
-            $returnPrepayment = 0;
-            $returnCashless = 0;
+            $remainingCashlessPrice = max(0, $order->cashless_price - $order->done_return_sum);
 
-            if ($order->done_return_sum > 0) {
-                $restReturnPrice = $order->price - $order->done_return_sum;
-                $restCashlessReturnPrice = max(0, $restReturnPrice - $order->spent_certificate);
-                $returnPrepayment = max(0, $order->done_return_sum - $restCashlessReturnPrice);
-                $returnCashless = max(0, $order->done_return_sum - $returnPrepayment);
-            }
+            $returnedPrepayment = max(0, $order->done_return_sum - $order->cashless_price);
+            $remainingPrepaymentPrice = max(0, $order->spent_certificate - $returnedPrepayment);
 
-            if ($order->cashless_price > 0) {
+            if ($remainingCashlessPrice > 0) {
                 $settlements[] = [
                     'type' => SettlementType::CASHLESS,
                     'amount' => [
-                        'value' => $order->cashless_price - $returnCashless,
+                        'value' => $remainingCashlessPrice,
                         'currency' => CurrencyCode::RUB,
                     ],
                 ];
@@ -126,7 +99,7 @@ class IncomeReceiptData extends ReceiptData
             $settlements[] = [
                 'type' => SettlementType::PREPAYMENT,
                 'amount' => [
-                    'value' => $order->spent_certificate - $returnPrepayment,
+                    'value' => $remainingPrepaymentPrice,
                     'currency' => CurrencyCode::RUB,
                 ],
             ];
@@ -134,7 +107,7 @@ class IncomeReceiptData extends ReceiptData
             $settlements[] = [
                 'type' => SettlementType::CASHLESS,
                 'amount' => [
-                    'value' => $order->price - $order->done_return_sum,
+                    'value' => $order->remaining_price,
                     'currency' => CurrencyCode::RUB,
                 ],
             ];

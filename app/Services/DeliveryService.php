@@ -140,7 +140,7 @@ class DeliveryService
             $basketItem = BasketItem::find($basketItemId);
 
             if ($basketItem->qty < $qty) {
-                throw new Exception('Shipment package qty can\'t be more than basket item qty');
+                throw new DeliveryServiceInvalidConditions('Shipment package qty can\'t be more than basket item qty');
             } else {
                 if (is_null($shipmentPackageItem)) {
                     $shipmentPackageItem = new ShipmentPackageItem();
@@ -183,16 +183,16 @@ class DeliveryService
     public function addShipment2Cargo(Shipment $shipment): void
     {
         if ($shipment->is_canceled) {
-            throw new Exception('Отправление отменено');
+            throw new DeliveryServiceInvalidConditions('Отправление отменено');
         }
         if ($shipment->status != ShipmentStatus::ASSEMBLED) {
-            throw new Exception('Отправление не собрано');
+            throw new DeliveryServiceInvalidConditions('Отправление не собрано');
         }
         if ($shipment->cargo_id) {
-            throw new Exception('Отправление уже добавлено в груз');
+            throw new DeliveryServiceInvalidConditions('Отправление уже добавлено в груз');
         }
         if (!$shipment->delivery->xml_id) {
-            throw new Exception('Задание на доставку не создано');
+            throw new DeliveryServiceInvalidConditions('Задание на доставку не создано');
         }
 
         $deliveryService = $this->getZeroMileShipmentDeliveryServiceId($shipment);
@@ -234,15 +234,15 @@ class DeliveryService
     public function createCourierCall(Cargo $cargo): void
     {
         if ($cargo->status != CargoStatus::CREATED) {
-            throw new Exception('Груз не в статусе "Создан"');
+            throw new DeliveryServiceInvalidConditions('Груз не в статусе "Создан"');
         }
         if ($cargo->xml_id) {
-            throw new Exception(
+            throw new DeliveryServiceInvalidConditions(
                 'Для груза уже создана заявка на вызов курьера с номером "' . $cargo->xml_id . '"'
             );
         }
         if ($cargo->shipments->isEmpty()) {
-            throw new Exception('Груз не содержит отправлений');
+            throw new DeliveryServiceInvalidConditions('Груз не содержит отправлений');
         }
 
         /** @var StoreService $storeService */
@@ -395,7 +395,7 @@ class DeliveryService
     public function cancelCargo(Cargo $cargo): bool
     {
         if ($cargo->status >= CargoStatus::SHIPPED) {
-            throw new \Exception(
+            throw new DeliveryServiceInvalidConditions(
                 'Груз, начиная со статуса "Передан Логистическому Оператору", нельзя отменить'
             );
         }
@@ -480,14 +480,18 @@ class DeliveryService
             ];
 
             if (!in_array($shipment->status, $validShipmentStatuses)) {
-                throw new Exception('Не все отправления доставки подтверждены/собраны мерчантами');
+                throw new DeliveryServiceInvalidConditions(
+                    'Не все отправления доставки подтверждены/собраны мерчантами'
+                );
             }
 
             $cntShipments++;
         }
 
         if (!$cntShipments) {
-            throw new Exception('Не все отправления доставки подтверждены/собраны мерчантами');
+            throw new DeliveryServiceInvalidConditions(
+                'Не все отправления доставки подтверждены/собраны мерчантами'
+            );
         }
 
         $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
@@ -916,7 +920,7 @@ class DeliveryService
     public function cancelShipment(Shipment $shipment, ?int $orderReturnReasonId = null): bool
     {
         if ($shipment->status >= ShipmentStatus::DONE) {
-            throw new \Exception(
+            throw new DeliveryServiceInvalidConditions(
                 'Отправление, начиная со статуса "Доставлено получателю", нельзя отменить'
             );
         }
@@ -931,7 +935,7 @@ class DeliveryService
 
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);
-            $orderReturnService->createOrderReturn($orderReturnDto);
+            $orderReturnService->create($orderReturnDto);
 
             return true;
         } else {
@@ -946,7 +950,7 @@ class DeliveryService
     public function cancelDelivery(Delivery $delivery, ?int $orderReturnReasonId = null): bool
     {
         if ($delivery->status >= DeliveryStatus::DONE) {
-            throw new \Exception(
+            throw new DeliveryServiceInvalidConditions(
                 'Доставку, начиная со статуса "Доставлена получателю", нельзя отменить'
             );
         }

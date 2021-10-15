@@ -2,14 +2,13 @@
 
 namespace App\Models\Order;
 
+use App\Core\Notifications\NotificationInterface;
 use App\Core\Notifications\OrderNotification;
 use App\Models\Basket\Basket;
 use App\Models\Delivery\Delivery;
-use App\Models\History\History;
-use App\Models\History\HistoryMainEntity;
-use App\Models\OmsModel;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\AuthService\UserService;
@@ -19,9 +18,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -209,7 +208,8 @@ use Illuminate\Support\Collection;
  * @property string $number - номер
  *
  * //dynamic attributes
- * @property int $cashless_price - cумма заказа без учета подарочных сертификатов
+ * @property-read float $cashless_price - cумма заказа без учета подарочных сертификатов
+ * @property-read float $remaining_price - cумма заказа за вычетом совершенных возвратов
  *
  * @property Basket $basket - корзина
  * @property Collection|Payment[] $payments - оплаты заказа
@@ -219,13 +219,14 @@ use Illuminate\Support\Collection;
  * @property Collection|OrderPromoCode[] $promoCodes - промокоды применённые к заказу
  * @property Collection|OrderBonus[] $bonuses - бонусы применённые к заказу
  * @property Collection|OrderReturn[] $orderReturns - возвраты по заказу
- * @property Collection|History[] $history - история изменений
  * @property OrderReturnReason $orderReturnReason - причина возврата заказа
  */
-class Order extends OmsModel
+class Order extends AbstractModel
 {
-    /** @var string */
-    public $notificator = OrderNotification::class;
+    use WithMainHistory;
+
+    /** @var bool */
+    protected static $unguarded = true;
 
     /** @var UserDto */
     protected $user;
@@ -283,14 +284,14 @@ class Order extends OmsModel
         return $this->hasMany(OrderReturn::class);
     }
 
-    public function history(): MorphToMany
-    {
-        return $this->morphToMany(History::class, 'main_entity', (new HistoryMainEntity())->getTable());
-    }
-
     public function orderReturnReason(): BelongsTo
     {
         return $this->belongsTo(OrderReturnReason::class, 'return_reason_id');
+    }
+
+    public function historyNotificator(): ?NotificationInterface
+    {
+        return resolve(OrderNotification::class);
     }
 
     /**
@@ -353,6 +354,14 @@ class Order extends OmsModel
     public function getCashlessPriceAttribute(): float
     {
         return max(0, $this->price - $this->spent_certificate);
+    }
+
+    /**
+     * Сумма заказа за вычетом совершенных возвратов
+     */
+    public function getRemainingPriceAttribute(): float
+    {
+        return max(0, $this->price - $this->done_return_sum);
     }
 
     /**

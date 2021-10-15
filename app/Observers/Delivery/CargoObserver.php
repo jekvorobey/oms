@@ -5,8 +5,6 @@ namespace App\Observers\Delivery;
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\ShipmentStatus;
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 
 /**
  * Class CargoObserver
@@ -23,15 +21,6 @@ class CargoObserver
     ];
 
     /**
-     * Handle the cargo "created" event.
-     * @return void
-     */
-    public function created(Cargo $cargo)
-    {
-        History::saveEvent(HistoryType::TYPE_CREATE, $cargo, $cargo);
-    }
-
-    /**
      * Handle the cargo "updating" event.
      */
     public function updating(Cargo $cargo): bool
@@ -45,18 +34,7 @@ class CargoObserver
      */
     public function updated(Cargo $cargo)
     {
-        History::saveEvent(HistoryType::TYPE_UPDATE, $cargo, $cargo);
-
         $this->setStatusToShipments($cargo);
-    }
-
-    /**
-     * Handle the cargo "deleting" event.
-     * @throws \Exception
-     */
-    public function deleting(Cargo $cargo)
-    {
-        History::saveEvent(HistoryType::TYPE_DELETE, $cargo, $cargo);
     }
 
     /**

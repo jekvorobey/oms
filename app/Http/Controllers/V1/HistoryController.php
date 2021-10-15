@@ -93,10 +93,10 @@ class HistoryController extends Controller
         if ($pagination) {
             $baseQuery->offset($pagination['offset'])->limit($pagination['limit']);
         }
-        $mainEntityClass = explode('\\', $mainEntity);
+        $mainEntityType = class_basename($mainEntity);
         $query = History::modifyQuery(
-            $baseQuery->whereHas('historyMainEntities', function (Builder $query) use ($mainEntityClass, $mainEntityId) {
-                $query->where('main_entity_type', end($mainEntityClass))
+            $baseQuery->whereHas('historyMainEntities', function (Builder $query) use ($mainEntityType, $mainEntityId) {
+                $query->where('main_entity_type', $mainEntityType)
                     ->where('main_entity_id', $mainEntityId);
             }),
             $restQuery
@@ -186,10 +186,10 @@ class HistoryController extends Controller
         $pageSize = $pagination ? $pagination['limit'] : ReadAction::$PAGE_SIZE;
         $baseQuery = History::query();
 
-        $mainEntityClass = explode('\\', $mainEntity);
+        $mainEntityType = class_basename($mainEntity);
         $query = History::modifyQuery(
-            $baseQuery->whereHas('historyMainEntities', function (Builder $query) use ($mainEntityClass, $mainEntityId) {
-                $query->where('main_entity_type', end($mainEntityClass))
+            $baseQuery->whereHas('historyMainEntities', function (Builder $query) use ($mainEntityType, $mainEntityId) {
+                $query->where('main_entity_type', $mainEntityType)
                     ->where('main_entity_id', $mainEntityId);
             }),
             $restQuery

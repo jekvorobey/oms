@@ -4,10 +4,10 @@ namespace App\Core\Notifications;
 
 use App\Models\Delivery\Shipment;
 use App\Models\History\HistoryType;
-use App\Models\OmsModel;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\Message\Dto\Notification\NotificationDto;
 use Greensight\Message\Services\NotificationService\NotificationService;
+use Illuminate\Database\Eloquent\Model;
 use MerchantManagement\Services\OperatorService\OperatorService;
 
 /**
@@ -21,15 +21,15 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
      * @param Shipment $mainModel
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
-    public static function notify(int $type, OmsModel $mainModel, OmsModel $model): void
+    public function notify(int $type, Model $mainModel, Model $model): void
     {
-        // self::notifyMerchants($type, $mainModel);
-        self::notifyAdmins($type, $mainModel);
+        // $this->notifyMerchants($type, $mainModel);
+        $this->notifyAdmins($type, $mainModel);
     }
 
-    protected static function notifyMerchants(int $type, Shipment $shipment): void
+    protected function notifyMerchants(int $type, Shipment $shipment): void
     {
-        $notification = static::getBaseNotification();
+        $notification = $this->getBaseNotification();
 
         switch ($type) {
             case HistoryType::TYPE_CREATE:
@@ -70,9 +70,9 @@ class ShipmentNotification extends AbstractNotification implements NotificationI
         }
     }
 
-    protected static function notifyAdmins(int $type, Shipment $shipment): void
+    protected function notifyAdmins(int $type, Shipment $shipment): void
     {
-        $notification = static::getBaseNotification();
+        $notification = $this->getBaseNotification();
 
         switch ($type) {
             case HistoryType::TYPE_UPDATE:

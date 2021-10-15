@@ -3,8 +3,6 @@
 namespace App\Observers\Basket;
 
 use App\Models\Basket\BasketItem;
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 use Pim\Services\SearchService\SearchService;
 
 /**
@@ -60,23 +58,9 @@ class BasketItemObserver
      */
     public function created(BasketItem $basketItem)
     {
-        if ($basketItem->basket->order) {
-            History::saveEvent(HistoryType::TYPE_CREATE, $basketItem->basket->order, $basketItem);
-        }
-
         /** @var SearchService $searchService */
         $searchService = resolve(SearchService::class);
         $searchService->markProductForIndexViaOffer($basketItem->offer_id);
-    }
-
-    /**
-     * Handle the basket item "updated" event.
-     */
-    public function updated(BasketItem $basketItem)
-    {
-        if ($basketItem->basket->order) {
-            History::saveEvent(HistoryType::TYPE_UPDATE, $basketItem->basket->order, $basketItem);
-        }
     }
 
     /**
@@ -85,10 +69,6 @@ class BasketItemObserver
      */
     public function deleting(BasketItem $basketItem)
     {
-        if ($basketItem->basket->order) {
-            History::saveEvent(HistoryType::TYPE_DELETE, $basketItem->basket->order, $basketItem);
-        }
-
         if ($basketItem->shipmentItem) {
             $basketItem->shipmentItem->delete();
         }

@@ -37,8 +37,7 @@ class RefundCertificateService
         $order = $orderReturn->order;
         $priceToReturn = $orderReturn->price;
 
-        $restReturnPrice = max(0, $order->price - $order->done_return_sum);
-        $restCashlessReturnPrice = max(0, $restReturnPrice - $order->spent_certificate);
+        $restCashlessReturnPrice = max(0, $order->remaining_price - $order->spent_certificate);
 
         return max(0, $priceToReturn - $restCashlessReturnPrice);
     }

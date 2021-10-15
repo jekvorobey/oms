@@ -39,9 +39,7 @@ class PaymentService
         }
 
         if ($payment->sum == 0) {
-            $payment->data = [
-                'externalPaymentId' => $this->getCertificatePaymentId($payment->order),
-            ];
+            $payment->external_payment_id = $this->getCertificatePaymentId($payment->order);
             $payment->save();
 
             if (!$this->pay($payment)) {
@@ -59,7 +57,7 @@ class PaymentService
         $payment->save();
         $paymentSystem->createExternalPayment($payment, $returnUrl);
 
-        return $paymentSystem->paymentLink($payment);
+        return $payment->payment_link;
     }
 
     /**
@@ -67,33 +65,32 @@ class PaymentService
      */
     private function getCertificatePaymentId(Order $order): ?string
     {
-        $certificate = current($order->certificates);
+        $certificate = head($order->certificates);
         $certificateService = resolve(CertificateService::class);
 
-        if ($certificate['id']) {
-            $certificateQuery = $certificateService->certificateQuery();
-            $certificateQuery->id($certificate['id']);
-            $certificateInfo = $certificateService->certificates($certificateQuery);
-
-            if ($certificateInfo) {
-                $certificateRequests = $certificateInfo->pluck('request_id')->toArray();
-
-                /** @var BasketItem $certificateBasketItem */
-                $certificateBasketItem = BasketItem::query()
-                    ->whereIn('product->request_id', $certificateRequests)
-                    ->with('basket.order.payments')
-                    ->firstOrFail();
-
-                $certificatePayment = $certificateBasketItem->basket->order->payments->first();
-                $result = $certificatePayment->data['externalPaymentId'];
-            } else {
-                throw new PaymentException('Certificates not found');
-            }
-        } else {
+        if (!isset($certificate['id'])) {
             throw new PaymentException('Certificate id in order not found');
         }
 
-        return $result;
+        $certificateQuery = $certificateService->certificateQuery()->id($certificate['id']);
+        $certificateInfo = $certificateService->certificates($certificateQuery);
+
+        if ($certificateInfo->isEmpty()) {
+            throw new PaymentException('Certificates not found');
+        }
+
+        $certificateRequests = $certificateInfo->pluck('request_id')->toArray();
+
+        /** @var BasketItem $certificateBasketItem */
+        $certificateBasketItem = BasketItem::query()
+            ->whereIn('product->request_id', $certificateRequests)
+            ->with('basket.order.payments')
+            ->firstOrFail();
+
+        /** @var Payment $certificatePayment */
+        $certificatePayment = $certificateBasketItem->basket->order->payments->first();
+
+        return $certificatePayment->external_payment_id ?? null;
     }
 
     /**
@@ -102,7 +99,6 @@ class PaymentService
     public function pay(Payment $payment): bool
     {
         $payment->status = PaymentStatus::PAID;
-        $payment->payed_at = Carbon::now();
 
         return $payment->save();
     }
@@ -142,7 +138,8 @@ class PaymentService
     {
         /** @var Payment $payment */
         $payment = $order->payments->last();
-        $refundSum = $payment->refund_sum + $sum;
+        $refundSum = min($payment->sum, $payment->refund_sum + $sum);
+
         if ($payment->sum >= $refundSum && $refundSum > 0) {
             $payment->refund_sum = $refundSum;
             $payment->save();

@@ -2,8 +2,8 @@
 
 namespace App\Models\Order;
 
-use App\Models\OmsModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property Order $order
  */
-class OrderComment extends OmsModel
+class OrderComment extends AbstractModel
 {
     /** @var string */
     protected $table = 'orders_comments';
@@ -43,6 +43,8 @@ class OrderComment extends OmsModel
 
     /** @var array */
     protected $fillable = self::FILLABLE;
+    /** @var bool */
+    protected static $unguarded = true;
 
     public function order(): BelongsTo
     {
