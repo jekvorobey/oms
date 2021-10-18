@@ -16,14 +16,14 @@ $factory->define(Payment::class, function (Faker $faker) {
         'order_id' => $order->id,
         'sum' => $order->basket->items->sum('cost'),
         'refund_sum' => 0,
-        'payed_at' => $faker->dateTime,
-        'expires_at' => $faker->dateTime('-30 days'),
-        'yandex_expires_at' => $faker->dateTime('-30 days'),
+        'payed_at' => $faker->dateTimeInInterval('-1 days', '+5 days'),
+        'expires_at' => $faker->dateTimeInInterval('+1 days', '+5 days'),
+        'yandex_expires_at' => $faker->dateTimeInInterval('+1 days', '+5 days'),
         'status' => $faker->randomElement(PaymentStatus::validValues()),
         'payment_method' => $faker->randomElement(PaymentMethod::validValues()),
         'payment_system' => PaymentSystem::TEST,
         'data' => [
-            'paymentId' => $faker->uuid,
+            'externalPaymentId' => $faker->uuid,
         ],
     ];
 });
