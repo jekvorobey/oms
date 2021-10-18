@@ -132,7 +132,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 }
                 break;
             case PaymentStatus::CANCELED:
-                if (($order->spent_certificate > 0 || $order->done_return_sum)) {
+                if ($order->cashless_price - $order->done_return_sum > 0) {
                     if ($order->cashless_price - $order->remaining_price > 0) {
                         $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
                         $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;

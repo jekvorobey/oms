@@ -140,9 +140,7 @@ class PaymentService
         $payment = $order->payments->last();
         $refundSum = min($payment->sum, $payment->refund_sum + $sum);
 
-        if ($payment->sum >= $refundSum && $refundSum > 0) {
-            $payment->refund_sum = $refundSum;
-            $payment->save();
-        }
+        $payment->refund_sum = $refundSum;
+        $payment->save();
     }
 }
