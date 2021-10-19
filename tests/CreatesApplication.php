@@ -8,7 +8,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\Builder;
 use Illuminate\Database\Schema\SQLiteBuilder;
 use Illuminate\Database\SQLiteConnection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Fluent;
 use Illuminate\Foundation\Application;
 
@@ -35,9 +34,6 @@ trait CreatesApplication
 
     protected function silentDropForeignForSqlite(): void
     {
-        $connection = config('database.default');
-
-        $driver = config("database.connections.{$connection}.driver");
         Connection::resolverFor('sqlite', function ($connection, $database, $prefix, $config) {
             return new class ($connection, $database, $prefix, $config) extends SQLiteConnection
             {

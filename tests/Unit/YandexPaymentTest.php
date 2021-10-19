@@ -37,34 +37,7 @@ class YandexPaymentTest extends TestCase
             'sum' => $faker->numberBetween(1, 10000),
         ]);
 
-        $mockYandexClientReturn = [
-            'id' => $faker->uuid,
-            'confirmation' => [
-                'confirmation_url' => $faker->url,
-                'type' => ConfirmationType::REDIRECT,
-            ],
-            'status' => YooKassaPaymentStatus::WAITING_FOR_CAPTURE,
-            'amount' => [
-                'value' => $payment->sum,
-                'currency' => CurrencyCode::RUB,
-            ],
-            'created_at' => $payment->created_at,
-            'paid' => true,
-            'refundable' => false,
-        ];
-
-        $this->mock(Client::class, function ($mock) use ($mockYandexClientReturn) {
-            $mock
-                ->shouldReceive('createPayment')
-                ->andReturn(new CreatePaymentResponse($mockYandexClientReturn));
-        });
-
-        $this->mock(CustomerService::class, function ($mock) {
-            $mock->makePartial()
-                ->shouldReceive('customers')
-                ->andReturn(collect([new CustomerDto()]));
-        });
-
+        $mockYandexClientReturn = $this->mockHttpNotification($payment, YooKassaPaymentStatus::WAITING_FOR_CAPTURE);
         $paymentSystem = $payment->paymentSystem();
         $paymentSystem->createExternalPayment($payment, $faker->url);
 
@@ -90,63 +63,7 @@ class YandexPaymentTest extends TestCase
             'sum' => $faker->numberBetween(1, 10000),
         ]);
 
-        $mockYandexClientReturn = [
-            'id' => $payment->external_payment_id,
-            'confirmation' => [
-                'confirmation_url' => $faker->url,
-                'type' => ConfirmationType::REDIRECT,
-            ],
-            'status' => YooKassaPaymentStatus::WAITING_FOR_CAPTURE,
-            'amount' => [
-                'value' => $payment->sum,
-                'currency' => CurrencyCode::RUB,
-            ],
-            'created_at' => $payment->created_at,
-            'paid' => true,
-            'refundable' => false,
-        ];
-
-        $paymentYooKassaParams = [
-            'dateExpiresAt' => $faker->dateTimeBetween('+1 day', '+3 day'),
-            'paymentId' => $payment->external_payment_id,
-            'metadata' => [
-                'source' => $faker->url,
-            ],
-            'status' => YooKassaPaymentStatus::WAITING_FOR_CAPTURE,
-        ];
-
-        $this->mock(CustomerService::class, function ($mock) {
-            $mock->makePartial()
-                ->shouldReceive('customers')
-                ->andReturn(collect([new CustomerDto()]));
-        });
-
-        $paymentYooKassa = $this->mock(AbstractPaymentResponse::class, function ($mock) use ($paymentYooKassaParams) {
-            $mock
-                ->makePartial()
-                ->shouldReceive([
-                    'getExpiresAt' => $paymentYooKassaParams['dateExpiresAt'],
-                    'getId' => $paymentYooKassaParams['paymentId'],
-                    'getMetadata' => new Metadata($paymentYooKassaParams['metadata']),
-                    'getStatus' => $paymentYooKassaParams['status'],
-                ]);
-        });
-
-        $this->mock(Client::class, function ($mock) use ($mockYandexClientReturn, $paymentYooKassa) {
-            $mock
-                ->shouldReceive([
-                    'capturePayment' => new CreateCaptureResponse($mockYandexClientReturn),
-                    'getPaymentInfo' => $paymentYooKassa,
-                ]);
-        });
-
-        $this->mock(AbstractNotification::class, function ($mock) use ($paymentYooKassa) {
-            $mock
-                ->makePartial()
-                ->shouldReceive('getObject')
-                ->andReturn($paymentYooKassa);
-        });
-
+        $mockYandexClientReturn = $this->mockHttpNotification($payment, YooKassaPaymentStatus::WAITING_FOR_CAPTURE);
         $paymentSystem = $payment->paymentSystem();
         $paymentSystem->handlePushPayment([
             'event' => NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE,
@@ -189,63 +106,7 @@ class YandexPaymentTest extends TestCase
             'sum' => $faker->numberBetween(1, 10000),
         ]);
 
-        $mockYandexClientReturn = [
-            'id' => $payment->external_payment_id,
-            'confirmation' => [
-                'confirmation_url' => $faker->url,
-                'type' => ConfirmationType::REDIRECT,
-            ],
-            'status' => YooKassaPaymentStatus::SUCCEEDED,
-            'amount' => [
-                'value' => $payment->sum,
-                'currency' => CurrencyCode::RUB,
-            ],
-            'created_at' => $payment->created_at,
-            'paid' => true,
-            'refundable' => false,
-        ];
-
-        $paymentYooKassaParams = [
-            'dateExpiresAt' => $faker->dateTimeBetween('+1 day', '+3 day'),
-            'paymentId' => $payment->external_payment_id,
-            'metadata' => [
-                'source' => $faker->url,
-            ],
-            'status' => YooKassaPaymentStatus::SUCCEEDED,
-        ];
-
-        $this->mock(CustomerService::class, function ($mock) {
-            $mock->makePartial()
-                ->shouldReceive('customers')
-                ->andReturn(collect([new CustomerDto()]));
-        });
-
-        $paymentYooKassa = $this->mock(AbstractPaymentResponse::class, function ($mock) use ($paymentYooKassaParams) {
-            $mock
-                ->makePartial()
-                ->shouldReceive([
-                    'getExpiresAt' => $paymentYooKassaParams['dateExpiresAt'],
-                    'getId' => $paymentYooKassaParams['paymentId'],
-                    'getMetadata' => new Metadata($paymentYooKassaParams['metadata']),
-                    'getStatus' => $paymentYooKassaParams['status'],
-                ]);
-        });
-
-        $this->mock(Client::class, function ($mock) use ($mockYandexClientReturn, $paymentYooKassa) {
-            $mock
-                ->shouldReceive([
-                    'capturePayment' => new CreateCaptureResponse($mockYandexClientReturn),
-                    'getPaymentInfo' => $paymentYooKassa,
-                ]);
-        });
-
-        $this->mock(AbstractNotification::class, function ($mock) use ($paymentYooKassa) {
-            $mock
-                ->makePartial()
-                ->shouldReceive('getObject')
-                ->andReturn($paymentYooKassa);
-        });
-
+        $mockYandexClientReturn = $this->mockHttpNotification($payment, YooKassaPaymentStatus::SUCCEEDED);
         $paymentSystem = $payment->paymentSystem();
         $paymentSystem->handlePushPayment([
             'event' => NotificationEventType::PAYMENT_SUCCEEDED,
@@ -288,63 +149,7 @@ class YandexPaymentTest extends TestCase
             'sum' => $faker->numberBetween(1, 10000),
         ]);
 
-        $mockYandexClientReturn = [
-            'id' => $payment->external_payment_id,
-            'confirmation' => [
-                'confirmation_url' => $faker->url,
-                'type' => ConfirmationType::REDIRECT,
-            ],
-            'status' => YooKassaPaymentStatus::SUCCEEDED,
-            'amount' => [
-                'value' => $payment->sum,
-                'currency' => CurrencyCode::RUB,
-            ],
-            'created_at' => $payment->created_at,
-            'paid' => true,
-            'refundable' => false,
-        ];
-
-        $paymentYooKassaParams = [
-            'dateExpiresAt' => $faker->dateTimeBetween('+1 day', '+3 day'),
-            'paymentId' => $payment->external_payment_id,
-            'metadata' => [
-                'source' => $faker->url,
-            ],
-            'status' => YooKassaPaymentStatus::CANCELED,
-        ];
-
-        $this->mock(CustomerService::class, function ($mock) {
-            $mock->makePartial()
-                ->shouldReceive('customers')
-                ->andReturn(collect([new CustomerDto()]));
-        });
-
-        $paymentYooKassa = $this->mock(AbstractPaymentResponse::class, function ($mock) use ($paymentYooKassaParams) {
-            $mock
-                ->makePartial()
-                ->shouldReceive([
-                    'getExpiresAt' => $paymentYooKassaParams['dateExpiresAt'],
-                    'getId' => $paymentYooKassaParams['paymentId'],
-                    'getMetadata' => new Metadata($paymentYooKassaParams['metadata']),
-                    'getStatus' => $paymentYooKassaParams['status'],
-                ]);
-        });
-
-        $this->mock(Client::class, function ($mock) use ($mockYandexClientReturn, $paymentYooKassa) {
-            $mock
-                ->shouldReceive([
-                    'capturePayment' => new CreateCaptureResponse($mockYandexClientReturn),
-                    'getPaymentInfo' => $paymentYooKassa,
-                ]);
-        });
-
-        $this->mock(AbstractNotification::class, function ($mock) use ($paymentYooKassa) {
-            $mock
-                ->makePartial()
-                ->shouldReceive('getObject')
-                ->andReturn($paymentYooKassa);
-        });
-
+        $mockYandexClientReturn = $this->mockHttpNotification($payment, YooKassaPaymentStatus::CANCELED);
         $paymentSystem = $payment->paymentSystem();
         $paymentSystem->handlePushPayment([
             'event' => NotificationEventType::PAYMENT_CANCELED,
@@ -375,5 +180,69 @@ class YandexPaymentTest extends TestCase
                 ], JSON_THROW_ON_ERROR),
             ],
         );
+    }
+
+    public function mockHttpNotification(Payment $payment, string $paymentStatus): array
+    {
+        $faker = Factory::create();
+        $mockYandexClientReturn = [
+            'id' => $payment->external_payment_id,
+            'confirmation' => [
+                'confirmation_url' => $faker->url,
+                'type' => ConfirmationType::REDIRECT,
+            ],
+            'status' => $paymentStatus,
+            'amount' => [
+                'value' => $payment->sum,
+                'currency' => CurrencyCode::RUB,
+            ],
+            'created_at' => $payment->created_at,
+            'paid' => true,
+            'refundable' => false,
+        ];
+
+        $paymentYooKassaParams = [
+            'dateExpiresAt' => $faker->dateTimeBetween('+1 day', '+3 day'),
+            'paymentId' => $payment->external_payment_id,
+            'metadata' => [
+                'source' => $faker->url,
+            ],
+            'status' => $paymentStatus,
+        ];
+
+        $this->mock(CustomerService::class, function ($mock) {
+            $mock->makePartial()
+                ->shouldReceive('customers')
+                ->andReturn(collect([new CustomerDto()]));
+        });
+
+        $paymentYooKassa = $this->mock(AbstractPaymentResponse::class, function ($mock) use ($paymentYooKassaParams) {
+            $mock
+                ->makePartial()
+                ->shouldReceive([
+                    'getExpiresAt' => $paymentYooKassaParams['dateExpiresAt'],
+                    'getId' => $paymentYooKassaParams['paymentId'],
+                    'getMetadata' => new Metadata($paymentYooKassaParams['metadata']),
+                    'getStatus' => $paymentYooKassaParams['status'],
+                ]);
+        });
+
+        $this->mock(Client::class, function ($mock) use ($mockYandexClientReturn, $paymentYooKassa) {
+            $mock
+                ->shouldReceive([
+                    'capturePayment' => new CreateCaptureResponse($mockYandexClientReturn),
+                    'getPaymentInfo' => $paymentYooKassa,
+                    'createPayment' => new CreatePaymentResponse($mockYandexClientReturn),
+                ]);
+        });
+
+        $this->mock(AbstractNotification::class, function ($mock) use ($paymentYooKassa) {
+            $mock
+                ->makePartial()
+                ->shouldReceive('getObject')
+                ->andReturn($paymentYooKassa);
+        });
+
+        return $mockYandexClientReturn;
     }
 }
