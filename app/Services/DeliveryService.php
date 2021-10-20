@@ -982,4 +982,31 @@ class DeliveryService
             $delivery->save();
         }
     }
+
+    /**
+     * Пометить доставку как проблемную
+     */
+    public function markAsProblem(Delivery $delivery): bool
+    {
+        $delivery->is_problem = true;
+
+        return $delivery->save();
+    }
+
+    /**
+     * Отменить флаг проблемности у доставки, если все отправления непроблемные
+     */
+    public function markAsNonProblem(Delivery $delivery): bool
+    {
+        $isAllShipmentsOk = true;
+        foreach ($delivery->shipments as $shipment) {
+            if ($shipment->is_problem) {
+                $isAllShipmentsOk = false;
+                break;
+            }
+        }
+        $delivery->is_problem = !$isAllShipmentsOk;
+
+        return $delivery->save();
+    }
 }
