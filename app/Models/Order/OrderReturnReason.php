@@ -2,7 +2,7 @@
 
 namespace App\Models\Order;
 
-use App\Models\OmsModel;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * * Класс-модель для справочника Причины отмены заказа
@@ -10,7 +10,7 @@ use App\Models\OmsModel;
  * @property int $id - id
  * @property string $text - причина отмены
  */
-class OrderReturnReason extends OmsModel
+class OrderReturnReason extends AbstractModel
 {
     public const FILLABLE = ['text'];
 

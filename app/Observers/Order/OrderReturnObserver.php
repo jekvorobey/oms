@@ -2,8 +2,6 @@
 
 namespace App\Observers\Order;
 
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 use App\Models\Order\OrderReturn;
 use App\Services\PaymentService\PaymentService;
 
@@ -19,7 +17,6 @@ class OrderReturnObserver
      */
     public function created(OrderReturn $orderReturn)
     {
-        History::saveEvent(HistoryType::TYPE_CREATE, $orderReturn->order, $orderReturn);
         (new PaymentService())->refund($orderReturn->order, $orderReturn->price);
     }
 
@@ -30,7 +27,6 @@ class OrderReturnObserver
      */
     public function updated(OrderReturn $orderReturn)
     {
-        History::saveEvent(HistoryType::TYPE_UPDATE, $orderReturn->order, $orderReturn);
         if ($orderReturn->wasChanged('price')) {
             (new PaymentService())->refund($orderReturn->order, $orderReturn->price - $orderReturn->getOriginal('price'));
         }
@@ -52,8 +48,6 @@ class OrderReturnObserver
      */
     public function deleting(OrderReturn $orderReturn)
     {
-        History::saveEvent(HistoryType::TYPE_DELETE, $orderReturn->order, $orderReturn);
-
         foreach ($orderReturn->items as $item) {
             $item->delete();
         }

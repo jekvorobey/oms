@@ -2,7 +2,7 @@
 
 namespace App\Core\Notifications;
 
-use App\Models\OmsModel;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Interface NotificationInterface
@@ -13,5 +13,5 @@ interface NotificationInterface
     /**
      * Создать уведомление
      */
-    public static function notify(int $type, OmsModel $mainModel, OmsModel $model): void;
+    public function notify(int $type, Model $mainModel, Model $model): void;
 }

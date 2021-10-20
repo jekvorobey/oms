@@ -7,7 +7,6 @@ use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
-use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Services\DeliveryService;
 use App\Services\DeliveryServiceInvalidConditions;
@@ -44,15 +43,6 @@ class ShipmentObserver
     ];
 
     /**
-     * Handle the shipment "created" event.
-     * @return void
-     */
-    public function created(Shipment $shipment)
-    {
-        History::saveEvent(HistoryType::TYPE_CREATE, $shipment->delivery->order, $shipment);
-    }
-
-    /**
      * Handle the shipment "updating" event.
      */
     public function updating(Shipment $shipment): bool
@@ -67,8 +57,6 @@ class ShipmentObserver
      */
     public function updated(Shipment $shipment)
     {
-        History::saveEvent(HistoryType::TYPE_UPDATE, [$shipment->delivery->order, $shipment], $shipment);
-
         $this->setStatusToDelivery($shipment);
         $this->setIsCanceledToDelivery($shipment);
         $this->setOrderIsPartiallyCancelled($shipment);
@@ -83,8 +71,6 @@ class ShipmentObserver
      */
     public function deleting(Shipment $shipment)
     {
-        History::saveEvent(HistoryType::TYPE_DELETE, [$shipment->delivery->order, $shipment], $shipment);
-
         foreach ($shipment->packages as $package) {
             $package->delete();
         }
@@ -271,13 +257,13 @@ class ShipmentObserver
      */
     protected function add2CargoHistory(Shipment $shipment): void
     {
-        if ($shipment->cargo_id != $shipment->getOriginal('cargo_id')) {
+        if ($shipment->wasChanged('cargo_id')) {
             if ($shipment->getOriginal('cargo_id')) {
-                History::saveEvent(HistoryType::TYPE_DELETE_LINK, Cargo::find($shipment->getOriginal('cargo_id')), $shipment);
+                $shipment->saveHistoryEvent(HistoryType::TYPE_DELETE_LINK, Cargo::find($shipment->getOriginal('cargo_id')));
             }
 
             if ($shipment->cargo_id) {
-                History::saveEvent(HistoryType::TYPE_CREATE_LINK, Cargo::find($shipment->cargo_id), $shipment);
+                $shipment->saveHistoryEvent(HistoryType::TYPE_DELETE_LINK, Cargo::find($shipment->cargo_id));
             }
         }
     }

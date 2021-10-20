@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use L5Swagger\L5SwaggerServiceProvider;
 use YooKassa\Client;
+use App\Services\PaymentService\PaymentSystems\Yandex\SDK\Client as LocalYandexClient;
 
 /**
  * Class AppServiceProvider
@@ -56,6 +57,12 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(Client::class, function () {
             $client = new Client();
+            $client->setAuth(config('app.y_checkout_shop_id'), config('app.y_checkout_key'));
+            return $client;
+        });
+
+        $this->app->singleton(LocalYandexClient::class, function () {
+            $client = new LocalYandexClient();
             $client->setAuth(config('app.y_checkout_shop_id'), config('app.y_checkout_key'));
             return $client;
         });
@@ -92,20 +99,21 @@ class AppServiceProvider extends ServiceProvider
             BasketItem::class,
             Cargo::class,
             Delivery::class,
-            Order::class,
-            OrderComment::class,
-            OrderReturn::class,
-            Payment::class,
             Shipment::class,
             ShipmentItem::class,
             ShipmentPackage::class,
             ShipmentPackageItem::class,
+            Order::class,
+            OrderComment::class,
+            OrderReturn::class,
+            Payment::class,
         ];
+
         $morphMap = [];
         foreach ($entitiesWithHistory as $entity) {
-            $entityClass = explode('\\', $entity);
-            $morphMap[end($entityClass)] = $entity;
+            $morphMap[class_basename($entity)] = $entity;
         }
+
         Relation::morphMap($morphMap);
     }
 }

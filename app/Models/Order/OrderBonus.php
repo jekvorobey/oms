@@ -2,10 +2,10 @@
 
 namespace App\Models\Order;
 
-use App\Models\OmsModel;
 use Carbon\Carbon;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -35,7 +35,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $valid_period (период действия бонуса в днях)
  * @property array|null $items
  */
-class OrderBonus extends OmsModel
+class OrderBonus extends AbstractModel
 {
     public const STATUS_ON_HOLD = 1; // На удержании
     public const STATUS_ACTIVE = 2; // Активные
@@ -58,6 +58,8 @@ class OrderBonus extends OmsModel
 
     /** @var array */
     protected $fillable = self::FILLABLE;
+    /** @var bool */
+    protected static $unguarded = true;
 
     /** @var array */
     protected $casts = ['items' => 'array'];
