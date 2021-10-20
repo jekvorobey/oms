@@ -10,7 +10,6 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\HistoryType;
 use App\Services\DeliveryService;
 use App\Services\DeliveryServiceInvalidConditions;
-use App\Services\OrderService;
 use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
