@@ -27,6 +27,11 @@ trait CreatesApplication
         return $app;
     }
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+    }
+
     protected function silentDropForeignForSqlite(): void
     {
         Connection::resolverFor('sqlite', function ($connection, $database, $prefix, $config) {
