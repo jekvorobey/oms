@@ -109,8 +109,8 @@ class ShipmentObserver
     {
         $this->recalcCargoAndDeliveryOnSaved($shipment);
         $this->recalcCargosOnSaved($shipment);
-        $this->markOrderAsProblem($shipment);
-        $this->markOrderAsNonProblem($shipment);
+        $this->markDeliveryAsProblem($shipment);
+        $this->markDeliveryAsNonProblem($shipment);
         $this->upsertDeliveryOrder($shipment);
         $this->add2Cargo($shipment);
         $this->add2CargoHistory($shipment);
@@ -182,29 +182,29 @@ class ShipmentObserver
     }
 
     /**
-     * Пометить заказ как проблемный в случае проблемного отправления
+     * Пометить доставку как проблемную в случае проблемного отправления
      */
-    protected function markOrderAsProblem(Shipment $shipment): void
+    protected function markDeliveryAsProblem(Shipment $shipment): void
     {
         if (
             $shipment->is_problem != $shipment->getOriginal('is_problem') &&
             $shipment->is_problem
         ) {
-            /** @var OrderService $orderService */
-            $orderService = resolve(OrderService::class);
-            $orderService->markAsProblem($shipment->delivery->order);
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+            $deliveryService->markAsProblem($shipment->delivery);
         }
     }
 
     /**
-     * Пометить заказ как непроблемный, если все его отправления непроблемные
+     * Пометить доставку как непроблемную, если все отправления непроблемные
      */
-    protected function markOrderAsNonProblem(Shipment $shipment): void
+    protected function markDeliveryAsNonProblem(Shipment $shipment): void
     {
         if ($shipment->is_problem != $shipment->getOriginal('is_problem') && !$shipment->is_problem) {
-            /** @var OrderService $orderService */
-            $orderService = resolve(OrderService::class);
-            $orderService->markAsNonProblem($shipment->delivery->order);
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+            $deliveryService->markAsNonProblem($shipment->delivery);
         }
     }
 
