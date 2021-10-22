@@ -42,6 +42,7 @@ class PaymentObserver
         if (
             in_array($payment->status, [PaymentStatus::HOLD, PaymentStatus::PAID], true)
             && !$payment->is_receipt_sent
+            && $this->isNeedCreateIncomeReceipt($payment)
         ) {
             $paymentSystem = $payment->paymentSystem();
             if ($paymentSystem) {
@@ -49,6 +50,17 @@ class PaymentObserver
                 $payment->is_receipt_sent = true;
                 $payment->save();
             }
+        }
+    }
+
+    public function isNeedCreateIncomeReceipt(Payment $payment): bool
+    {
+        if ($payment->order->isProductOrder() || $payment->order->isCertificateOrder()) {
+            return true;
+        }
+
+        if ($payment->order->isPublicEventOrder()) {
+            return $payment->order->price > 0;
         }
     }
 

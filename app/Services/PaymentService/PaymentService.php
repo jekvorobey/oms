@@ -39,8 +39,10 @@ class PaymentService
         }
 
         if ($payment->sum == 0) {
-            $payment->external_payment_id = $this->getCertificatePaymentId($payment->order);
-            $payment->save();
+            if ($payment->order->spent_certificate > 0) {
+                $payment->external_payment_id = $this->getCertificatePaymentId($payment->order);
+                $payment->save();
+            }
 
             if (!$this->pay($payment)) {
                 throw new \Exception('Ошибка при автоматической оплате');
