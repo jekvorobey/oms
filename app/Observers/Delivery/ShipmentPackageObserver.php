@@ -25,7 +25,7 @@ class ShipmentPackageObserver
      */
     public function saving(ShipmentPackage $shipmentPackage)
     {
-        if ($shipmentPackage->wasChanged('wrapper_weight')) {
+        if ($shipmentPackage->isDirty('wrapper_weight')) {
             $shipmentPackage->recalcWeight(false);
         }
     }
