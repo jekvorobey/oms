@@ -8,6 +8,7 @@ return [/*
     */
 
     'showcase_host' => env('SHOWCASE_HOST'),
+    'admin_host' => env('ADMIN_SERVICE_HOST'),
 
     'y_checkout_shop_id' => env('Y_CHECKOUT_SHOP_ID'),
     'y_checkout_key' => env('Y_CHECKOUT_KEY'),

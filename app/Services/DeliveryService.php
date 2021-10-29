@@ -929,12 +929,6 @@ class DeliveryService
             );
         }
 
-        if ($shipment->delivery_id === LogisticsDeliveryService::SERVICE_CDEK && $shipment->status >= ShipmentStatus::ASSEMBLED) {
-            throw new DeliveryServiceInvalidConditions(
-                'Отправление от СДЭК, начиная со статуса "Готово к отгрузке", нельзя отменить'
-            );
-        }
-
         $shipment->return_reason_id ??= $orderReturnReasonId;
 
         $shipment->is_canceled = true;
@@ -951,7 +945,7 @@ class DeliveryService
 
         $attributes = [
             'SHIPMENT_NUMBER' => $shipment->number,
-            'LINK_ORDER' => url("/orders/{$shipment->delivery->order->id}"),
+            'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order->id),
         ];
         $this->sendEmailToUserByRole('logistotpravlenie_otmeneno', 'Логист', $attributes);
 
@@ -991,13 +985,13 @@ class DeliveryService
 
         $delivery->return_reason_id ??= $orderReturnReasonId;
 
-        if ($delivery->save()) {
-            $this->cancelDeliveryOrder($delivery);
-
-            return true;
-        } else {
+        if (!$delivery->save()) {
             return false;
         }
+
+        $this->cancelDeliveryOrder($delivery);
+
+        return true;
     }
 
     /**
@@ -1008,7 +1002,9 @@ class DeliveryService
         if ($delivery->xml_id) {
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
+            if ($delivery->id !== LogisticsDeliveryService::SERVICE_CDEK && $delivery->status <= DeliveryStatus::ASSEMBLED) {
+                $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
+            }
 
             $delivery->xml_id = '';
             $delivery->save();
