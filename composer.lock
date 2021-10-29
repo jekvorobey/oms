@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d5e9a4ed8397daeec6477231dee5e1ae",
+    "content-hash": "a6580a449c7b50a07787ee585b07c283",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1123,11 +1123,11 @@
         },
         {
             "name": "iwengo/ibt-common-lib",
-            "version": "dev-feature/IBT-441-user-roles",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-common-ms-code.git",
-                "reference": "06a372effd1482bbb5424544119dc4966f21377a"
+                "reference": "cc5f61aa4881df224dd39d6a141510c3a2419359"
             },
             "require": {
                 "ext-json": "*",
@@ -1170,7 +1170,7 @@
                 }
             ],
             "description": "iBT common code for all microservices",
-            "time": "2021-10-21T12:25:40+00:00"
+            "time": "2021-10-29T12:53:20+00:00"
         },
         {
             "name": "iwengo/ibt-logistics-lib",
@@ -10109,7 +10109,7 @@
         },
         {
             "package": "iwengo/ibt-common-lib",
-            "version": "dev-feature/IBT-441-user-roles",
+            "version": "dev-master-ylab",
             "alias": "dev-master-ylab",
             "alias_normalized": "dev-master-ylab"
         },
@@ -10170,5 +10170,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.1.0"
 }

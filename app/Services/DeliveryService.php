@@ -17,6 +17,7 @@ use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
 use Exception;
 use Greensight\CommonMsa\Dto\AbstractDto;
+use Greensight\CommonMsa\Dto\RoleDto;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\CommonMsa\Services\RoleService\RoleService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
@@ -947,7 +948,7 @@ class DeliveryService
             'SHIPMENT_NUMBER' => $shipment->number,
             'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order->id),
         ];
-        $this->sendEmailToUserByRole('logistotpravlenie_otmeneno', 'Логист', $attributes);
+        $this->sendEmailToUserByRole('logistotpravlenie_otmeneno', RoleDto::ROLE_LOGISTIC, $attributes);
 
         return true;
     }
@@ -1002,12 +1003,15 @@ class DeliveryService
         if ($delivery->xml_id) {
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            if ($delivery->id !== LogisticsDeliveryService::SERVICE_CDEK && $delivery->status <= DeliveryStatus::ASSEMBLED) {
-                $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
-            }
 
             $delivery->xml_id = '';
             $delivery->save();
+
+            if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
+                return;
+            }
+
+            $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
         }
     }
 
