@@ -949,32 +949,28 @@ class DeliveryService
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturnService->create($orderReturnDto);
 
-        $this->sendEmailToLogistics($shipment);
+        $attributes = [
+            'SHIPMENT_NUMBER' => $shipment->number,
+            'LINK_ORDER' => url("/orders/{$shipment->delivery->order->id}"),
+        ];
+        $this->sendEmailToUserByRole('logistotpravlenie_otmeneno', 'Логист', $attributes);
 
         return true;
     }
 
     /**
-     * Отправить сообщение на почту всем пользователям с ролью "Логист".
+     * Отправить сообщение на почту всем пользователям с определенной ролью.
      */
-    protected function sendEmailToLogistics(Shipment $shipment): void
+    protected function sendEmailToUserByRole(string $type, string $role, array $attributes): void
     {
         /** @var ServiceNotificationService $notificationService */
         $notificationService = resolve(ServiceNotificationService::class);
         /** @var RoleService $roleService */
         $roleService = resolve(RoleService::class);
-        $logisticRole = $roleService->roles()->where('name', 'Логист')->first();
+        $logisticRole = $roleService->roles()->where('name', $role)->first();
         if ($logisticRole && $logisticRole->users) {
             foreach ($logisticRole->users as $logistic) {
-                $notificationService->sendDirect(
-                    'logistotpravlenie_otmeneno',
-                    $logistic->email,
-                    'email',
-                    [
-                        'SHIPMENT_NUMBER' => $shipment->number,
-                        'LINK_ORDER' => url("/orders/{$shipment->delivery->order->id}"),
-                    ]
-                );
+                $notificationService->sendDirect($type, $logistic->email, 'email', $attributes);
             }
         }
     }
