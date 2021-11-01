@@ -100,6 +100,25 @@ class OrderService
     }
 
     /**
+     * Вернуть деньги при деактивации сертификата
+     */
+    public function refundByCertificate(Order $order, int $sum): bool
+    {
+        $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderCertificate($order, $sum);
+
+        try {
+            /** @var OrderReturnService $orderReturnService */
+            $orderReturnService = resolve(OrderReturnService::class);
+            $orderReturn = $orderReturnService->create($orderReturnDto);
+        } catch (\Throwable $e) {
+            report($e);
+            return false;
+        }
+
+        return (bool) $orderReturn;
+    }
+
+    /**
      * Установить статус оплаты заказа
      */
     protected function setPaymentStatus(Order $order, int $status, bool $save = true): bool

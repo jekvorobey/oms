@@ -29,6 +29,18 @@ class OrderReturnDtoBuilder
     }
 
     /**
+     * Создание dto возврата заказа сертификата
+     */
+    public function buildFromOrderCertificate(Order $order, int $sum): OrderReturnDto
+    {
+        $orderReturnDto = $this->buildBase($order->id, collect());
+        $orderReturnDto->price = $sum;
+        $orderReturnDto->is_delivery = false;
+
+        return $orderReturnDto;
+    }
+
+    /**
      * Создание dto возврата отправления
      */
     public function buildFromShipment(Shipment $shipment): OrderReturnDto
