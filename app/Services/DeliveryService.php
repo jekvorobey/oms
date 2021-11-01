@@ -965,7 +965,7 @@ class DeliveryService
         $logisticRole = $roleService->roles()->where('id', $role)->first();
         if ($logisticRole && $logisticRole->users) {
             foreach ($logisticRole->users as $logistic) {
-                $notificationService->sendDirect($type, $logistic->email, 'email', $attributes);
+                $notificationService->sendDirect($type, $logistic['email'], 'email', $attributes);
             }
         }
     }
