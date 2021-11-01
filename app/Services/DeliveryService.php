@@ -962,7 +962,7 @@ class DeliveryService
         $notificationService = resolve(ServiceNotificationService::class);
         /** @var RoleService $roleService */
         $roleService = resolve(RoleService::class);
-        $logisticRole = $roleService->roles()->where('name', $role)->first();
+        $logisticRole = $roleService->roles()->where('id', $role)->first();
         if ($logisticRole && $logisticRole->users) {
             foreach ($logisticRole->users as $logistic) {
                 $notificationService->sendDirect($type, $logistic->email, 'email', $attributes);
