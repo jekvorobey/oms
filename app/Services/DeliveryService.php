@@ -957,17 +957,28 @@ class DeliveryService
     /**
      * Отправить сообщение на почту всем пользователям с определенной ролью.
      */
-    protected function sendEmailToUserByRole(string $type, string $role, array $attributes): void
+    protected function sendEmailToUserByRole(string $type, int $roleId, array $attributes): void
     {
-        /** @var ServiceNotificationService $notificationService */
-        $notificationService = resolve(ServiceNotificationService::class);
         /** @var RoleService $roleService */
         $roleService = resolve(RoleService::class);
-        $logisticRole = $roleService->roles()->where('id', $role)->first();
-        if ($logisticRole && $logisticRole->users) {
-            foreach ($logisticRole->users as $logistic) {
-                $notificationService->sendDirect($type, $logistic['email'], 'email', $attributes);
+
+        $logisticRole = $roleService->roles(
+            $roleService->newQuery()->setFilter('id', $roleId)
+        )->first();
+
+        if (!$logisticRole || !$logisticRole->users) {
+            return;
+        }
+
+        /** @var ServiceNotificationService $notificationService */
+        $notificationService = resolve(ServiceNotificationService::class);
+
+        foreach ($logisticRole->users as $logistic) {
+            if (empty($logistic['email'])) {
+                continue;
             }
+
+            $notificationService->sendDirect($type, $logistic['email'], 'email', $attributes);
         }
     }
 
