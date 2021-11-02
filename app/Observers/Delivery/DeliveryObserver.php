@@ -321,6 +321,10 @@ class DeliveryObserver
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
             foreach ($delivery->shipments as $shipment) {
+                if ($shipment->is_canceled) {
+                    continue;
+                }
+
                 $deliveryService->cancelShipment($shipment, $delivery->return_reason_id);
             }
         }
