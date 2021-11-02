@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a6580a449c7b50a07787ee585b07c283",
+    "content-hash": "6bad073e72658a969b91d83d74badae1",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1050,15 +1050,15 @@
         },
         {
             "name": "iwengo/ibt-cm-lib",
-            "version": "dev-master-ylab",
+            "version": "dev-feature/IBT-495-referal-partner-report",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
-                "reference": "2b64d9e380790ae3b2f630776d15cfe91a8e13c0"
+                "reference": "4cd62317ddddd70fcc0b21b6267b75c9e87d6858"
             },
             "require": {
                 "ext-json": "*",
-                "iwengo/ibt-common-lib": "dev-master-ylab as dev-master",
+                "iwengo/ibt-common-lib": "dev-master",
                 "php": "^7.1.3"
             },
             "require-dev": {
@@ -1088,7 +1088,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2021-10-11T08:44:12+00:00"
+            "time": "2021-11-02T12:47:27+00:00"
         },
         {
             "name": "iwengo/ibt-cms-lib",
@@ -10097,7 +10097,7 @@
     "aliases": [
         {
             "package": "iwengo/ibt-cm-lib",
-            "version": "dev-master-ylab",
+            "version": "dev-feature/IBT-495-referal-partner-report",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         },
@@ -10110,8 +10110,8 @@
         {
             "package": "iwengo/ibt-common-lib",
             "version": "dev-master-ylab",
-            "alias": "dev-master-ylab",
-            "alias_normalized": "dev-master-ylab"
+            "alias": "dev-master",
+            "alias_normalized": "dev-master"
         },
         {
             "package": "iwengo/ibt-logistics-lib",
