@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "af77631bb4026b0a46123123ac4bad90",
+    "content-hash": "a6580a449c7b50a07787ee585b07c283",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1127,7 +1127,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-common-ms-code.git",
-                "reference": "2f9cbf8846b82440b37164130951c43e14191228"
+                "reference": "cc5f61aa4881df224dd39d6a141510c3a2419359"
             },
             "require": {
                 "ext-json": "*",
@@ -1170,7 +1170,7 @@
                 }
             ],
             "description": "iBT common code for all microservices",
-            "time": "2021-04-15T10:05:28+00:00"
+            "time": "2021-10-29T12:53:20+00:00"
         },
         {
             "name": "iwengo/ibt-logistics-lib",
@@ -10110,8 +10110,8 @@
         {
             "package": "iwengo/ibt-common-lib",
             "version": "dev-master-ylab",
-            "alias": "dev-master",
-            "alias_normalized": "dev-master"
+            "alias": "dev-master-ylab",
+            "alias_normalized": "dev-master-ylab"
         },
         {
             "package": "iwengo/ibt-logistics-lib",
