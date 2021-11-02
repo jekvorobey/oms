@@ -935,9 +935,10 @@ class DeliveryService
         $shipment->is_canceled = true;
         $shipment->cargo_id = null;
 
-        if (!$shipment->save()) {
+        if (!$shipment->save() || !$shipment->wasChanged('is_canceled')) {
             return false;
         }
+
         $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
 
         /** @var OrderReturnService $orderReturnService */
@@ -986,7 +987,7 @@ class DeliveryService
 
         $delivery->return_reason_id ??= $orderReturnReasonId;
 
-        if (!$delivery->save()) {
+        if (!$delivery->save() || !$delivery->wasChanged('is_canceled')) {
             return false;
         }
 
