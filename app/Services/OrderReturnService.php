@@ -49,7 +49,7 @@ class OrderReturnService
                 $this->createOrderReturnItem($order, $orderReturn, $basketItem, $item->qty, $item->ticket_ids);
             }
 
-            $this->calcOrderReturnPrice($orderReturn, $orderReturnDto->is_delivery ? $orderReturnDto->price : null);
+            $this->calcOrderReturnPrice($orderReturn, $orderReturnDto->price);
 
             return $orderReturn;
         });
@@ -138,7 +138,7 @@ class OrderReturnService
         }
         $orderReturnItem->product = $basketItem->product;
         $orderReturnItem->name = $basketItem->name;
-        $orderReturnItem->qty = $order->type == Basket::TYPE_PRODUCT ? $qty : count($ticketIds);
+        $orderReturnItem->qty = $order->type == Basket::TYPE_MASTER ? count($ticketIds) : $qty;
         /**
          * Проверяем, что кол-во возвращаемого товара не больше, чем в корзине
          */

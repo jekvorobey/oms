@@ -91,6 +91,7 @@ class OrderObserver
             $this->sendNotification($order);
         }
         $this->setPaymentStatusToCertificateRequest($order);
+        $this->cancelBonuses($order);
     }
 
     protected function sendCreatedNotification(Order $order)
@@ -240,7 +241,6 @@ class OrderObserver
         $this->setAwaitingConfirmationStatus($order);
         $this->sendTicketsEmail($order);
         $this->returnTickets($order);
-        $this->cancelBonuses($order);
 
         //Данная команда должна быть в самом низу перед всеми $this->set*Status()
         $this->setStatusAt($order);
