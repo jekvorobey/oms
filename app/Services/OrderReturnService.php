@@ -233,32 +233,34 @@ class OrderReturnService
         Order $order,
         OrderReturn $orderReturn
     ): void {
-        if ($basketItems->filter(fn(BasketItem $basketItem) => $basketItem->referrer_id !== null)->isNotEmpty()) {
-            /** @var ReferralService $referralService */
-            $referralService = resolve(ReferralService::class);
-            /** @var OfferService $offerService */
-            $offerService = resolve(OfferService::class);
+        if ($basketItems->filter(fn(BasketItem $basketItem) => $basketItem->referrer_id !== null)->isEmpty()) {
+            return;
+        }
 
-            $offerIds = $basketItems->pluck('offer_id')->toArray();
-            $offersQuery = $offerService->newQuery();
-            $offersQuery->addFields(OfferDto::entity(), 'id', 'product_id')
-                ->setFilter('id', $offerIds);
-            $offersInfo = $offerService->offers($offersQuery)->keyBy('id');
+        /** @var ReferralService $referralService */
+        $referralService = resolve(ReferralService::class);
+        /** @var OfferService $offerService */
+        $offerService = resolve(OfferService::class);
 
-            if ($offersInfo->isNotEmpty()) {
-                $basketItems
-                    ->filter(fn(BasketItem $basketItem) => $basketItem->referrer_id !== null)
-                    ->each(function (BasketItem $basketItem) use ($orderReturn, $referralService, $order, $offersInfo) {
-                        $returnReferralBillOperationsDto = new ReturnReferralBillOperationDto();
-                        $returnReferralBillOperationsDto->setCustomerId($orderReturn->customer_id);
-                        $returnReferralBillOperationsDto->setOrderNumber($order->number);
-                        $returnReferralBillOperationsDto->setReturnDate(new Carbon($orderReturn->created_at));
-                        $returnReferralBillOperationsDto->setReturnNumber($orderReturn->number);
-                        $returnReferralBillOperationsDto->setProductId($offersInfo[$basketItem->offer_id]->product_id);
+        $offerIds = $basketItems->pluck('offer_id')->toArray();
+        $offersQuery = $offerService->newQuery();
+        $offersQuery->addFields(OfferDto::entity(), 'id', 'product_id')
+            ->setFilter('id', $offerIds);
+        $offersInfo = $offerService->offers($offersQuery)->keyBy('id');
 
-                        $referralService->returnBillOperation($basketItem->referrer_id, $returnReferralBillOperationsDto);
-                    });
-            }
+        if ($offersInfo->isNotEmpty()) {
+            $basketItems
+                ->filter(fn(BasketItem $basketItem) => $basketItem->referrer_id !== null)
+                ->each(function (BasketItem $basketItem) use ($orderReturn, $referralService, $order, $offersInfo) {
+                    $returnReferralBillOperationsDto = new ReturnReferralBillOperationDto();
+                    $returnReferralBillOperationsDto->setCustomerId($orderReturn->customer_id);
+                    $returnReferralBillOperationsDto->setOrderNumber($order->number);
+                    $returnReferralBillOperationsDto->setReturnDate(new Carbon($orderReturn->created_at));
+                    $returnReferralBillOperationsDto->setReturnNumber($orderReturn->number);
+                    $returnReferralBillOperationsDto->setProductId($offersInfo[$basketItem->offer_id]->product_id);
+
+                    $referralService->returnBillOperation($basketItem->referrer_id, $returnReferralBillOperationsDto);
+                });
         }
     }
 }
