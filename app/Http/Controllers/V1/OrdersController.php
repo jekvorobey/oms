@@ -421,7 +421,7 @@ class OrdersController extends Controller
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="orderReturnReasonId", required=true, @OA\Schema(type="integer")),
      *     @OA\Response(response="204", description=""),
-     *     @OA\Response(response="404", description="cargo not found"),
+     *     @OA\Response(response="404", description="order not found"),
      * )
      *
      * Отменить заказ
@@ -438,6 +438,36 @@ class OrdersController extends Controller
             throw new NotFoundHttpException('order not found');
         }
         if (!$orderService->cancel($order, $data['orderReturnReason'])) {
+            throw new HttpException(500);
+        }
+
+        return response('', 204);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/refund",
+     *     tags={"Заказы"},
+     *     description="Вернуть деньги при деактивации сертификата.",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="order not found"),
+     * )
+     *
+     * Вернуть деньги при деактивации сертификата
+     * @throws \Exception
+     */
+    public function refundByCertificate(int $id, Request $request, OrderService $orderService): Response
+    {
+        $data = $this->validate($request, [
+            'sum' => 'required|integer|min:0',
+        ]);
+
+        $order = $orderService->getOrder($id);
+        if (!$order) {
+            throw new NotFoundHttpException('order not found');
+        }
+        if (!$orderService->refundByCertificate($order, $data['sum'])) {
             throw new HttpException(500);
         }
 

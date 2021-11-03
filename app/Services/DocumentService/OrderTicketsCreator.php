@@ -4,7 +4,7 @@ namespace App\Services\DocumentService;
 
 use App\Models\Order\Order;
 use App\Services\OrderService;
-use mikehaertl\wkhtmlto\Pdf;
+use PDF;
 
 class OrderTicketsCreator extends DocumentCreator
 {
@@ -43,23 +43,19 @@ class OrderTicketsCreator extends DocumentCreator
             throw new \Exception('Order is not paid');
         }
 
-        $pdf = new Pdf();
-
         $orderInfoDto = $this->orderService->getPublicEventsOrderInfo($this->order, true, $this->basketItemId);
 
         if (!$orderInfoDto) {
             throw new \Exception('Order is not PublicEventOrder');
         }
 
-        $html = view('pdf::ticket', [
-            'order' => $orderInfoDto,
-        ])->render();
-
-        $pdf->addPage($html, [], Pdf::TYPE_HTML);
-
         $path = $this->generateDocumentPath();
 
-        $pdf->saveAs($path);
+        $pdf = PDF::loadView('pdf::ticket', [
+            'order' => $orderInfoDto,
+        ]);
+
+        $pdf->save($path, true);
 
         return $path;
     }

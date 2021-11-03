@@ -3,8 +3,6 @@
 namespace App\Observers\Delivery;
 
 use App\Models\Delivery\ShipmentItem;
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 
 /**
  * Class ShipmentItemObserver
@@ -12,54 +10,6 @@ use App\Models\History\HistoryType;
  */
 class ShipmentItemObserver
 {
-    /**
-     * Handle the shipment item "created" event.
-     * @return void
-     */
-    public function created(ShipmentItem $shipmentItem)
-    {
-        History::saveEvent(
-            HistoryType::TYPE_CREATE,
-            [
-                $shipmentItem->shipment->delivery->order,
-                $shipmentItem->shipment,
-            ],
-            $shipmentItem
-        );
-    }
-
-    /**
-     * Handle the shipment item "updated" event.
-     * @return void
-     */
-    public function updated(ShipmentItem $shipmentItem)
-    {
-        History::saveEvent(
-            HistoryType::TYPE_UPDATE,
-            [
-                $shipmentItem->shipment->delivery->order,
-                $shipmentItem->shipment,
-            ],
-            $shipmentItem
-        );
-    }
-
-    /**
-     * Handle the shipment item "deleting" event.
-     * @throws \Exception
-     */
-    public function deleting(ShipmentItem $shipmentItem)
-    {
-        History::saveEvent(
-            HistoryType::TYPE_DELETE,
-            [
-                $shipmentItem->shipment->delivery->order,
-                $shipmentItem->shipment,
-            ],
-            $shipmentItem
-        );
-    }
-
     /**
      * Handle the shipment item "deleted" event.
      * @throws \Exception

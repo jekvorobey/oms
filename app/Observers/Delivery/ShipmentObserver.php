@@ -7,11 +7,9 @@ use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
-use App\Models\History\History;
 use App\Models\History\HistoryType;
 use App\Services\DeliveryService;
 use App\Services\DeliveryServiceInvalidConditions;
-use App\Services\OrderService;
 use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -44,15 +42,6 @@ class ShipmentObserver
     ];
 
     /**
-     * Handle the shipment "created" event.
-     * @return void
-     */
-    public function created(Shipment $shipment)
-    {
-        History::saveEvent(HistoryType::TYPE_CREATE, $shipment->delivery->order, $shipment);
-    }
-
-    /**
      * Handle the shipment "updating" event.
      */
     public function updating(Shipment $shipment): bool
@@ -67,8 +56,6 @@ class ShipmentObserver
      */
     public function updated(Shipment $shipment)
     {
-        History::saveEvent(HistoryType::TYPE_UPDATE, [$shipment->delivery->order, $shipment], $shipment);
-
         $this->setStatusToDelivery($shipment);
         $this->setIsCanceledToDelivery($shipment);
         $this->setOrderIsPartiallyCancelled($shipment);
@@ -83,8 +70,6 @@ class ShipmentObserver
      */
     public function deleting(Shipment $shipment)
     {
-        History::saveEvent(HistoryType::TYPE_DELETE, [$shipment->delivery->order, $shipment], $shipment);
-
         foreach ($shipment->packages as $package) {
             $package->delete();
         }
@@ -123,8 +108,8 @@ class ShipmentObserver
     {
         $this->recalcCargoAndDeliveryOnSaved($shipment);
         $this->recalcCargosOnSaved($shipment);
-        $this->markOrderAsProblem($shipment);
-        $this->markOrderAsNonProblem($shipment);
+        $this->markDeliveryAsProblem($shipment);
+        $this->markDeliveryAsNonProblem($shipment);
         $this->upsertDeliveryOrder($shipment);
         $this->add2Cargo($shipment);
         $this->add2CargoHistory($shipment);
@@ -196,29 +181,29 @@ class ShipmentObserver
     }
 
     /**
-     * Пометить заказ как проблемный в случае проблемного отправления
+     * Пометить доставку как проблемную в случае проблемного отправления
      */
-    protected function markOrderAsProblem(Shipment $shipment): void
+    protected function markDeliveryAsProblem(Shipment $shipment): void
     {
         if (
             $shipment->is_problem != $shipment->getOriginal('is_problem') &&
             $shipment->is_problem
         ) {
-            /** @var OrderService $orderService */
-            $orderService = resolve(OrderService::class);
-            $orderService->markAsProblem($shipment->delivery->order);
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+            $deliveryService->markAsProblem($shipment->delivery);
         }
     }
 
     /**
-     * Пометить заказ как непроблемный, если все его отправления непроблемные
+     * Пометить доставку как непроблемную, если все отправления непроблемные
      */
-    protected function markOrderAsNonProblem(Shipment $shipment): void
+    protected function markDeliveryAsNonProblem(Shipment $shipment): void
     {
         if ($shipment->is_problem != $shipment->getOriginal('is_problem') && !$shipment->is_problem) {
-            /** @var OrderService $orderService */
-            $orderService = resolve(OrderService::class);
-            $orderService->markAsNonProblem($shipment->delivery->order);
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+            $deliveryService->markAsNonProblem($shipment->delivery);
         }
     }
 
@@ -271,13 +256,13 @@ class ShipmentObserver
      */
     protected function add2CargoHistory(Shipment $shipment): void
     {
-        if ($shipment->cargo_id != $shipment->getOriginal('cargo_id')) {
+        if ($shipment->wasChanged('cargo_id')) {
             if ($shipment->getOriginal('cargo_id')) {
-                History::saveEvent(HistoryType::TYPE_DELETE_LINK, Cargo::find($shipment->getOriginal('cargo_id')), $shipment);
+                $shipment->saveHistoryEvent(HistoryType::TYPE_DELETE_LINK, Cargo::find($shipment->getOriginal('cargo_id')));
             }
 
             if ($shipment->cargo_id) {
-                History::saveEvent(HistoryType::TYPE_CREATE_LINK, Cargo::find($shipment->cargo_id), $shipment);
+                $shipment->saveHistoryEvent(HistoryType::TYPE_DELETE_LINK, Cargo::find($shipment->cargo_id));
             }
         }
     }

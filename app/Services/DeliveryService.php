@@ -12,11 +12,14 @@ use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
+use Cms\Core\CmsException;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
 use Exception;
 use Greensight\CommonMsa\Dto\AbstractDto;
+use Greensight\CommonMsa\Dto\RoleDto;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
+use Greensight\CommonMsa\Services\RoleService\RoleService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
@@ -34,6 +37,7 @@ use Greensight\Logistics\Dto\Order\DeliveryOrderInput\RecipientDto;
 use Greensight\Logistics\Services\CourierCallService\CourierCallService;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Logistics\Services\ListsService\ListsService;
+use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
@@ -41,6 +45,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use MerchantManagement\Services\MerchantService\MerchantService;
+use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 
 /**
  * Класс-бизнес логики по работе с сущностями доставки:
@@ -309,7 +314,7 @@ class DeliveryService
         $deliveryCargoDto->length = $cargo->length;
         $orderIds = [];
         foreach ($cargo->shipments as $shipment) {
-            $orderIds[] = $shipment->delivery->xml_id ? : 0;
+            $orderIds[] = $shipment->delivery->xml_id ?: 0;
         }
         $deliveryCargoDto->order_ids = $orderIds;
 
@@ -562,7 +567,7 @@ class DeliveryService
 
     /**
      * Сформировать заказ на доставку
-     * @throws \Cms\Core\CmsException
+     * @throws CmsException
      */
     protected function formDeliveryOrder(Delivery $delivery): DeliveryOrderInputDto
     {
@@ -632,13 +637,13 @@ class DeliveryService
             $merchant = $merchantService->merchant($shipment->merchant_id);
 
             $storeAddress = $store->address;
-            $storeAddress['street'] = $storeAddress['street'] ? : '-'; //у cdek и b2cpl улица обязательна
+            $storeAddress['street'] = $storeAddress['street'] ?: '-'; //у cdek и b2cpl улица обязательна
             $senderDto = new DeliveryOrderInput\SenderDto($storeAddress);
             $deliveryOrderInputDto->sender = $senderDto;
             // если есть доп адрес для сдэка, то его тоже передаем
             $cdekSenderAddress = $store->cdek_address;
             if ($cdekSenderAddress && !empty($cdekSenderAddress['address_string'])) {
-                $cdekSenderAddress['street'] = $cdekSenderAddress['street'] ? : '-';
+                $cdekSenderAddress['street'] = $cdekSenderAddress['street'] ?: '-';
                 $deliveryOrderInputDto->cdekSender = $cdekSenderAddress;
             }
 
@@ -696,7 +701,7 @@ class DeliveryService
                 $recipientDto->area = $pointDto->address['area'] ?? '';
                 $recipientDto->city = $pointDto->address['city'] ?? '';
                 $recipientDto->city_guid = $pointDto->city_guid;
-                $recipientDto->street = $pointDto->address['street'] ? : '-'; //у cdek и b2cpl улица обязательна
+                $recipientDto->street = $pointDto->address['street'] ?: '-'; //у cdek и b2cpl улица обязательна
                 $recipientDto->house = $pointDto->address['house'] ?? '';
                 $recipientDto->block = $pointDto->address['block'] ?? '';
                 $recipientDto->flat = $pointDto->address['flat'] ?? '';
@@ -713,7 +718,7 @@ class DeliveryService
             $recipientDto->block,
             $recipientDto->flat,
         ]));
-        $recipientDto->street = $recipientDto->street ? : 'нет'; //у cdek и b2cpl улица обязательна
+        $recipientDto->street = $recipientDto->street ?: 'нет'; //у cdek и b2cpl улица обязательна
         $recipientDto->contact_name = $delivery->receiver_name;
         $recipientDto->email = $delivery->receiver_email;
         $recipientDto->phone = phoneNumberFormat($delivery->receiver_phone);
@@ -838,7 +843,7 @@ class DeliveryService
      */
     public function getZeroMileShipmentDeliveryServiceId(Shipment $shipment): int
     {
-        return $shipment->delivery_service_zero_mile ? : $shipment->delivery->delivery_service;
+        return $shipment->delivery_service_zero_mile ?: $shipment->delivery->delivery_service;
     }
 
     /**
@@ -930,16 +935,50 @@ class DeliveryService
         $shipment->is_canceled = true;
         $shipment->cargo_id = null;
 
-        if ($shipment->save()) {
-            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
-
-            /** @var OrderReturnService $orderReturnService */
-            $orderReturnService = resolve(OrderReturnService::class);
-            $orderReturnService->createOrderReturn($orderReturnDto);
-
-            return true;
-        } else {
+        if (!$shipment->save()) {
             return false;
+        }
+
+        $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
+
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+        $orderReturnService->create($orderReturnDto);
+
+        $attributes = [
+            'SHIPMENT_NUMBER' => $shipment->number,
+            'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order->id),
+        ];
+        $this->sendEmailToUserByRole('logistotpravlenie_otmeneno', RoleDto::ROLE_LOGISTIC, $attributes);
+
+        return true;
+    }
+
+    /**
+     * Отправить сообщение на почту всем пользователям с определенной ролью.
+     */
+    protected function sendEmailToUserByRole(string $type, int $roleId, array $attributes): void
+    {
+        /** @var RoleService $roleService */
+        $roleService = resolve(RoleService::class);
+
+        $logisticRole = $roleService->roles(
+            $roleService->newQuery()->setFilter('id', $roleId)
+        )->first();
+
+        if (!$logisticRole || !$logisticRole->users) {
+            return;
+        }
+
+        /** @var ServiceNotificationService $notificationService */
+        $notificationService = resolve(ServiceNotificationService::class);
+
+        foreach ($logisticRole->users as $logistic) {
+            if (empty($logistic['email'])) {
+                continue;
+            }
+
+            $notificationService->sendDirect($type, $logistic['email'], 'email', $attributes);
         }
     }
 
@@ -959,13 +998,13 @@ class DeliveryService
 
         $delivery->return_reason_id ??= $orderReturnReasonId;
 
-        if ($delivery->save()) {
-            $this->cancelDeliveryOrder($delivery);
-
-            return true;
-        } else {
+        if (!$delivery->save()) {
             return false;
         }
+
+        $this->cancelDeliveryOrder($delivery);
+
+        return true;
     }
 
     /**
@@ -976,10 +1015,42 @@ class DeliveryService
         if ($delivery->xml_id) {
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
 
             $delivery->xml_id = '';
             $delivery->save();
+
+            if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
+                return;
+            }
+
+            $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
         }
+    }
+
+    /**
+     * Пометить доставку как проблемную
+     */
+    public function markAsProblem(Delivery $delivery): bool
+    {
+        $delivery->is_problem = true;
+
+        return $delivery->save();
+    }
+
+    /**
+     * Отменить флаг проблемности у доставки, если все отправления непроблемные
+     */
+    public function markAsNonProblem(Delivery $delivery): bool
+    {
+        $isAllShipmentsOk = true;
+        foreach ($delivery->shipments as $shipment) {
+            if ($shipment->is_problem) {
+                $isAllShipmentsOk = false;
+                break;
+            }
+        }
+        $delivery->is_problem = !$isAllShipmentsOk;
+
+        return $delivery->save();
     }
 }

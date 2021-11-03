@@ -276,6 +276,8 @@ class CheckoutOrder
         $order->certificates = $this->certificates;
         if ($order->certificates) {
             $order->spent_certificate = array_sum(array_column((array) $order->certificates, 'amount'));
+            // Т.к. цена приходит с фронта, с учетом всех примененных скидок и подарочных сертификатов, номинал использованного сертификата нужно вернуть в цену
+            $order->price += $order->spent_certificate;
         }
 
         $order->delivery_type = $this->deliveryTypeId;

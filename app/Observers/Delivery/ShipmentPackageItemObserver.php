@@ -3,8 +3,6 @@
 namespace App\Observers\Delivery;
 
 use App\Models\Delivery\ShipmentPackageItem;
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 
 /**
  * Class ShipmentPackageItemObserver
@@ -12,55 +10,6 @@ use App\Models\History\HistoryType;
  */
 class ShipmentPackageItemObserver
 {
-    /**
-     * Handle the package item "created" event.
-     * @param ShipmentPackageItem $shipmentPackageItemItem
-     * @return void
-     */
-    public function created(ShipmentPackageItem $shipmentPackageItem)
-    {
-        History::saveEvent(
-            HistoryType::TYPE_CREATE,
-            [
-                $shipmentPackageItem->shipmentPackage->shipment->delivery->order,
-                $shipmentPackageItem->shipmentPackage->shipment,
-            ],
-            $shipmentPackageItem
-        );
-    }
-
-    /**
-     * Handle the package item "updated" event.
-     * @return void
-     */
-    public function updated(ShipmentPackageItem $shipmentPackageItem)
-    {
-        History::saveEvent(
-            HistoryType::TYPE_UPDATE,
-            [
-                $shipmentPackageItem->shipmentPackage->shipment->delivery->order,
-                $shipmentPackageItem->shipmentPackage->shipment,
-            ],
-            $shipmentPackageItem
-        );
-    }
-
-    /**
-     * Handle the package item "deleting" event.
-     * @throws \Exception
-     */
-    public function deleting(ShipmentPackageItem $shipmentPackageItem)
-    {
-        History::saveEvent(
-            HistoryType::TYPE_DELETE,
-            [
-                $shipmentPackageItem->shipmentPackage->shipment->delivery->order,
-                $shipmentPackageItem->shipmentPackage->shipment,
-            ],
-            $shipmentPackageItem
-        );
-    }
-
     /**
      * Handle the package item "deleted" event.
      * @throws \Exception
@@ -76,7 +25,7 @@ class ShipmentPackageItemObserver
      */
     public function saved(ShipmentPackageItem $shipmentPackageItem)
     {
-        if ($shipmentPackageItem->qty != $shipmentPackageItem->getOriginal('qty')) {
+        if ($shipmentPackageItem->wasChanged('qty')) {
             $shipmentPackageItem->shipmentPackage->recalcWeight();
         }
     }

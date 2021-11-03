@@ -10,8 +10,6 @@ use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
-use App\Models\History\History;
-use App\Models\History\HistoryType;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
@@ -69,8 +67,6 @@ class OrderObserver
      */
     public function created(Order $order)
     {
-        History::saveEvent(HistoryType::TYPE_CREATE, $order, $order);
-
         $order->basket->is_belongs_to_order = true;
         $order->basket->save();
 
@@ -85,8 +81,6 @@ class OrderObserver
      */
     public function updated(Order $order)
     {
-        History::saveEvent(HistoryType::TYPE_UPDATE, $order, $order);
-
         $this->setPaymentStatusToChildren($order);
         $this->setIsCanceledToChildren($order);
         $this->setIsProblemToChildren($order);
@@ -97,6 +91,7 @@ class OrderObserver
             $this->sendNotification($order);
         }
         $this->setPaymentStatusToCertificateRequest($order);
+        $this->cancelBonuses($order);
     }
 
     protected function sendCreatedNotification(Order $order)
@@ -246,7 +241,6 @@ class OrderObserver
         $this->setAwaitingConfirmationStatus($order);
         $this->sendTicketsEmail($order);
         $this->returnTickets($order);
-        $this->setCanceledCertificates($order);
 
         //Данная команда должна быть в самом низу перед всеми $this->set*Status()
         $this->setStatusAt($order);
@@ -258,8 +252,6 @@ class OrderObserver
      */
     public function deleting(Order $order)
     {
-        History::saveEvent(HistoryType::TYPE_DELETE, $order, $order);
-
         //todo Поправить удаления связанных сущностей
         if ($order->basket) {
             $order->basket->delete();
@@ -445,13 +437,16 @@ class OrderObserver
     }
 
     /**
-     * Возврат сертификатов
+     * Отклонение начисленных бонусов за заказ
      */
-    protected function setCanceledCertificates(Order $order): void
+    protected function cancelBonuses(Order $order): void
     {
-        if ($order->is_canceled != $order->getOriginal('is_canceled')) {
-            if ($order->spent_certificate > 0) {
-                resolve(CertificateService::class)->rollback($order->spent_certificate, $order->customer_id, $order->id, $order->number);
+        if ($order->is_canceled && $order->wasChanged('is_canceled')) {
+            $customerService = resolve(CustomerService::class);
+            $customerService->declineByOrder($order->customer_id, $order->id);
+
+            foreach ($order->bonuses as $bonus) {
+                $bonus->cancel();
             }
         }
     }
@@ -556,7 +551,7 @@ class OrderObserver
         /** @var Payment $payment */
         $payment = $order->payments->first();
 
-        $link = optional(optional($payment)->paymentSystem())->paymentLink($payment);
+        $link = optional($payment)->payment_link;
 
         $button = (function () use ($link, $override) {
             if ($override == self::OVERRIDE_AWAITING_PAYMENT) {

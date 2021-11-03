@@ -3,8 +3,9 @@
 namespace App\Models\Delivery;
 
 use App\Models\Basket\BasketItem;
-use App\Models\OmsModel;
+use App\Models\WithHistory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -25,10 +26,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Shipment $shipment
  * @property-read BasketItem $basketItem
  */
-class ShipmentItem extends OmsModel
+class ShipmentItem extends AbstractModel
 {
+    use WithHistory;
+
     /** @var string */
     protected $table = 'shipment_items';
+
+    /** @var bool */
+    protected static $unguarded = true;
 
     /** @var array */
     protected static $restIncludes = ['shipment', 'basketItem'];
@@ -41,5 +47,10 @@ class ShipmentItem extends OmsModel
     public function basketItem(): BelongsTo
     {
         return $this->belongsTo(BasketItem::class);
+    }
+
+    protected function historyMainModel(): array
+    {
+        return [$this->shipment->delivery->order, $this->shipment];
     }
 }

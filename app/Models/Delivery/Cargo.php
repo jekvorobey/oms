@@ -2,12 +2,13 @@
 
 namespace App\Models\Delivery;
 
-use App\Models\OmsModel;
+use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -132,8 +133,9 @@ use Illuminate\Support\Carbon;
  *
  * @property-read Collection|Shipment[] $shipments
  */
-class Cargo extends OmsModel
+class Cargo extends AbstractModel
 {
+    use WithMainHistory;
     use WithWeightAndSizes;
 
     private const SIDES = ['width', 'height', 'length'];
@@ -153,6 +155,9 @@ class Cargo extends OmsModel
 
     /** @var array */
     protected $fillable = self::FILLABLE;
+
+    /** @var bool */
+    protected static $unguarded = true;
 
     /** @var string */
     protected $table = 'cargo';

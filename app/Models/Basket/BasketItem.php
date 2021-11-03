@@ -4,8 +4,9 @@ namespace App\Models\Basket;
 
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentPackageItem;
-use App\Models\OmsModel;
+use App\Models\Order\Order;
 use App\Models\Order\OrderReturnItem;
+use App\Models\WithHistory;
 use App\Services\PublicEventService\Cart\PublicEventCartRepository;
 use App\Services\PublicEventService\Cart\PublicEventCartStruct;
 use Exception;
@@ -23,6 +24,7 @@ use Pim\Services\ProductService\ProductService;
 use Pim\Services\PublicEventMediaService\PublicEventMediaService;
 use Pim\Services\PublicEventSprintService\PublicEventSprintService;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -65,8 +67,13 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
  * @property-read ShipmentItem $shipmentItem
  * @property-read ShipmentPackageItem $shipmentPackageItem
  */
-class BasketItem extends OmsModel
+class BasketItem extends AbstractModel
 {
+    use WithHistory;
+
+    /** @var bool */
+    protected static $unguarded = true;
+
     /** @var array */
     protected $casts = [
         'product' => 'array',
@@ -101,6 +108,11 @@ class BasketItem extends OmsModel
     public function orderReturnItems(): HasMany
     {
         return $this->hasMany(OrderReturnItem::class);
+    }
+
+    protected function historyMainModel(): ?Order
+    {
+        return $this->basket->order;
     }
 
     /**

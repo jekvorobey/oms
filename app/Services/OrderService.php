@@ -82,23 +82,40 @@ class OrderService
 
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);
-            $orderReturnService->createOrderReturn($orderReturnDto);
+            $orderReturnService->create($orderReturnDto);
 
             if ($order->payment_status === PaymentStatus::HOLD) {
                 /** @var Payment $payment */
                 $payment = $order->payments->last();
                 $paymentSystem = $payment->paymentSystem();
-
-                if (!$paymentSystem) {
-                    return true;
+                if ($paymentSystem) {
+                    $paymentSystem->cancel($payment->external_payment_id);
                 }
-                $paymentSystem->cancel($payment->data['externalPaymentId']);
             }
 
             return true;
         } else {
             return false;
         }
+    }
+
+    /**
+     * Вернуть деньги при деактивации сертификата
+     */
+    public function refundByCertificate(Order $order, int $sum): bool
+    {
+        $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderCertificate($order, $sum);
+
+        try {
+            /** @var OrderReturnService $orderReturnService */
+            $orderReturnService = resolve(OrderReturnService::class);
+            $orderReturn = $orderReturnService->create($orderReturnDto);
+        } catch (\Throwable $e) {
+            report($e);
+            return false;
+        }
+
+        return (bool) $orderReturn;
     }
 
     /**

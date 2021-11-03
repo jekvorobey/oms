@@ -2,10 +2,11 @@
 
 namespace App\Models\Delivery;
 
+use App\Core\Notifications\NotificationInterface;
 use App\Core\Notifications\ShipmentNotification;
 use App\Models\Basket\BasketItem;
-use App\Models\OmsModel;
 use App\Models\Order\OrderReturnReason;
+use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -18,6 +19,7 @@ use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\ProductService\ProductService;
+use Greensight\CommonMsa\Models\AbstractModel;
 
 /**
  * @OA\Schema(
@@ -187,8 +189,9 @@ use Pim\Services\ProductService\ProductService;
  * @property-read Collection|ShipmentPackage[] $packages
  * @property-read Cargo $cargo
  */
-class Shipment extends OmsModel
+class Shipment extends AbstractModel
 {
+    use WithMainHistory;
     use WithWeightAndSizes;
 
     private const SIDES = ['width', 'height', 'length'];
@@ -210,11 +213,11 @@ class Shipment extends OmsModel
         'delivery_service_zero_mile',
     ];
 
-    /** @var string */
-    public $notificator = ShipmentNotification::class;
-
     /** @var array */
     protected $fillable = self::FILLABLE;
+
+    /** @var bool */
+    protected static $unguarded = true;
 
     /** @var string */
     protected $table = 'shipments';
@@ -265,6 +268,16 @@ class Shipment extends OmsModel
     public function export(): HasOne
     {
         return $this->hasOne(ShipmentExport::class);
+    }
+
+    protected function historyMainModel(): array
+    {
+        return [$this->delivery->order, $this];
+    }
+
+    public function historyNotificator(): ?NotificationInterface
+    {
+        return resolve(ShipmentNotification::class);
     }
 
     /**
