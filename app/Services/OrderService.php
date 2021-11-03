@@ -78,7 +78,11 @@ class OrderService
         $order->return_reason_id ??= $orderReturnReasonId;
 
         if ($order->save()) {
-            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrder($order);
+            if ($order->isCertificateOrder()) {
+                $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderCertificate($order, $order->price);
+            } else {
+                $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrder($order);
+            }
 
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);
