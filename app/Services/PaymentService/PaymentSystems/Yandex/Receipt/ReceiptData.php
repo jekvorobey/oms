@@ -139,8 +139,8 @@ abstract class ReceiptData
     protected function getItemPaymentMode(BasketItem $item): string
     {
         return [
-            Basket::TYPE_CERTIFICATE => PaymentMode::FULL_PAYMENT,
-        ][$item->type] ?? PaymentMode::ADVANCE;
+            Basket::TYPE_CERTIFICATE => PaymentMode::ADVANCE,
+        ][$item->type] ?? PaymentMode::FULL_PAYMENT;
     }
 
     protected function getItemAgentType(BasketItem $item): ?string
