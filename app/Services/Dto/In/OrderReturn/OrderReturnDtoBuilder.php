@@ -7,6 +7,8 @@ use App\Models\Delivery\Shipment;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use Illuminate\Support\Collection;
+use Pim\Dto\Certificate\CertificateStatusDto;
+use Pim\Services\CertificateService\CertificateService;
 
 /**
  * Class CreateOrderReturnDto
@@ -33,8 +35,13 @@ class OrderReturnDtoBuilder
      */
     public function buildFromOrderCertificate(Order $order, int $sum): OrderReturnDto
     {
+        $certificates = $this->getCertificates($order->id);
+        $sumToRefund = $this->getCertificateSumToRefund($certificates);
+
+        $basketItems = $order->basket->items;
+        
         $orderReturnDto = $this->buildBase($order->id, $order->basket->items);
-        $orderReturnDto->price = $sum;
+        $orderReturnDto->price = $sumToRefund ?? (float) $sum;
         $orderReturnDto->is_delivery = false;
 
         return $orderReturnDto;
@@ -65,10 +72,42 @@ class OrderReturnDtoBuilder
             $orderReturnItemDto->basket_item_id = $item->id;
             $orderReturnItemDto->qty = $item->qty;
             $orderReturnItemDto->ticket_ids = $item->getTicketIds();
+            $orderReturnItemDto->price = $item->price / $item->qty;
 
             return $orderReturnItemDto;
         });
 
         return $orderReturnDto;
+    }
+
+    private function getCertificateSumToRefund(Collection $certificates): float
+    {
+        if ($certificates->isEmpty()) {
+            return 0;
+        }
+
+        $result = 0;
+        $result += $certificates->filter(fn($certificate) => $certificate->status === CertificateStatusDto::STATUS_IN_USE)->sum('balance');
+        $result += $certificates
+            ->filter(fn($certificate) => in_array($certificate->status, [
+                CertificateStatusDto::STATUS_ACTIVATED,
+                CertificateStatusDto::STATUS_PAID,
+                CertificateStatusDto::STATUS_SENT,
+            ], true))
+            ->sum('price');
+
+        return $result;
+    }
+
+    private function getCertificates(int $orderId): Collection
+    {
+        /** @var CertificateService $certificateService */
+        $certificateService = resolve(CertificateService::class);
+        $query = $certificateService
+            ->requestQuery()
+            ->orderId($orderId)
+            ->withCertificates();
+
+        return $query->requests()->first()->certificates;
     }
 }
