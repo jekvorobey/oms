@@ -79,7 +79,7 @@ class OrderService
 
         if ($order->save()) {
             if ($order->isCertificateOrder()) {
-                $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderCertificate($order, $order->price);
+                $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderAllCertificates($order);
             } else {
                 $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrder($order);
             }
@@ -108,7 +108,7 @@ class OrderService
      */
     public function refundByCertificate(Order $order, int $sum): bool
     {
-        $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderCertificate($order, $sum);
+        $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderEachCertificate($order, $sum);
 
         try {
             /** @var OrderReturnService $orderReturnService */
