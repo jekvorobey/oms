@@ -233,7 +233,8 @@ class OrderReturnService
         Order $order,
         OrderReturn $orderReturn
     ): void {
-        if ($basketItems->filter(fn(BasketItem $basketItem) => $basketItem->referrer_id !== null)->isEmpty()) {
+        $basketItemsOfReferral = $basketItems->filter(fn(BasketItem $basketItem) => $basketItem->referrer_id !== null);
+        if ($basketItemsOfReferral->isEmpty()) {
             return;
         }
 
@@ -249,9 +250,7 @@ class OrderReturnService
         $offersInfo = $offerService->offers($offersQuery)->keyBy('id');
 
         if ($offersInfo->isNotEmpty()) {
-            $basketItems
-                ->filter(fn(BasketItem $basketItem) => $basketItem->referrer_id !== null)
-                ->each(function (BasketItem $basketItem) use ($orderReturn, $referralService, $order, $offersInfo) {
+            $basketItemsOfReferral->each(function (BasketItem $basketItem) use ($orderReturn, $referralService, $order, $offersInfo) {
                     $returnReferralBillOperationsDto = new ReturnReferralBillOperationDto();
                     $returnReferralBillOperationsDto->setCustomerId($orderReturn->customer_id);
                     $returnReferralBillOperationsDto->setOrderNumber($order->number);
@@ -260,7 +259,7 @@ class OrderReturnService
                     $returnReferralBillOperationsDto->setProductId($offersInfo[$basketItem->offer_id]->product_id);
 
                     $referralService->returnBillOperation($basketItem->referrer_id, $returnReferralBillOperationsDto);
-                });
+            });
         }
     }
 }
