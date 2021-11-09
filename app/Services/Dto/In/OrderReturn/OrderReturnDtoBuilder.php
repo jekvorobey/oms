@@ -72,7 +72,7 @@ class OrderReturnDtoBuilder
      */
     public function buildFromOrderEachCertificate(Order $order, int $sum): OrderReturnDto
     {
-        $orderReturnDto = $this->buildBase($order->id, collect());
+        $orderReturnDto = $this->buildBase($order->id, $order->basket->items);
         $orderReturnDto->price = $sum;
         $orderReturnDto->is_delivery = false;
 
