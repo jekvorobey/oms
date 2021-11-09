@@ -38,9 +38,17 @@ class OrderReturnDtoBuilder
         $certificates = $this->getCertificates($order->id);
         $sumToRefund = $this->getCertificateSumToRefund($certificates);
 
-        $basketItems = $order->basket->items;
-        
-        $orderReturnDto = $this->buildBase($order->id, $order->basket->items);
+        $basketItem = $order->basket->items->first();
+        $certificatesBasketItems = collect();
+        $certificates->each(static function ($certificate) use (&$certificatesBasketItems, $basketItem) {
+            $certificateBasketItem = clone $basketItem;
+            $certificateBasketItem->qty = 1;
+            $certificateBasketItem->price = $certificate->balance > 0 ? $certificate->balance : $certificate->price;
+            $certificateBasketItem->cost = $certificateBasketItem->price;
+            $certificatesBasketItems->push($certificateBasketItem);
+        });
+
+        $orderReturnDto = $this->buildBase($order->id, $certificatesBasketItems);
         $orderReturnDto->price = $sumToRefund ?? (float) $sum;
         $orderReturnDto->is_delivery = false;
 
