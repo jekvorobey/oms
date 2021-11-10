@@ -131,9 +131,17 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 }
                 break;
             case PaymentStatus::CANCELED:
-                $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
-                $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
-                $localPayment->save();
+                if ($order->done_return_sum && $order->cashless_price - $order->done_return_sum > 0) {
+                    if ($order->cashless_price - $order->remaining_price > 0) {
+                        $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
+                        $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
+                        $localPayment->save();
+                    }
+                } else {
+                    $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
+                    $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
+                    $localPayment->save();
+                }
                 break;
         }
 
