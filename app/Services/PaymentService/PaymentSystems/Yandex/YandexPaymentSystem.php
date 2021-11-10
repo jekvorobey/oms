@@ -101,7 +101,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     private function processRefundSucceeded(AbstractNotification $notification): void
     {
         $refundId = $notification->getObject()->getId();
-        $paymentId = $notification->getObject()->getId();
+        $paymentId = $notification->getObject()->getPaymentId();
 
         if ($paymentId && $refundId) {
             $this->createRefundReceipt($paymentId, $refundId);
