@@ -37,7 +37,6 @@ class OrderReturnDtoBuilder
     public function buildFromOrderAllCertificates(Order $order): OrderReturnDto
     {
         $certificates = $this->getCertificates($order->id);
-        $sumToRefund = $this->getCertificateSumToRefund($certificates);
 
         $basketItem = $order->basket->items->first();
         $certificatesBasketItems = collect();
@@ -61,7 +60,6 @@ class OrderReturnDtoBuilder
             });
 
         $orderReturnDto = $this->buildBase($order->id, $certificatesBasketItems);
-        $orderReturnDto->price = $sumToRefund;
         $orderReturnDto->is_delivery = false;
 
         return $orderReturnDto;
@@ -72,8 +70,14 @@ class OrderReturnDtoBuilder
      */
     public function buildFromOrderEachCertificate(Order $order, int $sum): OrderReturnDto
     {
-        $orderReturnDto = $this->buildBase($order->id, $order->basket->items);
-        $orderReturnDto->price = $sum;
+        $basketItem = $order->basket->items->first();
+
+        $certificateBasketItem = clone $basketItem;
+        $certificateBasketItem->qty = 1;
+        $certificateBasketItem->price = $sum;
+        $certificateBasketItem->cost = $sum;
+
+        $orderReturnDto = $this->buildBase($order->id, collect($certificateBasketItem));
         $orderReturnDto->is_delivery = false;
 
         return $orderReturnDto;
@@ -110,25 +114,6 @@ class OrderReturnDtoBuilder
         });
 
         return $orderReturnDto;
-    }
-
-    private function getCertificateSumToRefund(Collection $certificates): float
-    {
-        if ($certificates->isEmpty()) {
-            return 0;
-        }
-
-        $result = 0;
-        $result += $certificates->filter(fn($certificate) => $certificate->status === CertificateStatusDto::STATUS_IN_USE)->sum('balance');
-        $result += $certificates
-            ->filter(fn($certificate) => in_array($certificate->status, [
-                CertificateStatusDto::STATUS_ACTIVATED,
-                CertificateStatusDto::STATUS_PAID,
-                CertificateStatusDto::STATUS_SENT,
-            ], true))
-            ->sum('price');
-
-        return $result;
     }
 
     private function getCertificates(int $orderId): Collection
