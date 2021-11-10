@@ -14,8 +14,6 @@ use Monolog\Logger;
 use YooKassa\Model\Notification\AbstractNotification;
 use YooKassa\Model\Notification\NotificationFactory;
 use YooKassa\Model\NotificationEventType;
-use YooKassa\Model\PaymentStatus;
-use App\Models\Payment\PaymentType;
 use YooKassa\Model\Payment as YooKassaPayment;
 
 /**
