@@ -215,7 +215,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         try {
             $order = $orderReturn->order;
 
-            if ($order->isFullyPaidByCertificate()) {
+            if ($order->remaining_price <= $order->spent_certificate) {
                 $refundReceiptData = new RefundReceiptData();
                 $returnReceiptBuilder = $refundReceiptData->getRefundReceiptPartiallyData($paymentId, $orderReturn);
                 $request = $returnReceiptBuilder->build();
@@ -238,6 +238,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $orderReturn->refund_id = $response->getId();
                 $orderReturn->save();
             }
+
+            $order = $orderReturn->order;
+            $order->done_return_sum += $orderReturn->price;
+            $order->save();
 
             return $response->jsonSerialize();
         } catch (\Throwable $exception) {
@@ -326,10 +330,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
             $response = $this->yandexService->createReceipt($request);
             $this->logger->info('Return receipt', $response->jsonSerialize());
-
-            $order = $orderReturn->order;
-            $order->done_return_sum += $orderReturn->price;
-            $order->save();
         } catch (\Throwable $exception) {
             $this->logger->error('Error creating refund receipt', ['yandex_payment_id' => $paymentId, 'error' => $exception->getMessage()]);
             report($exception);

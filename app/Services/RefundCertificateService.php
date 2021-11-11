@@ -26,7 +26,11 @@ class RefundCertificateService
         $returnPrepayment = $this->getPrepaymentSum($orderReturn);
 
         if ($returnPrepayment > 0) {
-            $this->certificateService->rollback($returnPrepayment, $order->customer_id, $order->id, $order->number);
+            try {
+                $this->certificateService->rollback($returnPrepayment, $order->customer_id, $order->id, $order->number);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
         }
 
         return $returnPrepayment;
