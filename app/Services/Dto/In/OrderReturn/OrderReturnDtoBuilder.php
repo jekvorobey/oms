@@ -77,7 +77,7 @@ class OrderReturnDtoBuilder
         $certificateBasketItem->price = $sum;
         $certificateBasketItem->cost = $sum;
 
-        $orderReturnDto = $this->buildBase($order->id, collect($certificateBasketItem));
+        $orderReturnDto = $this->buildBase($order->id, collect([$certificateBasketItem]));
         $orderReturnDto->is_delivery = false;
 
         return $orderReturnDto;

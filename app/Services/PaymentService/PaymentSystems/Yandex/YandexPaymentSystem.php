@@ -185,10 +185,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
             }
 
             if ($localPayment->refund_sum > 0) {
-                $order = $localPayment->order;
-                $order->done_return_sum = $localPayment->refund_sum;
-                $order->save();
-
                 $this->createRefundAllReceipt($order, $localPayment);
                 $this->createIncomeReceipt($order, $localPayment);
             }
@@ -238,10 +234,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $orderReturn->refund_id = $response->getId();
                 $orderReturn->save();
             }
-
-            $order = $orderReturn->order;
-            $order->done_return_sum += $orderReturn->price;
-            $order->save();
 
             return $response->jsonSerialize();
         } catch (\Throwable $exception) {

@@ -46,8 +46,14 @@ class PaymentObserver
 
     public function createIncomeReceipt(Payment $payment): void
     {
+        $order = $payment->order;
+        $checkingStatuses = [PaymentStatus::PAID];
+        if (!$order->isPublicEventOrder()) {
+            $checkingStatuses[] = PaymentStatus::HOLD;
+        }
+
         if (
-            in_array($payment->status, [PaymentStatus::HOLD, PaymentStatus::PAID], true)
+            in_array($payment->status, $checkingStatuses, true)
             && !$payment->is_receipt_sent
             && $this->isNeedCreateIncomeReceipt($payment)
         ) {
