@@ -58,6 +58,12 @@ class ReturnOrderPayment extends Command
                 $certificateRefundService->refundSumToCertificate($orderReturn);
             }
 
+            if ($orderReturn->status !== OrderReturn::STATUS_FAILED) {
+                $order = $orderReturn->order;
+                $order->done_return_sum += $orderReturn->price;
+                $order->save();
+            }
+
             $orderReturn->save();
         }
     }

@@ -5,6 +5,7 @@ namespace App\Observers\Payment;
 use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use App\Models\Payment\PaymentType;
 use App\Services\OrderService;
 
 /**
@@ -15,7 +16,7 @@ class PaymentObserver
 {
     public function saving(Payment $payment): void
     {
-        if ($payment->wasChanged('status') && $payment->status === PaymentStatus::PAID) {
+        if ($payment->isDirty('status') && $payment->status === PaymentStatus::PAID) {
             $payment->payed_at = now();
         }
     }
@@ -28,6 +29,12 @@ class PaymentObserver
             $this->createIncomeReceipt($payment);
             $this->createRefundReceipt($payment);
         }
+
+        if ($payment->wasChanged('payment_type') && $payment->payment_type) {
+            $order = $payment->order;
+            $order->can_partially_cancelled = !in_array($payment->payment_type, PaymentType::typesWithoutPartiallyCancel(), true);
+            $order->save();
+        }
     }
 
     public function updateOrderPaymentStatus(Order $order): void
@@ -39,8 +46,14 @@ class PaymentObserver
 
     public function createIncomeReceipt(Payment $payment): void
     {
+        $order = $payment->order;
+        $checkingStatuses = [PaymentStatus::PAID];
+        if (!$order->isPublicEventOrder()) {
+            $checkingStatuses[] = PaymentStatus::HOLD;
+        }
+
         if (
-            in_array($payment->status, [PaymentStatus::HOLD, PaymentStatus::PAID], true)
+            in_array($payment->status, $checkingStatuses, true)
             && !$payment->is_receipt_sent
             && $this->isNeedCreateIncomeReceipt($payment)
         ) {
@@ -66,7 +79,7 @@ class PaymentObserver
 
     public function createRefundReceipt(Payment $payment): void
     {
-        if ($payment->wasChanged('status') && $payment->status === PaymentStatus::TIMEOUT) {
+        if ($payment->status === PaymentStatus::TIMEOUT) {
             $paymentSystem = $payment->paymentSystem();
 
             if ($paymentSystem) {
