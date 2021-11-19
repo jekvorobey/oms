@@ -61,7 +61,7 @@
         "iwengo/ibt-logistics-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-marketing-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-merchant-management-lib": "dev-master-ylab as dev-master",
-        "iwengo/ibt-message-lib": "dev-master-ylab as dev-master",
+        "iwengo/ibt-message-lib": "dev-feature/IBT-497-refactoring-reports as dev-master",
         "iwengo/ibt-pim-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-store-lib": "dev-master-ylab as dev-master",
         "jenssegers/date": "^4.0",

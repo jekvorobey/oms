@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6bad073e72658a969b91d83d74badae1",
+    "content-hash": "ffa4fe278e4becd478af7ef052091b86",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1289,11 +1289,11 @@
         },
         {
             "name": "iwengo/ibt-message-lib",
-            "version": "dev-master-ylab",
+            "version": "dev-feature/IBT-497-refactoring-reports",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-message-lib",
-                "reference": "6a1296cc7194519605d0e4db975d8c492b9568be"
+                "reference": "d836d9185ea52a51be786286fb120f50a9ccdbeb"
             },
             "require": {
                 "ext-json": "*",
@@ -1327,7 +1327,7 @@
                 }
             ],
             "description": "iBT message client",
-            "time": "2021-04-13T08:12:14+00:00"
+            "time": "2021-11-19T14:30:24+00:00"
         },
         {
             "name": "iwengo/ibt-pim-lib",
@@ -10133,7 +10133,7 @@
         },
         {
             "package": "iwengo/ibt-message-lib",
-            "version": "dev-master-ylab",
+            "version": "dev-feature/IBT-497-refactoring-reports",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         },

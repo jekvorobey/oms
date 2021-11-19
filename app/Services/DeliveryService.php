@@ -949,26 +949,13 @@ class DeliveryService
             'SHIPMENT_NUMBER' => $shipment->number,
             'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order->id),
         ];
-        $this->sendEmailToUserByRole('logistotpravlenie_otmeneno', RoleDto::ROLE_LOGISTIC, $attributes);
 
-        return true;
-    }
-
-    /**
-     * Отправить сообщение на почту всем пользователям с определенной ролью.
-     */
-    protected function sendEmailToUserByRole(string $type, string $role, array $attributes): void
-    {
         /** @var ServiceNotificationService $notificationService */
         $notificationService = resolve(ServiceNotificationService::class);
-        /** @var RoleService $roleService */
-        $roleService = resolve(RoleService::class);
-        $logisticRole = $roleService->roles()->where('id', $role)->first();
-        if ($logisticRole && $logisticRole->users) {
-            foreach ($logisticRole->users as $logistic) {
-                $notificationService->sendDirect($type, $logistic['email'], 'email', $attributes);
-            }
-        }
+
+        $notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logistotpravlenie_otmeneno', $attributes);
+
+        return true;
     }
 
     /**
