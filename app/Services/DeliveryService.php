@@ -951,7 +951,6 @@ class DeliveryService
 
         /** @var ServiceNotificationService $notificationService */
         $notificationService = resolve(ServiceNotificationService::class);
-
         $notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logistotpravlenie_otmeneno', $attributes);
 
         return true;
