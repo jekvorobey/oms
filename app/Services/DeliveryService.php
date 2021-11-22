@@ -19,7 +19,6 @@ use Exception;
 use Greensight\CommonMsa\Dto\AbstractDto;
 use Greensight\CommonMsa\Dto\RoleDto;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
-use Greensight\CommonMsa\Services\RoleService\RoleService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
@@ -992,8 +991,9 @@ class DeliveryService
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
 
-            $delivery->xml_id = '';
-            $delivery->save();
+            // IBT-621: не удалять xml_id при отмене доставки
+            // $delivery->xml_id = '';
+            // $delivery->save();
 
             if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
                 return;

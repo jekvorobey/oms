@@ -10,6 +10,7 @@ use App\Models\Order\OrderReturnItem;
 use App\Models\Payment\PaymentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDto;
 use Carbon\Carbon;
+use App\Services\Dto\In\OrderReturn\OrderReturnItemDto;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\Customer\Services\ReferralService\Dto\ReturnReferralBillOperationDto;
 use Greensight\Customer\Services\ReferralService\ReferralService;
@@ -51,7 +52,7 @@ class OrderReturnService
                     throw new \Exception("BasketItem by id={$item->basket_item_id} not found");
                 }
 
-                $this->createOrderReturnItem($order, $orderReturn, $basketItem, $item->qty, $item->ticket_ids);
+                $this->createOrderReturnItem($order, $orderReturn, $basketItem, $item);
             }
 
             $this->calcOrderReturnPrice($orderReturn, $orderReturnDto->price);
@@ -116,8 +117,7 @@ class OrderReturnService
         Order $order,
         OrderReturn $orderReturn,
         BasketItem $basketItem,
-        ?int $qty,
-        ?array $ticketIds
+        OrderReturnItemDto $item
     ): OrderReturnItem {
         $orderReturnItem = new OrderReturnItem();
         $orderReturnItem->order_return_id = $orderReturn->id;
@@ -131,27 +131,27 @@ class OrderReturnService
             /**
              * Проверяем, что указаны id билетов для возврата
              */
-            if (!$ticketIds) {
+            if (!$item->ticket_ids) {
                 throw new \Exception("Returning ticket_ids for BasketItem with id={$basketItem->id} not specified");
             }
             /**
              * Проверяем, что id билетов для возврата указаны у BasketItem корзины заказа
              */
-            if ($ticketIds != array_intersect($basketItem->getTicketIds(), $ticketIds)) {
+            if ($item->ticket_ids != array_intersect($basketItem->getTicketIds(), $item->ticket_ids)) {
                 throw new \Exception("Returning ticket_ids for BasketItem with id={$basketItem->id} not contained at order");
             }
-            $basketItem->setTicketIds($ticketIds);
+            $basketItem->setTicketIds($item->ticket_ids);
         }
         $orderReturnItem->product = $basketItem->product;
         $orderReturnItem->name = $basketItem->name;
-        $orderReturnItem->qty = $order->type == Basket::TYPE_MASTER ? count($ticketIds) : $qty;
+        $orderReturnItem->qty = $order->type == Basket::TYPE_MASTER ? count($item->ticket_ids) : $item->qty;
         /**
          * Проверяем, что кол-во возвращаемого товара не больше, чем в корзине
          */
         if ($orderReturnItem->qty > $basketItem->qty) {
             throw new \Exception("Returning qty for BasketItem with id={$basketItem->id} more than at order");
         }
-        $orderReturnItem->price = $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
+        $orderReturnItem->price = $item->price ?: $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
         $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии
         $orderReturnItem->save();
 

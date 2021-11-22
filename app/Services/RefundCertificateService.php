@@ -26,7 +26,11 @@ class RefundCertificateService
         $returnPrepayment = $this->getPrepaymentSum($orderReturn);
 
         if ($returnPrepayment > 0) {
-            $this->certificateService->rollback($returnPrepayment, $order->customer_id, $order->id, $order->number);
+            try {
+                $this->certificateService->rollback($returnPrepayment, $order->customer_id, $order->id, $order->number);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
         }
 
         return $returnPrepayment;
@@ -37,8 +41,9 @@ class RefundCertificateService
         $order = $orderReturn->order;
         $priceToReturn = $orderReturn->price;
 
-        $restCashlessReturnPrice = max(0, $order->remaining_price - $order->spent_certificate);
+        $returnedPrepayment = max(0, $order->done_return_sum - $order->cashless_price);
+        $remainingPrepaymentPrice = max(0, $order->spent_certificate - $returnedPrepayment);
 
-        return max(0, $priceToReturn - $restCashlessReturnPrice);
+        return $remainingPrepaymentPrice >= $priceToReturn ? $priceToReturn : $remainingPrepaymentPrice;
     }
 }

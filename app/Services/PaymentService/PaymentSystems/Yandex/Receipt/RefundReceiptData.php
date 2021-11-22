@@ -100,6 +100,8 @@ class RefundReceiptData extends ReceiptData
 
         foreach ($orderReturn->items as $item) {
             $basketItem = $item->basketItem;
+            $basketItem->price = $item->price ?: $basketItem->price;
+            $basketItem->qty = $item->qty ?: $basketItem->qty;
             $offer = $offers[$basketItem->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
