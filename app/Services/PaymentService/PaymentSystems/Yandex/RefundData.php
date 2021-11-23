@@ -16,9 +16,13 @@ class RefundData
      */
     public function getCreateData(string $paymentId, OrderReturn $orderReturn): CreateRefundRequestBuilder
     {
+        $order = $orderReturn->order;
+        $restCashlessReturnPrice = max(0, $order->remaining_price - $order->spent_certificate);
+        $returnCashless = min($restCashlessReturnPrice, $orderReturn->price);
+
         $builder = CreateRefundRequest::builder();
         $builder
-            ->setAmount(new MonetaryAmount($orderReturn->price))
+            ->setAmount(new MonetaryAmount($returnCashless))
             ->setCurrency(CurrencyCode::RUB)
             ->setPaymentId($paymentId)
             ->setReceiptPhone($orderReturn->order->customerPhone())

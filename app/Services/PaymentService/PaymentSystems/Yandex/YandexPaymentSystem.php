@@ -14,8 +14,6 @@ use Monolog\Logger;
 use YooKassa\Model\Notification\AbstractNotification;
 use YooKassa\Model\Notification\NotificationFactory;
 use YooKassa\Model\NotificationEventType;
-use YooKassa\Model\PaymentStatus;
-use App\Models\Payment\PaymentType;
 use YooKassa\Model\Payment as YooKassaPayment;
 
 /**
@@ -80,10 +78,12 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
         $this->logger->info('External event data', $notification->jsonSerialize());
 
-        $paymentId = $notification->getEvent() === NotificationEventType::REFUND_SUCCEEDED
-            ? $notification->getObject()->getPaymentId()
-            : $notification->getObject()->getId();
+        if ($notification->getEvent() === NotificationEventType::REFUND_SUCCEEDED) {
+            $this->processRefundSucceeded($notification);
+            return;
+        }
 
+        $paymentId = $notification->getObject()->getId();
         $payment = $this->yandexService->getPaymentInfo($paymentId);
 
         if ($payment) {
@@ -98,6 +98,16 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
     }
 
+    private function processRefundSucceeded(AbstractNotification $notification): void
+    {
+        $refundId = $notification->getObject()->getId();
+        $paymentId = $notification->getObject()->getPaymentId();
+
+        if ($paymentId && $refundId) {
+            $this->createRefundReceipt($paymentId, $refundId);
+        }
+    }
+
     private function processExternalPayment(
         string $paymentId,
         YooKassaPayment $payment,
@@ -105,48 +115,36 @@ class YandexPaymentSystem implements PaymentSystemInterface
     ): void {
         /** @var Payment $localPayment */
         $localPayment = Payment::byExternalPaymentId($paymentId)->firstOrFail();
-        $order = $localPayment->order;
 
-        $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
-
-        switch ($payment->getStatus()) {
-            case PaymentStatus::WAITING_FOR_CAPTURE:
+        switch ($notification->getEvent()) {
+            case NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE:
                 $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
                 $localPayment->status = Models\Payment\PaymentStatus::HOLD;
                 $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
+                $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
                 $localPayment->save();
 
                 break;
-            case PaymentStatus::SUCCEEDED:
+            case NotificationEventType::PAYMENT_SUCCEEDED:
                 $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
-
                 $localPayment->status = Models\Payment\PaymentStatus::PAID;
+                $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
                 $localPayment->save();
 
-                if ($notification->getEvent() === NotificationEventType::REFUND_SUCCEEDED) {
-                    $refundId = $notification->getObject()->getId();
-                    if ($refundId) {
-                        $this->createRefundReceipt($paymentId, $refundId);
-                    }
-                }
                 break;
-            case PaymentStatus::CANCELED:
-                if ($order->cashless_price - $order->done_return_sum > 0) {
-                    if ($order->cashless_price - $order->remaining_price > 0) {
-                        $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
-                        $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
-                        $localPayment->save();
-                    }
-                } else {
-                    $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
-                    $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
-                    $localPayment->save();
+            case NotificationEventType::PAYMENT_CANCELED:
+                $order = $localPayment->order;
+                // Если была оплата ПС+доплата и частично отменили на всю сумму доплаты, то платеж в Юкассе отменился, а у нас отменять не надо
+                if ($order->remaining_price && $order->remaining_price <= $order->spent_certificate) {
+                    break;
                 }
+
+                $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
+                $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
+                $localPayment->save();
+
                 break;
         }
-
-        $order->can_partially_cancelled = !in_array($localPayment->payment_type, PaymentType::typesWithoutPartiallyCancel(), true);
-        $order->save();
     }
 
     /**
@@ -164,19 +162,20 @@ class YandexPaymentSystem implements PaymentSystemInterface
      */
     public function commitHoldedPayment(Payment $localPayment, $amount): void
     {
-        $paymentData = new PaymentData();
-        $builder = $paymentData->getCommitData($localPayment, $amount);
-
-        $request = $builder->build();
-        $this->logger->info('Start commit holded payment', $request->toArray());
-
         try {
             $order = $localPayment->order;
 
             if ($amount > $order->spent_certificate) {
+                $paymentData = new PaymentData();
+                $builder = $paymentData->getCommitData($localPayment, $amount);
+
+                $request = $builder->build();
+
+                $this->logger->info('Start commit holded payment', $request->toArray());
                 $response = $this->yandexService->capturePayment($request, $localPayment->external_payment_id);
                 $this->logger->info('Commit result', $response->jsonSerialize());
             } else {
+                $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
                 $localPayment->status = Models\Payment\PaymentStatus::PAID;
                 $localPayment->save();
 
@@ -186,10 +185,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
             }
 
             if ($localPayment->refund_sum > 0) {
-                $order = $localPayment->order;
-                $order->done_return_sum = $localPayment->refund_sum;
-                $order->save();
-
                 $this->createRefundAllReceipt($order, $localPayment);
                 $this->createIncomeReceipt($order, $localPayment);
             }
@@ -216,7 +211,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         try {
             $order = $orderReturn->order;
 
-            if ($order->isFullyPaidByCertificate()) {
+            if ($order->remaining_price <= $order->spent_certificate) {
                 $refundReceiptData = new RefundReceiptData();
                 $returnReceiptBuilder = $refundReceiptData->getRefundReceiptPartiallyData($paymentId, $orderReturn);
                 $request = $returnReceiptBuilder->build();
@@ -263,7 +258,13 @@ class YandexPaymentSystem implements PaymentSystemInterface
      */
     public function cancel(string $paymentId): array
     {
-        return $this->yandexService->cancelPayment($paymentId)->jsonSerialize();
+        $this->logger->info('Start cancel payment', ['local_payment_id' => $paymentId]);
+
+        $response = $this->yandexService->cancelPayment($paymentId);
+
+        $this->logger->info('Cancel payment result', $response->jsonSerialize());
+
+        return $response->jsonSerialize();
     }
 
     /**
@@ -321,10 +322,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
             $response = $this->yandexService->createReceipt($request);
             $this->logger->info('Return receipt', $response->jsonSerialize());
-
-            $order = $orderReturn->order;
-            $order->done_return_sum += $orderReturn->price;
-            $order->save();
         } catch (\Throwable $exception) {
             $this->logger->error('Error creating refund receipt', ['yandex_payment_id' => $paymentId, 'error' => $exception->getMessage()]);
             report($exception);
