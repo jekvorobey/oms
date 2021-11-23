@@ -283,7 +283,7 @@ class OrderService
                 $stageInfoDto->description = $stage['description'];
                 $stageInfoDto->result = $stage['result'];
                 $stageInfoDto->raider = $stage['raider'];
-                $stageInfoDto->setDate($stage['date']);
+                $stageInfoDto->setDate($stage['date_from']);
                 $stageInfoDto->setTimeFrom($stage['time_from']);
                 $stageInfoDto->setTimeTo($stage['time_to']);
                 $stageInfoDto->placeId = $stage['place_id'];
