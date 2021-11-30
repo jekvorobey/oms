@@ -944,14 +944,16 @@ class DeliveryService
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturnService->create($orderReturnDto);
 
-        $attributes = [
-            'SHIPMENT_NUMBER' => $shipment->number,
-            'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order->id),
-        ];
+        if ($shipment->status > ShipmentStatus::CREATED) {
+            $attributes = [
+                'SHIPMENT_NUMBER' => $shipment->number,
+                'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order_id),
+            ];
 
-        /** @var ServiceNotificationService $notificationService */
-        $notificationService = resolve(ServiceNotificationService::class);
-        $notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logistotpravlenie_otmeneno', $attributes);
+            /** @var ServiceNotificationService $notificationService */
+            $notificationService = resolve(ServiceNotificationService::class);
+            $notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logistotpravlenie_otmeneno', $attributes);
+        }
 
         return true;
     }
