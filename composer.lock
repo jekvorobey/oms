@@ -1289,11 +1289,11 @@
         },
         {
             "name": "iwengo/ibt-message-lib",
-            "version": "dev-feature/IBT-497-refactoring-reports",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-message-lib",
-                "reference": "d836d9185ea52a51be786286fb120f50a9ccdbeb"
+                "reference": "f0940e7160fe99aedb6c79821d21548e59a5d991"
             },
             "require": {
                 "ext-json": "*",
@@ -1327,7 +1327,7 @@
                 }
             ],
             "description": "iBT message client",
-            "time": "2021-11-19T14:30:24+00:00"
+            "time": "2021-11-30T13:08:01+00:00"
         },
         {
             "name": "iwengo/ibt-pim-lib",
@@ -10133,7 +10133,7 @@
         },
         {
             "package": "iwengo/ibt-message-lib",
-            "version": "dev-feature/IBT-497-refactoring-reports",
+            "version": "dev-master-ylab",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         },
