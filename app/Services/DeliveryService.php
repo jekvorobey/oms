@@ -345,10 +345,9 @@ class DeliveryService
         $dayPlus = 0;
         // @todo: fix get timezone by store
         $timezone = new \DateTimeZone('Europe/Moscow');
-        $date = new \DateTime('now', $timezone);
-        $dateNow = new \DateTime('now', $timezone);
+        $dateNow = new \DateTimeImmutable('now', $timezone);
         while ($dayPlus <= 6) {
-            $date = $date->modify('+' . $dayPlus . ' day' . ($dayPlus > 1 ? 's' : ''));
+            $date = $dateNow->modify('+' . $dayPlus . ' day' . ($dayPlus > 1 ? 's' : ''));
             //Получаем номер дня недели (1 - понедельник, ..., 7 - воскресенье)
             $dayOfWeek = $date->format('N');
             $dayPlus++;
@@ -357,7 +356,7 @@ class DeliveryService
                 continue;
             }
 
-            $deliveryDateTo = new \DateTime($date->format('Y-m-d') . 'T' . $storePickupTimes[$dayOfWeek]->pickup_time_end, $timezone);
+            $deliveryDateTo = new \DateTimeImmutable($date->format('Y-m-d') . 'T' . $storePickupTimes[$dayOfWeek]->pickup_time_end, $timezone);
             if ($dateNow > $deliveryDateTo) {
                 continue;
             }
@@ -944,14 +943,16 @@ class DeliveryService
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturnService->create($orderReturnDto);
 
-        $attributes = [
-            'SHIPMENT_NUMBER' => $shipment->number,
-            'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order->id),
-        ];
+        if ($shipment->status > ShipmentStatus::CREATED) {
+            $attributes = [
+                'SHIPMENT_NUMBER' => $shipment->number,
+                'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order_id),
+            ];
 
-        /** @var ServiceNotificationService $notificationService */
-        $notificationService = resolve(ServiceNotificationService::class);
-        $notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logistotpravlenie_otmeneno', $attributes);
+            /** @var ServiceNotificationService $notificationService */
+            $notificationService = resolve(ServiceNotificationService::class);
+            $notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logistotpravlenie_otmeneno', $attributes);
+        }
 
         return true;
     }
