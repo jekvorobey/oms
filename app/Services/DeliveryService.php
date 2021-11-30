@@ -19,7 +19,6 @@ use Exception;
 use Greensight\CommonMsa\Dto\AbstractDto;
 use Greensight\CommonMsa\Dto\RoleDto;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
-use Greensight\CommonMsa\Services\RoleService\RoleService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
@@ -944,41 +943,18 @@ class DeliveryService
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturnService->create($orderReturnDto);
 
-        $attributes = [
-            'SHIPMENT_NUMBER' => $shipment->number,
-            'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order->id),
-        ];
-        $this->sendEmailToUserByRole('logistotpravlenie_otmeneno', RoleDto::ROLE_LOGISTIC, $attributes);
+        if ($shipment->status > ShipmentStatus::CREATED) {
+            $attributes = [
+                'SHIPMENT_NUMBER' => $shipment->number,
+                'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order_id),
+            ];
+
+            /** @var ServiceNotificationService $notificationService */
+            $notificationService = resolve(ServiceNotificationService::class);
+            $notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logistotpravlenie_otmeneno', $attributes);
+        }
 
         return true;
-    }
-
-    /**
-     * Отправить сообщение на почту всем пользователям с определенной ролью.
-     */
-    protected function sendEmailToUserByRole(string $type, int $roleId, array $attributes): void
-    {
-        /** @var RoleService $roleService */
-        $roleService = resolve(RoleService::class);
-
-        $logisticRole = $roleService->roles(
-            $roleService->newQuery()->setFilter('id', $roleId)
-        )->first();
-
-        if (!$logisticRole || !$logisticRole->users) {
-            return;
-        }
-
-        /** @var ServiceNotificationService $notificationService */
-        $notificationService = resolve(ServiceNotificationService::class);
-
-        foreach ($logisticRole->users as $logistic) {
-            if (empty($logistic['email'])) {
-                continue;
-            }
-
-            $notificationService->sendDirect($type, $logistic['email'], 'email', $attributes);
-        }
     }
 
     /**

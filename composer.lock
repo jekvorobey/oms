@@ -1293,7 +1293,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-message-lib",
-                "reference": "6a1296cc7194519605d0e4db975d8c492b9568be"
+                "reference": "f0940e7160fe99aedb6c79821d21548e59a5d991"
             },
             "require": {
                 "ext-json": "*",
@@ -1327,7 +1327,7 @@
                 }
             ],
             "description": "iBT message client",
-            "time": "2021-04-13T08:12:14+00:00"
+            "time": "2021-11-30T13:08:01+00:00"
         },
         {
             "name": "iwengo/ibt-pim-lib",
