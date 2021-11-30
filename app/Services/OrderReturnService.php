@@ -61,7 +61,7 @@ class OrderReturnService
         });
 
         rescue(fn() => $this->returnBillingOperations($basketItems, $order, $orderReturn));
-        rescue(fn() => $this->returnReferralBillingOperations($basketItems, $order, $orderReturn));
+//        rescue(fn() => $this->returnReferralBillingOperations($basketItems, $order, $orderReturn));
 
         return $orderReturn;
     }
