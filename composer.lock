@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ffa4fe278e4becd478af7ef052091b86",
+    "content-hash": "af77631bb4026b0a46123123ac4bad90",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1050,15 +1050,15 @@
         },
         {
             "name": "iwengo/ibt-cm-lib",
-            "version": "dev-feature/IBT-495-referal-partner-report",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
-                "reference": "4cd62317ddddd70fcc0b21b6267b75c9e87d6858"
+                "reference": "a9f776c60a0611fda76f7568c270376799666f5c"
             },
             "require": {
                 "ext-json": "*",
-                "iwengo/ibt-common-lib": "dev-master",
+                "iwengo/ibt-common-lib": "dev-master-ylab as dev-master",
                 "php": "^7.1.3"
             },
             "require-dev": {
@@ -1088,7 +1088,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2021-11-02T12:47:27+00:00"
+            "time": "2021-12-02T10:12:20+00:00"
         },
         {
             "name": "iwengo/ibt-cms-lib",
@@ -10097,7 +10097,7 @@
     "aliases": [
         {
             "package": "iwengo/ibt-cm-lib",
-            "version": "dev-feature/IBT-495-referal-partner-report",
+            "version": "dev-master-ylab",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         },
