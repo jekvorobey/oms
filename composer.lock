@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a6580a449c7b50a07787ee585b07c283",
+    "content-hash": "af77631bb4026b0a46123123ac4bad90",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1054,7 +1054,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
-                "reference": "2b64d9e380790ae3b2f630776d15cfe91a8e13c0"
+                "reference": "a9f776c60a0611fda76f7568c270376799666f5c"
             },
             "require": {
                 "ext-json": "*",
@@ -1088,7 +1088,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2021-10-11T08:44:12+00:00"
+            "time": "2021-12-02T10:12:20+00:00"
         },
         {
             "name": "iwengo/ibt-cms-lib",
@@ -10110,8 +10110,8 @@
         {
             "package": "iwengo/ibt-common-lib",
             "version": "dev-master-ylab",
-            "alias": "dev-master-ylab",
-            "alias_normalized": "dev-master-ylab"
+            "alias": "dev-master",
+            "alias_normalized": "dev-master"
         },
         {
             "package": "iwengo/ibt-logistics-lib",
