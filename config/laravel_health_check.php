@@ -12,7 +12,7 @@ return [
     'checkers' => [
         Letsgoi\HealthCheck\Checkers\AppKeyChecker::class,
         Letsgoi\HealthCheck\Checkers\DatabaseConnectionChecker::class,
-        Letsgoi\HealthCheck\Checkers\DatabaseMigrationsChecker::class,
+        // Letsgoi\HealthCheck\Checkers\DatabaseMigrationsChecker::class,
         // Letsgoi\HealthCheck\Checkers\DebugChecker::class,
         Letsgoi\HealthCheck\Checkers\EnvFileChecker::class,
         Letsgoi\HealthCheck\Checkers\WritablePathsChecker::class,

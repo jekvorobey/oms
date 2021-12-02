@@ -704,7 +704,7 @@ class ShipmentsController extends Controller
 
                 return response()->json([
                     'absolute_url' => $fileDto->absoluteUrl(),
-                    'original_name' => $fileDto->original_name,
+                    'original_name' => "barcode-{$shipment->number}.pdf", //$fileDto->original_name,
                     'size' => $fileDto->size,
                 ]);
             } else {
