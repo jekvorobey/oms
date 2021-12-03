@@ -68,6 +68,7 @@ class OrderObserver
     public function created(Order $order)
     {
         $order->number = $order->id + 1000000;
+        $order->save();
         $order->basket->is_belongs_to_order = true;
         $order->basket->save();
 
