@@ -78,7 +78,7 @@ class RefundReceiptData extends ReceiptData
             $receiptItems[] = new ReceiptItem($receiptItemInfo);
         }
         if ((float) $order->delivery_price > 0) {
-            $receiptItems[] = $this->getDeliveryReceiptItem($order->delivery_price);
+            $receiptItems[] = $this->getDeliveryReceiptItem($order->delivery_price, $order->status);
         }
 
         return $receiptItems;
@@ -111,7 +111,7 @@ class RefundReceiptData extends ReceiptData
         }
 
         if ($orderReturn->is_delivery) {
-            $receiptItems[] = $this->getDeliveryReceiptItem($orderReturn->price);
+            $receiptItems[] = $this->getDeliveryReceiptItem($orderReturn->price, $order->status);
         }
 
         return $receiptItems;

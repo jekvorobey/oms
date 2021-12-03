@@ -371,8 +371,13 @@ class OrderObserver
         $newStatus = $order->status;
         if ($newStatus == OrderStatus::DONE && $newStatus != $oldStatus) {
             foreach ($order->payments as $payment) {
-                if ($payment->status == PaymentStatus::HOLD) {
-                    $payment->commitHolded();
+                switch ($payment->status) {
+                    case PaymentStatus::HOLD:
+                        $payment->commitHolded();
+                        break;
+                    case PaymentStatus::PAID:
+                        $payment->sendReceiptWhenOrderDeliveried();
+                        break;
                 }
             }
         }
