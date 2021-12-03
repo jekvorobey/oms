@@ -72,7 +72,8 @@
         "phpoffice/phpword": "^0.17.0",
         "sentry/sentry-laravel": "^2.7",
         "spatie/calendar-links": "^1.4",
-        "yoomoney/yookassa-sdk-php": "^2.0"
+        "yoomoney/yookassa-sdk-php": "^2.0",
+        "doctrine/dbal": "^2.5"
     },
     "require-dev": {
         "beyondcode/laravel-dump-server": "^1.0",
