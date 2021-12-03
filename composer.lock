@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "af77631bb4026b0a46123123ac4bad90",
+    "content-hash": "c16cc06d322c7daa371a08edeccdab1b",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1178,7 +1178,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-logistics-lib",
-                "reference": "de5dbd89393b20ac2a1ae86393e42d5cd97c802a"
+                "reference": "04647d6bcb2b19ee942e4596760067b493d6f50e"
             },
             "require": {
                 "ext-json": "*",
@@ -1212,7 +1212,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2021-04-13T08:12:14+00:00"
+            "time": "2021-12-03T12:26:15+00:00"
         },
         {
             "name": "iwengo/ibt-marketing-lib",
@@ -1335,7 +1335,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-pim-lib",
-                "reference": "fda5233dac01883faacacaa17601c342413ef093"
+                "reference": "d201b6e694fecce4343c6be7864eeb83b03c27ee"
             },
             "require": {
                 "ext-json": "*",
@@ -1358,7 +1358,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2021-04-13T08:12:14+00:00"
+            "time": "2021-12-03T12:26:20+00:00"
         },
         {
             "name": "iwengo/ibt-store-lib",
@@ -10116,8 +10116,8 @@
         {
             "package": "iwengo/ibt-logistics-lib",
             "version": "dev-master-ylab",
-            "alias": "dev-master",
-            "alias_normalized": "dev-master"
+            "alias": "dev-master-ylab",
+            "alias_normalized": "dev-master-ylab"
         },
         {
             "package": "iwengo/ibt-marketing-lib",

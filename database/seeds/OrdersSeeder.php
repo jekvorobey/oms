@@ -120,7 +120,7 @@ class OrdersSeeder extends Seeder
                     'width' => $product->width,
                     'height' => $product->height,
                     'length' => $product->length,
-                    'is_explosive' => $product->explosive,
+                    'is_danger' => $product->isDanger(),
                 ];
                 $basketItem->save();
 
