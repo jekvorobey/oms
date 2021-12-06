@@ -374,7 +374,10 @@ class OrderObserver
                 if ($payment->status == PaymentStatus::HOLD) {
                     $payment->commitHolded();
                 }
-                $payment->sendReceiptWhenOrderDeliveried();
+
+                if ($order->isProductOrder()) {
+                    $payment->sendReceiptWhenOrderDeliveried();
+                }
             }
         }
     }
