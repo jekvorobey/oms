@@ -52,7 +52,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *
  * @property int $basket_id - id корзины
  * @property int $offer_id - id предложения мерчанта
- * @property int $type - тип товара (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)
+ * @property int $type - тип товара (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER|Basket::TYPE_CERTIFICATE)
  * @property string $name - название товара
  * @property float $qty - кол-во товара
  * @property float|null $price - цена элемента корзины со скидкой

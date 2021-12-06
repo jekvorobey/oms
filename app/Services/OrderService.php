@@ -61,7 +61,7 @@ class OrderService
             return;
         }
 
-        $this->setPaymentStatus($order, $payment->status, true);
+        $this->setPaymentStatus($order, $payment->status);
     }
 
     /**
@@ -77,26 +77,50 @@ class OrderService
         $order->is_canceled = true;
         $order->return_reason_id ??= $orderReturnReasonId;
 
-        if ($order->save()) {
-            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrder($order);
-
-            /** @var OrderReturnService $orderReturnService */
-            $orderReturnService = resolve(OrderReturnService::class);
-            $orderReturnService->create($orderReturnDto);
-
-            if ($order->payment_status === PaymentStatus::HOLD) {
-                /** @var Payment $payment */
-                $payment = $order->payments->last();
-                $paymentSystem = $payment->paymentSystem();
-                if ($paymentSystem) {
-                    $paymentSystem->cancel($payment->external_payment_id);
-                }
-            }
-
-            return true;
-        } else {
+        if (!$order->save()) {
             return false;
         }
+
+        if ($order->isCertificateOrder()) {
+            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderAllCertificates($order);
+        } else {
+            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrder($order);
+        }
+
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+        $orderReturnService->create($orderReturnDto);
+
+        if ($order->payment_status === PaymentStatus::HOLD) {
+            /** @var Payment $payment */
+            $payment = $order->payments->last();
+            $paymentSystem = $payment->paymentSystem();
+            if ($paymentSystem) {
+                $paymentSystem->cancel($payment->external_payment_id);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Вернуть деньги при деактивации сертификата
+     * @TODO переделать на передачу $certificateId вместо $sum
+     */
+    public function refundByCertificate(Order $order, int $sum): bool
+    {
+        $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderEachCertificate($order, $sum);
+
+        try {
+            /** @var OrderReturnService $orderReturnService */
+            $orderReturnService = resolve(OrderReturnService::class);
+            $orderReturn = $orderReturnService->create($orderReturnDto);
+        } catch (\Throwable $e) {
+            report($e);
+            return false;
+        }
+
+        return (bool) $orderReturn;
     }
 
     /**

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9d66071cec63d54f3274c1efa6f41d29",
+    "content-hash": "c16cc06d322c7daa371a08edeccdab1b",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1399,7 +1399,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
-                "reference": "2b64d9e380790ae3b2f630776d15cfe91a8e13c0"
+                "reference": "a9f776c60a0611fda76f7568c270376799666f5c"
             },
             "require": {
                 "ext-json": "*",
@@ -1433,7 +1433,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2021-10-11T08:44:12+00:00"
+            "time": "2021-12-02T10:12:20+00:00"
         },
         {
             "name": "iwengo/ibt-cms-lib",
@@ -1441,7 +1441,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cms-lib",
-                "reference": "6863adf689c2b251b3702918b059330641f55295"
+                "reference": "5bf700b5b10646626e04cfb424692497fda9c7f9"
             },
             "require": {
                 "ext-json": "*",
@@ -1464,7 +1464,7 @@
                 }
             ],
             "description": "iBT CMS service client",
-            "time": "2021-04-13T08:12:13+00:00"
+            "time": "2021-08-23T08:57:05+00:00"
         },
         {
             "name": "iwengo/ibt-common-lib",
@@ -1472,7 +1472,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-common-ms-code.git",
-                "reference": "2f9cbf8846b82440b37164130951c43e14191228"
+                "reference": "cc5f61aa4881df224dd39d6a141510c3a2419359"
             },
             "require": {
                 "ext-json": "*",
@@ -1515,15 +1515,15 @@
                 }
             ],
             "description": "iBT common code for all microservices",
-            "time": "2021-04-15T10:05:28+00:00"
+            "time": "2021-10-29T12:53:20+00:00"
         },
         {
             "name": "iwengo/ibt-logistics-lib",
-            "version": "dev-feature/IBT-514-danger-cargo",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-logistics-lib",
-                "reference": "41641903df8ba46718dd4b34c903738e09fad186"
+                "reference": "04647d6bcb2b19ee942e4596760067b493d6f50e"
             },
             "require": {
                 "ext-json": "*",
@@ -1557,7 +1557,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2021-11-30T14:30:30+00:00"
+            "time": "2021-12-03T12:26:15+00:00"
         },
         {
             "name": "iwengo/ibt-marketing-lib",
@@ -1638,7 +1638,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-message-lib",
-                "reference": "6a1296cc7194519605d0e4db975d8c492b9568be"
+                "reference": "f0940e7160fe99aedb6c79821d21548e59a5d991"
             },
             "require": {
                 "ext-json": "*",
@@ -1672,15 +1672,15 @@
                 }
             ],
             "description": "iBT message client",
-            "time": "2021-04-13T08:12:14+00:00"
+            "time": "2021-11-30T13:08:01+00:00"
         },
         {
             "name": "iwengo/ibt-pim-lib",
-            "version": "dev-feature/IBT-514-danger-cargo",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-pim-lib",
-                "reference": "6d0aa29beea3a1f511c6b9bd69cd1daaf1eeaf8c"
+                "reference": "d201b6e694fecce4343c6be7864eeb83b03c27ee"
             },
             "require": {
                 "ext-json": "*",
@@ -1703,7 +1703,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2021-12-01T10:52:24+00:00"
+            "time": "2021-12-03T12:26:20+00:00"
         },
         {
             "name": "iwengo/ibt-store-lib",
@@ -10116,7 +10116,7 @@
         },
         {
             "package": "iwengo/ibt-logistics-lib",
-            "version": "dev-feature/IBT-514-danger-cargo",
+            "version": "dev-master-ylab",
             "alias": "dev-master-ylab",
             "alias_normalized": "dev-master-ylab"
         },
@@ -10140,7 +10140,7 @@
         },
         {
             "package": "iwengo/ibt-pim-lib",
-            "version": "dev-feature/IBT-514-danger-cargo",
+            "version": "dev-master-ylab",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         },

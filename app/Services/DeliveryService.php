@@ -12,10 +12,12 @@ use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
+use Cms\Core\CmsException;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
 use Exception;
 use Greensight\CommonMsa\Dto\AbstractDto;
+use Greensight\CommonMsa\Dto\RoleDto;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
@@ -34,6 +36,7 @@ use Greensight\Logistics\Dto\Order\DeliveryOrderInput\RecipientDto;
 use Greensight\Logistics\Services\CourierCallService\CourierCallService;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Logistics\Services\ListsService\ListsService;
+use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
@@ -41,6 +44,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use MerchantManagement\Services\MerchantService\MerchantService;
+use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 
 /**
  * Класс-бизнес логики по работе с сущностями доставки:
@@ -309,7 +313,7 @@ class DeliveryService
         $deliveryCargoDto->length = $cargo->length;
         $orderIds = [];
         foreach ($cargo->shipments as $shipment) {
-            $orderIds[] = $shipment->delivery->xml_id ? : 0;
+            $orderIds[] = $shipment->delivery->xml_id ?: 0;
         }
         $deliveryCargoDto->order_ids = $orderIds;
 
@@ -341,10 +345,9 @@ class DeliveryService
         $dayPlus = 0;
         // @todo: fix get timezone by store
         $timezone = new \DateTimeZone('Europe/Moscow');
-        $date = new \DateTime('now', $timezone);
-        $dateNow = new \DateTime('now', $timezone);
+        $dateNow = new \DateTimeImmutable('now', $timezone);
         while ($dayPlus <= 6) {
-            $date = $date->modify('+' . $dayPlus . ' day' . ($dayPlus > 1 ? 's' : ''));
+            $date = $dateNow->modify('+' . $dayPlus . ' day' . ($dayPlus > 1 ? 's' : ''));
             //Получаем номер дня недели (1 - понедельник, ..., 7 - воскресенье)
             $dayOfWeek = $date->format('N');
             $dayPlus++;
@@ -353,7 +356,7 @@ class DeliveryService
                 continue;
             }
 
-            $deliveryDateTo = new \DateTime($date->format('Y-m-d') . 'T' . $storePickupTimes[$dayOfWeek]->pickup_time_end, $timezone);
+            $deliveryDateTo = new \DateTimeImmutable($date->format('Y-m-d') . 'T' . $storePickupTimes[$dayOfWeek]->pickup_time_end, $timezone);
             if ($dateNow > $deliveryDateTo) {
                 continue;
             }
@@ -562,7 +565,7 @@ class DeliveryService
 
     /**
      * Сформировать заказ на доставку
-     * @throws \Cms\Core\CmsException
+     * @throws CmsException
      */
     protected function formDeliveryOrder(Delivery $delivery): DeliveryOrderInputDto
     {
@@ -632,13 +635,13 @@ class DeliveryService
             $merchant = $merchantService->merchant($shipment->merchant_id);
 
             $storeAddress = $store->address;
-            $storeAddress['street'] = $storeAddress['street'] ? : '-'; //у cdek и b2cpl улица обязательна
+            $storeAddress['street'] = $storeAddress['street'] ?: '-'; //у cdek и b2cpl улица обязательна
             $senderDto = new DeliveryOrderInput\SenderDto($storeAddress);
             $deliveryOrderInputDto->sender = $senderDto;
             // если есть доп адрес для сдэка, то его тоже передаем
             $cdekSenderAddress = $store->cdek_address;
             if ($cdekSenderAddress && !empty($cdekSenderAddress['address_string'])) {
-                $cdekSenderAddress['street'] = $cdekSenderAddress['street'] ? : '-';
+                $cdekSenderAddress['street'] = $cdekSenderAddress['street'] ?: '-';
                 $deliveryOrderInputDto->cdekSender = $cdekSenderAddress;
             }
 
@@ -696,7 +699,7 @@ class DeliveryService
                 $recipientDto->area = $pointDto->address['area'] ?? '';
                 $recipientDto->city = $pointDto->address['city'] ?? '';
                 $recipientDto->city_guid = $pointDto->city_guid;
-                $recipientDto->street = $pointDto->address['street'] ? : '-'; //у cdek и b2cpl улица обязательна
+                $recipientDto->street = $pointDto->address['street'] ?: '-'; //у cdek и b2cpl улица обязательна
                 $recipientDto->house = $pointDto->address['house'] ?? '';
                 $recipientDto->block = $pointDto->address['block'] ?? '';
                 $recipientDto->flat = $pointDto->address['flat'] ?? '';
@@ -713,7 +716,7 @@ class DeliveryService
             $recipientDto->block,
             $recipientDto->flat,
         ]));
-        $recipientDto->street = $recipientDto->street ? : 'нет'; //у cdek и b2cpl улица обязательна
+        $recipientDto->street = $recipientDto->street ?: 'нет'; //у cdek и b2cpl улица обязательна
         $recipientDto->contact_name = $delivery->receiver_name;
         $recipientDto->email = $delivery->receiver_email;
         $recipientDto->phone = phoneNumberFormat($delivery->receiver_phone);
@@ -838,7 +841,7 @@ class DeliveryService
      */
     public function getZeroMileShipmentDeliveryServiceId(Shipment $shipment): int
     {
-        return $shipment->delivery_service_zero_mile ? : $shipment->delivery->delivery_service;
+        return $shipment->delivery_service_zero_mile ?: $shipment->delivery->delivery_service;
     }
 
     /**
@@ -930,17 +933,28 @@ class DeliveryService
         $shipment->is_canceled = true;
         $shipment->cargo_id = null;
 
-        if ($shipment->save()) {
-            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
-
-            /** @var OrderReturnService $orderReturnService */
-            $orderReturnService = resolve(OrderReturnService::class);
-            $orderReturnService->create($orderReturnDto);
-
-            return true;
-        } else {
+        if (!$shipment->save()) {
             return false;
         }
+
+        $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
+
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+        $orderReturnService->create($orderReturnDto);
+
+        if ($shipment->status > ShipmentStatus::CREATED) {
+            $attributes = [
+                'SHIPMENT_NUMBER' => $shipment->number,
+                'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order_id),
+            ];
+
+            /** @var ServiceNotificationService $notificationService */
+            $notificationService = resolve(ServiceNotificationService::class);
+            $notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logistotpravlenie_otmeneno', $attributes);
+        }
+
+        return true;
     }
 
     /**
@@ -959,13 +973,13 @@ class DeliveryService
 
         $delivery->return_reason_id ??= $orderReturnReasonId;
 
-        if ($delivery->save()) {
-            $this->cancelDeliveryOrder($delivery);
-
-            return true;
-        } else {
+        if (!$delivery->save()) {
             return false;
         }
+
+        $this->cancelDeliveryOrder($delivery);
+
+        return true;
     }
 
     /**
@@ -976,10 +990,16 @@ class DeliveryService
         if ($delivery->xml_id) {
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
 
-            $delivery->xml_id = '';
-            $delivery->save();
+            // IBT-621: не удалять xml_id при отмене доставки
+            // $delivery->xml_id = '';
+            // $delivery->save();
+
+            if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
+                return;
+            }
+
+            $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
         }
     }
 

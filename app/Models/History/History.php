@@ -92,6 +92,10 @@ class History extends AbstractModel
 
         /** @var Model|WithMainHistory $mainModel */
         foreach ($mainModels as $mainModel) {
+            if (!$mainModel) {
+                continue;
+            }
+
             $historyMainEntity = new HistoryMainEntity();
             $historyMainEntity->history_id = $event->id;
             $historyMainEntity->main_entity_id = $mainModel->id;
