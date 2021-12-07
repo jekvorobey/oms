@@ -238,12 +238,6 @@ class Order extends AbstractModel
         'certificates' => 'array',
     ];
 
-    public static function makeNumber(): int
-    {
-        $ordersCount = (self::all()->last()->id ?? 0) + 1000000;
-        return (int) $ordersCount + 1;
-    }
-
     public function basket(): HasOne
     {
         return $this->hasOne(Basket::class, 'id', 'basket_id');
