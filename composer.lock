@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c16cc06d322c7daa371a08edeccdab1b",
+    "content-hash": "f8d148bc0b27e11b3d092a68cee8c136",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1607,7 +1607,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-merchant-management-lib",
-                "reference": "d5d605471a1587a36c9b0b0663d890853f778470"
+                "reference": "849c26982eda6ba5a2813bf78b8d7b6d9107f1ae"
             },
             "require": {
                 "ext-json": "*",
@@ -1630,7 +1630,7 @@
                 }
             ],
             "description": "iBT Merchant Management service client",
-            "time": "2021-04-13T08:12:14+00:00"
+            "time": "2021-12-02T10:12:47+00:00"
         },
         {
             "name": "iwengo/ibt-message-lib",
