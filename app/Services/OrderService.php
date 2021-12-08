@@ -108,13 +108,11 @@ class OrderService
         if ($order->is_canceled) {
             throw new \Exception('Заказ уже отменен');
         }
-
-        $order->is_returned = true;
-        if (!$order->save()) {
-            return false;
+        if ($order->is_returned) {
+            throw new \Exception('Заказ уже возвращен');
         }
 
-        $order->load('deliveries', 'deliveries.shipments');
+        $order->load('deliveries', 'deliveries.shipments', 'deliveries.shipments.basketItems');
         $basketItems = collect();
         foreach ($order->deliveries as $delivery) {
             foreach ($delivery->shipments as $shipment) {
@@ -130,7 +128,8 @@ class OrderService
         $orderReturnService->create($orderReturnDto);
         $orderReturnService->create($orderReturnDtoItems);
 
-        return true;
+        $order->is_returned = true;
+        return $order->save();
     }
 
     /**

@@ -14,7 +14,7 @@ class AddIsReturnedToOrders extends Migration
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->boolean('is_returned');
+            $table->boolean('is_returned')->default(false);
         });
     }
 
