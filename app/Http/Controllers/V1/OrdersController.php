@@ -445,7 +445,6 @@ class OrdersController extends Controller
     }
 
     /**
-     *
      * @OA\Put(
      *     path="api/v1/orders/{id}/return",
      *     tags={"Заказы"},

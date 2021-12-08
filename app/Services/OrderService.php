@@ -155,7 +155,7 @@ class OrderService
             return false;
         }
 
-        return (bool)$orderReturn;
+        return (bool) $orderReturn;
     }
 
     /**
@@ -217,7 +217,7 @@ class OrderService
                 if ($order->isPublicEventOrder()) {
                     $order->loadMissing('basket.items');
                     foreach ($order->basket->items as $basketItem) {
-                        $ticketIds = array_merge($ticketIds, (array)$basketItem->getTicketIds());
+                        $ticketIds = array_merge($ticketIds, (array) $basketItem->getTicketIds());
                     }
                 }
             }
@@ -246,8 +246,7 @@ class OrderService
         Order $order,
         bool $loadTickets = false,
         ?int $basketItemId = null
-    ): ?PublicEventOrder\OrderInfoDto
-    {
+    ): ?PublicEventOrder\OrderInfoDto {
         if (!$order->isPublicEventOrder()) {
             return null;
         }
@@ -372,7 +371,7 @@ class OrderService
                     $ticketsInfoDto->nearestTimeFrom = $cardStruct->nearestTimeFrom;
                     $ticketsInfoDto->nearestPlaceName = $cardStruct->nearestPlaceName;
                     $ticketsInfoDto->ticketsQty = count($item->getTicketIds());
-                    $ticketsInfoDto->price = (float)$item->price;
+                    $ticketsInfoDto->price = (float) $item->price;
                     $ticketsInfoDto->pricePerOne = $ticketsInfoDto->price / $ticketsInfoDto->ticketsQty;
 
                     if ($loadTickets) {
