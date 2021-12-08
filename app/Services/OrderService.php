@@ -105,16 +105,11 @@ class OrderService
 
     public function returnCompletedOrder(Order $order): bool
     {
-        if ($order->status !== OrderStatus::DONE) {
-            throw new \Exception('На заказ без статуса "Выполнен" нельзя оформить возврат.');
+        if ($order->is_canceled) {
+            throw new \Exception('Заказ уже отменен');
         }
 
-        if ($order->status === OrderStatus::RETURNED) {
-            throw new \Exception('Заказ уже возвращен');
-        }
-
-        $order->status = OrderStatus::RETURNED;
-
+        $order->is_returned = true;
         if (!$order->save()) {
             return false;
         }
