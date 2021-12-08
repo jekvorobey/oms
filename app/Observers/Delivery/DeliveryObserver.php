@@ -15,8 +15,10 @@ use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use Carbon\Carbon;
+use Greensight\Logistics\Dto\Lists\DeliveryService as DeliveryServiceDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 
@@ -76,6 +78,7 @@ class DeliveryObserver
         // $this->notifyIfShipped($delivery);
         // $this->notifyIfReadyForRecipient($delivery);
         $this->sendNotification($delivery);
+        $this->deliveryPointOnStatus($delivery);
     }
 
     protected function sendNotification(Delivery $delivery)
@@ -238,6 +241,20 @@ class DeliveryObserver
             }
         } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
+        }
+    }
+
+    protected function cdekDeliverySumUpdate(Delivery $delivery, DeliveryOrderService $deliveryOrderService)
+    {
+        if (
+            $delivery->status === DeliveryStatus::ON_POINT_IN
+            && $delivery->delivery_service === DeliveryServiceDto::SERVICE_CDEK
+        ) {
+            $deliverySum = $deliveryOrderService->cdekDeliverySum($delivery->delivery_service, $delivery->xml_id);
+            if ($deliverySum >= $delivery->cost) {
+                $delivery->cost = $deliverySum;
+                $delivery->save();
+            }
         }
     }
 
