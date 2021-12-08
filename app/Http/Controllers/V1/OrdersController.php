@@ -445,6 +445,31 @@ class OrdersController extends Controller
     }
 
     /**
+     *
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/return",
+     *     tags={"Заказы"},
+     *     description="Вернуть выполненный заказ.",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="order not found"),
+     * )
+     * Вернуть заказ
+     * @throws \Exception
+     */
+    public function returnCompleted(int $id, OrderService $orderService): Response
+    {
+        $order = $orderService->getOrder($id);
+        if (!$order) {
+            throw new NotFoundHttpException('order not found');
+        }
+        if (!$orderService->returnCompletedOrder($order)) {
+            throw new HttpException(500);
+        }
+        return response('', 204);
+    }
+
+    /**
      * @OA\Put(
      *     path="api/v1/orders/{id}/refund",
      *     tags={"Заказы"},

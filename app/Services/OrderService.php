@@ -103,6 +103,41 @@ class OrderService
         return true;
     }
 
+    public function returnCompletedOrder(Order $order): bool
+    {
+        if ($order->status !== OrderStatus::DONE) {
+            throw new \Exception('На заказ без статуса "Выполнен" нельзя оформить возврат.');
+        }
+
+        if ($order->status === OrderStatus::RETURNED) {
+            throw new \Exception('Заказ уже возвращен');
+        }
+
+        $order->status = OrderStatus::RETURNED;
+
+        if (!$order->save()) {
+            return false;
+        }
+
+        $order->load('deliveries', 'deliveries.shipments');
+        $basketItems = collect();
+        foreach ($order->deliveries as $delivery) {
+            foreach ($delivery->shipments as $shipment) {
+                $basketItems = $basketItems->merge($shipment->basketItems);
+            }
+        }
+        $returnDtoBuilder = new OrderReturnDtoBuilder();
+        $orderReturnDto = $returnDtoBuilder->buildFromOrder($order);
+        $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $basketItems);
+
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+        $orderReturnService->create($orderReturnDto);
+        $orderReturnService->create($orderReturnDtoItems);
+
+        return true;
+    }
+
     /**
      * Вернуть деньги при деактивации сертификата
      * @TODO переделать на передачу $certificateId вместо $sum
@@ -120,7 +155,7 @@ class OrderService
             return false;
         }
 
-        return (bool) $orderReturn;
+        return (bool)$orderReturn;
     }
 
     /**
@@ -182,7 +217,7 @@ class OrderService
                 if ($order->isPublicEventOrder()) {
                     $order->loadMissing('basket.items');
                     foreach ($order->basket->items as $basketItem) {
-                        $ticketIds = array_merge($ticketIds, (array) $basketItem->getTicketIds());
+                        $ticketIds = array_merge($ticketIds, (array)$basketItem->getTicketIds());
                     }
                 }
             }
@@ -211,7 +246,8 @@ class OrderService
         Order $order,
         bool $loadTickets = false,
         ?int $basketItemId = null
-    ): ?PublicEventOrder\OrderInfoDto {
+    ): ?PublicEventOrder\OrderInfoDto
+    {
         if (!$order->isPublicEventOrder()) {
             return null;
         }
@@ -336,7 +372,7 @@ class OrderService
                     $ticketsInfoDto->nearestTimeFrom = $cardStruct->nearestTimeFrom;
                     $ticketsInfoDto->nearestPlaceName = $cardStruct->nearestPlaceName;
                     $ticketsInfoDto->ticketsQty = count($item->getTicketIds());
-                    $ticketsInfoDto->price = (float) $item->price;
+                    $ticketsInfoDto->price = (float)$item->price;
                     $ticketsInfoDto->pricePerOne = $ticketsInfoDto->price / $ticketsInfoDto->ticketsQty;
 
                     if ($loadTickets) {
