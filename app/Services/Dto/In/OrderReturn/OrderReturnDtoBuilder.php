@@ -95,6 +95,18 @@ class OrderReturnDtoBuilder
     }
 
     /**
+     * Создание потоварного возврата в выполненном заказе
+     * @param Collection|BasketItem[] $basketItems
+     */
+    public function buildFromBasketItems(Order $order, Collection $basketItems): OrderReturnDto
+    {
+        $orderReturnDto = $this->buildBase($order->id, $basketItems);
+        $orderReturnDto->is_delivery = false;
+
+        return $orderReturnDto;
+    }
+
+    /**
      * Формирование базового объекта возврата заказа
      */
     protected function buildBase(int $orderId, Collection $basketItems): OrderReturnDto

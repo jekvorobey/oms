@@ -103,6 +103,35 @@ class OrderService
         return true;
     }
 
+    public function returnCompletedOrder(Order $order): bool
+    {
+        if ($order->is_canceled) {
+            throw new \Exception('Заказ уже отменен');
+        }
+        if ($order->is_returned) {
+            throw new \Exception('Заказ уже возвращен');
+        }
+
+        $order->load('deliveries', 'deliveries.shipments', 'deliveries.shipments.basketItems');
+        $basketItems = collect();
+        foreach ($order->deliveries as $delivery) {
+            foreach ($delivery->shipments as $shipment) {
+                $basketItems = $basketItems->merge($shipment->basketItems);
+            }
+        }
+        $returnDtoBuilder = new OrderReturnDtoBuilder();
+        $orderReturnDto = $returnDtoBuilder->buildFromOrder($order);
+        $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $basketItems);
+
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+        $orderReturnService->create($orderReturnDto);
+        $orderReturnService->create($orderReturnDtoItems);
+
+        $order->is_returned = true;
+        return $order->save();
+    }
+
     /**
      * Вернуть деньги при деактивации сертификата
      * @TODO переделать на передачу $certificateId вместо $sum
