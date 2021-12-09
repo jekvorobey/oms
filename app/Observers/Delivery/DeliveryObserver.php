@@ -78,7 +78,7 @@ class DeliveryObserver
         // $this->notifyIfShipped($delivery);
         // $this->notifyIfReadyForRecipient($delivery);
         $this->sendNotification($delivery);
-        $this->deliveryPointOnStatus($delivery);
+        $this->cdekDeliverySumUpdate($delivery);
     }
 
     protected function sendNotification(Delivery $delivery)
@@ -244,12 +244,13 @@ class DeliveryObserver
         }
     }
 
-    protected function cdekDeliverySumUpdate(Delivery $delivery, DeliveryOrderService $deliveryOrderService)
+    protected function cdekDeliverySumUpdate(Delivery $delivery)
     {
         if (
             $delivery->status === DeliveryStatus::ON_POINT_IN
             && $delivery->delivery_service === DeliveryServiceDto::SERVICE_CDEK
         ) {
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
             $deliverySum = $deliveryOrderService->cdekDeliverySum($delivery->delivery_service, $delivery->xml_id);
             if ($deliverySum >= $delivery->cost) {
                 $delivery->cost = $deliverySum;
