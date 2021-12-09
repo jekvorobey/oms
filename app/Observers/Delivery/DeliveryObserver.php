@@ -251,11 +251,10 @@ class DeliveryObserver
             && $delivery->delivery_service === DeliveryServiceDto::SERVICE_CDEK
         ) {
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            $deliverySum = $deliveryOrderService->cdekDeliverySum($delivery->delivery_service, $delivery->xml_id);
-            if ($deliverySum >= $delivery->cost) {
-                $delivery->cost = $deliverySum;
-                $delivery->save();
-            }
+            $deliveryDetail = $deliveryOrderService->cdekDeliverySum($delivery->delivery_service, $delivery->xml_id);
+            $delivery->delivery_sum = $deliveryDetail->delivery_sum;
+            $delivery->total_sum = $deliveryDetail->total_sum;
+            $delivery->save();
         }
     }
 
