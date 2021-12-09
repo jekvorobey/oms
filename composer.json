@@ -57,8 +57,8 @@
         "fideloper/proxy": "^4.0",
         "iwengo/ibt-cm-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-cms-lib": "dev-master-ylab as dev-master",
-        "iwengo/ibt-common-lib": "dev-master-ylab as dev-master-ylab",
-        "iwengo/ibt-logistics-lib": "dev-master-ylab as dev-master",
+        "iwengo/ibt-common-lib": "dev-master-ylab as dev-master",
+        "iwengo/ibt-logistics-lib": "dev-master-ylab as dev-master-ylab",
         "iwengo/ibt-marketing-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-merchant-management-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-message-lib": "dev-master-ylab as dev-master",
@@ -72,7 +72,8 @@
         "phpoffice/phpword": "^0.17.0",
         "sentry/sentry-laravel": "^2.7",
         "spatie/calendar-links": "^1.4",
-        "yoomoney/yookassa-sdk-php": "^2.0"
+        "yoomoney/yookassa-sdk-php": "^2.0",
+        "doctrine/dbal": "^2.5"
     },
     "require-dev": {
         "beyondcode/laravel-dump-server": "^1.0",

@@ -9,11 +9,16 @@ use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderReturnItem;
 use App\Models\Payment\PaymentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDto;
+use Carbon\Carbon;
 use App\Services\Dto\In\OrderReturn\OrderReturnItemDto;
 use Greensight\CommonMsa\Rest\RestQuery;
+use Greensight\Customer\Services\ReferralService\Dto\ReturnReferralBillOperationDto;
+use Greensight\Customer\Services\ReferralService\ReferralService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use MerchantManagement\Services\MerchantService\MerchantService;
+use Pim\Dto\Offer\OfferDto;
+use Pim\Services\OfferService\OfferService;
 
 /**
  * Class OrderReturnService
@@ -56,6 +61,7 @@ class OrderReturnService
         });
 
         rescue(fn() => $this->returnBillingOperations($basketItems, $order, $orderReturn));
+//        rescue(fn() => $this->returnReferralBillingOperations($basketItems, $order, $orderReturn));
 
         return $orderReturn;
     }
@@ -216,5 +222,46 @@ class OrderReturnService
         }
 
         return $billingListByMerchants;
+    }
+
+    /**
+     * Отправка данных о возврате в ibt-cm-ms
+     * @throws \Pim\Core\PimException
+     */
+    private function returnReferralBillingOperations(
+        Collection $basketItems,
+        Order $order,
+        OrderReturn $orderReturn
+    ): void {
+        $basketItemsOfReferral = $basketItems->filter(fn(BasketItem $basketItem) => $basketItem->referrer_id !== null);
+        if ($basketItemsOfReferral->isEmpty()) {
+            return;
+        }
+
+        /** @var ReferralService $referralService */
+        $referralService = resolve(ReferralService::class);
+        /** @var OfferService $offerService */
+        $offerService = resolve(OfferService::class);
+
+        $offerIds = $basketItems->pluck('offer_id')->toArray();
+        $offersQuery = $offerService->newQuery();
+        $offersQuery->addFields(OfferDto::entity(), 'id', 'product_id')
+            ->setFilter('id', $offerIds);
+        $offersInfo = $offerService->offers($offersQuery)->keyBy('id');
+
+        if ($offersInfo->isEmpty()) {
+            return;
+        }
+
+        $basketItemsOfReferral->each(function (BasketItem $basketItem) use ($orderReturn, $referralService, $order, $offersInfo) {
+            $returnReferralBillOperationsDto = new ReturnReferralBillOperationDto();
+            $returnReferralBillOperationsDto->setCustomerId($orderReturn->customer_id);
+            $returnReferralBillOperationsDto->setOrderNumber($order->number);
+            $returnReferralBillOperationsDto->setReturnDate(new Carbon($orderReturn->created_at));
+            $returnReferralBillOperationsDto->setReturnNumber($orderReturn->number);
+            $returnReferralBillOperationsDto->setProductId($offersInfo[$basketItem->offer_id]->product_id);
+
+            $referralService->returnBillOperation($basketItem->referrer_id, $returnReferralBillOperationsDto);
+        });
     }
 }

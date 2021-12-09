@@ -28,7 +28,7 @@ $factory->define(BasketItem::class, function (Faker $faker) {
             'height' => $faker->numberBetween(1, 100),
             'length' => $faker->numberBetween(1, 100),
             'merchant_id' => $faker->numberBetween(1, 100),
-            'is_explosive' => $faker->boolean,
+            'is_danger' => $faker->boolean,
         ],
     ];
 });
