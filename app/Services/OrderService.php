@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
@@ -105,24 +106,15 @@ class OrderService
 
     public function returnCompletedOrder(Order $order): bool
     {
-        if ($order->is_canceled) {
-            throw new \Exception('Заказ уже отменен');
-        }
-        if ($order->is_returned) {
-            throw new \Exception('Заказ уже возвращен');
-        }
+        $this->stopIfCanceledOrReturned($order);
 
-        $order->load('deliveries', 'deliveries.shipments', 'deliveries.shipments.basketItems');
-        $basketItems = collect();
-        foreach ($order->deliveries as $delivery) {
-            foreach ($delivery->shipments as $shipment) {
-                $basketItems = $basketItems->merge($shipment->basketItems);
-            }
-        }
+        $order->loadMissing('deliveries', 'deliveries.shipments', 'deliveries.shipments.basketItems');
+        $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
         $returnDtoBuilder = new OrderReturnDtoBuilder();
         $orderReturnDto = $returnDtoBuilder->buildFromOrder($order);
         $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $basketItems);
 
+        BasketItem::query()->whereIn('id', $basketItems->pluck('id'))->update(['is_returned' => true]);
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturnService->create($orderReturnDto);
@@ -130,6 +122,59 @@ class OrderService
 
         $order->is_returned = true;
         return $order->save();
+    }
+
+    public function returnBasketItemsInOrder(Order $order, array $itemIds): bool
+    {
+        $this->stopIfCanceledOrReturned($order);
+
+        $order->load([
+            'deliveries',
+            'deliveries.shipments',
+            'deliveries.shipments.basketItems',
+        ]);
+
+        $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
+        $existingItemIdsFromInput = array_intersect($itemIds, $basketItems->pluck('id')->toArray());
+
+
+        if (count($existingItemIdsFromInput) === $basketItems->count()) {
+            return $this->returnCompletedOrder($order);
+        }
+
+        $filteredBasketItems = $basketItems->whereIn('id', $existingItemIdsFromInput, true);
+        $returnDtoBuilder = new OrderReturnDtoBuilder();
+        $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $filteredBasketItems);
+
+        BasketItem::query()->whereIn('id', $filteredBasketItems->pluck('id'))->update(['is_returned' => true]);
+
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+        $orderReturnService->create($orderReturnDtoItems);
+
+        return $order->save();
+    }
+
+    protected function stopIfCanceledOrReturned(Order $order)
+    {
+        if ($order->is_canceled) {
+            throw new \Exception('Заказ уже отменен');
+        }
+
+        if ($order->is_returned) {
+            throw new \Exception('Заказ уже возвращен');
+        }
+    }
+
+    protected function getNotReturnedBasketItemsFromOrder(Order $order): Collection
+    {
+        $basketItems = collect();
+        foreach ($order->deliveries as $delivery) {
+            foreach ($delivery->shipments as $shipment) {
+                $basketItems = $basketItems->merge($shipment->basketItems->where('is_returned', false));
+            }
+        }
+        return $basketItems;
     }
 
     /**
