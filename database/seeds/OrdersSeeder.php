@@ -120,7 +120,7 @@ class OrdersSeeder extends Seeder
                     'width' => $product->width,
                     'height' => $product->height,
                     'length' => $product->length,
-                    'is_explosive' => $product->explosive,
+                    'is_danger' => $product->isDanger(),
                 ];
                 $basketItem->save();
 
@@ -134,7 +134,6 @@ class OrdersSeeder extends Seeder
             $order->basket_id = $basket->id;
             $order->customer_id = $basket->customer_id;
             $order->type = $basket->type;
-            $order->number = Order::makeNumber();
             $order->status = $faker->randomElement(OrderStatus::validValues());
             $order->created_at = $faker->dateTimeThisYear();
             $order->manager_comment = $faker->realText();

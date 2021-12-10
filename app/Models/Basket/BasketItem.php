@@ -145,7 +145,7 @@ class BasketItem extends AbstractModel
                 'height' => $offerInfo->height,
                 'length' => $offerInfo->length,
                 'merchant_id' => $offerInfo->merchant_id,
-                'is_explosive' => $offerInfo->is_explosive,
+                'is_danger' => $offerInfo->is_danger,
                 'sale_at' => $offerInfo->sale_at,
             ]);
             if (!isset($this->product['store_id'])) {
