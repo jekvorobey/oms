@@ -161,7 +161,7 @@ class OrderService
     protected function getNotReturnedBasketItemsFromOrder(Order $order): Collection
     {
         $order->loadMissing([
-            'deliveries.shipments' => fn(HasMany $relation) => $relation->where('is_cancelled', false),
+            'deliveries.shipments' => fn(HasMany $relation) => $relation->where('is_canceled', false),
             'deliveries.shipments.basketItems',
         ]);
         $basketItems = collect();
