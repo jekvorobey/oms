@@ -12,6 +12,7 @@ use App\Services\Dto\Internal\PublicEventOrder;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
 use App\Services\PublicEventService\Email\PublicEventCartStruct;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use App\Observers\Order\OrderObserver;
@@ -113,7 +114,7 @@ class OrderService
         $orderReturnDto = $returnDtoBuilder->buildFromOrder($order);
         $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $basketItems);
 
-        BasketItem::query()->whereIn('id', $basketItems->pluck('id'))->update(['is_returned' => true]);
+        $basketItems->map(fn(BasketItem $item) => $item->update(['is_returned' => true]));
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturnService->create($orderReturnDto);
@@ -129,13 +130,12 @@ class OrderService
 
         $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
         $existingItemIdsFromInput = array_intersect($itemIds, $basketItems->pluck('id')->toArray());
+        $filteredBasketItems = $basketItems->whereIn('id', $existingItemIdsFromInput, true);
 
-
-        if (count($existingItemIdsFromInput) === $basketItems->count()) {
+        if ($filteredBasketItems->count() === $basketItems->count()) {
             return $this->returnCompletedOrder($order);
         }
 
-        $filteredBasketItems = $basketItems->whereIn('id', $existingItemIdsFromInput, true);
         $returnDtoBuilder = new OrderReturnDtoBuilder();
         $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $filteredBasketItems);
 
@@ -144,7 +144,7 @@ class OrderService
         $orderReturnService->create($orderReturnDtoItems);
 
         $filteredBasketItems->map(fn(BasketItem $item) => $item->update(['is_returned' => true]));
-        return $order->save();
+        return true;
     }
 
     protected function stopIfCanceledOrReturned(Order $order)
@@ -160,7 +160,10 @@ class OrderService
 
     protected function getNotReturnedBasketItemsFromOrder(Order $order): Collection
     {
-        $order->loadMissing('deliveries.shipments.basketItems');
+        $order->loadMissing([
+            'deliveries.shipments' => fn(HasMany $relation) => $relation->where('is_cancelled', false),
+            'deliveries.shipments.basketItems',
+        ]);
         $basketItems = collect();
         foreach ($order->deliveries as $delivery) {
             foreach ($delivery->shipments as $shipment) {
