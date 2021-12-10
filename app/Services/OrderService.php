@@ -108,7 +108,6 @@ class OrderService
     {
         $this->stopIfCanceledOrReturned($order);
 
-        $order->loadMissing('deliveries', 'deliveries.shipments', 'deliveries.shipments.basketItems');
         $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
         $returnDtoBuilder = new OrderReturnDtoBuilder();
         $orderReturnDto = $returnDtoBuilder->buildFromOrder($order);
@@ -128,12 +127,6 @@ class OrderService
     {
         $this->stopIfCanceledOrReturned($order);
 
-        $order->load([
-            'deliveries',
-            'deliveries.shipments',
-            'deliveries.shipments.basketItems',
-        ]);
-
         $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
         $existingItemIdsFromInput = array_intersect($itemIds, $basketItems->pluck('id')->toArray());
 
@@ -146,12 +139,11 @@ class OrderService
         $returnDtoBuilder = new OrderReturnDtoBuilder();
         $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $filteredBasketItems);
 
-        BasketItem::query()->whereIn('id', $filteredBasketItems->pluck('id'))->update(['is_returned' => true]);
-
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturnService->create($orderReturnDtoItems);
 
+        $filteredBasketItems->map(fn(BasketItem $item) => $item->update(['is_returned' => true]));
         return $order->save();
     }
 
@@ -168,6 +160,7 @@ class OrderService
 
     protected function getNotReturnedBasketItemsFromOrder(Order $order): Collection
     {
+        $order->loadMissing('deliveries.shipments.basketItems');
         $basketItems = collect();
         foreach ($order->deliveries as $delivery) {
             foreach ($delivery->shipments as $shipment) {
