@@ -114,12 +114,12 @@ class OrderService
         $orderReturnDto = $returnDtoBuilder->buildFromOrder($order);
         $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $basketItems);
 
-        $basketItems->map(fn(BasketItem $item) => $item->update(['is_returned' => true]));
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturnService->create($orderReturnDto);
         $orderReturnService->create($orderReturnDtoItems);
 
+        $basketItems->map(fn(BasketItem $item) => $item->update(['is_returned' => true]));
         $order->is_returned = true;
         return $order->save();
     }
@@ -129,8 +129,7 @@ class OrderService
         $this->stopIfCanceledOrReturned($order);
 
         $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
-        $existingItemIdsFromInput = array_intersect($itemIds, $basketItems->pluck('id')->toArray());
-        $filteredBasketItems = $basketItems->whereIn('id', $existingItemIdsFromInput, true);
+        $filteredBasketItems = $basketItems->whereIn('id', $itemIds, true);
 
         if ($filteredBasketItems->count() === $basketItems->count()) {
             return $this->returnCompletedOrder($order);
