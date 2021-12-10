@@ -247,7 +247,8 @@ class DeliveryObserver
     protected function cdekDeliverySumUpdate(Delivery $delivery)
     {
         if (
-            $delivery->status === DeliveryStatus::ON_POINT_IN
+            $delivery->wasChanged('status')
+            && $delivery->status === DeliveryStatus::ON_POINT_IN
             && $delivery->delivery_service === DeliveryServiceDto::SERVICE_CDEK
         ) {
             $deliveryOrderService = resolve(DeliveryOrderService::class);
