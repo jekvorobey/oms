@@ -115,7 +115,7 @@ class OrderReturnDtoBuilder
         $orderReturnDto->order_id = $orderId;
         $orderReturnDto->status = OrderReturn::STATUS_CREATED;
 
-        $orderReturnDto->items = $basketItems->transform(static function (BasketItem $item) {
+        $orderReturnDto->items = $basketItems->map(static function (BasketItem $item) {
             $orderReturnItemDto = new OrderReturnItemDto();
             $orderReturnItemDto->basket_item_id = $item->id;
             $orderReturnItemDto->qty = $item->qty;
