@@ -124,7 +124,7 @@ class TicketNotifierService
                 $this->publicEventSprintStageService
                     ->query()
                     ->setFilter('sprint_id', $sprint->id)
-                    ->addSort('date')
+                    ->addSort('date_from')
             )->map(function ($stage) {
                 $place = $this->publicEventPlaceService->find(
                     $this->publicEventPlaceService->query()
