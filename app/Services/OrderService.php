@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
+use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -26,10 +27,12 @@ class OrderService
 {
     /**
      * Получить объект заказа по его id
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function getOrder(int $orderId): ?Order
+    public function getOrder(int $orderId): Order
     {
-        return Order::find($orderId);
+        return Order::findOrFail($orderId);
     }
 
     /**
@@ -83,15 +86,7 @@ class OrderService
             return false;
         }
 
-        if ($order->isCertificateOrder()) {
-            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderAllCertificates($order);
-        } else {
-            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrder($order);
-        }
-
-        /** @var OrderReturnService $orderReturnService */
-        $orderReturnService = resolve(OrderReturnService::class);
-        $orderReturnService->create($orderReturnDto);
+        $this->createOrderReturnForDelivery($order);
 
         if ($order->payment_status === PaymentStatus::HOLD) {
             /** @var Payment $payment */
@@ -105,48 +100,10 @@ class OrderService
         return true;
     }
 
-    public function returnCompletedOrder(Order $order): bool
-    {
-        $this->stopIfCanceledOrReturned($order);
-
-        $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
-        $returnDtoBuilder = new OrderReturnDtoBuilder();
-        $orderReturnDto = $returnDtoBuilder->buildFromOrder($order);
-        $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $basketItems);
-
-        /** @var OrderReturnService $orderReturnService */
-        $orderReturnService = resolve(OrderReturnService::class);
-        $orderReturnService->create($orderReturnDto);
-        $orderReturnService->create($orderReturnDtoItems);
-
-        $basketItems->map(fn(BasketItem $item) => $item->update(['is_returned' => true]));
-        $order->is_returned = true;
-        return $order->save();
-    }
-
-    public function returnBasketItemsInOrder(Order $order, array $itemIds): bool
-    {
-        $this->stopIfCanceledOrReturned($order);
-
-        $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
-        $filteredBasketItems = $basketItems->whereIn('id', $itemIds, true);
-
-        if ($filteredBasketItems->count() === $basketItems->count()) {
-            return $this->returnCompletedOrder($order);
-        }
-
-        $returnDtoBuilder = new OrderReturnDtoBuilder();
-        $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $filteredBasketItems);
-
-        /** @var OrderReturnService $orderReturnService */
-        $orderReturnService = resolve(OrderReturnService::class);
-        $orderReturnService->create($orderReturnDtoItems);
-
-        $filteredBasketItems->map(fn(BasketItem $item) => $item->update(['is_returned' => true]));
-        return true;
-    }
-
-    protected function stopIfCanceledOrReturned(Order $order)
+    /**
+     * Создать возврат для выполненного заказа
+     */
+    public function returnCompletedOrder(Order $order, ?array $basketItemIds): bool
     {
         if ($order->is_canceled) {
             throw new \Exception('Заказ уже отменен');
@@ -155,21 +112,65 @@ class OrderService
         if ($order->is_returned) {
             throw new \Exception('Заказ уже возвращен');
         }
+
+        $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
+        $selectedBasketItems = $basketItems->when(isset($basketItemIds), function (Collection $basketItems) use ($basketItemIds) {
+            return $basketItems->whereIn('id', $basketItemIds);
+        });
+
+        $this->createOrderReturnForBasketItems($order, $basketItems);
+        $selectedBasketItems->each(fn(BasketItem $item) => $item->update(['is_returned' => true]));
+
+        if ($selectedBasketItems->count() === $basketItems->count()) {
+            $this->createOrderReturnForDelivery($order);
+            $order->update(['is_returned' => true]);
+        }
+
+        return true;
     }
 
     protected function getNotReturnedBasketItemsFromOrder(Order $order): Collection
     {
-        $order->loadMissing([
+        $order->load([
             'deliveries.shipments' => fn(HasMany $relation) => $relation->where('is_canceled', false),
-            'deliveries.shipments.basketItems',
+            'deliveries.shipments.basketItems' => fn(HasMany $relation) => $relation->where('is_returned', false),
         ]);
+
         $basketItems = collect();
         foreach ($order->deliveries as $delivery) {
             foreach ($delivery->shipments as $shipment) {
-                $basketItems = $basketItems->merge($shipment->basketItems->where('is_returned', false));
+                $basketItems = $basketItems->merge($shipment->basketItems);
             }
         }
+
         return $basketItems;
+    }
+
+    protected function createOrderReturnForBasketItems(Order $order, Collection $basketItems): OrderReturn
+    {
+        $returnDtoBuilder = new OrderReturnDtoBuilder();
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+
+        $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $basketItems);
+
+        return $orderReturnService->create($orderReturnDtoItems);
+    }
+
+    protected function createOrderReturnForDelivery(Order $order): OrderReturn
+    {
+        $returnDtoBuilder = new OrderReturnDtoBuilder();
+
+        if ($order->isCertificateOrder()) {
+            $orderReturnDto = $returnDtoBuilder->buildFromOrderAllCertificates($order);
+        } else {
+            $orderReturnDto = $returnDtoBuilder->buildFromOrder($order);
+        }
+
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+
+        return $orderReturnService->create($orderReturnDto);
     }
 
     /**

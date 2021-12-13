@@ -83,7 +83,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::put('', 'OrdersController@update');
             Route::put('cancel', 'OrdersController@cancel');
             Route::put('return', 'OrdersController@returnCompleted');
-            Route::put('returnItems', 'OrdersController@returnOrderItems');
             Route::put('refund-by-certificate', 'OrdersController@refundByCertificate');
             Route::put('pay', 'OrdersController@pay');
             Route::delete('', 'OrdersController@delete');
