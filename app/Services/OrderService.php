@@ -119,7 +119,7 @@ class OrderService
             return $basketItems->whereIn('id', $basketItemIds);
         });
 
-        $this->createOrderReturnForBasketItems($order, $basketItems);
+        $this->createOrderReturnForBasketItems($order, $selectedBasketItems);
         $selectedBasketItems->each(fn(BasketItem $item) => $item->update(['is_returned' => true]));
 
         if ($selectedBasketItems->count() === $basketItems->count()) {
@@ -147,7 +147,7 @@ class OrderService
         return $basketItems;
     }
 
-    protected function createOrderReturnForBasketItems(Order $order, Collection $basketItems): OrderReturn
+    protected function createOrderReturnForBasketItems(Order $order, Collection $basketItems): ?OrderReturn
     {
         $returnDtoBuilder = new OrderReturnDtoBuilder();
         /** @var OrderReturnService $orderReturnService */
@@ -158,7 +158,7 @@ class OrderService
         return $orderReturnService->create($orderReturnDtoItems);
     }
 
-    protected function createOrderReturnForDelivery(Order $order): OrderReturn
+    protected function createOrderReturnForDelivery(Order $order): ?OrderReturn
     {
         $returnDtoBuilder = new OrderReturnDtoBuilder();
 
