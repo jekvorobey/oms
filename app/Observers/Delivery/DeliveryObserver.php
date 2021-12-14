@@ -78,7 +78,8 @@ class DeliveryObserver
         // $this->notifyIfShipped($delivery);
         // $this->notifyIfReadyForRecipient($delivery);
         $this->sendNotification($delivery);
-        $this->cdekDeliverySumUpdate($delivery);
+
+        rescue(fn() => $this->cdekDeliverySumUpdate($delivery));
     }
 
     protected function sendNotification(Delivery $delivery)
