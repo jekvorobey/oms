@@ -108,7 +108,7 @@ class OrderReturnDtoBuilder
             $orderReturnItemDto->basket_item_id = $item->id;
             $orderReturnItemDto->qty = $item->qty;
             $orderReturnItemDto->ticket_ids = $item->getTicketIds();
-            $orderReturnItemDto->price = $item->price / $item->qty;
+            $orderReturnItemDto->price = $item->price;
 
             return $orderReturnItemDto;
         });
