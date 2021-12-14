@@ -32,7 +32,8 @@ class OrderReturnService
      */
     public function create(OrderReturnDto $orderReturnDto): ?OrderReturn
     {
-        $order = Order::findOrFail($orderReturnDto->order_id)->load('basket.items');
+        /** @var Order $order */
+        $order = Order::query()->findOrFail($orderReturnDto->order_id)->load('basket.items');
 
         $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
 
@@ -41,7 +42,7 @@ class OrderReturnService
         }
 
         /** @var Collection|BasketItem[] $basketItems */
-        $basketItems = BasketItem::whereKey($basketItemIds)->with('shipmentItem.shipment')->get()->keyBy('id');
+        $basketItems = BasketItem::query()->whereKey($basketItemIds)->with('shipmentItem.shipment')->get()->keyBy('id');
 
         $orderReturn = DB::transaction(function () use ($orderReturnDto, $order, $basketItems) {
             $orderReturn = $this->createOrderReturn($order, $orderReturnDto);
@@ -151,7 +152,7 @@ class OrderReturnService
         if ($orderReturnItem->qty > $basketItem->qty) {
             throw new \Exception("Returning qty for BasketItem with id={$basketItem->id} more than at order");
         }
-        $orderReturnItem->price = $item->price ?: $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
+        $orderReturnItem->price = $item->price; // $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
         $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии
         $orderReturnItem->save();
 

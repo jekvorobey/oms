@@ -169,4 +169,9 @@ class Payment extends AbstractModel
     {
         optional($this->paymentSystem())->commitHoldedPayment($this, $this->sum - (float) $this->refund_sum);
     }
+
+    public function sendReceiptWhenOrderDeliveried()
+    {
+        optional($this->paymentSystem())->createIncomeReceipt($this->order, $this);
+    }
 }

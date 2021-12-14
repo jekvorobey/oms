@@ -204,6 +204,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property int $is_require_check - флаг, что заказ требует проверки
  * @property string $manager_comment - комментарий менеджера
  * @property int $confirmation_type - тип подтверждения заказа (см. \App\Models\Order\OrderConfirmationType)
+ * @property bool $is_returned - флаг возврата выполненного заказа
  *
  * @property string $number - номер
  *
@@ -237,12 +238,6 @@ class Order extends AbstractModel
     protected $casts = [
         'certificates' => 'array',
     ];
-
-    public static function makeNumber(): int
-    {
-        $ordersCount = (self::all()->last()->id ?? 0) + 1000000;
-        return (int) $ordersCount + 1;
-    }
 
     public function basket(): HasOne
     {

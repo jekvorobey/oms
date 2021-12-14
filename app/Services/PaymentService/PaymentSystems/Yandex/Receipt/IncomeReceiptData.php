@@ -67,7 +67,7 @@ class IncomeReceiptData extends ReceiptData
         }
 
         if ((float) $order->delivery_price > 0 && !$deliveryForReturn) {
-            $receiptItems[] = $this->getDeliveryReceiptItem($order->delivery_price);
+            $receiptItems[] = $this->getDeliveryReceiptItem($order->delivery_price, $order->status);
         }
 
         return $receiptItems;

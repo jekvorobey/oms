@@ -95,6 +95,18 @@ class OrderReturnDtoBuilder
     }
 
     /**
+     * Создание потоварного возврата в выполненном заказе
+     * @param Collection|BasketItem[] $basketItems
+     */
+    public function buildFromBasketItems(Order $order, Collection $basketItems): OrderReturnDto
+    {
+        $orderReturnDto = $this->buildBase($order->id, $basketItems);
+        $orderReturnDto->is_delivery = false;
+
+        return $orderReturnDto;
+    }
+
+    /**
      * Формирование базового объекта возврата заказа
      */
     protected function buildBase(int $orderId, Collection $basketItems): OrderReturnDto
@@ -103,12 +115,12 @@ class OrderReturnDtoBuilder
         $orderReturnDto->order_id = $orderId;
         $orderReturnDto->status = OrderReturn::STATUS_CREATED;
 
-        $orderReturnDto->items = $basketItems->transform(static function (BasketItem $item) {
+        $orderReturnDto->items = $basketItems->map(static function (BasketItem $item) {
             $orderReturnItemDto = new OrderReturnItemDto();
             $orderReturnItemDto->basket_item_id = $item->id;
             $orderReturnItemDto->qty = $item->qty;
             $orderReturnItemDto->ticket_ids = $item->getTicketIds();
-            $orderReturnItemDto->price = $item->price / $item->qty;
+            $orderReturnItemDto->price = $item->price;
 
             return $orderReturnItemDto;
         });

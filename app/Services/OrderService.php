@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
+use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
@@ -11,6 +13,8 @@ use App\Services\Dto\Internal\PublicEventOrder;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
 use App\Services\PublicEventService\Email\PublicEventCartStruct;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use App\Observers\Order\OrderObserver;
@@ -24,10 +28,12 @@ class OrderService
 {
     /**
      * Получить объект заказа по его id
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function getOrder(int $orderId): ?Order
+    public function getOrder(int $orderId): Order
     {
-        return Order::find($orderId);
+        return Order::findOrFail($orderId);
     }
 
     /**
@@ -81,15 +87,7 @@ class OrderService
             return false;
         }
 
-        if ($order->isCertificateOrder()) {
-            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrderAllCertificates($order);
-        } else {
-            $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromOrder($order);
-        }
-
-        /** @var OrderReturnService $orderReturnService */
-        $orderReturnService = resolve(OrderReturnService::class);
-        $orderReturnService->create($orderReturnDto);
+        $this->createOrderReturnForDelivery($order);
 
         if ($order->payment_status === PaymentStatus::HOLD) {
             /** @var Payment $payment */
@@ -101,6 +99,79 @@ class OrderService
         }
 
         return true;
+    }
+
+    /**
+     * Создать возврат для выполненного заказа
+     */
+    public function returnCompletedOrder(Order $order, ?array $basketItemIds): bool
+    {
+        if ($order->is_canceled) {
+            throw new \Exception('Заказ уже отменен');
+        }
+
+        if ($order->is_returned) {
+            throw new \Exception('Заказ уже возвращен');
+        }
+
+        $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
+        $selectedBasketItems = $basketItems->when(isset($basketItemIds), function (Collection $basketItems) use ($basketItemIds) {
+            return $basketItems->whereIn('id', $basketItemIds);
+        });
+
+        $this->createOrderReturnForBasketItems($order, $selectedBasketItems);
+        $selectedBasketItems->each(fn(BasketItem $item) => $item->update(['is_returned' => true]));
+
+        if ($selectedBasketItems->count() === $basketItems->count()) {
+            $this->createOrderReturnForDelivery($order);
+            $order->update(['is_returned' => true]);
+        }
+
+        return true;
+    }
+
+    protected function getNotReturnedBasketItemsFromOrder(Order $order): Collection
+    {
+        $order->load([
+            'deliveries.shipments' => fn(HasMany $relation) => $relation->where('is_canceled', false),
+            'deliveries.shipments.basketItems' => fn(BelongsToMany $relation) => $relation->where('is_returned', false),
+        ]);
+
+        $basketItems = collect();
+        foreach ($order->deliveries as $delivery) {
+            foreach ($delivery->shipments as $shipment) {
+                $basketItems = $basketItems->merge($shipment->basketItems);
+            }
+        }
+
+        return $basketItems;
+    }
+
+    protected function createOrderReturnForBasketItems(Order $order, Collection $basketItems): ?OrderReturn
+    {
+        $returnDtoBuilder = new OrderReturnDtoBuilder();
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+
+        $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $basketItems);
+
+        return $orderReturnService->create($orderReturnDtoItems);
+    }
+
+    protected function createOrderReturnForDelivery(Order $order): ?OrderReturn
+    {
+        $returnDtoBuilder = new OrderReturnDtoBuilder();
+
+        if ($order->isCertificateOrder()) {
+            $orderReturnDto = $returnDtoBuilder->buildFromOrderAllCertificates($order);
+        } else {
+            $orderReturnDto = $returnDtoBuilder->buildFromOrder($order);
+        }
+
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+
+        return $orderReturnService->create($orderReturnDto);
     }
 
     /**
@@ -288,7 +359,6 @@ class OrderService
                 $placeInfoDto->cityName = $place['city_name'];
                 $placeInfoDto->address = $place['address'];
                 $placeInfoDto->latitude = $place['latitude'];
-                $placeInfoDto->longitude = $place['longitude'];
                 $placeInfoDto->longitude = $place['longitude'];
                 foreach ($place['gallery'] as $gallery) {
                     $galleryItemInfoDto = new PublicEventOrder\GalleryItemInfoDto();

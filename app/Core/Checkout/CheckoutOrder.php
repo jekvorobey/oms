@@ -262,7 +262,6 @@ class CheckoutOrder
     {
         $order = new Order();
         $order->customer_id = $this->customerId;
-        $order->number = Order::makeNumber();
         $order->basket_id = $this->basketId;
         $order->type = $this->basket()->type;
         $order->receiver_name = $this->receiverName;
