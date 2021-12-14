@@ -252,11 +252,17 @@ class DeliveryObserver
             && $delivery->status === DeliveryStatus::ON_POINT_IN
             && $delivery->delivery_service === DeliveryServiceDto::SERVICE_CDEK
         ) {
+            /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
             $deliveryDetail = $deliveryOrderService->cdekDeliverySum($delivery->delivery_service, $delivery->xml_id);
-            $delivery->delivery_sum = $deliveryDetail->delivery_sum;
-            $delivery->total_sum = $deliveryDetail->total_sum;
-            $delivery->save();
+
+            if ($deliveryDetail->success) {
+                $delivery->delivery_sum = $deliveryDetail->delivery_sum;
+                $delivery->total_sum = $deliveryDetail->total_sum;
+                $delivery->save();
+            } else {
+                throw new \Exception('Get cdek delivery sum error: ' . $deliveryDetail->message);
+            }
         }
     }
 
