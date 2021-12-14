@@ -13,6 +13,7 @@ use App\Services\Dto\Internal\PublicEventOrder;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
 use App\Services\PublicEventService\Email\PublicEventCartStruct;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
@@ -133,7 +134,7 @@ class OrderService
     {
         $order->load([
             'deliveries.shipments' => fn(HasMany $relation) => $relation->where('is_canceled', false),
-            'deliveries.shipments.basketItems' => fn(HasMany $relation) => $relation->where('is_returned', false),
+            'deliveries.shipments.basketItems' => fn(BelongsToMany $relation) => $relation->where('is_returned', false),
         ]);
 
         $basketItems = collect();
@@ -358,7 +359,6 @@ class OrderService
                 $placeInfoDto->cityName = $place['city_name'];
                 $placeInfoDto->address = $place['address'];
                 $placeInfoDto->latitude = $place['latitude'];
-                $placeInfoDto->longitude = $place['longitude'];
                 $placeInfoDto->longitude = $place['longitude'];
                 foreach ($place['gallery'] as $gallery) {
                     $galleryItemInfoDto = new PublicEventOrder\GalleryItemInfoDto();
