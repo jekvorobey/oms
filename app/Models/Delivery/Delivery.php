@@ -113,6 +113,16 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *         description="стоимость доставки, полученная от службы доставки (не влияет на общую стоимость доставки по заказу!)"
  *     ),
  *     @OA\Property(
+ *         property="delivery_sum",
+ *         type="number",
+ *         description="фактическая стоимость доставки, полученная от службы доставки"
+ *     ),
+ *     @OA\Property(
+ *         property="total_sum",
+ *         type="number",
+ *         description="фактическая стоимость доставки с услугами, полученная от службы доставки"
+ *     ),
+ *     @OA\Property(
  *         property="width",
  *         type="number",
  *         description="ширина (расчитывается автоматически)"
@@ -217,6 +227,8 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property int $point_id - идентификатор пункта самовывоза из сервиса логистики
  * @property string $number - номер доставки (номер_заказа-порядковый_номер_доставки)
  * @property float $cost - стоимость доставки, полученная от службы доставки (не влияет на общую стоимость доставки по заказу!)
+ * @property float $delivery_sum - фактическая стоимость доставки, полученная от службы доставки
+ * @property float $total_sum - фактическая стоимость доставки с услугами, полученная от службы доставки
  * @property float $width - ширина (расчитывается автоматически)
  * @property float $height - высота (расчитывается автоматически)
  * @property float $length - длина (расчитывается автоматически)
