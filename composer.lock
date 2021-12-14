@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "17077b24e72b97f8aafee264a66c9340",
+    "content-hash": "af77631bb4026b0a46123123ac4bad90",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1174,11 +1174,11 @@
         },
         {
             "name": "iwengo/ibt-logistics-lib",
-            "version": "dev-feature/IBT-472-cdek-delivery-sum",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-logistics-lib",
-                "reference": "d83ced7bd06dba692c62d8e765491c6e8a932d6c"
+                "reference": "ff4a24c523f30cbf480d9c85fd2a3c96a2af5b69"
             },
             "require": {
                 "ext-json": "*",
@@ -1212,7 +1212,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2021-12-09T12:55:51+00:00"
+            "time": "2021-12-14T14:16:57+00:00"
         },
         {
             "name": "iwengo/ibt-marketing-lib",
@@ -10115,9 +10115,9 @@
         },
         {
             "package": "iwengo/ibt-logistics-lib",
-            "version": "dev-feature/IBT-472-cdek-delivery-sum",
-            "alias": "dev-master-ylab",
-            "alias_normalized": "dev-master-ylab"
+            "version": "dev-master-ylab",
+            "alias": "dev-master",
+            "alias_normalized": "dev-master"
         },
         {
             "package": "iwengo/ibt-marketing-lib",
@@ -10170,5 +10170,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.1.0"
 }
