@@ -152,7 +152,7 @@ class OrderReturnService
         if ($orderReturnItem->qty > $basketItem->qty) {
             throw new \Exception("Returning qty for BasketItem with id={$basketItem->id} more than at order");
         }
-        $orderReturnItem->price = $item->price ?: $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
+        $orderReturnItem->price = $item->price; // $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
         $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии
         $orderReturnItem->save();
 

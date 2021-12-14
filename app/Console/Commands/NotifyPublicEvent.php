@@ -137,7 +137,7 @@ class NotifyPublicEvent extends Command
                 $stage = $publicEventSprintStageService->find(
                     $publicEventSprintStageService->query()
                         ->setFilter('sprint_id', $items['sprint']->id)
-                        ->addSort('date')
+                        ->addSort('date_from')
                         ->addSort('time_from')
                 )->first();
                 $organizer = $publicEventOrganizerService->find(
