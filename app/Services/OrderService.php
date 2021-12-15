@@ -104,7 +104,7 @@ class OrderService
     /**
      * Создать возврат для выполненного заказа
      */
-    public function returnCompletedOrder(Order $order, ?array $basketItemIds): bool
+    public function returnCompletedOrder(Order $order, ?array $basketItemIds = null): bool
     {
         if ($order->is_canceled) {
             throw new \Exception('Заказ уже отменен');

@@ -456,7 +456,7 @@ class OrdersController extends Controller
         $order = $orderService->getOrder($id);
 
         $this->validate($request, [
-            'basketItemIds' => 'sometimes|array',
+            'basketItemIds' => 'nullable|array',
             'basketItemIds.*' => 'int',
         ]);
 
