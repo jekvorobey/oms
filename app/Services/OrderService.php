@@ -106,10 +106,12 @@ class OrderService
      */
     public function returnCompletedOrder(Order $order, ?array $basketItemIds = null): bool
     {
+        if (!$order->isProductOrder()) {
+            throw new \Exception('Возврат возможен только для заказа товаров');
+        }
         if ($order->is_canceled) {
             throw new \Exception('Заказ уже отменен');
         }
-
         if ($order->is_returned) {
             throw new \Exception('Заказ уже возвращен');
         }
