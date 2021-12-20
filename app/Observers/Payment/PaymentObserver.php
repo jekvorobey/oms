@@ -79,7 +79,10 @@ class PaymentObserver
 
     public function createRefundReceipt(Payment $payment): void
     {
-        if ($payment->status === PaymentStatus::TIMEOUT) {
+        if (
+            $payment->status === PaymentStatus::TIMEOUT
+            && in_array($payment->getOriginal('status'), [PaymentStatus::HOLD, PaymentStatus::PAID])
+        ) {
             $paymentSystem = $payment->paymentSystem();
 
             if ($paymentSystem) {
