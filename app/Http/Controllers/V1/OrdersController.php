@@ -321,9 +321,6 @@ class OrdersController extends Controller
     public function update(int $id, Request $request, OrderService $orderService): Response
     {
         $order = $orderService->getOrder($id);
-        if (!$order) {
-            throw new NotFoundHttpException('order not found');
-        }
         $data = $request->all();
         $validator = Validator::make($data, [
             'basket_id' => 'nullable|integer',
@@ -370,9 +367,6 @@ class OrdersController extends Controller
     public function delete(int $id, OrderService $orderService): Response
     {
         $order = $orderService->getOrder($id);
-        if (!$order) {
-            throw new NotFoundHttpException('order not found');
-        }
         $ok = $order->delete();
         if (!$ok) {
             throw new HttpException(500, 'unable to save order');
@@ -403,9 +397,6 @@ class OrdersController extends Controller
     public function pay(int $id, OrderService $orderService): Response
     {
         $order = $orderService->getOrder($id);
-        if (!$order) {
-            throw new NotFoundHttpException('order not found');
-        }
         if (!$orderService->pay($order)) {
             throw new HttpException(500);
         }
@@ -434,13 +425,44 @@ class OrdersController extends Controller
         ]);
 
         $order = $orderService->getOrder($id);
-        if (!$order) {
-            throw new NotFoundHttpException('order not found');
-        }
         if (!$orderService->cancel($order, $data['orderReturnReason'])) {
             throw new HttpException(500);
         }
 
+        return response('', 204);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/return",
+     *     tags={"Заказы"},
+     *     description="Вернуть выполненный заказ",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          @OA\Property(property="basketItemIds", type="array", @OA\Items(type="string"))),
+     *      ),
+     *     ),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="order not found"),
+     * )
+     * Вернуть заказ
+     * @throws \Exception
+     */
+    public function returnCompleted(int $id, Request $request, OrderService $orderService): Response
+    {
+        $order = $orderService->getOrder($id);
+
+        $this->validate($request, [
+            'basketItemIds' => 'nullable|array',
+            'basketItemIds.*' => 'int',
+        ]);
+
+        if (!$orderService->returnCompletedOrder($order, $request->get('basketItemIds'))) {
+            throw new HttpException(500);
+        }
         return response('', 204);
     }
 
@@ -464,9 +486,6 @@ class OrdersController extends Controller
         ]);
 
         $order = $orderService->getOrder($id);
-        if (!$order) {
-            throw new NotFoundHttpException('order not found');
-        }
         if (!$orderService->refundByCertificate($order, $data['sum'])) {
             throw new HttpException(500);
         }

@@ -15,8 +15,10 @@ use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use Carbon\Carbon;
+use Greensight\Logistics\Dto\Lists\DeliveryService as DeliveryServiceDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
+use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 
@@ -76,6 +78,8 @@ class DeliveryObserver
         // $this->notifyIfShipped($delivery);
         // $this->notifyIfReadyForRecipient($delivery);
         $this->sendNotification($delivery);
+
+        rescue(fn() => $this->cdekDeliverySumUpdate($delivery));
     }
 
     protected function sendNotification(Delivery $delivery)
@@ -238,6 +242,27 @@ class DeliveryObserver
             }
         } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
+        }
+    }
+
+    protected function cdekDeliverySumUpdate(Delivery $delivery)
+    {
+        if (
+            $delivery->wasChanged('status')
+            && $delivery->status === DeliveryStatus::ON_POINT_IN
+            && $delivery->delivery_service === DeliveryServiceDto::SERVICE_CDEK
+        ) {
+            /** @var DeliveryOrderService $deliveryOrderService */
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
+            $deliveryDetail = $deliveryOrderService->cdekDeliverySum($delivery->delivery_service, $delivery->xml_id);
+
+            if ($deliveryDetail->success) {
+                $delivery->delivery_sum = $deliveryDetail->delivery_sum;
+                $delivery->total_sum = $deliveryDetail->total_sum;
+                $delivery->save();
+            } else {
+                throw new \Exception('Get cdek delivery sum error: ' . $deliveryDetail->message);
+            }
         }
     }
 

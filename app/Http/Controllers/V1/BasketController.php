@@ -135,9 +135,6 @@ class BasketController extends Controller
         OrderService $orderService
     ): JsonResponse {
         $order = $orderService->getOrder($orderId);
-        if (!$order) {
-            throw new NotFoundHttpException('order not found');
-        }
 
         return $this->setItem($order->basket_id, $offerId, $request);
     }

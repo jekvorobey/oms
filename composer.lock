@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f8d148bc0b27e11b3d092a68cee8c136",
+    "content-hash": "7bf16a66b1151bde389e4d546fb75f64",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1523,7 +1523,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-logistics-lib",
-                "reference": "04647d6bcb2b19ee942e4596760067b493d6f50e"
+                "reference": "6e814700e14d11cecb20cf65c11d79100e68c9d2"
             },
             "require": {
                 "ext-json": "*",
@@ -1557,7 +1557,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2021-12-03T12:26:15+00:00"
+            "time": "2021-12-14T14:23:09+00:00"
         },
         {
             "name": "iwengo/ibt-marketing-lib",
@@ -10117,8 +10117,8 @@
         {
             "package": "iwengo/ibt-logistics-lib",
             "version": "dev-master-ylab",
-            "alias": "dev-master-ylab",
-            "alias_normalized": "dev-master-ylab"
+            "alias": "dev-master",
+            "alias_normalized": "dev-master"
         },
         {
             "package": "iwengo/ibt-marketing-lib",
