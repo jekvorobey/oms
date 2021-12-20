@@ -10,7 +10,6 @@ use Greensight\CommonMsa\Services\FileService\FileService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Fluent;
 use Pim\Dto\PublicEvent\MediaDto;
 use Pim\Dto\PublicEvent\OrganizerDto;
 use Pim\Dto\PublicEvent\PlaceDto;
