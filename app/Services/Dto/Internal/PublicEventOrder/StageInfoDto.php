@@ -3,6 +3,7 @@
 namespace App\Services\Dto\Internal\PublicEventOrder;
 
 use Illuminate\Support\Carbon;
+use Jenssegers\Date\Date;
 
 /**
  * Class StageInfoDto
@@ -21,7 +22,9 @@ class StageInfoDto
     /** @var string */
     public $raider;
     /** @var Carbon */
-    public $date;
+    public $dateFrom;
+    /** @var Carbon */
+    public $dateTo;
     /** @var Carbon */
     public $timeFrom;
     /** @var Carbon */
@@ -35,9 +38,21 @@ class StageInfoDto
 
     public const TIME_FORMAT = 'H:i:s';
 
-    public function setDate(string $date): void
+    public function setDateFrom(string $dateFrom): void
     {
-        $this->date = Carbon::createFromFormat(self::DATE_FORMAT, $date);
+        $this->dateFrom = Carbon::createFromFormat(self::DATE_FORMAT, $dateFrom);
+    }
+
+    public function setDateTo(string $dateTo): void
+    {
+        $this->dateTo = Carbon::createFromFormat(self::DATE_FORMAT, $dateTo);
+    }
+
+    public function getDateFormatted(): string
+    {
+        $formatDate = static fn(Carbon $date) => Date::parse($date)->format('j F') . ' ' . short_day_of_week($date->dayOfWeek);
+
+        return $formatDate($this->dateFrom) . ($this->dateFrom != $this->dateTo ? ' - ' . $formatDate($this->dateTo) : '');
     }
 
     /**
