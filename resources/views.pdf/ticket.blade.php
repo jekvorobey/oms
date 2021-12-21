@@ -333,7 +333,7 @@
                                 <ul class="dates">
                                     @foreach($publicEvent->stages as $stage)
                                         <li>
-                                            {{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}} ({{short_day_of_week($stage->date->dayOfWeek)}}), {{$stage->timeFrom->format('H:i')}}-{{$stage->timeTo->format('H:i')}}
+                                            {{$stage->getDateFormatted()}}, {{$stage->timeFrom->format('H:i')}}-{{$stage->timeTo->format('H:i')}}
                                         </li>
                                     @endforeach
                                 </ul>
@@ -462,7 +462,7 @@
                             <div class="program-layout">
                                 <div class="program-sidebar" style="margin-top: -12px;">
                                     <div class="title">{{$stage->name}}</div>
-                                    <div class="text-small" style="line-height: 1.275;">{{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}} ({{short_day_of_week($stage->date->dayOfWeek)}}), {{$stage->timeFrom->format('H:i')}}-{{$stage->timeTo->format('H:i')}}</div>
+                                    <div class="text-small" style="line-height: 1.275;">{{$stage->getDateFormatted()}}, {{$stage->timeFrom->format('H:i')}}-{{$stage->timeTo->format('H:i')}}</div>
                                     @if($publicEvent->places->has($stage->placeId))
                                         <div class="text" style="line-height: 1.275;">
                                             {{$publicEvent->places[$stage->placeId]->name}}, {{$publicEvent->places[$stage->placeId]->address}}
