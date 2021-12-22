@@ -16,9 +16,9 @@ class BasketService
     /**
      * Получить объект корзины по его id
      */
-    public function getBasket(int $basketId): ?Basket
+    public function getBasket(int $basketId): Basket
     {
-        return Basket::find($basketId);
+        return Basket::findOrFail($basketId);
     }
 
     /**
@@ -27,6 +27,7 @@ class BasketService
     public function findFreeUserBasket(int $type, int $customerId): Basket
     {
         $basket = Basket::query()
+            ->select('id')
             ->where('customer_id', $customerId)
             ->where('type', $type)
             ->where('is_belongs_to_order', 0)
@@ -55,17 +56,12 @@ class BasketService
     /**
      * Получить объект товар корзины, даже если его нет в БД
      */
-    public function itemByOffer(int $basketId, int $offerId, ?int $bundleId = null): ?BasketItem
+    protected function itemByOffer(Basket $basket, int $offerId, ?int $bundleId = null): BasketItem
     {
-        $basket = $this->getBasket($basketId);
-        if (is_null($basket)) {
-            return null;
-        }
-
         $item = $basket->items->first(function (BasketItem $item) use ($offerId, $bundleId) {
-            return $bundleId ?
-                $item->offer_id == $offerId && $item->bundle_id == $bundleId :
-                $item->offer_id == $offerId && is_null($item->bundle_id);
+            return $bundleId
+                ? $item->offer_id == $offerId && $item->bundle_id == $bundleId
+                : $item->offer_id == $offerId && is_null($item->bundle_id);
         });
 
         if (!$item) {
@@ -84,17 +80,9 @@ class BasketService
      * @return bool|null
      * @throws Exception
      */
-    public function setItem(int $basketId, int $offerId, array $data): bool
+    public function setItem(Basket $basket, int $offerId, array $data): bool
     {
-        $basket = $this->getBasket($basketId);
-        if (is_null($basket)) {
-            return false;
-        }
-
-        $item = $this->itemByOffer($basketId, $offerId, $data['bundle_id'] ?? null);
-        if (!$item) {
-            return false;
-        }
+        $item = $this->itemByOffer($basket, $offerId, $data['bundle_id'] ?? null);
 
         if ($item->id && isset($data['qty']) && !$data['qty']) {
             $ok = $item->delete();
@@ -117,13 +105,12 @@ class BasketService
      * Удалить корзину
      * @throws Exception
      */
-    public function deleteBasket(int $basketId): bool
+    public function deleteBasket(Basket $basket): bool
     {
-        $basket = $this->getBasket($basketId);
-        if (is_null($basket)) {
+        if ($basket->is_belongs_to_order) {
             return false;
         }
 
-        return !$basket->is_belongs_to_order ? $basket->delete() : false;
+        return $basket->delete();
     }
 }
