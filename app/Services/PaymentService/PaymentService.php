@@ -145,4 +145,20 @@ class PaymentService
         $payment->refund_sum = $refundSum;
         $payment->save();
     }
+
+    public function capture(Payment $payment): void
+    {
+        optional($payment->paymentSystem())->commitHoldedPayment($this, $payment->sum - (float) $payment->refund_sum);
+        if ($payment->refund_sum > 0) {
+            optional($payment->paymentSystem())->createRefundAllReceipt($payment->order, $payment);
+            optional($payment->paymentSystem())->createIncomeReceipt($payment->order, $payment);
+        }
+    }
+
+    public function sendFullPaymentReceipt(Payment $payment): void
+    {
+        optional($payment->paymentSystem())->createIncomeReceipt($payment->order, $payment);
+        $payment->is_fullpayment_receipt_sent = true;
+        $payment->save();
+    }
 }

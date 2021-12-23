@@ -54,13 +54,13 @@ class PaymentObserver
 
         if (
             in_array($payment->status, $checkingStatuses, true)
-            && !$payment->is_receipt_sent
+            && !$payment->is_prepayment_receipt_sent
             && $this->isNeedCreateIncomeReceipt($payment)
         ) {
             $paymentSystem = $payment->paymentSystem();
             if ($paymentSystem) {
                 $paymentSystem->createIncomeReceipt($payment->order, $payment);
-                $payment->is_receipt_sent = true;
+                $payment->is_prepayment_receipt_sent = true;
                 $payment->save();
             }
         }

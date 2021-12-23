@@ -16,6 +16,7 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
+use App\Services\PaymentService\PaymentService;
 use App\Services\TicketNotifierService;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
@@ -372,14 +373,15 @@ class OrderObserver
     {
         $oldStatus = $order->getOriginal('status');
         $newStatus = $order->status;
+        $paymentService = new PaymentService();
         if ($newStatus == OrderStatus::DONE && $newStatus != $oldStatus) {
             foreach ($order->payments as $payment) {
                 if ($payment->status == PaymentStatus::HOLD) {
-                    $payment->commitHolded();
+                    $paymentService->capture($payment);
                 }
 
-                if ($order->isProductOrder()) {
-                    $payment->sendReceiptWhenOrderDeliveried();
+                if ($order->isProductOrder() && !$payment->is_fullpayment_receipt_sent) {
+                    $paymentService->sendFullPaymentReceipt($payment);
                 }
             }
         }
