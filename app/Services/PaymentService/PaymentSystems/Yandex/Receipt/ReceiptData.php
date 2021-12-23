@@ -143,8 +143,10 @@ abstract class ReceiptData
 
     protected function getItemPaymentMode(BasketItem $item): string
     {
-        if ($item->type === Basket::TYPE_PRODUCT && $item->basket->order->status < OrderStatus::DONE) {
-            return PaymentMode::FULL_PREPAYMENT;
+        if ($item->basket->order->status == OrderStatus::DONE) {
+            return [
+                Basket::TYPE_CERTIFICATE => PaymentMode::ADVANCE,
+            ][$item->type] ?? PaymentMode::FULL_PAYMENT;
         }
 
         return [
@@ -223,8 +225,8 @@ abstract class ReceiptData
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => VatCode::CODE_DEFAULT,
-            'payment_mode' => $orderStatus >= OrderStatus::DONE ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT,
-            'payment_subject' => $orderStatus >= OrderStatus::DONE ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
+            'payment_mode' => $orderStatus == OrderStatus::DONE ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT,
+            'payment_subject' => $orderStatus == OrderStatus::DONE ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
         ]);
     }
 }
