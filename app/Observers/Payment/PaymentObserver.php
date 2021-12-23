@@ -2,11 +2,13 @@
 
 namespace App\Observers\Payment;
 
+use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentType;
 use App\Services\OrderService;
+use App\Services\PaymentService\PaymentService;
 
 /**
  * Class PaymentObserver
@@ -46,34 +48,22 @@ class PaymentObserver
 
     public function createIncomeReceipt(Payment $payment): void
     {
-        $order = $payment->order;
-        $checkingStatuses = [PaymentStatus::PAID];
-        if (!$order->isPublicEventOrder()) {
-            $checkingStatuses[] = PaymentStatus::HOLD;
-        }
-
-        if (
-            in_array($payment->status, $checkingStatuses, true)
-            && !$payment->is_prepayment_receipt_sent
-            && $this->isNeedCreateIncomeReceipt($payment)
-        ) {
-            $paymentSystem = $payment->paymentSystem();
-            if ($paymentSystem) {
-                $paymentSystem->createIncomeReceipt($payment->order, $payment);
-                $payment->is_prepayment_receipt_sent = true;
-                $payment->save();
-            }
+        if ($this->isNeedCreateIncomeReceipt($payment)) {
+            $paymentService = new PaymentService();
+            $paymentService->sendIncomePrepaymentReceipt($payment);
         }
     }
 
     public function isNeedCreateIncomeReceipt(Payment $payment): bool
     {
-        if ($payment->order->isProductOrder() || $payment->order->isCertificateOrder()) {
-            return true;
-        }
-
-        if ($payment->order->isPublicEventOrder()) {
-            return $payment->order->price > 0;
+        switch ($payment->order->type) {
+            case Basket::TYPE_PRODUCT:
+            case Basket::TYPE_CERTIFICATE:
+                return in_array($payment->status, [PaymentStatus::HOLD, PaymentStatus::PAID]);
+            case Basket::TYPE_MASTER:
+                return $payment->order->price > 0 && $payment->status == PaymentStatus::PAID;
+            default:
+                return false;
         }
     }
 
@@ -84,9 +74,8 @@ class PaymentObserver
             && in_array($payment->getOriginal('status'), [PaymentStatus::HOLD, PaymentStatus::PAID])
         ) {
             $paymentSystem = $payment->paymentSystem();
-
             if ($paymentSystem) {
-                $paymentSystem->createRefundAllReceipt($payment->order, $payment);
+                $paymentSystem->createRefundAllReceipt($payment);
             }
         }
     }

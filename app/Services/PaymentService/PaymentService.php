@@ -4,6 +4,7 @@ namespace App\Services\PaymentService;
 
 use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
+use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\PaymentService\PaymentSystems\Exceptions\Payment as PaymentException;
@@ -154,21 +155,49 @@ class PaymentService
         }
 
         $paymentSystem->commitHoldedPayment($payment, $payment->sum - (float) $payment->refund_sum);
+
         if ($payment->refund_sum > 0) {
-            $paymentSystem->createRefundAllReceipt($payment->order, $payment);
-            $paymentSystem->createIncomeReceipt($payment->order, $payment);
+            $paymentSystem->createRefundAllReceipt($payment);
+
+            if ($payment->order->status == OrderStatus::DONE) {
+                $this->sendIncomeFullPaymentReceipt($payment);
+            } else {
+                $this->sendIncomePrepaymentReceipt($payment, true);
+            }
         }
     }
 
-    public function sendFullPaymentReceipt(Payment $payment): void
+    public function sendIncomePrepaymentReceipt(Payment $payment, bool $force = false): void
     {
+        if (!$force && $payment->is_prepayment_receipt_sent) {
+            return;
+        }
+
         $paymentSystem = $payment->paymentSystem();
         if (!$paymentSystem) {
             return;
         }
 
-        $paymentSystem->createIncomeReceipt($payment->order, $payment);
-        $payment->is_fullpayment_receipt_sent = true;
+        $paymentSystem->createIncomeReceipt($payment, false);
+
+        $payment->is_prepayment_receipt_sent = true;
+        $payment->save();
+    }
+
+    public function sendIncomeFullPaymentReceipt(Payment $payment): void
+    {
+        if ($payment->is_fullpayment_receipt_sent) {
+            return;
+        }
+
+        $paymentSystem = $payment->paymentSystem();
+        if (!$paymentSystem) {
+            return;
+        }
+
+        $paymentSystem->createIncomeReceipt($payment, true);
+
+        $payment->is_prepayment_receipt_sent = true;
         $payment->save();
     }
 }

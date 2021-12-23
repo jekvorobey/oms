@@ -80,7 +80,7 @@ class LocalPaymentSystem implements PaymentSystemInterface
     /**
      * @inheritDoc
      */
-    public function refund(string $paymentId, OrderReturn $orderReturn): array
+    public function refund(Payment $payment, OrderReturn $orderReturn): array
     {
         $items = [];
         if ($orderReturn->is_delivery) {
@@ -113,7 +113,7 @@ class LocalPaymentSystem implements PaymentSystemInterface
                 'value' => $orderReturn->price,
                 'currency' => self::CURRENCY_RUB,
             ],
-            'payment_id' => $paymentId,
+            'payment_id' => $payment->external_payment_id,
             'receipt' => [
                 'tax_system_code' => '2',
                 'phone' => $orderReturn->order->customerPhone(),
@@ -122,7 +122,7 @@ class LocalPaymentSystem implements PaymentSystemInterface
         ];
 
         return [
-            'paymentId' => $paymentId,
+            'paymentId' => $payment->external_payment_id,
             'amount' => $orderReturn->price,
             'status' => self::STATUS_REFUND_SUCCESS,
             'receipt' => $captureData['receipt'],
@@ -144,7 +144,7 @@ class LocalPaymentSystem implements PaymentSystemInterface
      * @inheritDoc
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
-    public function createIncomeReceipt(Order $order, Payment $payment): void
+    public function createIncomeReceipt(Payment $payment, bool $isFullPayment): void
     {
         // TODO: Implement createIncomeReceipt() method.
     }
@@ -153,7 +153,7 @@ class LocalPaymentSystem implements PaymentSystemInterface
      * @inheritDoc
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
-    public function createRefundAllReceipt(Order $order, Payment $payment): void
+    public function createRefundAllReceipt(Payment $payment): void
     {
         // TODO: Implement createIncomeReceipt() method.
     }

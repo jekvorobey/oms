@@ -40,7 +40,7 @@ class CommitPayments extends Command
         logger()->info('Commit holded payment', ['paymentId' => $payment->id]);
         try {
             $paymentService = new PaymentService();
-            $paymentService->capture();
+            $paymentService->capture($payment);
         } catch (\Throwable $e) {
             $payment->status = PaymentStatus::ERROR;
             $payment->save();

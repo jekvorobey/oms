@@ -371,18 +371,18 @@ class OrderObserver
 
     private function commitPaymentIfOrderDelivered(Order $order): void
     {
-        $oldStatus = $order->getOriginal('status');
-        $newStatus = $order->status;
-        $paymentService = new PaymentService();
-        if ($newStatus == OrderStatus::DONE && $newStatus != $oldStatus) {
-            foreach ($order->payments as $payment) {
-                if ($payment->status == PaymentStatus::HOLD) {
-                    $paymentService->capture($payment);
-                }
+        if ($order->status == OrderStatus::DONE && $order->wasChanged('status')) {
+            /** @var Payment $payment */
+            $payment = $order->payments->last();
 
-                if ($order->isProductOrder() && !$payment->is_fullpayment_receipt_sent) {
-                    $paymentService->sendFullPaymentReceipt($payment);
-                }
+            $paymentService = new PaymentService();
+
+            if ($payment->status == PaymentStatus::HOLD) {
+                $paymentService->capture($payment);
+            }
+
+            if ($order->isProductOrder()) {
+                $paymentService->sendIncomeFullPaymentReceipt($payment);
             }
         }
     }

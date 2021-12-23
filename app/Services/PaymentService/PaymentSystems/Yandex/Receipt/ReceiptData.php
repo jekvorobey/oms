@@ -32,11 +32,21 @@ abstract class ReceiptData
     protected OfferService $offerService;
     protected PublicEventService $publicEventService;
 
+    protected bool $isFullPayment = false;
+
     public function __construct()
     {
         $this->merchantService = resolve(MerchantService::class);
         $this->offerService = resolve(OfferService::class);
         $this->publicEventService = resolve(PublicEventService::class);
+    }
+
+    /** @return static */
+    public function setIsFullPayment(bool $isFullPayment): self
+    {
+        $this->isFullPayment = $isFullPayment;
+
+        return $this;
     }
 
     protected function loadOffersAndMerchants(array $offerIds, Order $order): array
@@ -130,7 +140,7 @@ abstract class ReceiptData
 
     protected function getItemPaymentSubject(BasketItem $item): string
     {
-        if ($item->type === Basket::TYPE_PRODUCT && $item->basket->order->status != OrderStatus::DONE) {
+        if ($item->type === Basket::TYPE_PRODUCT && !$this->isFullPayment) {
             return PaymentSubject::PAYMENT;
         }
 
@@ -143,7 +153,7 @@ abstract class ReceiptData
 
     protected function getItemPaymentMode(BasketItem $item): string
     {
-        if ($item->type === Basket::TYPE_PRODUCT && $item->basket->order->status != OrderStatus::DONE) {
+        if ($item->type === Basket::TYPE_PRODUCT && !$this->isFullPayment) {
             return PaymentMode::FULL_PREPAYMENT;
         }
 
@@ -213,7 +223,7 @@ abstract class ReceiptData
         return null;
     }
 
-    protected function getDeliveryReceiptItem(float $deliveryPrice, int $orderStatus): ReceiptItem
+    protected function getDeliveryReceiptItem(float $deliveryPrice): ReceiptItem
     {
         return new ReceiptItem([
             'description' => 'Доставка',
@@ -223,8 +233,8 @@ abstract class ReceiptData
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => VatCode::CODE_DEFAULT,
-            'payment_mode' => $orderStatus == OrderStatus::DONE ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT,
-            'payment_subject' => $orderStatus == OrderStatus::DONE ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
+            'payment_mode' => $this->isFullPayment ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT,
+            'payment_subject' => $this->isFullPayment ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
         ]);
     }
 }
