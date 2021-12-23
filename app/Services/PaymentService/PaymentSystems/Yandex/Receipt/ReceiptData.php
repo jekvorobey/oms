@@ -130,28 +130,23 @@ abstract class ReceiptData
 
     protected function getItemPaymentSubject(BasketItem $item): string
     {
-        if ($item->basket->order->status === OrderStatus::DONE) {
-            return [
-                Basket::TYPE_MASTER => PaymentSubject::SERVICE,
-                Basket::TYPE_PRODUCT => PaymentSubject::COMMODITY,
-                Basket::TYPE_CERTIFICATE => PaymentSubject::PAYMENT,
-            ][$item->type] ?? PaymentSubject::COMMODITY;
+        if ($item->type === Basket::TYPE_PRODUCT && $item->basket->order->status < OrderStatus::DONE) {
+            return PaymentSubject::PAYMENT;
         }
 
         return [
             Basket::TYPE_MASTER => PaymentSubject::SERVICE,
-            Basket::TYPE_PRODUCT => PaymentSubject::PAYMENT,
+            Basket::TYPE_PRODUCT => PaymentSubject::COMMODITY,
             Basket::TYPE_CERTIFICATE => PaymentSubject::PAYMENT,
-        ][$item->type] ?? PaymentSubject::SERVICE;
+        ][$item->type] ?? PaymentSubject::COMMODITY;
     }
 
     protected function getItemPaymentMode(BasketItem $item): string
     {
-        if ($item->basket->order->status === OrderStatus::DONE) {
-            return [
-                Basket::TYPE_CERTIFICATE => PaymentMode::ADVANCE,
-            ][$item->type] ?? PaymentMode::FULL_PAYMENT;
+        if ($item->type === Basket::TYPE_PRODUCT && $item->basket->order->status < OrderStatus::DONE) {
+            return PaymentMode::FULL_PREPAYMENT;
         }
+
         return [
             Basket::TYPE_CERTIFICATE => PaymentMode::ADVANCE,
         ][$item->type] ?? PaymentMode::FULL_PREPAYMENT;
@@ -228,8 +223,8 @@ abstract class ReceiptData
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => VatCode::CODE_DEFAULT,
-            'payment_mode' => $orderStatus === OrderStatus::DONE ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT,
-            'payment_subject' => $orderStatus === OrderStatus::DONE ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
+            'payment_mode' => $orderStatus >= OrderStatus::DONE ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT,
+            'payment_subject' => $orderStatus >= OrderStatus::DONE ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
         ]);
     }
 }
