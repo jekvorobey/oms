@@ -130,7 +130,7 @@ abstract class ReceiptData
 
     protected function getItemPaymentSubject(BasketItem $item): string
     {
-        if ($item->type === Basket::TYPE_PRODUCT && $item->basket->order->status < OrderStatus::DONE) {
+        if ($item->type === Basket::TYPE_PRODUCT && $item->basket->order->status != OrderStatus::DONE) {
             return PaymentSubject::PAYMENT;
         }
 
@@ -143,15 +143,13 @@ abstract class ReceiptData
 
     protected function getItemPaymentMode(BasketItem $item): string
     {
-        if ($item->basket->order->status == OrderStatus::DONE) {
-            return [
-                Basket::TYPE_CERTIFICATE => PaymentMode::ADVANCE,
-            ][$item->type] ?? PaymentMode::FULL_PAYMENT;
+        if ($item->type === Basket::TYPE_PRODUCT && $item->basket->order->status != OrderStatus::DONE) {
+            return PaymentMode::FULL_PREPAYMENT;
         }
 
         return [
             Basket::TYPE_CERTIFICATE => PaymentMode::ADVANCE,
-        ][$item->type] ?? PaymentMode::FULL_PREPAYMENT;
+        ][$item->type] ?? PaymentMode::FULL_PAYMENT;
     }
 
     protected function getItemAgentType(BasketItem $item): ?string
