@@ -197,7 +197,7 @@ class PaymentService
 
         $paymentSystem->createIncomeReceipt($payment, true);
 
-        $payment->is_prepayment_receipt_sent = true;
+        $payment->is_fullpayment_receipt_sent = true;
         $payment->save();
     }
 }
