@@ -5,7 +5,6 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex\Receipt;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
-use App\Models\Order\OrderStatus;
 use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
 use Illuminate\Support\Collection;
 use MerchantManagement\Dto\MerchantDto;
