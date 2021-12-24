@@ -37,7 +37,7 @@ class DeliveryController extends Controller
     /**
      * @OA\Get(
      *     path="api/v1/deliveries/count",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Количество сущностей вариантов значений доставка",
      *     @OA\Response(
      *         response="200",
@@ -54,7 +54,7 @@ class DeliveryController extends Controller
     /**
      * @OA\Get(
      *     path="api/v1/deliveries",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Получить список доставок",
      *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
      *     @OA\Parameter(name="fields", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса fields"),
@@ -72,7 +72,7 @@ class DeliveryController extends Controller
      *
      * @OA\Get(
      *     path="api/v1/deliveries/{id}",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Получить значение доставки с ID",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
@@ -93,7 +93,7 @@ class DeliveryController extends Controller
     /**
      * @OA\Put(
      *     path="api/v1/deliveries/{id}",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Изменить значения значение доставки с ID.",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\RequestBody(
@@ -109,7 +109,7 @@ class DeliveryController extends Controller
     /**
      * @OA\Delete(
      *     path="api/v1/deliveries/{id}",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Удалить доставку",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Response(response="204", description=""),
@@ -170,7 +170,7 @@ class DeliveryController extends Controller
     /**
      * @OA\Get(
      *     path="api/v1/orders/{id}/deliveries/count",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Подсчитать кол-во доставок заказа",
      *     @OA\Response(
      *         response="200",
@@ -211,7 +211,7 @@ class DeliveryController extends Controller
     /**
      * @OA\Post (
      *     path="api/v1/orders/{id}/deliveries",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Создать доставку",
      *     @OA\RequestBody(
      *      required=true,
@@ -286,7 +286,7 @@ class DeliveryController extends Controller
     /**
      * @OA\Get(
      *     path="api/v1/orders/{id}/deliveries",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Список доставок заказа",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="include", required=false, in="query", @OA\Schema(type="array", @OA\Items(type="string")), description="параметр json-api запроса include"),
@@ -330,7 +330,7 @@ class DeliveryController extends Controller
     /**
      * @OA\Put(
      *     path="api/v1/deliveries/{id}/cancel",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Отменить доставку.",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Response(response="204", description=""),
@@ -358,7 +358,7 @@ class DeliveryController extends Controller
     /**
      * @OA\Put(
      *     path="api/v1/deliveries/{id}/delivery-order",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Создать/обновить заказ на доставку у службы доставки.",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Response(response="204", description=""),
@@ -381,7 +381,7 @@ class DeliveryController extends Controller
     /**
      * @OA\Put(
      *     path="api/v1/deliveries/{id}/delivery-order/cancel",
-     *     tags={"Дотсавка"},
+     *     tags={"Доставка"},
      *     description="Отменить заказ на доставку у службы доставки.",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Response(response="204", description=""),
@@ -420,5 +420,33 @@ class DeliveryController extends Controller
                 ];
             }),
         ]);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="api/v1/deliveries/update-cdek-delivery-status",
+     *     tags={"Доставка"},
+     *     description="Обновить статус заказа на доставку.",
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="delivery not found"),
+     * )
+     *
+     * Отменить заказ на доставку у службы доставки
+     */
+    public function updateCdekDeliveryOrderStatus(Request $request, OmsDeliveryService $deliveryService): Response
+    {
+        $data = $this->validate($request, [
+            'xml_id' => 'required|string',
+            'status_xml_id' => 'required|string',
+            'status' => 'required|string',
+            'status_date' => 'required|string',
+        ]);
+        $delivery = $deliveryService->getDeliveryByXmlId($data['xml_id']);
+        if (!$delivery) {
+            throw new NotFoundHttpException('delivery not found');
+        }
+        $deliveryService->updateCdekDeliveryStatusFromWebhook($delivery, $data);
+
+        return response('', 204);
     }
 }

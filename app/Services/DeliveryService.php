@@ -84,6 +84,14 @@ class DeliveryService
     }
 
     /**
+     * Получить объект отправления по его идентификатору заказа на доставку в службе доставки
+     */
+    public function getDeliveryByXmlId(int $xmlId)
+    {
+        return Delivery::query()->where('xml_id', $xmlId)->get()->first();
+    }
+
+    /**
      * Создать коробку отправления
      */
     public function createShipmentPackage(int $shipmentId, int $packageId): ?ShipmentPackage
@@ -831,6 +839,24 @@ class DeliveryService
                 } catch (\Throwable $e) {
                 }
             }
+        }
+    }
+
+    /**
+     * Получить от сдэк статус и обновить статус заказа на доставку
+     * @param Collection|Delivery $delivery
+     * @param array $data
+     */
+    public function updateCdekDeliveryStatusFromWebhook($delivery, array $data): void
+    {
+        try {
+            $delivery->setStatusXmlId(
+                $data['statusCode'],
+                new Carbon($data['status_date'])
+            );
+            $delivery->status = $data['status'];
+            $delivery->save();
+        } catch (\Throwable $e) {
         }
     }
 

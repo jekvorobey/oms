@@ -150,6 +150,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('count', 'DeliveryController@count');
             Route::get('count-today-by-delivery-services', 'DeliveryController@countTodayByDeliveryServices');
             Route::get('', 'DeliveryController@read');
+            Route::put('update-cdek-delivery-status', 'DeliveryController@updateCdekDeliveryOrderStatus');
 
             Route::prefix('{id}')->group(function () {
                 Route::get('', 'DeliveryController@read');
