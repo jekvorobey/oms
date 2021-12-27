@@ -433,7 +433,7 @@ class DeliveryController extends Controller
      *
      * Отменить заказ на доставку у службы доставки
      */
-    public function updateCdekDeliveryOrderStatus(Request $request, OmsDeliveryService $deliveryService): Response
+    public function updateDeliveryStatusByXmlId(Request $request, OmsDeliveryService $deliveryService): Response
     {
         $data = $this->validate($request, [
             'xml_id' => 'required|string',
@@ -445,7 +445,7 @@ class DeliveryController extends Controller
         if (!$delivery) {
             throw new NotFoundHttpException('delivery not found');
         }
-        $deliveryService->updateCdekDeliveryStatusFromWebhook($delivery, $data);
+        $deliveryService->updateDeliveryStatus($delivery, $data);
 
         return response('', 204);
     }

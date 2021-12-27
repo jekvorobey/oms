@@ -40,6 +40,7 @@ use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationSe
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -88,7 +89,7 @@ class DeliveryService
      */
     public function getDeliveryByXmlId(int $xmlId)
     {
-        return Delivery::query()->where('xml_id', $xmlId)->get()->first();
+        return Delivery::query()->where('xml_id', $xmlId)->first();
     }
 
     /**
@@ -844,20 +845,17 @@ class DeliveryService
 
     /**
      * Получить от сдэк статус и обновить статус заказа на доставку
-     * @param Collection|Delivery $delivery
+     * @param Model|Delivery $delivery
      * @param array $data
      */
-    public function updateCdekDeliveryStatusFromWebhook($delivery, array $data): void
+    public function updateDeliveryStatus($delivery, array $data): void
     {
-        try {
-            $delivery->setStatusXmlId(
-                $data['statusCode'],
-                new Carbon($data['status_date'])
-            );
-            $delivery->status = $data['status'];
-            $delivery->save();
-        } catch (\Throwable $e) {
-        }
+        $delivery->setStatusXmlId(
+            $data['statusCode'],
+            new Carbon($data['status_date'])
+        );
+        $delivery->status = $data['status'];
+        $delivery->save();
     }
 
     /**
