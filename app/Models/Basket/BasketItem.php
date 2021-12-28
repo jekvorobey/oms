@@ -168,6 +168,7 @@ class BasketItem extends AbstractModel
                 'sprint_id' => $publicEventCartStruct->sprintId,
                 'ticket_type_id' => $publicEventCartStruct->getIdByOfferId($this->offer_id),
                 'ticket_type_name' => $publicEventCartStruct->getNameByOfferId($this->offer_id),
+                'stage_ids' => $publicEventCartStruct->getStageIdsByOfferId($this->offer_id),
             ]);
         } elseif ($this->type == Basket::TYPE_CERTIFICATE) {
             //

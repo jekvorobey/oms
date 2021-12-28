@@ -18,6 +18,8 @@ class TicketsInfoDto implements Arrayable
     public $photoId;
     /** @var string */
     public $name;
+    /** @var int[] */
+    public $stageIds;
     /** @var string */
     public $ticketTypeName;
     /** @var Carbon */
@@ -57,6 +59,7 @@ class TicketsInfoDto implements Arrayable
             'id' => $this->id,
             'photo_id' => $this->photoId,
             'name' => $this->name,
+            'stage_ids' => $this->stageIds,
             'ticket_type_name' => $this->ticketTypeName,
             'nearest_date' => $this->nearestDate,
             'nearest_time_from' => $this->nearestTimeFrom,
