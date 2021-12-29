@@ -170,18 +170,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function commitHoldedPayment(Payment $localPayment, $amount): void
     {
         try {
-            $order = $localPayment->order;
-
-            if ($amount > 0) {
-                $paymentData = new PaymentData();
-                $builder = $paymentData->getCommitData($localPayment, $amount);
-
-                $request = $builder->build();
-
-                $this->logger->info('Start commit holded payment', $request->toArray());
-                $response = $this->yandexService->capturePayment($request, $localPayment->external_payment_id);
-                $this->logger->info('Commit result', $response->jsonSerialize());
-            } else {
+            if ($amount <= 0) {
                 // Если была частичная оплата сертификатом и к моменту подтверждения платежа отменили всю сумму доплаты
                 // То в Юкассе платеж отменяем, а в системе подтверждаем, чтобы заказ остался
                 $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
@@ -191,7 +180,16 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 if ($localPayment->external_payment_id) {
                     $this->cancel($localPayment->external_payment_id);
                 }
+                return;
             }
+
+            $paymentData = new PaymentData();
+            $builder = $paymentData->getCommitData($localPayment, $amount);
+            $request = $builder->build();
+
+            $this->logger->info('Start commit holded payment', $request->toArray());
+            $response = $this->yandexService->capturePayment($request, $localPayment->external_payment_id);
+            $this->logger->info('Commit result', $response->jsonSerialize());
         } catch (\Throwable $exception) {
             $this->logger->error('Error from payment system', ['message' => $exception->getMessage(), 'trace' => $exception->getTraceAsString()]);
             report($exception);
@@ -200,15 +198,6 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
     /**
      * @inheritDoc
-     * @throws \YooKassa\Common\Exceptions\ApiException
-     * @throws \YooKassa\Common\Exceptions\BadApiRequestException
-     * @throws \YooKassa\Common\Exceptions\ExtensionNotFoundException
-     * @throws \YooKassa\Common\Exceptions\ForbiddenException
-     * @throws \YooKassa\Common\Exceptions\InternalServerError
-     * @throws \YooKassa\Common\Exceptions\NotFoundException
-     * @throws \YooKassa\Common\Exceptions\ResponseProcessingException
-     * @throws \YooKassa\Common\Exceptions\TooManyRequestsException
-     * @throws \YooKassa\Common\Exceptions\UnauthorizedException
      */
     public function refund(Payment $payment, OrderReturn $orderReturn): array
     {
