@@ -14,6 +14,7 @@ use Greensight\CommonMsa\Services\FileService\FileService;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Pim\Core\PimException;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductImageDto;
 use Pim\Dto\Product\ProductImageType;
@@ -209,6 +210,15 @@ class BasketItem extends AbstractModel
         return isset($this->product['ticket_type_id']) ? (int) $this->product['ticket_type_id'] : null;
     }
 
+    /**
+     * Получить ids программ у билета на мастер-классы
+     * @return array|null
+     */
+    public function getTicketStageIds(): ?int
+    {
+        return isset($this->product['stage_ids']) ? (array) $this->product['stage_ids'] : null;
+    }
+
     public function getTicketTypeName(): ?string
     {
         return isset($this->product['ticket_type_name']) ? (string) $this->product['ticket_type_name'] : null;
@@ -221,7 +231,10 @@ class BasketItem extends AbstractModel
         $this->product = $product;
     }
 
-    public function getItemMedia()
+    /**
+     * @throws PimException
+     */
+    public function getItemMedia(): array
     {
         switch ($this->type) {
             case Basket::TYPE_PRODUCT:
@@ -231,7 +244,10 @@ class BasketItem extends AbstractModel
         }
     }
 
-    private function getProductMedia()
+    /**
+     * @throws PimException
+     */
+    private function getProductMedia(): array
     {
         /** @var OfferService $offerService */
         $offerService = app(OfferService::class);
@@ -252,7 +268,7 @@ class BasketItem extends AbstractModel
             ->toArray();
     }
 
-    private function getMasterMedia()
+    private function getMasterMedia(): array
     {
         /** @var PublicEventSprintService $sprintService */
         $sprintService = app(PublicEventSprintService::class);
