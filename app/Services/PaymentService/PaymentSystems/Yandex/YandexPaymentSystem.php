@@ -172,7 +172,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         try {
             $order = $localPayment->order;
 
-            if ($amount > $order->spent_certificate) {
+            if ($amount > 0) {
                 $paymentData = new PaymentData();
                 $builder = $paymentData->getCommitData($localPayment, $amount);
 
@@ -182,6 +182,8 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $response = $this->yandexService->capturePayment($request, $localPayment->external_payment_id);
                 $this->logger->info('Commit result', $response->jsonSerialize());
             } else {
+                // Если была частичная оплата сертификатом и к моменту подтверждения платежа отменили всю сумму доплаты
+                // То в Юкассе платеж отменяем, а в системе подтверждаем, чтобы заказ остался
                 $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
                 $localPayment->status = Models\Payment\PaymentStatus::PAID;
                 $localPayment->save();
