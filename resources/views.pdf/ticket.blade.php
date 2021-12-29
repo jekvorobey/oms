@@ -416,7 +416,8 @@
                                         @endphp
                                         @if($gallery->isNotEmpty())
                                             @php
-                                                /** @var \Illuminate\Support\Collection|GalleryItemInfoDto[] $galleryItemsInfoDto */use App\Services\Dto\Internal\PublicEventOrder\GalleryItemInfoDto;
+                                                /** @var \Illuminate\Support\Collection|\App\Services\Dto\Internal\PublicEventOrder\GalleryItemInfoDto[] $galleryItemsInfoDto */
+
                                             @endphp
                                             @foreach($gallery->chunk(3) as $galleryItemsInfoDto)
                                                 @foreach($galleryItemsInfoDto as $galleryItemInfoDto)
@@ -433,75 +434,76 @@
                                 <img class="logo" src="{{ public_path() }}/img/logo.svg">
                                 <div class="title space">ПРОГРАММА</div>
                                 @foreach($publicEvent->stages as $stage)
-                                    @if(in_array($stage->id, $ticketsInfo->stageIds))
-                                        <div class="program" style="padding-top: 20.5px">
-                                            <div class="program-layout">
-                                                <div class="program-sidebar" style="margin-top: -12px;">
-                                                    <div class="title">{{$stage->name}}</div>
-                                                    <div class="text-small"
-                                                         style="line-height: 1.275;">{{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}}
-                                                        ({{short_day_of_week($stage->date->dayOfWeek)}}
-                                                        ), {{$stage->timeFrom->format('H:i')}}
-                                                        -{{$stage->timeTo->format('H:i')}}</div>
-                                                    @if($publicEvent->places->has($stage->placeId))
-                                                        <div class="text" style="line-height: 1.275;">
-                                                            {{$publicEvent->places[$stage->placeId]->name}}
-                                                            , {{$publicEvent->places[$stage->placeId]->address}}
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                                @if ($stage->description)
-                                                    <div class="program-body" style="margin-top: -3px;">
-                                                        <div class="text">{!! $stage->description !!}</div>
+                                    @if(!in_array($stage->id, $ticketsInfo->stageIds))
+                                        @continue
+                                    @endif
+                                    <div class="program" style="padding-top: 20.5px">
+                                        <div class="program-layout">
+                                            <div class="program-sidebar" style="margin-top: -12px;">
+                                                <div class="title">{{$stage->name}}</div>
+                                                <div class="text-small"
+                                                     style="line-height: 1.275;">{{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}}
+                                                    ({{short_day_of_week($stage->date->dayOfWeek)}}
+                                                    ), {{$stage->timeFrom->format('H:i')}}
+                                                    -{{$stage->timeTo->format('H:i')}}</div>
+                                                @if($publicEvent->places->has($stage->placeId))
+                                                    <div class="text" style="line-height: 1.275;">
+                                                        {{$publicEvent->places[$stage->placeId]->name}}
+                                                        , {{$publicEvent->places[$stage->placeId]->address}}
                                                     </div>
                                                 @endif
                                             </div>
-                                            <div class="program-layout">
-                                                <div class="speakers">
-                                                    @if($stage->speakerIds)
-                                                        <div class="sub-title space" style="margin-bottom: 23px">
-                                                            СПИКЕРЫ
-                                                        </div>
-
-                                                        @foreach($stage->speakerIds as $speakerId)
-                                                            @if($publicEvent->speakers->has($speakerId))
-                                                                @php
-                                                                    $speaker = $publicEvent->speakers[$speakerId];
-                                                                @endphp
-                                                                <div class="speaker">
-                                                                    <div class="speaker-avatar">
-                                                                        @if($speaker->avatar)
-                                                                            <img
-                                                                                src="{{config('app.showcase_host')}}/files/compressed/{{$speaker->avatar}}/80/80/jpg">
-                                                                        @else
-                                                                            <img
-                                                                                src="https://eu.ui-avatars.com/api/?rounded=true&name={{$speaker->lastName}}+{{$speaker->firstName}}&background=000&color=fff&size=80">
-                                                                        @endif
-                                                                    </div>
-                                                                    <div class="speaker-info">
-                                                                        <div
-                                                                            class="text">{{$speaker->firstName}} {{$speaker->lastName}}</div>
-                                                                        <div
-                                                                            class="text-small">{{$speaker->profession}}</div>
-                                                                    </div>
-                                                                </div>
-                                                            @endif
-                                                        @endforeach
-                                                    @endif
+                                            @if ($stage->description)
+                                                <div class="program-body" style="margin-top: -3px;">
+                                                    <div class="text">{!! $stage->description !!}</div>
                                                 </div>
-                                                @if ($stage->raider)
-                                                    <div class="kit">
-                                                        <div class="sub-title space">ЧТО ВЗЯТЬ С СОБОЙ</div>
-                                                        <div class="text small-space"
-                                                             style="margin-top: 18px; line-height: 1.475!important;">{!! $stage->raider !!}</div>
-                                                    </div>
-                                                @endif
-                                            </div>
+                                            @endif
                                         </div>
+                                        <div class="program-layout">
+                                            <div class="speakers">
+                                                @if($stage->speakerIds)
+                                                    <div class="sub-title space" style="margin-bottom: 23px">
+                                                        СПИКЕРЫ
+                                                    </div>
 
-                                        @if(!$loop->last)
-                                            <hr>
-                                        @endif
+                                                    @foreach($stage->speakerIds as $speakerId)
+                                                        @if($publicEvent->speakers->has($speakerId))
+                                                            @php
+                                                                $speaker = $publicEvent->speakers[$speakerId];
+                                                            @endphp
+                                                            <div class="speaker">
+                                                                <div class="speaker-avatar">
+                                                                    @if($speaker->avatar)
+                                                                        <img
+                                                                            src="{{config('app.showcase_host')}}/files/compressed/{{$speaker->avatar}}/80/80/jpg">
+                                                                    @else
+                                                                        <img
+                                                                            src="https://eu.ui-avatars.com/api/?rounded=true&name={{$speaker->lastName}}+{{$speaker->firstName}}&background=000&color=fff&size=80">
+                                                                    @endif
+                                                                </div>
+                                                                <div class="speaker-info">
+                                                                    <div
+                                                                        class="text">{{$speaker->firstName}} {{$speaker->lastName}}</div>
+                                                                    <div
+                                                                        class="text-small">{{$speaker->profession}}</div>
+                                                                </div>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                @endif
+                                            </div>
+                                            @if ($stage->raider)
+                                                <div class="kit">
+                                                    <div class="sub-title space">ЧТО ВЗЯТЬ С СОБОЙ</div>
+                                                    <div class="text small-space"
+                                                         style="margin-top: 18px; line-height: 1.475!important;">{!! $stage->raider !!}</div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    @if(!$loop->last)
+                                        <hr>
                                     @endif
                                 @endforeach
                             </div>
