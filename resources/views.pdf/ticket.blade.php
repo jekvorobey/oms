@@ -298,6 +298,9 @@
                                         <div class="text">
                                             <ul class="dates">
                                                 @foreach($publicEvent->stages as $stage)
+                                                    @if(!in_array($stage->id, $ticketsInfo->stageIds))
+                                                        @continue
+                                                    @endif
                                                     <li>
                                                         {{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}}
                                                         ({{short_day_of_week($stage->date->dayOfWeek)}}
@@ -316,11 +319,17 @@
                                             @if ($publicEvent->places->count() > 1)
                                                 <ol>
                                                     @foreach($publicEvent->places as $place)
+                                                        @if(!in_array($place->id, $publicEvent->stages->whereIn('id', $ticketsInfo->stageIds)->pluck('placeId')->all()))
+                                                            @continue
+                                                        @endif
                                                         <li>{{$place->name}}, {{$place->address}}</li>
                                                     @endforeach
                                                 </ol>
                                             @else
                                                 @foreach($publicEvent->places as $place)
+                                                    @if(!in_array($place->id, $publicEvent->stages->whereIn('id', $ticketsInfo->stageIds)->pluck('placeId')->all()))
+                                                        @continue
+                                                    @endif
                                                     {{$place->name}}, {{$place->address}}
                                                 @endforeach
                                             @endif
@@ -406,6 +415,9 @@
 
                                 <div class="sub-title">КАК ДОБРАТЬСЯ</div>
                                 @foreach($publicEvent->places as $place)
+                                    @if(!in_array($place->id, $publicEvent->stages->whereIn('id', $ticketsInfo->stageIds)->pluck('placeId')->all()))
+                                        @continue
+                                    @endif
                                     <div class="route">
                                         <div class="text"><b>{{$place->name}}, {{$place->address}}</b></div>
                                         <div class="text">{!! $place->description !!}</div>
