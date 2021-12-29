@@ -214,7 +214,7 @@ class BasketItem extends AbstractModel
      * Получить ids программ у билета на мастер-классы
      * @return array|null
      */
-    public function getTicketStageIds(): ?int
+    public function getTicketStageIds(): ?array
     {
         return isset($this->product['stage_ids']) ? (array) $this->product['stage_ids'] : null;
     }
