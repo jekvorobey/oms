@@ -34,8 +34,7 @@
             font-style: normal;
         } */
 
-        *
-        {
+        * {
             font-family: 'Futura PT';
         }
 
@@ -48,93 +47,80 @@
             page-break-before: always;
         }
 
-        p
-        {
+        p {
             padding: 0;
             padding-bottom: 0px;
         }
 
-        ol
-        {
+        ol {
             margin: 0;
             padding-left: 20px;
         }
 
-        .dates
-        {
+        .dates {
             list-style-type: none;
             margin: 0;
             padding: 0;
         }
 
-        .title
-        {
+        .title {
             font-size: 23px;
             font-weight: 500;
             line-height: 1.275;
             margin-top: 8px;
         }
 
-        .sub-title
-        {
+        .sub-title {
             font-size: 20.5px;
             font-weight: 500;
             line-height: .875;
         }
 
-        .text
-        {
+        .text {
             font-size: 18px;
             line-height: 1.375 !important;
         }
 
-        .text > b
-        {
+        .text > b {
             font-weight: 500;
         }
 
-        .text-small
-        {
+        .text-small {
             font-size: 15.5px;
             color: #7D7D7D;
         }
 
-        .space
-        {
+        .space {
             margin-top: 30px;
         }
 
-        .small-space
-        {
+        .small-space {
             margin-top: 10.2px;
         }
 
         /* head */
 
-        .head > div
-        {
+        .head > div {
             display: inline-block;
             vertical-align: top;
             box-sizing: border-box;
         }
-        .head-body
-        {
+
+        .head-body {
             width: 79%;
         }
-        .head-sidebar
-        {
+
+        .head-sidebar {
             width: 20%;
         }
 
         /* head->sidebar */
-        .logo
-        {
+        .logo {
             width: 380px;
             margin-top: 0;
         }
 
-        .id
-        {
+        .id {
             font-weight: 500;
             font-size: 30.5px;
             text-transform: uppercase;
@@ -143,63 +129,55 @@
             max-width: 180px;
             text-align: center;
         }
-        .cost
-        {
+
+        .cost {
             font-weight: 500;
             font-size: 25.5px;
             padding: 40px 0 0 0;
         }
 
         /* box */
-        .box
-        {
+        .box {
             margin-top: 20px;
             background: #F8F8F8;
             margin-bottom: 25.5px;
         }
-        .box > div
-        {
+
+        .box > div {
             width: 50%;
             display: inline-block;
             vertical-align: top;
             box-sizing: border-box;
         }
 
-        .box-body
-        {
+        .box-body {
             padding: 25.5px;
-            width: 56.5%!important;
+            width: 56.5% !important;
         }
 
-        .box-body-row
-        {
+        .box-body-row {
             display: flex;
             padding-bottom: 6.375px;
         }
 
-        .box-body-item
-        {
+        .box-body-item {
             width: 50%;
         }
 
-        .box-map > img
-        {
+        .box-map > img {
             width: 100%;
         }
 
-        .route
-        {
+        .route {
             margin-top: 12.75px;
         }
 
-        .route > .text
-        {
+        .route > .text {
             font-style: 14.025px;
-            line-height: 1.275!important;
+            line-height: 1.275 !important;
         }
 
-        .route > img
-        {
+        .route > img {
             width: 160px;
             margin-top: 19.125px;
             margin-right: 25.5px;
@@ -207,22 +185,19 @@
 
         /* program */
 
-        .program-layout > div
-        {
+        .program-layout > div {
             display: inline-block;
             vertical-align: top;
             margin: 0;
         }
 
         .program-sidebar,
-        .speakers
-        {
+        .speakers {
             width: 35.25%;
         }
 
         .program-body,
-        .kit
-        {
+        .kit {
             margin-left: 4.5%;
             width: 61.25%;
         }
@@ -243,38 +218,32 @@
             content: '—';
         }
 
-        .program > .info
-        {
+        .program > .info {
             padding-top: 32px
         }
 
-        .program > .info > div
-        {
+        .program > .info > div {
             display: inline-block;
             vertical-align: top;
             width: 50%;
         }
 
 
-        .speaker
-        {
+        .speaker {
             margin-top: 12.75px;
         }
 
-        .speaker > div
-        {
+        .speaker > div {
             display: inline-block;
             vertical-align: middle;
         }
 
-        .speaker-info > .text
-        {
+        .speaker-info > .text {
             padding-bottom: 0;
         }
 
         /* HERE */
-        .speaker-avatar
-        {
+        .speaker-avatar {
             width: 51px;
             height: 51px;
             border-radius: 25.5px;
@@ -282,15 +251,13 @@
             overflow: hidden;
         }
 
-        .speaker-avatar > img
-        {
+        .speaker-avatar > img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .speaker-avatar > .no-img
-        {
+        .speaker-avatar > .no-img {
             background: #000;
             width: 51px;
             height: 51px;
@@ -301,10 +268,9 @@
             font-weight: 500;
         }
 
-        hr
-        {
+        hr {
             margin-top: 20.5px;
-            border: 1.275px solid #7D7D7D!important;
+            border: 1.275px solid #7D7D7D !important;
             opacity: .1;
         }
     </style>
@@ -314,209 +280,246 @@
             @foreach($ticketsInfo->tickets as $ticket)
                 @if ($loop->index > 0)
                     <div class="wrapper page-break">
-                @else
-                    <div class="wrapper">
-                @endif
-
-                <div class="head">
-                    <div class="head-body">
-                        <img class="logo" src="{{ public_path() }}/img/logo.svg">
-                        <div class="title space">
-                            {{$ticketsInfo->name}}<br>
-                            ({{$ticketsInfo->ticketTypeName}})
-                        </div>
-                        <p style="margin-top: -8px;">
-                            <div class="text-small">
-                                Дата и время мастер-класса
-                            </div>
-                            <div class="text">
-                                <ul class="dates">
-                                    @foreach($publicEvent->stages as $stage)
-                                        <li>
-                                            {{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}} ({{short_day_of_week($stage->date->dayOfWeek)}}), {{$stage->timeFrom->format('H:i')}}-{{$stage->timeTo->format('H:i')}}
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        </p>
-                        <p style="margin-top: -8px;">
-                            <div class="text-small">
-                                Место проведения
-                            </div>
-                            <div class="text">
-                                @if ($publicEvent->places->count() > 1)
-                                <ol>
-                                    @foreach($publicEvent->places as $place)
-                                        <li>{{$place->name}}, {{$place->address}}</li>
-                                    @endforeach
-                                </ol>
-                                @else
-                                    @foreach($publicEvent->places as $place)
-                                        {{$place->name}}, {{$place->address}}
-                                    @endforeach
-                                @endif
-                            </div>
-                        </p>
-                        <p style="margin-top: -8px;">
-                            <div class="text-small">
-                                Участник
-                            </div>
-                            <div class="text">
-                                <b>{{$ticket->lastName}} {{$ticket->firstName}}, </b>{{$ticket->email}}, {{$ticket->phone}}
-                            </div>
-                        </p>
-                    </div>
-                    <div class="head-sidebar">
-                        <div class="id">{{$ticket->code}}</div>
-                        @if ($ticketsInfo->pricePerOne > 0)
-                            <div class="cost">{{price_format($ticketsInfo->pricePerOne)}} &#8381;</div>
                         @else
-                            <div class="cost">Бесплатно</div>
-                        @endif
-                        <p>
-                            <div class="text-small">
-                            Номер заказа
-                            </div>
-                            <div class="text">
-                                {{$order->number}}
-                            </div>
-                        </p>
-                        <p>
-                            <div class="text-small">
-                            Дата и время покупки
-                            </div>
-                            <div class="text">
-                                {{\Jenssegers\Date\Date::parse($order->createdAt)->format('j F')}}, {{$order->createdAt->format('H:i')}}
-                            </div>
-                        </p>
-                    </div>
-                </div>
-
-                <div class="box">
-                    <div class="box-body">
-                        <div class="title">По всем вопросам и предложениям обращаться к организатору</div>
-                        <p style="margin-top: 12.75px">
-                            <div class="sub-title">{{$publicEvent->organizer->name}}</div>
-                            <div class="text-small">{{$publicEvent->organizer->description}}</div>
-                        </p>
-                        <div class="box-body-row" style="margin-top: 12.75px;">
-                            @if ($publicEvent->organizer->phone)
-                            <div class="box-body-item">
-                                <div class="text-small" style="line-height: 1.5">Телефон</div>
-                                <div class="text">{{$publicEvent->organizer->phone}}</div>
-                            </div>
-                            @endif
-                            @if ($publicEvent->organizer->email)
-                            <div class="box-body-item">
-                                <div class="text-small" style="line-height: 1.5">Email</div>
-                                <div class="text">{{$publicEvent->organizer->email}}</div>
-                            </div>
-                            @endif
-                        </div>
-                        <div class="box-body-row">
-                            @if ($publicEvent->organizer->messengerPhone)
-                            <div class="box-body-item">
-                                <div class="text-small" style="line-height: 1.5">WhatsApp, Viber, Telegram</div>
-                                <div class="text">{{$publicEvent->organizer->messengerPhone}}</div>
-                            </div>
-                            @endif
-                            @if ($publicEvent->organizer->site)
-                            <div class="box-body-item">
-                                <div class="text-small" style="line-height: 1.5">Сайт</div>
-                                <div class="text">{{$publicEvent->organizer->site}}</div>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sub-title">КАК ДОБРАТЬСЯ</div>
-                    @foreach($publicEvent->places as $place)
-                        <div class="route">
-                            <div class="text"><b>{{$place->name}}, {{$place->address}}</b></div>
-                            <div class="text">{!! $place->description !!}</div>
-                            @php
-                                $gallery = $place->gallery->filter(function (\App\Services\Dto\Internal\PublicEventOrder\GalleryItemInfoDto $galleryItemInfoDto) {
-                                    return $galleryItemInfoDto->type == \Pim\Dto\PublicEvent\MediaDto::TYPE_IMAGE;
-                                });
-                            @endphp
-                            @if($gallery->isNotEmpty())
-                                @php
-                                    /** @var \Illuminate\Support\Collection|\App\Services\Dto\Internal\PublicEventOrder\GalleryItemInfoDto[] $galleryItemsInfoDto */
-                                @endphp
-                                @foreach($gallery->chunk(3) as $galleryItemsInfoDto)
-                                    @foreach($galleryItemsInfoDto as $galleryItemInfoDto)
-                                        <img src="{{config('app.showcase_host')}}/files/compressed/{{$galleryItemInfoDto->fileId}}/285/215/jpg">
-                                    @endforeach
-                                @endforeach
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="program page-break wrapper">
-                    <img class="logo" src="{{ public_path() }}/img/logo.svg">
-                    <div class="title space">ПРОГРАММА</div>
-                    @foreach($publicEvent->stages as $stage)
-                        <div class="program" style="padding-top: 20.5px">
-                            <div class="program-layout">
-                                <div class="program-sidebar" style="margin-top: -12px;">
-                                    <div class="title">{{$stage->name}}</div>
-                                    <div class="text-small" style="line-height: 1.275;">{{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}} ({{short_day_of_week($stage->date->dayOfWeek)}}), {{$stage->timeFrom->format('H:i')}}-{{$stage->timeTo->format('H:i')}}</div>
-                                    @if($publicEvent->places->has($stage->placeId))
-                                        <div class="text" style="line-height: 1.275;">
-                                            {{$publicEvent->places[$stage->placeId]->name}}, {{$publicEvent->places[$stage->placeId]->address}}
-                                        </div>
-                                    @endif
-                                </div>
-                                @if ($stage->description)
-                                    <div class="program-body" style="margin-top: -3px;">
-                                        <div class="text">{!! $stage->description !!}</div>
-                                    </div>
+                            <div class="wrapper">
                                 @endif
-                            </div>
-                            <div class="program-layout">
-                                <div class="speakers">
-                                    @if($stage->speakerIds)
-                                        <div class="sub-title space" style="margin-bottom: 23px">СПИКЕРЫ</div>
 
-                                        @foreach($stage->speakerIds as $speakerId)
-                                            @if($publicEvent->speakers->has($speakerId))
-                                                @php
-                                                    $speaker = $publicEvent->speakers[$speakerId];
-                                                @endphp
-                                                <div class="speaker">
-                                                    <div class="speaker-avatar">
-                                                        @if($speaker->avatar)
-                                                            <img src="{{config('app.showcase_host')}}/files/compressed/{{$speaker->avatar}}/80/80/jpg">
-                                                        @else
-                                                            <img src="https://eu.ui-avatars.com/api/?rounded=true&name={{$speaker->lastName}}+{{$speaker->firstName}}&background=000&color=fff&size=80">
+                                <div class="head">
+                                    <div class="head-body">
+                                        <img class="logo" src="{{ public_path() }}/img/logo.svg">
+                                        <div class="title space">
+                                            {{$ticketsInfo->name}}<br>
+                                            ({{$ticketsInfo->ticketTypeName}})
+                                        </div>
+                                        <p style="margin-top: -8px;">
+                                        <div class="text-small">
+                                            Дата и время мастер-класса
+                                        </div>
+                                        <div class="text">
+                                            <ul class="dates">
+                                                @foreach($publicEvent->stages as $stage)
+                                                    @if(!in_array($stage->id, $ticketsInfo->stageIds))
+                                                        @continue
+                                                    @endif
+                                                    <li>
+                                                        {{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}}
+                                                        ({{short_day_of_week($stage->date->dayOfWeek)}}
+                                                        ), {{$stage->timeFrom->format('H:i')}}
+                                                        -{{$stage->timeTo->format('H:i')}}
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                        </p>
+                                        <p style="margin-top: -8px;">
+                                        <div class="text-small">
+                                            Место проведения
+                                        </div>
+                                        <div class="text">
+                                            @if ($publicEvent->places->count() > 1)
+                                                <ol>
+                                                    @foreach($publicEvent->places as $place)
+                                                        @if(!in_array($place->id, $publicEvent->stages->whereIn('id', $ticketsInfo->stageIds)->pluck('placeId')->all()))
+                                                            @continue
                                                         @endif
-                                                    </div>
-                                                    <div class="speaker-info">
-                                                        <div class="text">{{$speaker->firstName}} {{$speaker->lastName}}</div>
-                                                        <div class="text-small">{{$speaker->profession}}</div>
-                                                    </div>
+                                                        <li>{{$place->name}}, {{$place->address}}</li>
+                                                    @endforeach
+                                                </ol>
+                                            @else
+                                                @foreach($publicEvent->places as $place)
+                                                    @if(!in_array($place->id, $publicEvent->stages->whereIn('id', $ticketsInfo->stageIds)->pluck('placeId')->all()))
+                                                        @continue
+                                                    @endif
+                                                    {{$place->name}}, {{$place->address}}
+                                                @endforeach
+                                            @endif
+                                        </div>
+                                        </p>
+                                        <p style="margin-top: -8px;">
+                                        <div class="text-small">
+                                            Участник
+                                        </div>
+                                        <div class="text">
+                                            <b>{{$ticket->lastName}} {{$ticket->firstName}}, </b>{{$ticket->email}}
+                                            , {{$ticket->phone}}
+                                        </div>
+                                        </p>
+                                    </div>
+                                    <div class="head-sidebar">
+                                        <div class="id">{{$ticket->code}}</div>
+                                        @if ($ticketsInfo->pricePerOne > 0)
+                                            <div class="cost">{{price_format($ticketsInfo->pricePerOne)}} &#8381;</div>
+                                        @else
+                                            <div class="cost">Бесплатно</div>
+                                        @endif
+                                        <p>
+                                        <div class="text-small">
+                                            Номер заказа
+                                        </div>
+                                        <div class="text">
+                                            {{$order->number}}
+                                        </div>
+                                        </p>
+                                        <p>
+                                        <div class="text-small">
+                                            Дата и время покупки
+                                        </div>
+                                        <div class="text">
+                                            {{\Jenssegers\Date\Date::parse($order->createdAt)->format('j F')}}
+                                            , {{$order->createdAt->format('H:i')}}
+                                        </div>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="box">
+                                    <div class="box-body">
+                                        <div class="title">По всем вопросам и предложениям обращаться к организатору
+                                        </div>
+                                        <p style="margin-top: 12.75px">
+                                        <div class="sub-title">{{$publicEvent->organizer->name}}</div>
+                                        <div class="text-small">{{$publicEvent->organizer->description}}</div>
+                                        </p>
+                                        <div class="box-body-row" style="margin-top: 12.75px;">
+                                            @if ($publicEvent->organizer->phone)
+                                                <div class="box-body-item">
+                                                    <div class="text-small" style="line-height: 1.5">Телефон</div>
+                                                    <div class="text">{{$publicEvent->organizer->phone}}</div>
                                                 </div>
                                             @endif
-                                        @endforeach
-                                    @endif
-                                </div>
-                                @if ($stage->raider)
-                                    <div class="kit">
-                                        <div class="sub-title space">ЧТО ВЗЯТЬ С СОБОЙ</div>
-                                        <div class="text small-space" style="margin-top: 18px; line-height: 1.475!important;">{!! $stage->raider !!}</div>
+                                            @if ($publicEvent->organizer->email)
+                                                <div class="box-body-item">
+                                                    <div class="text-small" style="line-height: 1.5">Email</div>
+                                                    <div class="text">{{$publicEvent->organizer->email}}</div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div class="box-body-row">
+                                            @if ($publicEvent->organizer->messengerPhone)
+                                                <div class="box-body-item">
+                                                    <div class="text-small" style="line-height: 1.5">WhatsApp, Viber,
+                                                        Telegram
+                                                    </div>
+                                                    <div class="text">{{$publicEvent->organizer->messengerPhone}}</div>
+                                                </div>
+                                            @endif
+                                            @if ($publicEvent->organizer->site)
+                                                <div class="box-body-item">
+                                                    <div class="text-small" style="line-height: 1.5">Сайт</div>
+                                                    <div class="text">{{$publicEvent->organizer->site}}</div>
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
-                                @endif
-                            </div>
-                        </div>
+                                </div>
 
-                        @if(!$loop->last)
-                            <hr>
-                        @endif
+                                <div class="sub-title">КАК ДОБРАТЬСЯ</div>
+                                @foreach($publicEvent->places as $place)
+                                    @if(!in_array($place->id, $publicEvent->stages->whereIn('id', $ticketsInfo->stageIds)->pluck('placeId')->all()))
+                                        @continue
+                                    @endif
+                                    <div class="route">
+                                        <div class="text"><b>{{$place->name}}, {{$place->address}}</b></div>
+                                        <div class="text">{!! $place->description !!}</div>
+                                        @php
+                                            $gallery = $place->gallery->filter(function (\App\Services\Dto\Internal\PublicEventOrder\GalleryItemInfoDto $galleryItemInfoDto) {
+                                                return $galleryItemInfoDto->type == \Pim\Dto\PublicEvent\MediaDto::TYPE_IMAGE;
+                                            });
+                                        @endphp
+                                        @if($gallery->isNotEmpty())
+                                            @php
+                                                /** @var \Illuminate\Support\Collection|\App\Services\Dto\Internal\PublicEventOrder\GalleryItemInfoDto[] $galleryItemsInfoDto */
+
+                                            @endphp
+                                            @foreach($gallery->chunk(3) as $galleryItemsInfoDto)
+                                                @foreach($galleryItemsInfoDto as $galleryItemInfoDto)
+                                                    <img
+                                                        src="{{config('app.showcase_host')}}/files/compressed/{{$galleryItemInfoDto->fileId}}/285/215/jpg">
+                                                @endforeach
+                                            @endforeach
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="program page-break wrapper">
+                                <img class="logo" src="{{ public_path() }}/img/logo.svg">
+                                <div class="title space">ПРОГРАММА</div>
+                                @foreach($publicEvent->stages as $stage)
+                                    @if(!in_array($stage->id, $ticketsInfo->stageIds))
+                                        @continue
+                                    @endif
+                                    <div class="program" style="padding-top: 20.5px">
+                                        <div class="program-layout">
+                                            <div class="program-sidebar" style="margin-top: -12px;">
+                                                <div class="title">{{$stage->name}}</div>
+                                                <div class="text-small"
+                                                     style="line-height: 1.275;">{{\Jenssegers\Date\Date::parse($stage->date)->format('j F')}}
+                                                    ({{short_day_of_week($stage->date->dayOfWeek)}}
+                                                    ), {{$stage->timeFrom->format('H:i')}}
+                                                    -{{$stage->timeTo->format('H:i')}}</div>
+                                                @if($publicEvent->places->has($stage->placeId))
+                                                    <div class="text" style="line-height: 1.275;">
+                                                        {{$publicEvent->places[$stage->placeId]->name}}
+                                                        , {{$publicEvent->places[$stage->placeId]->address}}
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            @if ($stage->description)
+                                                <div class="program-body" style="margin-top: -3px;">
+                                                    <div class="text">{!! $stage->description !!}</div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <div class="program-layout">
+                                            <div class="speakers">
+                                                @if($stage->speakerIds)
+                                                    <div class="sub-title space" style="margin-bottom: 23px">
+                                                        СПИКЕРЫ
+                                                    </div>
+
+                                                    @foreach($stage->speakerIds as $speakerId)
+                                                        @if($publicEvent->speakers->has($speakerId))
+                                                            @php
+                                                                $speaker = $publicEvent->speakers[$speakerId];
+                                                            @endphp
+                                                            <div class="speaker">
+                                                                <div class="speaker-avatar">
+                                                                    @if($speaker->avatar)
+                                                                        <img
+                                                                            src="{{config('app.showcase_host')}}/files/compressed/{{$speaker->avatar}}/80/80/jpg">
+                                                                    @else
+                                                                        <img
+                                                                            src="https://eu.ui-avatars.com/api/?rounded=true&name={{$speaker->lastName}}+{{$speaker->firstName}}&background=000&color=fff&size=80">
+                                                                    @endif
+                                                                </div>
+                                                                <div class="speaker-info">
+                                                                    <div
+                                                                        class="text">{{$speaker->firstName}} {{$speaker->lastName}}</div>
+                                                                    <div
+                                                                        class="text-small">{{$speaker->profession}}</div>
+                                                                </div>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                @endif
+                                            </div>
+                                            @if ($stage->raider)
+                                                <div class="kit">
+                                                    <div class="sub-title space">ЧТО ВЗЯТЬ С СОБОЙ</div>
+                                                    <div class="text small-space"
+                                                         style="margin-top: 18px; line-height: 1.475!important;">{!! $stage->raider !!}</div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    @if(!$loop->last)
+                                        <hr>
+                                    @endif
+                                @endforeach
+                            </div>
                     @endforeach
-                </div>
-            @endforeach
-        @endforeach
-    @endforeach
+                    @endforeach
+                    @endforeach
 @endsection
