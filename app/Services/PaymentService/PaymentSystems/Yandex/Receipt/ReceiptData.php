@@ -5,7 +5,6 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex\Receipt;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
-use App\Models\Order\OrderStatus;
 use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
 use Illuminate\Support\Collection;
 use MerchantManagement\Dto\MerchantDto;
@@ -32,11 +31,21 @@ abstract class ReceiptData
     protected OfferService $offerService;
     protected PublicEventService $publicEventService;
 
+    protected bool $isFullPayment = false;
+
     public function __construct()
     {
         $this->merchantService = resolve(MerchantService::class);
         $this->offerService = resolve(OfferService::class);
         $this->publicEventService = resolve(PublicEventService::class);
+    }
+
+    /** @return static */
+    public function setIsFullPayment(bool $isFullPayment): self
+    {
+        $this->isFullPayment = $isFullPayment;
+
+        return $this;
     }
 
     protected function loadOffersAndMerchants(array $offerIds, Order $order): array
@@ -130,31 +139,26 @@ abstract class ReceiptData
 
     protected function getItemPaymentSubject(BasketItem $item): string
     {
-        if ($item->basket->order->status === OrderStatus::DONE) {
-            return [
-                Basket::TYPE_MASTER => PaymentSubject::SERVICE,
-                Basket::TYPE_PRODUCT => PaymentSubject::COMMODITY,
-                Basket::TYPE_CERTIFICATE => PaymentSubject::PAYMENT,
-            ][$item->type] ?? PaymentSubject::COMMODITY;
+        if ($item->type === Basket::TYPE_PRODUCT && !$this->isFullPayment) {
+            return PaymentSubject::PAYMENT;
         }
 
         return [
             Basket::TYPE_MASTER => PaymentSubject::SERVICE,
-            Basket::TYPE_PRODUCT => PaymentSubject::PAYMENT,
+            Basket::TYPE_PRODUCT => PaymentSubject::COMMODITY,
             Basket::TYPE_CERTIFICATE => PaymentSubject::PAYMENT,
-        ][$item->type] ?? PaymentSubject::SERVICE;
+        ][$item->type] ?? PaymentSubject::COMMODITY;
     }
 
     protected function getItemPaymentMode(BasketItem $item): string
     {
-        if ($item->basket->order->status === OrderStatus::DONE) {
-            return [
-                Basket::TYPE_CERTIFICATE => PaymentMode::ADVANCE,
-            ][$item->type] ?? PaymentMode::FULL_PAYMENT;
+        if ($item->type === Basket::TYPE_PRODUCT && !$this->isFullPayment) {
+            return PaymentMode::FULL_PREPAYMENT;
         }
+
         return [
             Basket::TYPE_CERTIFICATE => PaymentMode::ADVANCE,
-        ][$item->type] ?? PaymentMode::FULL_PREPAYMENT;
+        ][$item->type] ?? PaymentMode::FULL_PAYMENT;
     }
 
     protected function getItemAgentType(BasketItem $item): ?string
@@ -218,7 +222,7 @@ abstract class ReceiptData
         return null;
     }
 
-    protected function getDeliveryReceiptItem(float $deliveryPrice, int $orderStatus): ReceiptItem
+    protected function getDeliveryReceiptItem(float $deliveryPrice): ReceiptItem
     {
         return new ReceiptItem([
             'description' => 'Доставка',
@@ -228,8 +232,8 @@ abstract class ReceiptData
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => VatCode::CODE_DEFAULT,
-            'payment_mode' => $orderStatus === OrderStatus::DONE ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT,
-            'payment_subject' => $orderStatus === OrderStatus::DONE ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
+            'payment_mode' => $this->isFullPayment ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT,
+            'payment_subject' => $this->isFullPayment ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
         ]);
     }
 }

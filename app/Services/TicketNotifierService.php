@@ -14,6 +14,7 @@ use Pim\Dto\PublicEvent\MediaDto;
 use Pim\Dto\PublicEvent\OrganizerDto;
 use Pim\Dto\PublicEvent\PlaceDto;
 use Pim\Dto\PublicEvent\PublicEventDto;
+use Pim\Dto\PublicEvent\StageDto;
 use Pim\Services\PublicEventMediaService\PublicEventMediaService;
 use Pim\Services\PublicEventOrganizerService\PublicEventOrganizerService;
 use Pim\Services\PublicEventPlaceService\PublicEventPlaceService;
@@ -124,7 +125,7 @@ class TicketNotifierService
                     ->query()
                     ->setFilter('sprint_id', $sprint->id)
                     ->addSort('date_from')
-            )->map(function ($stage) {
+            )->map(function (StageDto $stage) {
                 $place = $this->publicEventPlaceService->find(
                     $this->publicEventPlaceService->query()
                         ->setFilter('id', $stage->place_id)
@@ -149,9 +150,13 @@ class TicketNotifierService
                 $speakers = $this->publicEventSpeakerService
                     ->getByStage($stage->id);
 
+                $dateFormatted = Carbon::parse($stage->date_from)->locale('ru')->isoFormat('D MMMM (dd)');
+                if ($stage->date_to !== $stage->date_from) {
+                    $dateFormatted .= ' - ' . Carbon::parse($stage->date_to)->locale('ru')->isoFormat('D MMMM (dd)');
+                }
                 return [
                     sprintf('%s, %s', $place->name, $place->address),
-                    Carbon::parse($stage->date)->locale('ru')->isoFormat('D MMMM (dd)'),
+                    $dateFormatted,
                     Carbon::parse($stage->time_from)->format('H:i'),
                     Carbon::parse($stage->time_to)->format('H:i'),
                     [
@@ -159,7 +164,8 @@ class TicketNotifierService
                         'text' => $stage->description,
                         'kit' => $stage->raider,
                         'speakers' => collect($speakers['items']),
-                        'date' => $stage->date,
+                        'date_from' => $stage->date_from,
+                        'date_to' => $stage->date_to,
                         'from' => $stage->time_from,
                         'to' => $stage->time_to,
                     ],
@@ -208,8 +214,8 @@ class TicketNotifierService
 
             $link = Link::create(
                 $event->name,
-                Carbon::createFromDate($stages->first()[4]['date'])->setTimeFromTimeString($stages->first()[4]['from']),
-                Carbon::createFromDate($stages->first()[4]['date'])->setTimeFromTimeString($stages->first()[4]['to']),
+                Carbon::createFromDate($stages->first()[4]['date_from'])->setTimeFromTimeString($stages->first()[4]['from']),
+                Carbon::createFromDate($stages->first()[4]['date_to'])->setTimeFromTimeString($stages->first()[4]['to']),
             )
             ->description($event_desc_short[0][0] ?? '')
             ->address($stages->first()[0]);

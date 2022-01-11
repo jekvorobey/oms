@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use App\Services\PaymentService\PaymentService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
@@ -38,7 +39,8 @@ class CommitPayments extends Command
     {
         logger()->info('Commit holded payment', ['paymentId' => $payment->id]);
         try {
-            $payment->commitHolded();
+            $paymentService = new PaymentService();
+            $paymentService->capture($payment);
         } catch (\Throwable $e) {
             $payment->status = PaymentStatus::ERROR;
             $payment->save();
