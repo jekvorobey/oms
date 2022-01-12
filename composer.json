@@ -58,7 +58,7 @@
         "iwengo/ibt-cm-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-cms-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-common-lib": "dev-master-ylab as dev-master",
-        "iwengo/ibt-logistics-lib": "dev-master-ylab as dev-master",
+        "iwengo/ibt-logistics-lib": "dev-feature/IBT-654-import-cdek-city-guids as dev-master",
         "iwengo/ibt-marketing-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-merchant-management-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-message-lib": "dev-master-ylab as dev-master",
@@ -90,7 +90,10 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     },
     "extra": {
         "laravel": {

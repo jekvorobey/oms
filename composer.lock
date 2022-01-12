@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7bf16a66b1151bde389e4d546fb75f64",
+    "content-hash": "083b46d4bbc932ed86eeedd31ad8d471",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1519,11 +1519,11 @@
         },
         {
             "name": "iwengo/ibt-logistics-lib",
-            "version": "dev-master-ylab",
+            "version": "dev-feature/IBT-654-import-cdek-city-guids",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-logistics-lib",
-                "reference": "6e814700e14d11cecb20cf65c11d79100e68c9d2"
+                "reference": "d4131e1ae8ee8db9178600d9ed32bd93d0b6addf"
             },
             "require": {
                 "ext-json": "*",
@@ -1557,7 +1557,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2021-12-14T14:23:09+00:00"
+            "time": "2022-01-12T13:57:50+00:00"
         },
         {
             "name": "iwengo/ibt-marketing-lib",
@@ -10116,7 +10116,7 @@
         },
         {
             "package": "iwengo/ibt-logistics-lib",
-            "version": "dev-master-ylab",
+            "version": "dev-feature/IBT-654-import-cdek-city-guids",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         },
@@ -10171,5 +10171,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.2.0"
 }
