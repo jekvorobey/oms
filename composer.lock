@@ -1523,7 +1523,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-logistics-lib",
-                "reference": "d4131e1ae8ee8db9178600d9ed32bd93d0b6addf"
+                "reference": "b14e6ce9b327fec7efe4cd3846e187d3b491d590"
             },
             "require": {
                 "ext-json": "*",
@@ -1557,7 +1557,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2022-01-12T13:57:50+00:00"
+            "time": "2022-01-14T11:57:06+00:00"
         },
         {
             "name": "iwengo/ibt-marketing-lib",

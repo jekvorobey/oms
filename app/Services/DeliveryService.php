@@ -690,7 +690,7 @@ class DeliveryService
             $listsService = resolve(ListsService::class);
             $pointQuery = $listsService->newQuery()
                 ->setFilter('id', $delivery->point_id)
-                ->addFields(PointDto::entity(), 'address', 'city_guid', 'cdek_city_guid', 'delivery_service');
+                ->addFields(PointDto::entity(), 'address', 'city_guid', 'cdek_city_guid', 'cdek_city_code', 'delivery_service');
             /** @var PointDto|null $pointDto */
             $pointDto = $listsService->points($pointQuery)->first();
             if ($pointDto) {
@@ -698,9 +698,8 @@ class DeliveryService
                 $recipientDto->region = $pointDto->address['region'] ?? '';
                 $recipientDto->area = $pointDto->address['area'] ?? '';
                 $recipientDto->city = $pointDto->address['city'] ?? '';
-                $recipientDto->city_guid =
-                    $pointDto->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $pointDto->cdek_city_guid
-                    ? $pointDto->cdek_city_guid : $pointDto->city_guid;
+                $recipientDto->city_guid = $pointDto->city_guid;
+                $recipientDto->cdek_city_code = $pointDto->cdek_city_code;
                 $recipientDto->street = $pointDto->address['street'] ?: '-'; //у cdek и b2cpl улица обязательна
                 $recipientDto->house = $pointDto->address['house'] ?? '';
                 $recipientDto->block = $pointDto->address['block'] ?? '';
