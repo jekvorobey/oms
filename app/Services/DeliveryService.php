@@ -690,7 +690,7 @@ class DeliveryService
             $listsService = resolve(ListsService::class);
             $pointQuery = $listsService->newQuery()
                 ->setFilter('id', $delivery->point_id)
-                ->addFields(PointDto::entity(), 'address', 'city_guid', 'cdek_city_guid', 'cdek_city_code', 'delivery_service');
+                ->addFields(PointDto::entity(), 'address', 'city_guid', 'cdek_city_code');
             /** @var PointDto|null $pointDto */
             $pointDto = $listsService->points($pointQuery)->first();
             if ($pointDto) {
