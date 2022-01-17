@@ -177,6 +177,10 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('delivered', 'ShipmentsController@getDeliveredIds');
             Route::get('', 'ShipmentsController@read');
             Route::get('similar-unshipped-shipments', 'ShipmentsController@similarUnshippedShipments');
+            Route::get('merchant/{merchantId}/grouped-by-status/{year}/{month}', 'ShipmentsController@merchantShipmentsCountGroupedByStatus');
+
+            Route::get('merchant_products/{merchantId}/grouped-by-status/{year}/{month}', 'ShipmentsController@merchantProductsCountGroupedByStatus');
+
 
             Route::prefix('exports')->group(function () {
                 Route::get('new', 'ShipmentsController@readNew');

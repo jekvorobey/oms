@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
+use App\Models\Delivery\Shipment;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Класс-бизнес логики по работе с корзинами
@@ -13,6 +15,8 @@ use Exception;
  */
 class BasketService
 {
+
+    public const SUM_PREFIX = 'sum';
     /**
      * Получить объект корзины по его id
      */
@@ -125,5 +129,32 @@ class BasketService
         }
 
         return !$basket->is_belongs_to_order ? $basket->delete() : false;
+    }
+
+    public function getCountedByStatusProductItemsForPeriod(int $merchantId, int $year, int $month): ?array
+    {
+        $sumPrefix = self::SUM_PREFIX;
+        $query = DB::table('basket_items AS bi')
+            ->join('shipment_items AS si', 'si.basket_item_id', '=', 'bi.id')
+            ->join('shipments AS s', 'si.shipment_id', '=', 's.id')
+            ->where('s.merchant_id', $merchantId)
+            ->where(DB::raw('YEAR(s.created_at)'), $year)
+//            ->where(DB::raw('MONTH(s.created_at)'), $month)
+            ->selectRaw(Shipment::aggregatedQueryString('SUM', 'bi.qty') . ', ' . Shipment::aggregatedQueryString('SUM', 'bi.price*bi.qty', $sumPrefix))
+            ->groupBy(['merchant_id']);
+
+
+        $dbResult = (array) $query->first();
+        $result = [];
+        if (count($dbResult)) {
+            foreach (array_keys(Shipment::SIMPLIFIED_STATUSES) as $status) {
+                $result[$status]['count'] = (int) $dbResult[$status];
+                $result[$status][$sumPrefix] = (int) $dbResult["{$sumPrefix}_$status"];
+            }
+        } else {
+            return null;
+        }
+
+        return $result;
     }
 }

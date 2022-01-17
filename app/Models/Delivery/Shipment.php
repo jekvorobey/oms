@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
@@ -211,6 +212,15 @@ class Shipment extends AbstractModel
         'required_shipping_at',
         'assembly_problem_comment',
         'delivery_service_zero_mile',
+    ];
+
+    public const SIMPLIFIED_STATUSES = [
+        'accepted' => 'status >= ' . ShipmentStatus::AWAITING_CONFIRMATION,
+        'shipped' => 'status = ' . ShipmentStatus::SHIPPED,
+        'transition' => 'status >= ' . ShipmentStatus::ON_POINT_IN . ' and status <= ' . ShipmentStatus::DELIVERING,
+        'done' => 'status = ' . ShipmentStatus::DONE,
+        'canceled' => 'is_canceled = true and status >= ' . ShipmentStatus::AWAITING_CONFIRMATION,
+        'returned' => 'status >= ' . ShipmentStatus::CANCELLATION_EXPECTED,
     ];
 
     /** @var array */
@@ -634,5 +644,15 @@ class Shipment extends AbstractModel
         }
 
         return $result;
+    }
+
+    public static function aggregatedQueryString($operation = 'COUNT', $value = 1, $prefix = ''): string
+    {
+        $prefix = $prefix ? Str::finish($prefix, '_') : $prefix;
+        $selectQueryRows = [];
+        foreach (self::SIMPLIFIED_STATUSES as $status => $condition) {
+            $selectQueryRows[] = "$operation(case when $condition then $value end) as {$prefix}$status";
+        }
+        return implode(',', $selectQueryRows);
     }
 }

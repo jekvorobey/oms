@@ -11,6 +11,7 @@ use App\Models\Delivery\ShipmentExport;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Payment\PaymentStatus;
+use App\Services\BasketService;
 use App\Services\DeliveryService;
 use Greensight\CommonMsa\Dto\FileDto;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -303,6 +305,49 @@ class ShipmentsController extends Controller
             'pages' => $pages,
             'pageSize' => $pageSize,
         ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="api/v1/deliveries/{id}/shipments/count",
+     *     tags={"Поставки"},
+     *     description=" Подсчитать кол-во отправлений доставки",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="pages", type="integer"),
+     *             @OA\Property(property="pageSize", type="integer"),
+     *         )
+     *     )
+     * )
+     * Подсчитать кол-во отправлений доставки
+     */
+    public function merchantShipmentsCountGroupedByStatus(int $merchantId, int $year, int $month)
+    {
+        $query = Shipment::query()
+            ->selectRaw(Shipment::aggregatedQueryString())
+            ->where('merchant_id', $merchantId)
+            ->where(DB::raw('MONTH(created_at)'), $month)
+            ->where(DB::raw('YEAR(created_at)'), $year)
+            ->groupBy(['merchant_id']);
+
+        return $query->first()->toJson();
+    }
+
+    public function merchantProductsCountGroupedByStatus(int $merchantId, int $year, int $month, BasketService $service)
+    {
+        $currentPeriod = $service->getCountedByStatusProductItemsForPeriod($merchantId, $year, $month);
+        $prevPeriod = $service->getCountedByStatusProductItemsForPeriod($merchantId, $year - 1, $month);
+
+        foreach ($currentPeriod as $status => $values) {
+            $prevSum = $prevPeriod[$status][BasketService::SUM_PREFIX];
+            $currentSum = $values[BasketService::SUM_PREFIX];
+            $currentPeriod[$status]['lfl'] = $prevSum ? round(($currentSum - $prevSum) / $prevSum * 100) : null;
+        }
+        return response()->json($currentPeriod);
     }
 
     /**
