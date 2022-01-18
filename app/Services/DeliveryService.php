@@ -653,6 +653,7 @@ class DeliveryService
             $senderDto->contact_name = $storeContact->name;
             $senderDto->email = $storeContact->email;
             $senderDto->phone = phoneNumberFormat($storeContact->phone);
+            $senderDto->cdek_city_code = $cdekSenderAddress['code'] ?? null;
         } else {
             /**
              * Иначе указываем данные маркетплейса
