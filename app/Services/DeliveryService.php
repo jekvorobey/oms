@@ -40,6 +40,7 @@ use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationSe
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -81,6 +82,14 @@ class DeliveryService
     public function getCargo(int $cargoId): ?Cargo
     {
         return Cargo::find($cargoId);
+    }
+
+    /**
+     * Получить объект отправления по его идентификатору заказа на доставку в службе доставки
+     */
+    public function getDeliveryByXmlId(int $xmlId)
+    {
+        return Delivery::query()->where('xml_id', $xmlId)->first();
     }
 
     /**
@@ -832,6 +841,21 @@ class DeliveryService
                 }
             }
         }
+    }
+
+    /**
+     * Получить от сдэк статус и обновить статус заказа на доставку
+     * @param Model|Delivery $delivery
+     * @param array $data
+     */
+    public function updateDeliveryStatus($delivery, array $data): void
+    {
+        $delivery->setStatusXmlId(
+            $data['statusCode'],
+            new Carbon($data['status_date'])
+        );
+        $delivery->status = $data['status'];
+        $delivery->save();
     }
 
     /**
