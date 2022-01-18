@@ -4,7 +4,9 @@ namespace App\Services\DocumentService;
 
 use App\Models\Order\Order;
 use App\Services\OrderService;
+use Exception;
 use PDF;
+use Pim\Core\PimException;
 
 class OrderTicketsCreator extends DocumentCreator
 {
@@ -37,16 +39,20 @@ class OrderTicketsCreator extends DocumentCreator
         return 'order-tickets.pdf';
     }
 
+    /**
+     * @throws PimException
+     * @throws Exception
+     */
     protected function createDocument(): string
     {
         if (!$this->order->isPaid()) {
-            throw new \Exception('Order is not paid');
+            throw new Exception('Order is not paid');
         }
 
         $orderInfoDto = $this->orderService->getPublicEventsOrderInfo($this->order, true, $this->basketItemId);
 
         if (!$orderInfoDto) {
-            throw new \Exception('Order is not PublicEventOrder');
+            throw new Exception('Order is not PublicEventOrder');
         }
 
         $path = $this->generateDocumentPath();

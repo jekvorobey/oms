@@ -403,6 +403,7 @@ class OrderService
                     $ticketsInfoDto->id = $item->id;
                     $ticketsInfoDto->code = $item->code;
                     $ticketsInfoDto->name = $item->name;
+                    $ticketsInfoDto->stageIds = $item->getTicketStageIds();
                     $ticketsInfoDto->ticketTypeName = $item->getTicketTypeName();
                     $ticketsInfoDto->photoId = $cardStruct->image;
                     $ticketsInfoDto->nearestDate = $cardStruct->nearestDate;
