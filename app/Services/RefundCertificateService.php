@@ -55,6 +55,6 @@ class RefundCertificateService
         $returnedPrepayment = max(0, $order->done_return_sum - $order->cashless_price);
         $remainingPrepaymentPrice = max(0, $order->spent_certificate - $returnedPrepayment);
 
-        return $remainingPrepaymentPrice >= $priceToReturn ? $priceToReturn : $remainingPrepaymentPrice;
+        return $remainingPrepaymentPrice >= $returnPrepayment ? $returnPrepayment : $remainingPrepaymentPrice;
     }
 }
