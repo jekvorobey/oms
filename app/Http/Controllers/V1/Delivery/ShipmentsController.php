@@ -27,7 +27,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -309,35 +308,21 @@ class ShipmentsController extends Controller
 
     /**
      * @OA\Get(
-     *     path="api/v1/deliveries/{id}/shipments/count",
+     *     path="api/v1/shipments/merchant_analytics/{merchantId}/{year}/{month}",
      *     tags={"Поставки"},
-     *     description=" Подсчитать кол-во отправлений доставки",
-     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     description="Получить количества отправлений, товаров и суммы по товарам мерчанта за период, сгруппированные по статусу",
+     *     @OA\Parameter(name="merchantId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="year", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="month", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Response(
      *         response="200",
      *         description="",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="total", type="integer"),
-     *             @OA\Property(property="pages", type="integer"),
-     *             @OA\Property(property="pageSize", type="integer"),
-     *         )
+     *         @OA\JsonContent()
      *     )
      * )
-     * Подсчитать кол-во отправлений доставки
+     * Получить количества отправлений, товаров и суммы по товарам мерчанта за период, сгруппированные по статусу
      */
-    public function merchantShipmentsCountGroupedByStatus(int $merchantId, int $year, int $month)
-    {
-        $query = Shipment::query()
-            ->selectRaw(Shipment::aggregatedQueryString())
-            ->where('merchant_id', $merchantId)
-            ->where(DB::raw('MONTH(created_at)'), $month)
-            ->where(DB::raw('YEAR(created_at)'), $year)
-            ->groupBy(['merchant_id']);
-
-        return $query->first()->toJson();
-    }
-
-    public function merchantProductsCountGroupedByStatus(int $merchantId, int $year, int $month, BasketService $service)
+    public function merchantShipmentsAnalytics(int $merchantId, int $year, int $month, BasketService $service)
     {
         $currentPeriod = $service->getCountedByStatusProductItemsForPeriod($merchantId, $year, $month);
         $prevPeriod = $service->getCountedByStatusProductItemsForPeriod($merchantId, $year - 1, $month);
@@ -348,6 +333,16 @@ class ShipmentsController extends Controller
             $currentPeriod[$status]['lfl'] = $prevSum ? round(($currentSum - $prevSum) / $prevSum * 100) : null;
         }
         return response()->json($currentPeriod);
+    }
+
+    public function merchantSales(int $merchantId, int $year, BasketService $service)
+    {
+        return $service->getMerchantSalesAnalytics($merchantId, $year);
+    }
+
+    public function merchantBestsellers(int $merchantId, BasketService $service)
+    {
+        return $service->getMerchantTopProducts($merchantId);
     }
 
     /**

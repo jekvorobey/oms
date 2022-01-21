@@ -5,7 +5,10 @@ namespace App\Services;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
+use App\Models\Delivery\ShipmentStatus;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -15,8 +18,8 @@ use Illuminate\Support\Facades\DB;
  */
 class BasketService
 {
-
     public const SUM_PREFIX = 'sum';
+
     /**
      * Получить объект корзины по его id
      */
@@ -133,28 +136,107 @@ class BasketService
 
     public function getCountedByStatusProductItemsForPeriod(int $merchantId, int $year, int $month): ?array
     {
-        $sumPrefix = self::SUM_PREFIX;
-        $query = DB::table('basket_items AS bi')
-            ->join('shipment_items AS si', 'si.basket_item_id', '=', 'bi.id')
-            ->join('shipments AS s', 'si.shipment_id', '=', 's.id')
-            ->where('s.merchant_id', $merchantId)
-            ->where(DB::raw('YEAR(s.created_at)'), $year)
-//            ->where(DB::raw('MONTH(s.created_at)'), $month)
-            ->selectRaw(Shipment::aggregatedQueryString('SUM', 'bi.qty') . ', ' . Shipment::aggregatedQueryString('SUM', 'bi.price*bi.qty', $sumPrefix))
-            ->groupBy(['merchant_id']);
+        /** @var Shipment[]|Collection $shipments */
+        $shipments = Shipment::with('basketItems')
+            ->where('merchant_id', $merchantId)
+            ->whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->get();
 
-
-        $dbResult = (array) $query->first();
-        $result = [];
-        if (count($dbResult)) {
-            foreach (array_keys(Shipment::SIMPLIFIED_STATUSES) as $status) {
-                $result[$status]['count'] = (int) $dbResult[$status];
-                $result[$status][$sumPrefix] = (int) $dbResult["{$sumPrefix}_$status"];
+        $result = array_map(fn() => [
+            'countShipments' => 0,
+            'countProducts' => 0,
+            'sum' => 0,
+        ], Shipment::SIMPLIFIED_STATUSES);
+        foreach ($shipments as $shipment) {
+            foreach (array_keys($result) as $status) {
+                if ($this->simpleStatusCheck($shipment, $status)) {
+                    $result[$status]['countShipments']++;
+                    $result[$status]['countProducts'] += $shipment->basketItems->count();
+                    $result[$status]['sum'] += $shipment->basketItems->sum(fn(BasketItem $item) => (int) $item->price * $item->qty);
+                }
             }
-        } else {
-            return null;
+        }
+        return $result;
+    }
+
+    /** @return  Shipment[]|Collection $shipments */
+    public function getMerchantSalesAnalytics(int $merchantId, int $year)
+    {
+        $years = [$year - 1, $year];
+        /** @var \Illuminate\Support\Collection|Collection[] $shipments */
+        $shipments = Shipment::with('basketItems')
+            ->where('merchant_id', $merchantId)
+            ->whereBetween(DB::raw('YEAR(created_at)'), $years)
+//            ->where('status', ShipmentStatus::DONE)
+//            ->where('is_canceled', false)
+            ->addSelect(['id', 'merchant_id', 'status', DB::raw('YEAR(created_at) year'), DB::raw('MONTH(created_at) month')])
+            ->get()->mapToGroups(fn(Shipment $shipment) => [
+                $shipment->year => $shipment,
+            ]);
+
+//        dd($yearShipments);
+        foreach ($shipments->keys() as $year) {
+            $shipments[$year] = $shipments[$year]->mapToGroups(fn(Shipment $shipment) => [
+                $shipment->month => $shipment,
+            ])->sortKeys();
+            /** @var Collection $monthShipments */
+            foreach ($shipments[$year] as $month => $monthShipments) {
+                $sum = $monthShipments->sum(fn(Shipment $shipment) => (int) $shipment->basketItems->sum(
+                    fn(BasketItem $item) => (int) $item->price * $item->qty
+                ));
+
+                $shipments[$year][$month] = [
+                    'month' => $month,
+                    'sum' => $sum,
+                ];
+            }
         }
 
+        return $shipments;
+    }
+
+    public function getMerchantTopProducts(int $merchantId)
+    {
+        $res = BasketItem::query()
+            ->whereHas('shipmentItem.shipment', fn(Builder $query) => $query
+                ->where('merchant_id', $merchantId))
+            ->selectRaw('name, SUM(price*qty) as sum, SUM(qty) as count')
+            ->groupBy(['name'])
+            ->orderByDesc('sum')
+        ;
+        return $res->get()
+//            ->map(function (BasketItem $item) {
+//            $item->sum = (int) $item->sum;
+//            $item->count = (int) $item->count;
+//            return $item;
+//        })
+            ;
+    }
+
+    public function simpleStatusCheck(Shipment $shipment, string $status): bool
+    {
+        $result = false;
+        switch ($shipment->status) {
+            case $status === 'shipped':
+                $result = $shipment->status === ShipmentStatus::SHIPPED;
+                break;
+            case $status === 'transition':
+                $result = $shipment->status >= ShipmentStatus::ON_POINT_IN && $shipment->status <= ShipmentStatus::DELIVERING;
+                break;
+            case $status === 'done':
+                $result = $shipment->status === ShipmentStatus::DONE;
+                break;
+            case $status === 'canceled':
+                $result = $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION && $shipment->is_canceled;
+                break;
+            case $status === 'returned':
+                $result = $shipment->status >= ShipmentStatus::CANCELLATION_EXPECTED;
+                break;
+            case $status === 'accepted':
+                $result = $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION;
+                break;
+        }
         return $result;
     }
 }

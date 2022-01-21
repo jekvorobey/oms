@@ -176,11 +176,13 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('active', 'ShipmentsController@getActiveIds');
             Route::get('delivered', 'ShipmentsController@getDeliveredIds');
             Route::get('', 'ShipmentsController@read');
+//            Route::prefix('{merchantId}')->group(function () {
+//
+//            });
             Route::get('similar-unshipped-shipments', 'ShipmentsController@similarUnshippedShipments');
-            Route::get('merchant/{merchantId}/grouped-by-status/{year}/{month}', 'ShipmentsController@merchantShipmentsCountGroupedByStatus');
-
-            Route::get('merchant_products/{merchantId}/grouped-by-status/{year}/{month}', 'ShipmentsController@merchantProductsCountGroupedByStatus');
-
+            Route::get('merchant_analytics/{merchantId}/{year}/{month}', 'ShipmentsController@merchantShipmentsAnalytics');
+            Route::get('merchant_sales/{merchantId}/{year}', 'ShipmentsController@merchantSales');
+            Route::get('top/products/{merchantId}', 'ShipmentsController@merchantBestsellers');
 
             Route::prefix('exports')->group(function () {
                 Route::get('new', 'ShipmentsController@readNew');
