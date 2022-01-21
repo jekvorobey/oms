@@ -223,7 +223,7 @@ class Shipment extends AbstractModel
     protected $table = 'shipments';
 
     /** @var array */
-    protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems', 'export'];
+    protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems', 'exports'];
 
     /**
      * @param int $orderNumber - порядковый номер заказа
