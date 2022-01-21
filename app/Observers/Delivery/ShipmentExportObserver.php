@@ -5,7 +5,6 @@ namespace App\Observers\Delivery;
 use App\Models\Delivery\ShipmentExport;
 use Greensight\CommonMsa\Dto\RoleDto;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
-use Illuminate\Support\Str;
 use MerchantManagement\Services\MerchantService\MerchantService;
 
 class ShipmentExportObserver
