@@ -21,7 +21,7 @@ class ShipmentExportObserver
             $merchantInfo = $merchantService->merchant($shipmentExport->shipment->merchant_id);
             $notificationService->sendByRole(
                 RoleDto::ROLE_LOGISTIC,
-                Str::slug('Ошибка экспорта отправления', '_'),
+                'osibka_eksporta_otpravleniya',
                 [
                     'SHIPMENT_NUMBER' => $shipmentExport->shipment->number,
                     'MERCHANT' => $merchantInfo->legal_name,
