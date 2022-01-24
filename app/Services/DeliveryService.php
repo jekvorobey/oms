@@ -40,6 +40,7 @@ use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationSe
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -81,6 +82,14 @@ class DeliveryService
     public function getCargo(int $cargoId): ?Cargo
     {
         return Cargo::find($cargoId);
+    }
+
+    /**
+     * Получить объект отправления по его идентификатору заказа на доставку в службе доставки
+     */
+    public function getDeliveryByXmlId(int $xmlId)
+    {
+        return Delivery::query()->where('xml_id', $xmlId)->first();
     }
 
     /**
@@ -653,6 +662,7 @@ class DeliveryService
             $senderDto->contact_name = $storeContact->name;
             $senderDto->email = $storeContact->email;
             $senderDto->phone = phoneNumberFormat($storeContact->phone);
+            $senderDto->cdek_city_code = $cdekSenderAddress['code'] ?? null;
         } else {
             /**
              * Иначе указываем данные маркетплейса
@@ -690,7 +700,7 @@ class DeliveryService
             $listsService = resolve(ListsService::class);
             $pointQuery = $listsService->newQuery()
                 ->setFilter('id', $delivery->point_id)
-                ->addFields(PointDto::entity(), 'address', 'city_guid');
+                ->addFields(PointDto::entity(), 'address', 'city_guid', 'cdek_city_code');
             /** @var PointDto|null $pointDto */
             $pointDto = $listsService->points($pointQuery)->first();
             if ($pointDto) {
@@ -699,6 +709,7 @@ class DeliveryService
                 $recipientDto->area = $pointDto->address['area'] ?? '';
                 $recipientDto->city = $pointDto->address['city'] ?? '';
                 $recipientDto->city_guid = $pointDto->city_guid;
+                $recipientDto->cdek_city_code = $pointDto->cdek_city_code;
                 $recipientDto->street = $pointDto->address['street'] ?: '-'; //у cdek и b2cpl улица обязательна
                 $recipientDto->house = $pointDto->address['house'] ?? '';
                 $recipientDto->block = $pointDto->address['block'] ?? '';
@@ -832,6 +843,21 @@ class DeliveryService
                 }
             }
         }
+    }
+
+    /**
+     * Получить от сдэк статус и обновить статус заказа на доставку
+     * @param Model|Delivery $delivery
+     * @param array $data
+     */
+    public function updateDeliveryStatus($delivery, array $data): void
+    {
+        $delivery->setStatusXmlId(
+            $data['statusCode'],
+            new Carbon($data['status_date'])
+        );
+        $delivery->status = $data['status'];
+        $delivery->save();
     }
 
     /**

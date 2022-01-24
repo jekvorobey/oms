@@ -75,7 +75,8 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property int $payment_method
  * @property int $payment_system
  * @property string $payment_type
- * @property bool $is_receipt_sent
+ * @property bool $is_prepayment_receipt_sent
+ * @property bool $is_fullpayment_receipt_sent
  * @property array $data
  *
  * @property-read Order $order
@@ -163,15 +164,5 @@ class Payment extends AbstractModel
     public function setPaymentLinkAttribute($value): void
     {
         $this->data = array_merge($this->data, ['paymentLink' => $value]);
-    }
-
-    public function commitHolded()
-    {
-        optional($this->paymentSystem())->commitHoldedPayment($this, $this->sum - (float) $this->refund_sum);
-    }
-
-    public function sendReceiptWhenOrderDeliveried()
-    {
-        optional($this->paymentSystem())->createIncomeReceipt($this->order, $this);
     }
 }

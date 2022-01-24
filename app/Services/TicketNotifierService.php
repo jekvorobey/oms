@@ -14,7 +14,7 @@ use Pim\Dto\PublicEvent\MediaDto;
 use Pim\Dto\PublicEvent\OrganizerDto;
 use Pim\Dto\PublicEvent\PlaceDto;
 use Pim\Dto\PublicEvent\PublicEventDto;
-use Pim\Dto\PublicEvent\TicketDto;
+use Pim\Dto\PublicEvent\StageDto;
 use Pim\Services\PublicEventMediaService\PublicEventMediaService;
 use Pim\Services\PublicEventOrganizerService\PublicEventOrganizerService;
 use Pim\Services\PublicEventPlaceService\PublicEventPlaceService;
@@ -112,7 +112,7 @@ class TicketNotifierService
         $firstOrganizer = null;
 
         $classes = [];
-        $pdfs = [];
+        $pdfIds = [];
         foreach ($basketItems as $basketItem) {
             $sprint = $this->publicEventSprintService->find(
                 $this->publicEventSprintService
@@ -125,7 +125,7 @@ class TicketNotifierService
                     ->query()
                     ->setFilter('sprint_id', $sprint->id)
                     ->addSort('date_from')
-            )->map(function ($stage) {
+            )->map(function (StageDto $stage) {
                 $place = $this->publicEventPlaceService->find(
                     $this->publicEventPlaceService->query()
                         ->setFilter('id', $stage->place_id)
@@ -150,9 +150,13 @@ class TicketNotifierService
                 $speakers = $this->publicEventSpeakerService
                     ->getByStage($stage->id);
 
+                $dateFormatted = Carbon::parse($stage->date_from)->locale('ru')->isoFormat('D MMMM (dd)');
+                if ($stage->date_to !== $stage->date_from) {
+                    $dateFormatted .= ' - ' . Carbon::parse($stage->date_to)->locale('ru')->isoFormat('D MMMM (dd)');
+                }
                 return [
                     sprintf('%s, %s', $place->name, $place->address),
-                    Carbon::parse($stage->date)->locale('ru')->isoFormat('D MMMM (dd)'),
+                    $dateFormatted,
                     Carbon::parse($stage->time_from)->format('H:i'),
                     Carbon::parse($stage->time_to)->format('H:i'),
                     [
@@ -160,7 +164,8 @@ class TicketNotifierService
                         'text' => $stage->description,
                         'kit' => $stage->raider,
                         'speakers' => collect($speakers['items']),
-                        'date' => $stage->date,
+                        'date_from' => $stage->date_from,
+                        'date_to' => $stage->date_to,
                         'from' => $stage->time_from,
                         'to' => $stage->time_to,
                     ],
@@ -209,8 +214,8 @@ class TicketNotifierService
 
             $link = Link::create(
                 $event->name,
-                Carbon::createFromDate($stages->first()[4]['date'])->setTimeFromTimeString($stages->first()[4]['from']),
-                Carbon::createFromDate($stages->first()[4]['date'])->setTimeFromTimeString($stages->first()[4]['to']),
+                Carbon::createFromDate($stages->first()[4]['date_from'])->setTimeFromTimeString($stages->first()[4]['from']),
+                Carbon::createFromDate($stages->first()[4]['date_to'])->setTimeFromTimeString($stages->first()[4]['to']),
             )
             ->description($event_desc_short[0][0] ?? '')
             ->address($stages->first()[0]);
@@ -273,64 +278,7 @@ class TicketNotifierService
                 'calendar' => $link->ics(),
             ];
 
-            foreach ($basketItem->product['ticket_ids'] as $ticket) {
-                /** @var TicketDto $ticket */
-                $ticket = $this->publicEventTicketService->tickets(
-                    $this->publicEventTicketService
-                        ->newQuery()
-                        ->setFilter('id', $ticket)
-                )->first();
-
-                $pdfs[] = [
-                    'RECEIVER_EMAIL' => $ticket->email,
-                    'RECEIVER_NAME' => $ticket->first_name,
-                    'MESSAGE_FILENAME' => sprintf('order-tickets-%s', $ticket->code),
-                    'name' => $event->name,
-                    'ticket_type' => '(' . $basketItem->product['ticket_type_name'] . ')',
-                    'id' => $ticket->code,
-                    'cost' => price_format((int) $basketItem->price),
-                    'order_num' => $order->number,
-                    'bought_at' => $order->created_at->locale('ru')->isoFormat('D MMMM, HH:mm'),
-                    'time' => $stages->map(function ($el) {
-                        return sprintf(
-                            '%s, %s-%s',
-                            $el[1],
-                            $el[2],
-                            $el[3]
-                        );
-                    })->all(),
-                    'adress' => $stages->map(function ($el) {
-                        return $el[0];
-                    })->unique()->all(),
-                    'participant' => [
-                        'name' => sprintf('%s %s', $ticket->last_name, $ticket->first_name),
-                        'short_name' => mb_substr($ticket->first_name, 0, 1) . mb_substr($ticket->last_name, 0, 1),
-                        'email' => $ticket->email,
-                        'phone' => OrderObserver::formatNumber($ticket->phone),
-                    ],
-                    'manager' => [
-                        'name' => $organizer->name,
-                        'about' => $organizer->description,
-                        'phone' => $organizer->phone,
-                        'messangers' => false,
-                        'email' => $organizer->email,
-                        'site' => $organizer->site,
-                    ],
-                    'map' => $this->generateMapImage(
-                        $stages->map(function ($stage) {
-                            return $stage[5];
-                        })
-                    ),
-                    'routes' => $stages->map(function ($stage) {
-                        return [
-                            'title' => $stage[0],
-                            'text' => $stage[5]->description,
-                            'images' => $stage[6],
-                        ];
-                    })->unique('title')->all(),
-                    'programs' => $programs,
-                ];
-            }
+            $pdfIds[] = $this->orderTicketsCreator->setOrder($order)->setBasketItemId($basketItem->id)->create()->file_id;
         }
 
         $type = $this->publicEventTypeService->find(
@@ -384,19 +332,19 @@ class TicketNotifierService
                 $user->id,
                 'kupleny_bilety_neskolko_shtuk',
                 $data,
-                ['pdfs' => ['pdf.ticket' => $pdfs]]
+                ['files' => $pdfIds]
             );
         } else {
             $this->serviceNotificationService->send(
                 $user->id,
                 'kuplen_bilet',
                 $data,
-                ['pdfs' => ['pdf.ticket' => $pdfs]]
+                ['files' => $pdfIds]
             );
         }
     }
 
-    private function generateMapImage(Collection $points)
+    private function generateMapImage(Collection $points): string
     {
         $query = $points
             ->map(function (PlaceDto $point, $key) {
@@ -407,7 +355,7 @@ class TicketNotifierService
         return sprintf('https://enterprise.static-maps.yandex.ru/1.x/?key=%s&l=map&pt=%s', config('app.y_maps_key'), $query);
     }
 
-    private function generateTicketWord(int $count)
+    private function generateTicketWord(int $count): string
     {
         if ($count == 1) {
             return 'билет';

@@ -11,11 +11,11 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDto;
 use Carbon\Carbon;
 use App\Services\Dto\In\OrderReturn\OrderReturnItemDto;
-use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\Customer\Services\ReferralService\Dto\ReturnReferralBillOperationDto;
 use Greensight\Customer\Services\ReferralService\ReferralService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use MerchantManagement\Dto\MerchantBillOperation\ShipmentStatusDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Services\OfferService\OfferService;
@@ -204,10 +204,11 @@ class OrderReturnService
         }
 
         foreach ($basketItemsByMerchants as $merchantId => $merchantBasketItems) {
-            $restQuery = (new RestQuery())
+            $restQuery = $merchantService->newQuery()
                 ->setFilter('merchant_id', $merchantId)
                 ->setFilter('offer_id', array_column($merchantBasketItems, 'offer_id'))
-                ->setFilter('order_id', $order->id);
+                ->setFilter('order_id', $order->id)
+                ->setFilter('shipment_status', ShipmentStatusDto::SHIPMENT_STATUS_DONE);
             $billingList = $merchantService->merchantBillingList($restQuery, $merchantId);
 
             if (!isset($billingList['items'])) {

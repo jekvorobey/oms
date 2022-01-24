@@ -2,7 +2,6 @@
 
 namespace App\Services\PaymentService\PaymentSystems;
 
-use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 
@@ -53,7 +52,7 @@ interface PaymentSystemInterface
     /**
      * Сформировать запрос на возврат средств
      */
-    public function refund(string $paymentId, OrderReturn $orderReturn): array;
+    public function refund(Payment $payment, OrderReturn $orderReturn): array;
 
     /**
      * Сформировать запрос на отмену оплаты
@@ -63,10 +62,10 @@ interface PaymentSystemInterface
     /**
      * Создание чека прихода
      */
-    public function createIncomeReceipt(Order $order, Payment $payment): void;
+    public function createIncomeReceipt(Payment $payment, bool $isFullPayment): void;
 
     /**
      * Создание чека возврата (при отмене всего заказа/платежа)
      */
-    public function createRefundAllReceipt(Order $order, Payment $payment): void;
+    public function createRefundAllReceipt(Payment $payment): void;
 }

@@ -259,7 +259,7 @@ class DeliveryObserver
             if ($deliveryDetail->success) {
                 $delivery->delivery_sum = $deliveryDetail->delivery_sum;
                 $delivery->total_sum = $deliveryDetail->total_sum;
-                $delivery->save();
+                Delivery::withoutEvents(fn() => $delivery->save());
             } else {
                 throw new \Exception('Get cdek delivery sum error: ' . $deliveryDetail->message);
             }

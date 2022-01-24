@@ -379,7 +379,8 @@ class OrderService
                 $stageInfoDto->description = $stage['description'];
                 $stageInfoDto->result = $stage['result'];
                 $stageInfoDto->raider = $stage['raider'];
-                $stageInfoDto->setDate($stage['date_from']);
+                $stageInfoDto->setDateFrom($stage['date_from']);
+                $stageInfoDto->setDateTo($stage['date_to']);
                 $stageInfoDto->setTimeFrom($stage['time_from']);
                 $stageInfoDto->setTimeTo($stage['time_to']);
                 $stageInfoDto->placeId = $stage['place_id'];
@@ -402,6 +403,7 @@ class OrderService
                     $ticketsInfoDto->id = $item->id;
                     $ticketsInfoDto->code = $item->code;
                     $ticketsInfoDto->name = $item->name;
+                    $ticketsInfoDto->stageIds = $item->getTicketStageIds();
                     $ticketsInfoDto->ticketTypeName = $item->getTicketTypeName();
                     $ticketsInfoDto->photoId = $cardStruct->image;
                     $ticketsInfoDto->nearestDate = $cardStruct->nearestDate;
