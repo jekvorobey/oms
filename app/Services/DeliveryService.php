@@ -662,6 +662,7 @@ class DeliveryService
             $senderDto->contact_name = $storeContact->name;
             $senderDto->email = $storeContact->email;
             $senderDto->phone = phoneNumberFormat($storeContact->phone);
+            $senderDto->cdek_city_code = $cdekSenderAddress['code'] ?? null;
         } else {
             /**
              * Иначе указываем данные маркетплейса
@@ -699,7 +700,7 @@ class DeliveryService
             $listsService = resolve(ListsService::class);
             $pointQuery = $listsService->newQuery()
                 ->setFilter('id', $delivery->point_id)
-                ->addFields(PointDto::entity(), 'address', 'city_guid');
+                ->addFields(PointDto::entity(), 'address', 'city_guid', 'cdek_city_code');
             /** @var PointDto|null $pointDto */
             $pointDto = $listsService->points($pointQuery)->first();
             if ($pointDto) {
@@ -708,6 +709,7 @@ class DeliveryService
                 $recipientDto->area = $pointDto->address['area'] ?? '';
                 $recipientDto->city = $pointDto->address['city'] ?? '';
                 $recipientDto->city_guid = $pointDto->city_guid;
+                $recipientDto->cdek_city_code = $pointDto->cdek_city_code;
                 $recipientDto->street = $pointDto->address['street'] ?: '-'; //у cdek и b2cpl улица обязательна
                 $recipientDto->house = $pointDto->address['house'] ?? '';
                 $recipientDto->block = $pointDto->address['block'] ?? '';

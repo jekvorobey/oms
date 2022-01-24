@@ -883,7 +883,7 @@ class ShipmentsController extends Controller
             ->where('status', '>=', ShipmentStatus::AWAITING_CONFIRMATION)
             ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
             ->where('is_canceled', false)
-            ->doesntHave('export')
+            ->doesntHave('exports')
             ->get();
 
         return response()->json([
