@@ -36,14 +36,25 @@ class RefundCertificateService
         return $returnPrepayment;
     }
 
+    /**
+     * В случае частичного возврата сначала возвращается сумма доплаты, потом сумма ПС
+     */
     public function getPrepaymentSum(OrderReturn $orderReturn): float
     {
         $order = $orderReturn->order;
         $priceToReturn = $orderReturn->price;
 
+        $remainingCashlessPrice = max(0, $order->cashless_price - $order->done_return_sum);
+
+        $returnPrepayment = max(0, $priceToReturn - $remainingCashlessPrice);
+
+        if (!$returnPrepayment) {
+            return 0;
+        }
+
         $returnedPrepayment = max(0, $order->done_return_sum - $order->cashless_price);
         $remainingPrepaymentPrice = max(0, $order->spent_certificate - $returnedPrepayment);
 
-        return $remainingPrepaymentPrice >= $priceToReturn ? $priceToReturn : $remainingPrepaymentPrice;
+        return $remainingPrepaymentPrice >= $returnPrepayment ? $returnPrepayment : $remainingPrepaymentPrice;
     }
 }
