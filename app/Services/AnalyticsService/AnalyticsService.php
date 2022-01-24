@@ -15,12 +15,12 @@ use Illuminate\Support\Facades\DB;
 class AnalyticsService
 {
     public const SIMPLIFIED_STATUSES = [
-        'accepted' => 'status >= ' . ShipmentStatus::AWAITING_CONFIRMATION,
-        'shipped' => 'status = ' . ShipmentStatus::SHIPPED,
-        'transition' => 'status >= ' . ShipmentStatus::ON_POINT_IN . ' and status <= ' . ShipmentStatus::DELIVERING,
-        'done' => 'status = ' . ShipmentStatus::DONE,
-        'canceled' => 'is_canceled = true and status >= ' . ShipmentStatus::AWAITING_CONFIRMATION,
-        'returned' => 'status >= ' . ShipmentStatus::CANCELLATION_EXPECTED,
+        'accepted',
+        'shipped',
+        'transition',
+        'done',
+        'canceled',
+        'returned',
     ];
 
     /** @throws Exception */
@@ -57,10 +57,10 @@ class AnalyticsService
                 'countProducts' => 0,
             ];
         }
-        $result = array_map(fn() => $defaultAssocArray, self::SIMPLIFIED_STATUSES);
+        $result = array_map(fn() => $defaultAssocArray, array_flip(self::SIMPLIFIED_STATUSES));
 
         foreach ($shipments as $shipment) {
-            foreach (array_keys($result) as $status) {
+            foreach (self::SIMPLIFIED_STATUSES as $status) {
                 if ($this->simpleStatusCheck($shipment, $status)) {
                     if ($count) {
                         $result[$status]['countShipments']++;
@@ -79,36 +79,32 @@ class AnalyticsService
     {
         $interval = new DoubleDateInterval($start, $end);
         /** @var SimpleCollection|Collection[] $shipments */
-        $shipments = Shipment::with('basketItems')
+        $shipments = Shipment::with(['basketItems' => fn($query) => $query->selectRaw('price*qty as sum')])
+            ->whereHas('basketItems', fn($query) => $query->where('is_returned', false))
             ->where('merchant_id', $merchantId)
-            ->whereBetween('created_at', $interval->fullPeriod())
+            ->whereBetween('status_at', $interval->fullPeriod())
             ->where('status', ShipmentStatus::DONE)
             ->where('is_canceled', false)
-            ->where('is_returned', false)
             ->addSelect(['id', 'merchant_id', 'status', DB::raw('YEAR(created_at) year'), DB::raw('MONTH(created_at) month')])
-            ->get()->mapToGroups(fn(Shipment $shipment) => [
-                $shipment->year => $shipment,
-            ]);
+            ->get()->groupBy('year');
 
-        $resultingShipments = [];
-        foreach ($shipments->keys() as $year) {
-            $shipments[$year] = $shipments[$year]->mapToGroups(fn(Shipment $shipment) => [
-                $shipment->month => $shipment,
-            ])->sortKeys();
+        $result = [];
+        foreach ($shipments as $year => $yearShipments) {
+            $shipments[$year] = $shipments[$year]->groupBy('month')->sortKeys();
             /** @var Collection $monthShipments */
             foreach ($shipments[$year] as $month => $monthShipments) {
                 $sum = $monthShipments->sum(fn(Shipment $shipment) => (int)$shipment->basketItems->sum(
-                    fn(BasketItem $item) => (int)$item->price * $item->qty
+                    fn(BasketItem $item) => (int)$item['sum']
                 ));
 
-                $resultingShipments[$year][] = [
+                $result[$year][] = [
                     'month' => $month,
                     'sum' => $sum,
                 ];
             }
         }
 
-        return $resultingShipments;
+        return $result;
     }
 
     /** @throws Exception */
@@ -122,30 +118,35 @@ class AnalyticsService
         $currentTopProductsQuery = (clone $topProductsQuery)
             ->whereHas('shipmentItem.shipment', $this->shipmentQuery($interval->currentPeriod(), $merchantId));
         $currentTopProducts = $currentTopProductsQuery->get();
-        $currentGroupedTopProducts = $this->groupByOffer($currentTopProducts);
+        $currentGroupedTopProducts = $currentTopProducts->groupBy('offer_id');
         $previousTopProductsQuery = (clone $topProductsQuery)->whereHas('shipmentItem.shipment', $this->shipmentQuery($interval->previousPeriod(), $merchantId))
             ->whereIn('offer_id', $currentTopProducts->pluck('offer_id')->unique());
 
         $previousTopProducts = $previousTopProductsQuery->get();
 
-        $groupedPreviousTopProducts = $this->groupByOffer($previousTopProducts);
+        /** @var Collection $previousGroupedTopProducts */
+        $previousGroupedTopProducts = $previousTopProducts->groupBy('offer_id');
 
         $result = collect([]);
         /** @var Collection|BasketItem[] $productItems */
         foreach ($currentGroupedTopProducts as $offerId => $productItems) {
             $sumCallback = fn(BasketItem $item) => (int)($item->price * $item->qty);
-            $prevSum = isset($groupedPreviousTopProducts[$offerId]) ? $groupedPreviousTopProducts[$offerId]->sum($sumCallback) : 0;
+            $prevSum = isset($previousGroupedTopProducts[$offerId]) ? $previousGroupedTopProducts[$offerId]->sum($sumCallback) : 0;
             $result->push([
                 'name' => $productItems[0]->name,
                 'offerId' => $offerId,
                 'sum' => $currentSum = $productItems->sum($sumCallback),
                 'count' => $productItems->sum(fn (BasketItem $item) => (int) $item->qty),
-                'lfl' => $prevSum ? ( (int) (( ($currentSum - $prevSum) / $prevSum) * 100) ) : 100
+                'lfl' => $prevSum ? $this->lfl($currentSum, $prevSum) : 100,
             ]);
         }
-        return $result->sortByDesc('sum')->values();
+        return $result->sortByDesc('sum')->values()->slice(0, $limit);
     }
 
+    private function lfl(int $currentSum, int $prevSum) {
+        $diff = ($currentSum - $prevSum);
+        return (int) ( ($diff / $prevSum) * 100) ;
+    }
     private function shipmentQuery(array $period, int $merchantId): \Closure
     {
         return fn(Builder $query) => $query
@@ -153,36 +154,24 @@ class AnalyticsService
             ->whereBetween('created_at', $period);
     }
 
-    private function groupByOffer(Collection $items): SimpleCollection
-    {
-        return $items->mapToGroups(fn(BasketItem $item) => [
-            $item->offer_id => $item
-        ]);
-    }
-
     private function simpleStatusCheck(Shipment $shipment, string $status): bool
     {
-        $result = false;
-        switch ($shipment->status) {
-            case $status === 'shipped':
-                $result = $shipment->status === ShipmentStatus::SHIPPED;
-                break;
-            case $status === 'transition':
-                $result = $shipment->status >= ShipmentStatus::ON_POINT_IN && $shipment->status <= ShipmentStatus::DELIVERING;
-                break;
-            case $status === 'done':
-                $result = $shipment->status === ShipmentStatus::DONE;
-                break;
-            case $status === 'canceled':
-                $result = $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION && $shipment->is_canceled;
-                break;
-            case $status === 'returned':
-                $result = $shipment->status >= ShipmentStatus::CANCELLATION_EXPECTED;
-                break;
-            case $status === 'accepted':
-                $result = $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION;
-                break;
+        if (!$shipment->is_canceled || $status === 'returned') {
+            switch ($shipment->status) {
+                case $status === 'shipped':
+                    return $shipment->status === ShipmentStatus::SHIPPED;
+                case $status === 'transition':
+                    return $shipment->status >= ShipmentStatus::ON_POINT_IN && $shipment->status <= ShipmentStatus::DELIVERING;
+                case $status === 'done':
+                    return $shipment->status === ShipmentStatus::DONE;
+                case $status === 'canceled':
+                    return $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION && $shipment->is_canceled;
+                case $status === 'returned':
+                    return $shipment->status >= ShipmentStatus::CANCELLATION_EXPECTED;
+                case $status === 'accepted':
+                    return $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION;
+            }
         }
-        return $result;
+        return false;
     }
 }

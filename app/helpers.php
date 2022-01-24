@@ -74,11 +74,11 @@ if (! function_exists('phoneNumberFormat')) {
     }
 }
 
-if (!function_exists('getEloquentSqlWithBindings')) {
+if (!function_exists('query_builder_to_sql')) {
     /** @param Builder|QueryBuilder|Relation $query */
-    function getEloquentSqlWithBindings($query): ?string
+    function query_builder_to_sql($query): ?string
     {
-        return env('APP_DEBUG')
+        return config('app.debug')
             ? vsprintf(str_replace('?', '%s', $query->toSql()), collect($query->getBindings())->map(function ($binding) {
                 $binding = addslashes($binding);
                 return is_numeric($binding) ? $binding : "'{$binding}'";
