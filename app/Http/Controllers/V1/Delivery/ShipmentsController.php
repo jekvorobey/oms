@@ -11,7 +11,6 @@ use App\Models\Delivery\ShipmentExport;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Payment\PaymentStatus;
-use App\Services\BasketService;
 use App\Services\DeliveryService;
 use Greensight\CommonMsa\Dto\FileDto;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
@@ -304,45 +303,6 @@ class ShipmentsController extends Controller
             'pages' => $pages,
             'pageSize' => $pageSize,
         ]);
-    }
-
-    /**
-     * @OA\Get(
-     *     path="api/v1/shipments/merchant_analytics/{merchantId}/{year}/{month}",
-     *     tags={"Поставки"},
-     *     description="Получить количества отправлений, товаров и суммы по товарам мерчанта за период, сгруппированные по статусу",
-     *     @OA\Parameter(name="merchantId", required=true, in="path", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="year", required=true, in="path", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="month", required=true, in="path", @OA\Schema(type="integer")),
-     *     @OA\Response(
-     *         response="200",
-     *         description="",
-     *         @OA\JsonContent()
-     *     )
-     * )
-     * Получить количества отправлений, товаров и суммы по товарам мерчанта за период, сгруппированные по статусу
-     */
-    public function merchantShipmentsAnalytics(int $merchantId, int $year, int $month, BasketService $service)
-    {
-        $currentPeriod = $service->getCountedByStatusProductItemsForPeriod($merchantId, $year, $month);
-        $prevPeriod = $service->getCountedByStatusProductItemsForPeriod($merchantId, $year - 1, $month);
-
-        foreach ($currentPeriod as $status => $values) {
-            $prevSum = $prevPeriod[$status][BasketService::SUM_PREFIX];
-            $currentSum = $values[BasketService::SUM_PREFIX];
-            $currentPeriod[$status]['lfl'] = $prevSum ? round(($currentSum - $prevSum) / $prevSum * 100) : null;
-        }
-        return response()->json($currentPeriod);
-    }
-
-    public function merchantSales(int $merchantId, int $year, BasketService $service)
-    {
-        return $service->getMerchantSalesAnalytics($merchantId, $year);
-    }
-
-    public function merchantBestsellers(int $merchantId, BasketService $service)
-    {
-        return $service->getMerchantTopProducts($merchantId);
     }
 
     /**

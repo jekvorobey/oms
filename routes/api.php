@@ -145,6 +145,12 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::get('assembling-card', 'DocumentTemplatesController@assemblingCard');
     });
 
+    Route::prefix('merchant_analytics/{merchantId}')->group(function () {
+        Route::get('products_shipments/{start}/{end}', 'AnalyticsController@productsShipments');
+        Route::get('sales/{start}/{end}', 'AnalyticsController@sales');
+        Route::get('top/products/{start}/{end}', 'AnalyticsController@bestsellers');
+    });
+
     Route::namespace('Delivery')->group(function () {
         Route::prefix('deliveries')->group(function () {
             Route::get('count', 'DeliveryController@count');
@@ -180,9 +186,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 //
 //            });
             Route::get('similar-unshipped-shipments', 'ShipmentsController@similarUnshippedShipments');
-            Route::get('merchant_analytics/{merchantId}/{year}/{month}', 'ShipmentsController@merchantShipmentsAnalytics');
-            Route::get('merchant_sales/{merchantId}/{year}', 'ShipmentsController@merchantSales');
-            Route::get('top/products/{merchantId}', 'ShipmentsController@merchantBestsellers');
 
             Route::prefix('exports')->group(function () {
                 Route::get('new', 'ShipmentsController@readNew');

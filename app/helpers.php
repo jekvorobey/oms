@@ -1,5 +1,9 @@
 <?php
 
+use Doctrine\DBAL\Query\QueryBuilder;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
+
 if (! function_exists('in_production')) {
     /**
      * Находится ли приложение в прод режиме
@@ -67,5 +71,18 @@ if (! function_exists('phoneNumberFormat')) {
         return $phoneNumber
             ? preg_replace('/[^\d+]+/', '', $phoneNumber)
             : '';
+    }
+}
+
+if (!function_exists('getEloquentSqlWithBindings')) {
+    /** @param Builder|QueryBuilder|Relation $query */
+    function getEloquentSqlWithBindings($query): ?string
+    {
+        return env('APP_DEBUG')
+            ? vsprintf(str_replace('?', '%s', $query->toSql()), collect($query->getBindings())->map(function ($binding) {
+                $binding = addslashes($binding);
+                return is_numeric($binding) ? $binding : "'{$binding}'";
+            })->toArray())
+            : null;
     }
 }
