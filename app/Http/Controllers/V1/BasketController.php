@@ -15,10 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class BasketController
@@ -90,17 +87,8 @@ class BasketController extends Controller
      * )
      * @throws \Exception
      */
-    public function setItemByBasket(
-        int $basketId,
-        int $offerId,
-        Request $request,
-        BasketService $basketService
-    ): JsonResponse {
-        $basket = $basketService->getBasket($basketId);
-        if (!$basket) {
-            throw new NotFoundHttpException('basket not found');
-        }
-
+    public function setItemByBasket(int $basketId, int $offerId, Request $request): JsonResponse
+    {
         return $this->setItem($basketId, $offerId, $request);
     }
 
@@ -146,28 +134,27 @@ class BasketController extends Controller
     {
         /** @var BasketService $basketService */
         $basketService = resolve(BasketService::class);
+        $basket = $basketService->getBasket($basketId);
 
-        $data = $request->all();
-        $respondWithItems = boolval($data['items'] ?? false);
-        unset($data['items']);
-
-        $validator = Validator::make($data, [
+        $data = $this->validate($request, [
             'referrer_id' => 'nullable|integer',
             'qty' => 'integer',
             'product' => 'array',
             'product.store_id' => 'nullable|integer',
             'product.bundle_id' => 'nullable|integer',
         ]);
-        if ($validator->fails()) {
-            throw new BadRequestHttpException($validator->errors()->first());
-        }
-        $ok = $basketService->setItem($basketId, $offerId, $data);
+
+        $respondWithItems = (bool) ($data['items'] ?? false);
+        unset($data['items']);
+
+        $ok = $basketService->setItem($basket, $offerId, $data);
         if (!$ok) {
             throw new HttpException(500, 'unable to save basket item');
         }
+
         $response = [];
         if ($respondWithItems) {
-            $response['items'] = $this->getItems($basketService->getBasket($basketId));
+            $response['items'] = $this->getItems($basket);
         }
 
         return response()->json($response);
@@ -224,7 +211,9 @@ class BasketController extends Controller
      */
     public function dropBasket(int $basketId, BasketService $basketService): Response
     {
-        if (!$basketService->deleteBasket($basketId)) {
+        $basket = $basketService->getBasket($basketId);
+
+        if (!$basketService->deleteBasket($basket)) {
             throw new HttpException(500, 'unable to delete basket');
         }
 
