@@ -1003,7 +1003,7 @@ class DeliveryService
             return false;
         }
 
-        $this->cancelDeliveryOrder($delivery);
+        rescue(fn() => $this->cancelDeliveryOrder($delivery));
 
         return true;
     }
