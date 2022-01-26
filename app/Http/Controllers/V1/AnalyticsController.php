@@ -53,9 +53,14 @@ class AnalyticsController extends Controller
      * Получить продажи мерчанта в конкретный период интервально.
      * @throws Exception
      */
-    public function sales(int $merchantId, string $start, string $end, AnalyticsService $service): JsonResponse
-    {
-        return response()->json($service->getMerchantSalesAnalytics($merchantId, $start, $end));
+    public function sales(
+        int $merchantId,
+        string $start,
+        string $end,
+        string $intervalType,
+        AnalyticsService $service
+    ): JsonResponse {
+        return response()->json($service->getMerchantSalesAnalytics($merchantId, $start, $end, $intervalType));
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Services\AnalyticsService\AnalyticsDateInterval;
 
 /*
 |--------------------------------------------------------------------------
@@ -146,9 +147,11 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('merchant_analytics/{merchantId}')->group(function () {
+        $merchantAnalyticsTimeIntervalTypes = implode('|', array_keys(AnalyticsDateInterval::TYPES));
         Route::get('products_shipments/{start}/{end}', 'AnalyticsController@productsShipments');
-        Route::get('sales/{start}/{end}', 'AnalyticsController@sales');
         Route::get('top/products/{start}/{end}', 'AnalyticsController@bestsellers');
+        Route::get('sales/{start}/{end}/{intervalType}', 'AnalyticsController@sales')
+            ->where('intervalType', "($merchantAnalyticsTimeIntervalTypes)");
     });
 
     Route::namespace('Delivery')->group(function () {

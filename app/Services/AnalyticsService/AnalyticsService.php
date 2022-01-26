@@ -26,7 +26,7 @@ class AnalyticsService
     /** @throws Exception */
     public function getCountedByStatusProductItemsForPeriod(int $merchantId, string $start, string $end): ?array
     {
-        $interval = new DoubleDateInterval($start, $end);
+        $interval = new AnalyticsDateInterval($start, $end);
         /** @var Shipment[]|Collection $shipments */
         $shipments = Shipment::with(['basketItems' => fn(BelongsToMany $relation) => $relation->select(['price', 'qty'])])
             ->select(['id', 'status', 'created_at'])
@@ -75,9 +75,10 @@ class AnalyticsService
 
 
     /** @throws Exception */
-    public function getMerchantSalesAnalytics(int $merchantId, string $start, string $end): array
+    public function getMerchantSalesAnalytics(int $merchantId, string $start, string $end, string $intervalType = AnalyticsDateInterval::TYPE_MONTH): array
     {
-        $interval = new DoubleDateInterval($start, $end);
+        $groupBy = AnalyticsDateInterval::TYPES[$intervalType]['groupBy'];
+        $interval = new AnalyticsDateInterval($start, $end, $intervalType);
         /** @var SimpleCollection|Collection[] $shipments */
         $shipments = Shipment::with(['basketItems' => fn($query) => $query->selectRaw('price*qty as sum')])
             ->whereHas('basketItems', fn($query) => $query->where('is_returned', false))
@@ -85,32 +86,41 @@ class AnalyticsService
             ->whereBetween('status_at', $interval->fullPeriod())
             ->where('status', ShipmentStatus::DONE)
             ->where('is_canceled', false)
-            ->addSelect(['id', 'merchant_id', 'status', DB::raw('YEAR(created_at) year'), DB::raw('MONTH(created_at) month')])
-            ->get()->groupBy('year');
+            ->addSelect([
+                'id',
+                'merchant_id',
+                'status',
+                DB::raw('YEAR(created_at) year'),
+                DB::raw('MONTH(created_at) month'),
+                DB::raw('DAY(created_at) day')]
+            )
+            ->get()->groupBy([$groupBy]);
 
         $result = [];
-        foreach ($shipments as $year => $yearShipments) {
-            $shipments[$year] = $shipments[$year]->groupBy('month')->sortKeys();
-            /** @var Collection $monthShipments */
-            foreach ($shipments[$year] as $month => $monthShipments) {
-                $sum = $monthShipments->sum(fn(Shipment $shipment) => (int)$shipment->basketItems->sum(
-                    fn(BasketItem $item) => (int)$item['sum']
-                ));
-
-                $result[$year][] = [
-                    'month' => $month,
-                    'sum' => $sum,
-                ];
-            }
+        foreach ($shipments as $intervalNumber => $intervalShipments) {
+            $salesSumCallback = fn(Shipment $shipment) => (int)$shipment->basketItems->sum(
+                fn(BasketItem $item) => (int)$item['sum']
+            );
+            $current = $intervalShipments->where($intervalType, $interval->previousEnd->{$intervalType});
+            $previous = $intervalShipments->where($intervalType, $interval->end->{$intervalType});
+            $previousSum = $previous->sum($salesSumCallback);
+            $currentSum = $current->sum($salesSumCallback);
+            $result['current'][] = [
+                'intervalNumber' => $intervalNumber,
+                'sum' => $currentSum,
+            ];
+            $result['previous'][] = [
+                'intervalNumber' => $intervalNumber,
+                'sum' => $previousSum,
+            ];
         }
-
         return $result;
     }
 
     /** @throws Exception */
     public function getMerchantTopProducts(int $merchantId, string $start, string $end, int $limit = 10): SimpleCollection
     {
-        $interval = new DoubleDateInterval($start, $end, DoubleDateInterval::TYPE_MONTH);
+        $interval = new AnalyticsDateInterval($start, $end, AnalyticsDateInterval::TYPE_MONTH);
         $topProductsQuery = BasketItem::query()->select('id', 'offer_id', 'name', 'price', 'qty');
 
         /** @var BasketItem[]|Collection $currentTopProducts */
@@ -137,16 +147,21 @@ class AnalyticsService
                 'offerId' => $offerId,
                 'sum' => $currentSum = $productItems->sum($sumCallback),
                 'count' => $productItems->sum(fn (BasketItem $item) => (int) $item->qty),
-                'lfl' => $prevSum ? $this->lfl($currentSum, $prevSum) : 100,
+                'lfl' => $this->lfl($currentSum, $prevSum),
             ]);
         }
         return $result->sortByDesc('sum')->values()->slice(0, $limit);
     }
 
-    private function lfl(int $currentSum, int $prevSum) {
+    private function lfl(int $currentSum, int $prevSum): int
+    {
         $diff = ($currentSum - $prevSum);
-        return (int) ( ($diff / $prevSum) * 100) ;
+        if ($prevSum === 0) {
+            return 100;
+        }
+        return (int) ( ($diff / $prevSum) * 100);
     }
+
     private function shipmentQuery(array $period, int $merchantId): \Closure
     {
         return fn(Builder $query) => $query
