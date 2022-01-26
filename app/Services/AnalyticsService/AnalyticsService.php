@@ -39,7 +39,7 @@ class AnalyticsService
             $relation->selectRaw('price*qty as sum')
                 ->where('is_returned', false)
         ])
-            ->select(['id', 'status', 'created_at'])
+            ->select(['id', 'status', 'created_at', 'is_canceled'])
             ->where('merchant_id', $merchantId)
             ->whereBetween('created_at', $interval->fullPeriod())
             ->orderBy('created_at')
