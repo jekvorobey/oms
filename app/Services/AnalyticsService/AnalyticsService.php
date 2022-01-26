@@ -15,20 +15,30 @@ use Illuminate\Support\Facades\DB;
 class AnalyticsService
 {
     public const SIMPLIFIED_STATUSES = [
-        'accepted',
-        'shipped',
-        'transition',
-        'done',
-        'canceled',
-        'returned',
+        self::STATUS_ACCEPTED,
+        self::STATUS_SHIPPED,
+        self::STATUS_TRANSITION,
+        self::STATUS_DONE,
+        self::STATUS_CANCELED,
+        self::STATUS_RETURNED,
     ];
+
+    const STATUS_ACCEPTED = 'accepted';
+    const STATUS_SHIPPED = 'shipped';
+    const STATUS_TRANSITION = 'transition';
+    const STATUS_DONE = 'done';
+    const STATUS_CANCELED = 'canceled';
+    const STATUS_RETURNED = 'returned';
 
     /** @throws Exception */
     public function getCountedByStatusProductItemsForPeriod(int $merchantId, string $start, string $end): ?array
     {
         $interval = new AnalyticsDateInterval($start, $end);
         /** @var Shipment[]|Collection $shipments */
-        $shipments = Shipment::with(['basketItems' => fn(BelongsToMany $relation) => $relation->select(['price', 'qty'])])
+        $shipments = Shipment::with(['basketItems' => fn(BelongsToMany $relation) =>
+            $relation->selectRaw('price*qty as sum')
+                ->where('is_returned', false)
+        ])
             ->select(['id', 'status', 'created_at'])
             ->where('merchant_id', $merchantId)
             ->whereBetween('created_at', $interval->fullPeriod())
@@ -40,7 +50,7 @@ class AnalyticsService
         $currentData = $this->groupedByStatusCalculatedShipments($currentPeriodShipments);
         $previousData = $this->groupedByStatusCalculatedShipments($previousPeriodShipments, false);
         foreach ($previousData as $status => $datum) {
-            $currentData[$status]['lfl'] = $datum['sum'] ? (int)(($currentData[$status]['sum'] - $datum['sum']) / $datum['sum'] * 100) : 100;
+            $currentData[$status]['lfl'] = $this->lfl($currentData[$status]['sum'], $datum['sum']);
         }
 
         return $currentData;
@@ -66,7 +76,7 @@ class AnalyticsService
                         $result[$status]['countShipments']++;
                         $result[$status]['countProducts'] += $shipment->basketItems->count();
                     }
-                    $result[$status]['sum'] += $shipment->basketItems->sum(fn(BasketItem $item) => (int)$item->price * $item->qty);
+                    $result[$status]['sum'] += $shipment->basketItems->sum('sum');
                 }
             }
         }
@@ -80,7 +90,7 @@ class AnalyticsService
         $groupBy = AnalyticsDateInterval::TYPES[$intervalType]['groupBy'];
         $interval = new AnalyticsDateInterval($start, $end, $intervalType);
         /** @var SimpleCollection|Collection[] $shipments */
-        $shipments = Shipment::with(['basketItems' => fn($query) => $query->selectRaw('price*qty as sum')])
+        $shipments = Shipment::with(['basketItems' => fn($query) => $query->selectRaw('price*qty as sum')->where('is_returned', false)])
             ->whereHas('basketItems', fn($query) => $query->where('is_returned', false))
             ->where('merchant_id', $merchantId)
             ->whereBetween('status_at', $interval->fullPeriod())
@@ -90,17 +100,15 @@ class AnalyticsService
                 'id',
                 'merchant_id',
                 'status',
-                DB::raw('YEAR(created_at) year'),
-                DB::raw('MONTH(created_at) month'),
-                DB::raw('DAY(created_at) day')]
+                DB::raw('YEAR(status_at) year'),
+                DB::raw('MONTH(status_at) month'),
+                DB::raw('DAY(status_at) day')]
             )
             ->get()->groupBy([$groupBy]);
 
         $result = [];
         foreach ($shipments as $intervalNumber => $intervalShipments) {
-            $salesSumCallback = fn(Shipment $shipment) => (int)$shipment->basketItems->sum(
-                fn(BasketItem $item) => (int)$item['sum']
-            );
+            $salesSumCallback = fn(Shipment $shipment) => (int)$shipment->basketItems->sum('sum');
             $current = $intervalShipments->where($intervalType, $interval->previousEnd->{$intervalType});
             $previous = $intervalShipments->where($intervalType, $interval->end->{$intervalType});
             $previousSum = $previous->sum($salesSumCallback);
@@ -146,7 +154,7 @@ class AnalyticsService
                 'name' => $productItems[0]->name,
                 'offerId' => $offerId,
                 'sum' => $currentSum = $productItems->sum($sumCallback),
-                'count' => $productItems->sum(fn (BasketItem $item) => (int) $item->qty),
+                'count' => $productItems->sum('qty'),
                 'lfl' => $this->lfl($currentSum, $prevSum),
             ]);
         }
@@ -155,10 +163,10 @@ class AnalyticsService
 
     private function lfl(int $currentSum, int $prevSum): int
     {
-        $diff = ($currentSum - $prevSum);
         if ($prevSum === 0) {
             return 100;
         }
+        $diff = ($currentSum - $prevSum);
         return (int) ( ($diff / $prevSum) * 100);
     }
 
@@ -171,19 +179,19 @@ class AnalyticsService
 
     private function simpleStatusCheck(Shipment $shipment, string $status): bool
     {
-        if (!$shipment->is_canceled || $status === 'returned') {
+        if (!$shipment->is_canceled || $status === self::STATUS_CANCELED) {
             switch ($shipment->status) {
-                case $status === 'shipped':
+                case $status === self::STATUS_SHIPPED:
                     return $shipment->status === ShipmentStatus::SHIPPED;
-                case $status === 'transition':
+                case $status === self::STATUS_TRANSITION:
                     return $shipment->status >= ShipmentStatus::ON_POINT_IN && $shipment->status <= ShipmentStatus::DELIVERING;
-                case $status === 'done':
+                case $status === self::STATUS_DONE:
                     return $shipment->status === ShipmentStatus::DONE;
-                case $status === 'canceled':
+                case $status === self::STATUS_CANCELED:
                     return $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION && $shipment->is_canceled;
-                case $status === 'returned':
+                case $status === self::STATUS_RETURNED:
                     return $shipment->status >= ShipmentStatus::CANCELLATION_EXPECTED;
-                case $status === 'accepted':
+                case $status === self::STATUS_ACCEPTED:
                     return $shipment->status >= ShipmentStatus::AWAITING_CONFIRMATION;
             }
         }

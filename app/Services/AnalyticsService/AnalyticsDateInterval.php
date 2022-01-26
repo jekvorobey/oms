@@ -33,8 +33,7 @@ class AnalyticsDateInterval
         $this->start = Carbon::createFromFormat('Y-m-d', $start)->startOfDay();
         $this->end = Carbon::createFromFormat('Y-m-d', $end)->endOfDay();
         $this->previousEnd = $this->start->clone()->sub(1, $intervalScaleUnit)->endOfDay();
-        $diff = $interval === self::TYPE_YEAR ? new CarbonInterval(1) : new CarbonInterval(0, 1);
-        $this->previousStart = $this->start->clone()->sub($diff)->startOfDay();
+        $this->previousStart = $this->start->clone()->sub(1, $intervalScaleUnit)->startOfDay();
     }
 
     /**
@@ -66,7 +65,7 @@ class AnalyticsDateInterval
         return $date
             ->between(
                 $this->previousStart,
-                $this->start
+                $this->previousEnd
             );
     }
 
