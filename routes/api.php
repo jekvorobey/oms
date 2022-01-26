@@ -185,9 +185,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('active', 'ShipmentsController@getActiveIds');
             Route::get('delivered', 'ShipmentsController@getDeliveredIds');
             Route::get('', 'ShipmentsController@read');
-//            Route::prefix('{merchantId}')->group(function () {
-//
-//            });
             Route::get('similar-unshipped-shipments', 'ShipmentsController@similarUnshippedShipments');
 
             Route::prefix('exports')->group(function () {

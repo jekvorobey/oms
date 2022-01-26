@@ -77,6 +77,7 @@ class AnalyticsService
                         $result[$status]['countProducts'] += $shipment->basketItems->count();
                     }
                     $result[$status]['sum'] += $shipment->basketItems->sum('sum');
+                    break;
                 }
             }
         }
@@ -100,10 +101,12 @@ class AnalyticsService
                 'id',
                 'merchant_id',
                 'status',
+                'is_canceled',
                 DB::raw('YEAR(status_at) year'),
                 DB::raw('MONTH(status_at) month'),
                 DB::raw('DAY(status_at) day')]
             )
+            ->orderBy('status_at')
             ->get()->groupBy([$groupBy]);
 
         $result = [];
