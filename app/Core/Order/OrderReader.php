@@ -290,7 +290,7 @@ class OrderReader
         if ($trackXmlIdFilter) {
             [$op, $value] = current($trackXmlIdFilter);
             $query->whereHas('deliveries', function (Builder $query) use ($op, $value) {
-               $query->where('xml_id', $op, $value);
+                $query->where('xml_id', $op, $value);
             });
             $modifiedRestQuery->removeFilter('track_xml_id');
         }
