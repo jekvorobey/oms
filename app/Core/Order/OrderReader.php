@@ -286,13 +286,14 @@ class OrderReader
             $modifiedRestQuery->removeFilter('delivery_city');
         }
 
-        $trackXmlIdFilter = $restQuery->getFilter('track_xml_id');
+        // Фильтр по ШК
+        $trackXmlIdFilter = $restQuery->getFilter('delivery_xml_id');
         if ($trackXmlIdFilter) {
             [$op, $value] = current($trackXmlIdFilter);
-            $query->whereHas('deliveries', function (Builder $query) use ($op, $value) {
-                $query->where('xml_id', $op, $value);
+            $query->whereHas('deliveries', function (Builder $query) use ($value) {
+                $query->where('xml_id', $value);
             });
-            $modifiedRestQuery->removeFilter('track_xml_id');
+            $modifiedRestQuery->removeFilter('delivery_xml_id');
         }
 
         //Фильтр по PSD
