@@ -286,6 +286,15 @@ class OrderReader
             $modifiedRestQuery->removeFilter('delivery_city');
         }
 
+        $trackXmlIdFilter = $restQuery->getFilter('track_xml_id');
+        if ($trackXmlIdFilter) {
+            [$op, $value] = current($trackXmlIdFilter);
+            $query->whereHas('deliveries', function (Builder $query) use ($op, $value) {
+               $query->where('xml_id', $op, $value);
+            });
+            $modifiedRestQuery->removeFilter('track_xml_id');
+        }
+
         //Фильтр по PSD
         $psdFilter = $restQuery->getFilter('psd');
         if ($psdFilter) {
