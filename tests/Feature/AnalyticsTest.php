@@ -65,9 +65,12 @@ class AnalyticsTest extends TestCase
         $requestData['end'] = $data['end']->format('Y-m-d');
 
         $response = [];
-        $response['bestsellers'] = $this->get(route('analytics.bestsellers', $requestData));
-        $response['sales'] = $this->get(route('analytics.sales', $requestData));
-        $response['shipments'] = $this->get(route('analytics.products_shipments', $requestData));
+        $urlQueryString = '?' . http_build_query($requestData);
+        $urlBase = 'http://' . request()->getHttpHost() . '/api/v1';
+
+        $response['shipments'] = $this->get("$urlBase/merchant_analytics/products_shipments$urlQueryString");
+        $response['sales'] = $this->get("$urlBase/merchant_analytics/sales$urlQueryString");
+        $response['bestsellers'] = $this->get("$urlBase/merchant_analytics/top/bestsellers$urlQueryString");
 
         foreach (array_keys($expectedData) as $key) {
             $response[$key]->assertOk();

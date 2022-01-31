@@ -105,8 +105,7 @@ class AnalyticsService
                 'merchant_id',
                 'status',
                 'is_canceled',
-                'status_at',
-                'created_at'
+                'status_at'
                 ])
             ->orderBy('status_at')
             ->get();
@@ -156,7 +155,6 @@ class AnalyticsService
             ->whereIn('offer_id', $currentTopProducts->pluck('offer_id')->unique());
 
         $previousTopProducts = $previousTopProductsQuery->get();
-
 
         /** @var Collection $previousGroupedTopProducts */
         $previousGroupedTopProducts = $previousTopProducts->groupBy('offer_id');
