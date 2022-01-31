@@ -72,6 +72,10 @@ trait CreatesApplication
 
                                 public function bigInteger($column, $autoIncrement = false, $unsigned = false)
                                 {
+                                    if ($column === 'discount_id' && $this->table === 'order_discounts') {
+//                                        dd($this);
+//                                        dd(parent::bigInteger($column, $autoIncrement, $unsigned)->default(0));
+                                    };
                                     return parent::bigInteger($column, $autoIncrement, $unsigned)->default(0);
                                 }
 

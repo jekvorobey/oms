@@ -10,7 +10,9 @@ use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 
 $factory->define(Delivery::class, function (Faker $faker) {
-    $order = factory(Order::class)->create();
+    $order = factory(Order::class)->create([
+        'number' => $faker->randomNumber(),
+    ]);
     $deliveryDt = $faker->randomFloat(0, 1, 7);
     $deliveryAt = $order->created_at->addDays($deliveryDt)->setTime(0, 0);
 

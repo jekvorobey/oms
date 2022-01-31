@@ -30,9 +30,10 @@ class AnalyticsController extends Controller
         int $merchantId,
         string $start,
         string $end,
+        string $intervalType,
         AnalyticsService $service
     ): JsonResponse {
-        $currentPeriod = $service->getCountedByStatusProductItemsForPeriod($merchantId, $start, $end);
+        $currentPeriod = $service->getCountedByStatusProductItemsForPeriod($merchantId, $start, $end, $intervalType);
         return response()->json($currentPeriod);
     }
 
@@ -80,8 +81,8 @@ class AnalyticsController extends Controller
      * Получить список бестселлеров мерчанта.
      * @throws Exception
      */
-    public function bestsellers(int $merchantId, string $start, string $end, AnalyticsService $service): JsonResponse
+    public function bestsellers(int $merchantId, string $start, string $end, string $intervalType, AnalyticsService $service): JsonResponse
     {
-        return response()->json($service->getMerchantTopProducts($merchantId, $start, $end));
+        return response()->json($service->getMerchantBestsellers($merchantId, $start, $end, $intervalType));
     }
 }

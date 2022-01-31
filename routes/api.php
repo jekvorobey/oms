@@ -148,9 +148,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 
     Route::prefix('merchant_analytics/{merchantId}')->group(function () {
         $merchantAnalyticsTimeIntervalTypes = implode('|', array_keys(AnalyticsDateInterval::TYPES));
-        Route::get('products_shipments/{start}/{end}', 'AnalyticsController@productsShipments');
-        Route::get('top/products/{start}/{end}', 'AnalyticsController@bestsellers');
-        Route::get('sales/{start}/{end}/{intervalType}', 'AnalyticsController@sales')
+        Route::get('products_shipments/{start}/{end}/{intervalType}', 'AnalyticsController@productsShipments')->name('analytics.products_shipments');
+        Route::get('top/products/{start}/{end}/{intervalType}', 'AnalyticsController@bestsellers')->name('analytics.bestsellers');
+        Route::get('sales/{start}/{end}/{intervalType}', 'AnalyticsController@sales')->name('analytics.sales')
             ->where('intervalType', "($merchantAnalyticsTimeIntervalTypes)");
     });
 

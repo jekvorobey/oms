@@ -14,7 +14,7 @@ class AddTypeColumnToOrders extends Migration
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->integer('type')->unsigned()->after('basket_id');
+            $table->integer('type')->nullable()->unsigned()->after('basket_id');
         });
     }
 
