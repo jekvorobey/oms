@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Services\AnalyticsService\AnalyticsDateInterval;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AnalyticsRequest extends FormRequest
