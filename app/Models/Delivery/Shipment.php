@@ -637,7 +637,7 @@ class Shipment extends AbstractModel
     ): void {
         $filter = $restQuery->getFilter($filterName);
         if ($filter) {
-            [$op, $value] = $filter[0];
+            [$op, $value] = reset($filter);
 
             $query->whereHas('cargo', function (Builder $query) use ($fieldName, $op, $value) {
                 if (is_array($value)) {
