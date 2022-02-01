@@ -213,7 +213,7 @@ class Shipment extends AbstractModel
         'delivery_service_zero_mile',
     ];
 
-    protected $dates = ['status_at', 'created_at'];
+    protected $dates = ['created_at'];
     protected $casts = [
         'status' => 'int',
     ];

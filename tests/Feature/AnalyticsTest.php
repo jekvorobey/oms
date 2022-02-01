@@ -75,7 +75,7 @@ class AnalyticsTest extends TestCase
 
         $response = [];
         $urlQueryString = '?' . http_build_query($requestData);
-        $urlBase = 'http://' . request()->getHttpHost() . '/api/v1';
+        $urlBase = '/api/v1';
 
         $response['shipments'] = $this->get("$urlBase/merchant_analytics/products_shipments$urlQueryString");
         $response['sales'] = $this->get("$urlBase/merchant_analytics/sales$urlQueryString");
@@ -100,7 +100,6 @@ class AnalyticsTest extends TestCase
 
     private function seedDB(string $intervalType, Carbon $start, Carbon $end): array
     {
-        $service = new AnalyticsService();
         $faker = Factory::create('ru_RU');
 
         $testBasketItemsData = collect([]);
@@ -279,13 +278,13 @@ class AnalyticsTest extends TestCase
         $previousBestsellers = $expectedData['bestsellers']['previous'];
         foreach ($currentBestsellers as $offerId => $bestseller) {
             if (isset($previousBestsellers[$offerId])) {
-                $currentBestsellers[$offerId] += ['lfl' => $service->lfl($bestseller['sum'], $previousBestsellers[$offerId]['sum'])];
+                $currentBestsellers[$offerId] += ['lfl' => $this->lfl($bestseller['sum'], $previousBestsellers[$offerId]['sum'])];
             }
         }
         $expectedData['bestsellers'] = $currentBestsellers->sortByDesc('sum')->slice(0, 10)->values()->toArray();
 
         foreach ($expectedData['shipments'] as $status => $datum) {
-            $expectedData['shipments'][$status]['lfl'] = $service->lfl($datum['sum'], $expectedData['shipments'][$status]['oldSum']);
+            $expectedData['shipments'][$status]['lfl'] = $this->lfl($datum['sum'], $expectedData['shipments'][$status]['oldSum']);
             unset($expectedData['shipments'][$status]['oldSum']);
         }
         foreach (array_keys($expectedData['sales']) as $key) {
@@ -293,5 +292,14 @@ class AnalyticsTest extends TestCase
             $expectedData['sales'][$key] = array_values($expectedData['sales'][$key]);
         }
         return $expectedData;
+    }
+
+    private function lfl(int $currentSum, int $prevSum): int
+    {
+        if ($prevSum === 0) {
+            return 100;
+        }
+        $diff = $currentSum - $prevSum;
+        return (int) ( $diff / $prevSum * 100);
     }
 }

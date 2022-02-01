@@ -23,7 +23,6 @@ class AnalyticsRequest extends FormRequest
             'start' => 'required|date',
             'end' => 'required|date|after_or_equal:start',
             'intervalType' => ['required', 'string', Rule::in(array_keys($this->allowedIntervalTypes))],
-            'limit' => 'int',
         ];
     }
 

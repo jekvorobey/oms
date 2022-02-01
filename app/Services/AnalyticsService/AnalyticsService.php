@@ -33,7 +33,7 @@ class AnalyticsService
     const STATUS_RETURNED = 'returned';
 
     /** @throws Exception */
-    public function getCountedByStatusProductItemsForPeriod(int $merchantId, string $start, string $end, string $intervalType = AnalyticsDateInterval::TYPE_MONTH): ?array
+    public function getCountedByStatusProductItemsForPeriod(int $merchantId, string $start, string $end, string $intervalType): ?array
     {
         $interval = new AnalyticsDateInterval($start, $end, $intervalType);
         /** @var Shipment[]|Collection $shipments */
@@ -123,41 +123,37 @@ class AnalyticsService
 
 //        dd($shipments->count());
         $intervalCallback = fn(Shipment $shipment) => [
-            $shipment->status_at->{$groupBy} => $shipment
+            Carbon::createFromTimeString($shipment->status_at)->{$groupBy} => $shipment
         ];
         $shipmentGroups = [];
         /** @var Collection[] $shipmentGroups */
         $shipmentGroups['current'] = $shipments
-            ->filter(fn(Shipment $shipment) => $interval->isDateWithinCurrentPeriod($shipment->status_at))
+            ->filter(fn(Shipment $shipment) => $interval->isDateWithinCurrentPeriod(Carbon::createFromTimeString($shipment->status_at)))
             ->mapToGroups($intervalCallback);
 
         /** @var Collection $previous */
         $shipmentGroups['previous'] = $shipments
-            ->filter(fn(Shipment $shipment) => $interval->isDateWithinPreviousPeriod($shipment->status_at))
+            ->filter(fn(Shipment $shipment) => $interval->isDateWithinPreviousPeriod(Carbon::createFromTimeString($shipment->status_at)))
             ->mapToGroups($intervalCallback);
 
-
-        /** @var Collection[] $result */
-        $result = [
-            'current' => collect([]),
-            'previous' => collect([]),
-        ];
+        $result = [];
 
         foreach ($shipmentGroups as $period => $shipmentGroup) {
-            $shipmentGroup->map(function (Collection $shipmentItems, $intervalNumber) use ($period, &$result) {
+            $result[$period] =$shipmentGroup->map(function (Collection $shipmentItems, $intervalNumber) use ($period, &$result) {
                 /** @param Collection|Shipment[] $shipments */;
-                $result[$period]->push([
+                return [
                     'intervalNumber' => $intervalNumber,
                     'sum' => $shipmentItems->sum(fn(Shipment $shipment) => (int)$shipment->basketItems->sum('sum')),
-                ]);
+                ];
             });
         }
         return array_map(fn(SimpleCollection $items) => $items->sortBy('intervalNumber')->values(), $result);
     }
 
     /** @throws Exception */
-    public function getMerchantBestsellers(int $merchantId, string $start, string $end, string $intervalType, int $limit = 10): SimpleCollection
+    public function getMerchantBestsellers(int $merchantId, string $start, string $end, string $intervalType): SimpleCollection
     {
+        $limit = 10;
         $interval = new AnalyticsDateInterval($start, $end, $intervalType);
         $topProductsQuery = BasketItem::query()->select('id', 'offer_id', 'name', 'price', 'qty');
         /** @var BasketItem[]|Collection $currentTopProducts */
@@ -195,7 +191,7 @@ class AnalyticsService
         return $result->sortByDesc('sum')->values()->slice(0, $limit);
     }
 
-    public function lfl(int $currentSum, int $prevSum): int
+    private function lfl(int $currentSum, int $prevSum): int
     {
         if ($prevSum === 0) {
             return 100;
