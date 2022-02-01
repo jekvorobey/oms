@@ -579,6 +579,10 @@ class Shipment extends AbstractModel
         $filterByDeliveryField('delivery_service', 'delivery_service');
         //Фильтр по времени доставки отправления
         $filterByDeliveryField('delivery_at', 'delivery_at');
+        // Фильтр по данным покупателя
+        $filterByDeliveryField('receiver_name', 'receiver_name');
+        // Фильтр по pdd
+        $filterByDeliveryField('pdd', 'pdd');
 
         //Фильтр по службе доставки на нулевой миле
         $deliveryServiceZeroMileFilter = $restQuery->getFilter('delivery_service_zero_mile');
@@ -619,7 +623,32 @@ class Shipment extends AbstractModel
         $filterByDeliveryAddressFields('floor');
         $filterByDeliveryAddressFields('flat');
 
+        self::filterByCargoField('cargo_xml_id', 'xml_id', $restQuery, $query, $modifiedRestQuery);
+
         return parent::modifyQuery($query, $modifiedRestQuery);
+    }
+
+    private static function filterByCargoField(
+        string $filterName,
+        string $fieldName,
+        $restQuery,
+        $query,
+        $modifiedRestQuery
+    ): void {
+        $filter = $restQuery->getFilter($filterName);
+        if ($filter) {
+            [$op, $value] = $filter[0];
+
+            $query->whereHas('cargo', function (Builder $query) use ($fieldName, $op, $value) {
+                if (is_array($value)) {
+                    $query->whereIn($fieldName, $value);
+                } else {
+                    $query->where($fieldName, $op, $value);
+                }
+            });
+
+            $modifiedRestQuery->removeFilter($filterName);
+        }
     }
 
     /**
