@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 
 class AnalyticsRequest extends FormRequest
 {
-    private array $allowedIntervalTypes;
+    protected array $allowedIntervalTypes;
 
     public function authorize(): bool
     {
@@ -28,10 +28,6 @@ class AnalyticsRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        $isTopRoute = Str::endsWith($this->route()->getPrefix(), '/top');
         $this->allowedIntervalTypes = AnalyticsDateInterval::TYPES;
-        if (!$isTopRoute) {
-            unset($this->allowedIntervalTypes[AnalyticsDateInterval::TYPE_DAY]);
-        }
     }
 }

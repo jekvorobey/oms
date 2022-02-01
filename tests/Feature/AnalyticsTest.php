@@ -147,8 +147,6 @@ class AnalyticsTest extends TestCase
             if ($isCurrentPeriod) {
                 $shipmentAt = Carbon::createFromTimestamp($faker->numberBetween($start->unix(), $end->unix()));
             } else {
-//                dd($intervalType, $start->clone()->sub(1, $intervalType)->startOfDay(),
-//                    $start->clone()->subDay()->endOfDay());
                 $shipmentAt = Carbon::createFromTimestamp(
                     $faker->numberBetween(
                         $start->clone()->sub(1, $intervalType)->startOfDay()->unix(),

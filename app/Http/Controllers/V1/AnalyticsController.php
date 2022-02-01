@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AnalyticsRequest;
+use App\Http\Requests\AnalyticsTopRequest;
 use App\Services\AnalyticsService\AnalyticsService;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -64,9 +65,11 @@ class AnalyticsController extends Controller
      * Получить список бестселлеров мерчанта.
      * @throws Exception
      */
-    public function bestsellers(AnalyticsRequest $request, AnalyticsService $service): JsonResponse
+    public function bestsellers(AnalyticsTopRequest $request, AnalyticsService $service): JsonResponse
     {
         $data = $request->validated();
-        return response()->json($service->getMerchantBestsellers($data['merchantId'], $data['start'], $data['end'], $data['intervalType']));
+        return response()->json(
+            $service->getMerchantBestsellers($data['merchantId'], $data['start'], $data['end'], $data['intervalType'], $data['limit'])
+        );
     }
 }

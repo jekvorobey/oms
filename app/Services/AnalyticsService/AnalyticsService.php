@@ -48,14 +48,6 @@ class AnalyticsService
             ->get();
         $previousPeriodShipments = $shipments->filter(fn(Shipment $shipment) => $interval->isDateWithinPreviousPeriod($shipment->created_at));
         $currentPeriodShipments = $shipments->filter(fn(Shipment $shipment) => $interval->isDateWithinCurrentPeriod($shipment->created_at));
-//        dd(
-//            Shipment::with('basketItems')
-//            ->whereNotIn('id', $currentPeriodShipments->pluck('id'))
-//            ->whereNotIn('id', $previousPeriodShipments->pluck('id'))
-//            ->get()->toArray(),
-//            $previousPeriodShipments->count(),
-//            $currentPeriodShipments->count(),
-//        );
         $currentData = $this->groupedByStatusCalculatedShipments($currentPeriodShipments);
         $previousData = $this->groupedByStatusCalculatedShipments($previousPeriodShipments);
 
@@ -121,7 +113,6 @@ class AnalyticsService
             ->orderBy('status_at')
             ->get();
 
-//        dd($shipments->count());
         $intervalCallback = fn(Shipment $shipment) => [
             Carbon::createFromTimeString($shipment->status_at)->{$groupBy} => $shipment
         ];
@@ -151,9 +142,8 @@ class AnalyticsService
     }
 
     /** @throws Exception */
-    public function getMerchantBestsellers(int $merchantId, string $start, string $end, string $intervalType): SimpleCollection
+    public function getMerchantBestsellers(int $merchantId, string $start, string $end, string $intervalType, int $limit): SimpleCollection
     {
-        $limit = 10;
         $interval = new AnalyticsDateInterval($start, $end, $intervalType);
         $topProductsQuery = BasketItem::query()->select('id', 'offer_id', 'name', 'price', 'qty');
         /** @var BasketItem[]|Collection $currentTopProducts */
