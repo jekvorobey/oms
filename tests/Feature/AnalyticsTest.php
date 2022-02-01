@@ -14,6 +14,7 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\AnalyticsService\AnalyticsDateInterval;
 use App\Services\AnalyticsService\AnalyticsService;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Faker\Factory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -51,6 +52,14 @@ class AnalyticsTest extends TestCase
                     'intervalType' => AnalyticsDateInterval::TYPE_YEAR,
                 ],
             ],
+            [
+                [
+                    'merchantId' => $this->merchantId,
+                    'start' => $date->clone()->startOfWeek(),
+                    'end' => $date->clone()->endOfWeek(CarbonInterface::SUNDAY),
+                    'intervalType' => AnalyticsDateInterval::TYPE_WEEK,
+                ],
+            ],
         ];
     }
 
@@ -78,18 +87,18 @@ class AnalyticsTest extends TestCase
             if ($key === 'sales') {
                 foreach (array_keys(self::PERIODS) as $period) {
                     foreach ($expectedData[$key][$period] as $dKey => $datum) {
-                        $this->assertEquals($datum, $response[$key][$period][$dKey]);
+                        $this->assertEquals($datum, $response[$key][$period][$dKey], "requested analytics: $key | period: $period, dataKey: $dKey");
                     }
                 }
             } else {
                 foreach ($expectedData[$key] as $dKey => $datum) {
-                    $this->assertEquals($datum, $response[$key][$dKey], "dataKey: $dKey");
+                    $this->assertEquals($datum, $response[$key][$dKey], "requested analytics: $key | dataKey: $dKey");
                 }
             }
         }
     }
 
-    public function seedDB(string $intervalType, Carbon $start, Carbon $end): array
+    private function seedDB(string $intervalType, Carbon $start, Carbon $end): array
     {
         $service = new AnalyticsService();
         $faker = Factory::create('ru_RU');
@@ -126,12 +135,8 @@ class AnalyticsTest extends TestCase
                 AnalyticsService::STATUS_CANCELED => $shipmentTemplateData,
                 AnalyticsService::STATUS_RETURNED => $shipmentTemplateData,
             ],
-            'sales' => [
-                self::PERIODS,
-            ],
-            'bestsellers' => [
-                self::PERIODS,
-            ],
+            'sales' => self::PERIODS,
+            'bestsellers' => self::PERIODS,
         ];
 
         foreach ($baskets as $bIdx => $basket) {
@@ -143,6 +148,8 @@ class AnalyticsTest extends TestCase
             if ($isCurrentPeriod) {
                 $shipmentAt = Carbon::createFromTimestamp($faker->numberBetween($start->unix(), $end->unix()));
             } else {
+//                dd($intervalType, $start->clone()->sub(1, $intervalType)->startOfDay(),
+//                    $start->clone()->subDay()->endOfDay());
                 $shipmentAt = Carbon::createFromTimestamp(
                     $faker->numberBetween(
                         $start->clone()->sub(1, $intervalType)->startOfDay()->unix(),

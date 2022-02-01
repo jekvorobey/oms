@@ -5,6 +5,7 @@ namespace App\Services\AnalyticsService;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -32,7 +33,7 @@ class AnalyticsService
     const STATUS_RETURNED = 'returned';
 
     /** @throws Exception */
-    public function getCountedByStatusProductItemsForPeriod(int $merchantId, string $start, string $end, string $intervalType = AnalyticsDateInterval::TYPE_YEAR): ?array
+    public function getCountedByStatusProductItemsForPeriod(int $merchantId, string $start, string $end, string $intervalType = AnalyticsDateInterval::TYPE_MONTH): ?array
     {
         $interval = new AnalyticsDateInterval($start, $end, $intervalType);
         /** @var Shipment[]|Collection $shipments */
@@ -47,6 +48,14 @@ class AnalyticsService
             ->get();
         $previousPeriodShipments = $shipments->filter(fn(Shipment $shipment) => $interval->isDateWithinPreviousPeriod($shipment->created_at));
         $currentPeriodShipments = $shipments->filter(fn(Shipment $shipment) => $interval->isDateWithinCurrentPeriod($shipment->created_at));
+//        dd(
+//            Shipment::with('basketItems')
+//            ->whereNotIn('id', $currentPeriodShipments->pluck('id'))
+//            ->whereNotIn('id', $previousPeriodShipments->pluck('id'))
+//            ->get()->toArray(),
+//            $previousPeriodShipments->count(),
+//            $currentPeriodShipments->count(),
+//        );
         $currentData = $this->groupedByStatusCalculatedShipments($currentPeriodShipments);
         $previousData = $this->groupedByStatusCalculatedShipments($previousPeriodShipments);
 
@@ -94,11 +103,13 @@ class AnalyticsService
         $groupBy = AnalyticsDateInterval::TYPES[$intervalType]['groupBy'];
         $interval = new AnalyticsDateInterval($start, $end, $intervalType);
         /** @var SimpleCollection|Collection[] $shipments */
-        $shipments = Shipment::with(['basketItems' => fn($query) => $query->selectRaw('price*qty as sum')->where('is_returned', false)])
+        $shipments = Shipment::with([
+            'basketItems' => fn($query) => $query->selectRaw('price*qty as sum')->where('is_returned', false)
+        ])
             ->whereHas('basketItems', fn($query) => $query->where('is_returned', false))
             ->where('merchant_id', $merchantId)
             ->whereBetween('status_at', $interval->fullPeriod())
-            ->where('status', ShipmentStatus::DONE)
+            ->where('status', ShipmentStatus::  DONE)
             ->where('is_canceled', false)
             ->addSelect([
                 'id',
@@ -110,6 +121,7 @@ class AnalyticsService
             ->orderBy('status_at')
             ->get();
 
+//        dd($shipments->count());
         $intervalCallback = fn(Shipment $shipment) => [
             $shipment->status_at->{$groupBy} => $shipment
         ];
@@ -125,18 +137,22 @@ class AnalyticsService
             ->mapToGroups($intervalCallback);
 
 
-        $result = [];
+        /** @var Collection[] $result */
+        $result = [
+            'current' => collect([]),
+            'previous' => collect([]),
+        ];
 
-        foreach ($shipmentGroups as $group => $shipmentGroup) {
-            $shipmentGroup->map(function (Collection $shipmentItems, $intervalNumber) use ($group, &$result) {
+        foreach ($shipmentGroups as $period => $shipmentGroup) {
+            $shipmentGroup->map(function (Collection $shipmentItems, $intervalNumber) use ($period, &$result) {
                 /** @param Collection|Shipment[] $shipments */;
-                $result[$group][] = [
+                $result[$period]->push([
                     'intervalNumber' => $intervalNumber,
                     'sum' => $shipmentItems->sum(fn(Shipment $shipment) => (int)$shipment->basketItems->sum('sum')),
-                ];
+                ]);
             });
         }
-        return $result;
+        return array_map(fn(SimpleCollection $items) => $items->sortBy('intervalNumber')->values(), $result);
     }
 
     /** @throws Exception */

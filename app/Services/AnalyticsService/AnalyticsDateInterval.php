@@ -15,6 +15,7 @@ class AnalyticsDateInterval
 
     const TYPE_YEAR = 'year';
     const TYPE_MONTH = 'month';
+    const TYPE_WEEK = 'week';
     const TYPE_DAY = 'day';
 
     const TYPES = [
@@ -24,10 +25,12 @@ class AnalyticsDateInterval
         self::TYPE_MONTH => [
             'groupBy' => self::TYPE_DAY
         ],
+        self::TYPE_WEEK => [
+            'groupBy' => self::TYPE_DAY
+        ],
         self::TYPE_DAY => [
             'groupBy' => self::TYPE_DAY
         ],
-
     ];
 
     /** @throws Exception */
