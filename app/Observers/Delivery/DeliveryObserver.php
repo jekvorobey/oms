@@ -325,7 +325,7 @@ class DeliveryObserver
         if (isset(self::STATUS_TO_SHIPMENTS[$delivery->status]) && $delivery->status != $delivery->getOriginal('status')) {
             $delivery->loadMissing('shipments');
             foreach ($delivery->shipments as $shipment) {
-                if ($shipment->status == self::STATUS_TO_SHIPMENTS[$delivery->status]) {
+                if ($shipment->status >= self::STATUS_TO_SHIPMENTS[$delivery->status]) {
                     continue;
                 }
 
