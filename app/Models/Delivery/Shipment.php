@@ -623,7 +623,7 @@ class Shipment extends AbstractModel
         $filterByDeliveryAddressFields('floor');
         $filterByDeliveryAddressFields('flat');
 
-        self::filterByCargoField('cargo_xml_id', 'cdek_intake_number', $restQuery, $query, $modifiedRestQuery, true, 'xml_id');
+        self::filterByCargoField('cargo_xml_id', 'cdek_intake_number', $restQuery, $query, $modifiedRestQuery, 'xml_id');
 
         return parent::modifyQuery($query, $modifiedRestQuery);
     }
@@ -634,19 +634,18 @@ class Shipment extends AbstractModel
         RestQuery $restQuery,
         Builder $query,
         RestQuery $modifiedRestQuery,
-        bool $isDoubleField,
-        string $secondField
+        ?string $secondField = null
     ): void {
         $filter = $restQuery->getFilter($filterName);
         if ($filter) {
             [$op, $value] = reset($filter);
 
-            $query->whereHas('cargo', function (Builder $query) use ($fieldName, $op, $value, $isDoubleField, $secondField) {
+            $query->whereHas('cargo', function (Builder $query) use ($fieldName, $op, $value, $secondField) {
                 if (is_array($value)) {
                     $query->whereIn($fieldName, $value);
                 } else {
                     $query = $query->where($fieldName, $op, $value);
-                    if ($isDoubleField) {
+                    if ($secondField) {
                         $query->orWhere($secondField, $op, $value);
                     }
                 }
