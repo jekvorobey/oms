@@ -294,9 +294,10 @@ class DeliveryService
         $senderDto->phone = !is_null($store->storeContact()) ? phoneNumberFormat($store->storeContact()[0]->phone) : '';
         $courierCallInputDto->sender = $senderDto;
 
-        if ($store->cdek_address && !empty($store->cdek_address['address_string'])) {
+        if ($store->cdek_address && (!empty($store->cdek_address['address_string']) || !empty($store->cdek_address['code']))) {
             $cdekSenderDto = new SenderDto();
             $cdekSenderDto->address_string = $store->cdek_address['address_string'] ?? '';
+            $cdekSenderDto->cdek_city_code = $store->cdek_address['code'] ?? '';
             $cdekSenderDto->post_index = $store->cdek_address['post_index'] ?? '';
             $cdekSenderDto->country_code = $store->cdek_address['country_code'] ?? '';
             $cdekSenderDto->region = $store->cdek_address['region'] ?? '';
@@ -307,10 +308,6 @@ class DeliveryService
             $cdekSenderDto->house = $store->cdek_address['house'] ?? '';
             $cdekSenderDto->block = $store->cdek_address['block'] ?? '';
             $cdekSenderDto->flat = $store->cdek_address['flat'] ?? '';
-            $cdekSenderDto->company_name = $merchant->legal_name;
-            $cdekSenderDto->contact_name = !is_null($store->storeContact()) ? $store->storeContact()[0]->name : '';
-            $cdekSenderDto->email = !is_null($store->storeContact()) ? $store->storeContact()[0]->email : '';
-            $cdekSenderDto->phone = !is_null($store->storeContact()) ? phoneNumberFormat($store->storeContact()[0]->phone) : '';
             $courierCallInputDto->cdekSender = $cdekSenderDto;
         }
 
