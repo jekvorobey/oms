@@ -72,6 +72,9 @@ class OrderReader
         if ($restQuery->isIncluded('deliveries.shipments.packages')) {
             $query->with('deliveries.shipments.packages');
         }
+        if ($restQuery->isIncluded('deliveries.shipments.exports')) {
+            $query->with('deliveries.shipments.exports');
+        }
         if ($restQuery->isIncluded('all')) {
             $query->with('history')
                 ->with('basket.items')
@@ -80,7 +83,8 @@ class OrderReader
                 ->with('payments')
                 ->with('deliveries.shipments.basketItems')
                 ->with('deliveries.shipments.packages.items.basketItem')
-                ->with('deliveries.shipments.cargo');
+                ->with('deliveries.shipments.cargo')
+                ->with('deliveries.shipments.exports');
         }
     }
 

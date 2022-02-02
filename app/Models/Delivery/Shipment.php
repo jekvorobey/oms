@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
@@ -184,6 +183,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property int $package_qty - кол-во коробок отправления
  *
  * @property-read Delivery $delivery
+ * @property-read Collection|ShipmentExport[] $exports
  * @property-read Collection|ShipmentItem[] $items
  * @property-read Collection|BasketItem[] $basketItems
  * @property-read Collection|ShipmentPackage[] $packages
@@ -223,7 +223,7 @@ class Shipment extends AbstractModel
     protected $table = 'shipments';
 
     /** @var array */
-    protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems'];
+    protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems', 'exports'];
 
     /**
      * @param int $orderNumber - порядковый номер заказа
@@ -265,9 +265,9 @@ class Shipment extends AbstractModel
         return $this->belongsTo(Cargo::class);
     }
 
-    public function export(): HasOne
+    public function exports(): HasMany
     {
-        return $this->hasOne(ShipmentExport::class);
+        return $this->hasMany(ShipmentExport::class);
     }
 
     protected function historyMainModel(): array
