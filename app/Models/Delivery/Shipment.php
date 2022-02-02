@@ -642,7 +642,10 @@ class Shipment extends AbstractModel
 
             $query->whereHas('cargo', function (Builder $query) use ($fieldName, $op, $value, $secondField) {
                 if (is_array($value)) {
-                    $query->whereIn($fieldName, $value);
+                    $query = $query->whereIn($fieldName, $value);
+                    if ($secondField) {
+                        $query->orWhereIn($secondField, $value);
+                    }
                 } else {
                     $query = $query->where($fieldName, $op, $value);
                     if ($secondField) {
