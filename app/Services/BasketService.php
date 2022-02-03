@@ -96,9 +96,7 @@ class BasketService
             if (array_key_exists('referrer_id', $data) && !$data['referrer_id']) {
                 unset($data['referrer_id']);
             }
-            if (array_key_exists('id', $data)) {
-                unset($data['id']);
-            }
+            
             $item->fill($data);
             $item->setDataByType($data);
             $ok = $item->save();
