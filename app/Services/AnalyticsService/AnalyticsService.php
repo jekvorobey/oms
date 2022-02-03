@@ -7,12 +7,9 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection as SimpleCollection;
-use Illuminate\Support\Facades\DB;
-use PDO;
 
 class AnalyticsService
 {
@@ -25,21 +22,24 @@ class AnalyticsService
         self::STATUS_RETURNED,
     ];
 
-    const STATUS_ACCEPTED = 'accepted';
-    const STATUS_SHIPPED = 'shipped';
-    const STATUS_TRANSITION = 'transition';
-    const STATUS_DONE = 'done';
-    const STATUS_CANCELED = 'canceled';
-    const STATUS_RETURNED = 'returned';
+    public const STATUS_ACCEPTED = 'accepted';
+    public const STATUS_SHIPPED = 'shipped';
+    public const STATUS_TRANSITION = 'transition';
+    public const STATUS_DONE = 'done';
+    public const STATUS_CANCELED = 'canceled';
+    public const STATUS_RETURNED = 'returned';
 
     /** @throws Exception */
-    public function getCountedByStatusProductItemsForPeriod(int $merchantId, string $start, string $end, string $intervalType): ?array
-    {
+    public function getCountedByStatusProductItemsForPeriod(
+        int $merchantId,
+        string $start,
+        string $end,
+        string $intervalType
+    ): ?array {
         $interval = new AnalyticsDateInterval($start, $end, $intervalType);
         /** @var Shipment[]|Collection $shipments */
-        $shipments = Shipment::with(['basketItems' => fn(BelongsToMany $relation) =>
-            $relation->selectRaw('price*qty as sum, qty')
-                ->where('is_returned', false)
+        $shipments = Shipment::with(['basketItems' => fn(BelongsToMany $relation) => $relation->selectRaw('price*qty as sum, qty')
+                ->where('is_returned', false),
         ])
             ->select(['id', 'status', 'created_at', 'is_canceled'])
             ->where('merchant_id', $merchantId)
@@ -67,8 +67,8 @@ class AnalyticsService
 
         $result = array_map(fn() => $defaultAssocArray, array_flip(self::SIMPLIFIED_STATUSES));
 
-        /** @var Collection|Shipment[] $shipments */
         foreach ($shipments as $shipment) {
+            /** @var Shipment $shipment */
             if ($status = $this->getSimpleStatus($shipment)) {
                 $this->fillShipmentProductData($result[$status], $shipment);
                 if ($status !== self::STATUS_ACCEPTED) {
@@ -79,7 +79,8 @@ class AnalyticsService
         return $result;
     }
 
-    private function fillShipmentProductData(&$data, Shipment $shipment) {
+    private function fillShipmentProductData(&$data, Shipment $shipment)
+    {
         $data['countShipments']++;
         $data['countProducts'] += $shipment->basketItems->sum('qty');
         $data['sum'] += $shipment->basketItems->sum('sum');
@@ -96,33 +97,33 @@ class AnalyticsService
         $interval = new AnalyticsDateInterval($start, $end, $intervalType);
         /** @var SimpleCollection|Collection[] $shipments */
         $shipments = Shipment::with([
-            'basketItems' => fn($query) => $query->selectRaw('price*qty as sum')->where('is_returned', false)
+            'basketItems' => fn($query) => $query->selectRaw('price*qty as sum')->where('is_returned', false),
         ])
             ->whereHas('basketItems', fn($query) => $query->where('is_returned', false))
             ->where('merchant_id', $merchantId)
             ->whereBetween('status_at', $interval->fullPeriod())
-            ->where('status', ShipmentStatus::  DONE)
+            ->where('status', ShipmentStatus:: DONE)
             ->where('is_canceled', false)
             ->addSelect([
                 'id',
                 'merchant_id',
                 'status',
                 'is_canceled',
-                'status_at'
-                ])
+                'status_at',
+            ])
             ->orderBy('status_at')
             ->get();
 
         $intervalCallback = fn(Shipment $shipment) => [
-            Carbon::createFromTimeString($shipment->status_at)->{$groupBy} => $shipment
+            Carbon::createFromTimeString($shipment->status_at)->{$groupBy} => $shipment,
         ];
         $shipmentGroups = [];
         /** @var Collection[] $shipmentGroups */
+
         $shipmentGroups['current'] = $shipments
             ->filter(fn(Shipment $shipment) => $interval->isDateWithinCurrentPeriod(Carbon::createFromTimeString($shipment->status_at)))
             ->mapToGroups($intervalCallback);
 
-        /** @var Collection $previous */
         $shipmentGroups['previous'] = $shipments
             ->filter(fn(Shipment $shipment) => $interval->isDateWithinPreviousPeriod(Carbon::createFromTimeString($shipment->status_at)))
             ->mapToGroups($intervalCallback);
@@ -130,11 +131,11 @@ class AnalyticsService
         $result = [];
 
         foreach ($shipmentGroups as $period => $shipmentGroup) {
-            $result[$period] =$shipmentGroup->map(function (Collection $shipmentItems, $intervalNumber) use ($period, &$result) {
-                /** @param Collection|Shipment[] $shipments */;
+            $result[$period] = $shipmentGroup->map(function (Collection $shipmentItems, $intervalNumber) {
+                /** @param Collection|Shipment[] $shipments */
                 return [
                     'intervalNumber' => $intervalNumber,
-                    'sum' => $shipmentItems->sum(fn(Shipment $shipment) => (int)$shipment->basketItems->sum('sum')),
+                    'sum' => $shipmentItems->sum(fn(Shipment $shipment) => (int) $shipment->basketItems->sum('sum')),
                 ];
             });
         }
@@ -142,20 +143,25 @@ class AnalyticsService
     }
 
     /** @throws Exception */
-    public function getMerchantBestsellers(int $merchantId, string $start, string $end, string $intervalType, int $limit): SimpleCollection
-    {
+    public function getMerchantBestsellers(
+        int $merchantId,
+        string $start,
+        string $end,
+        string $intervalType,
+        int $limit
+    ): SimpleCollection {
         $interval = new AnalyticsDateInterval($start, $end, $intervalType);
         $topProductsQuery = BasketItem::query()->select('id', 'offer_id', 'name', 'price', 'qty');
-        /** @var BasketItem[]|Collection $currentTopProducts */
-        /** @var Collection|Collection[] $currentGroupedTopProducts */
+
         $currentTopProductsQuery = (clone $topProductsQuery)
             ->whereHas('shipmentItem.shipment', $this->shipmentQuery($interval->currentPeriod(), $merchantId));
+        /** @var BasketItem[]|Collection $currentTopProducts */
         $currentTopProducts = $currentTopProductsQuery->get();
         $currentGroupedTopProducts = $currentTopProducts->groupBy('offer_id');
+
         $previousTopProductsQuery = (clone $topProductsQuery)
             ->whereHas('shipmentItem.shipment', $this->shipmentQuery($interval->previousPeriod(), $merchantId))
             ->whereIn('offer_id', $currentTopProducts->pluck('offer_id')->unique());
-
         $previousTopProducts = $previousTopProductsQuery->get();
 
         /** @var Collection $previousGroupedTopProducts */
@@ -166,7 +172,7 @@ class AnalyticsService
         foreach ($currentGroupedTopProducts as $offerId => $productItems) {
             $sumCallback = function (BasketItem $item) {
                 $sum = $item->price * $item->qty;
-                return (int)$sum;
+                return (int) $sum;
             };
             $prevSum = isset($previousGroupedTopProducts[$offerId]) ? $previousGroupedTopProducts[$offerId]->sum($sumCallback) : 0;
             $currentSum = $productItems->sum($sumCallback);
@@ -186,8 +192,8 @@ class AnalyticsService
         if ($prevSum === 0) {
             return 100;
         }
-        $diff = ($currentSum - $prevSum);
-        return (int) ( ($diff / $prevSum) * 100);
+        $diff = $currentSum - $prevSum;
+        return (int) ( $diff / $prevSum * 100);
     }
 
     private function shipmentQuery(array $period, int $merchantId): \Closure

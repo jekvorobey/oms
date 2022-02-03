@@ -13,23 +13,23 @@ class AnalyticsDateInterval
     public Carbon $start;
     public Carbon $end;
 
-    const TYPE_YEAR = 'year';
-    const TYPE_MONTH = 'month';
-    const TYPE_WEEK = 'week';
-    const TYPE_DAY = 'day';
+    public const TYPE_YEAR = 'year';
+    public const TYPE_MONTH = 'month';
+    public const TYPE_WEEK = 'week';
+    public const TYPE_DAY = 'day';
 
-    const TYPES = [
+    public const TYPES = [
         self::TYPE_YEAR => [
-            'groupBy' => self::TYPE_MONTH
+            'groupBy' => self::TYPE_MONTH,
         ],
         self::TYPE_MONTH => [
-            'groupBy' => self::TYPE_DAY
+            'groupBy' => self::TYPE_DAY,
         ],
         self::TYPE_WEEK => [
-            'groupBy' => self::TYPE_DAY
+            'groupBy' => self::TYPE_DAY,
         ],
         self::TYPE_DAY => [
-            'groupBy' => self::TYPE_DAY
+            'groupBy' => self::TYPE_DAY,
         ],
     ];
 
@@ -40,7 +40,9 @@ class AnalyticsDateInterval
         $this->start = Carbon::createFromFormat('Y-m-d', $start)->startOfDay();
         $this->end = Carbon::createFromFormat('Y-m-d', $end)->endOfDay();
 
-        $compare = $this->start->diffAsCarbonInterval($this->end->clone()->addDay()->startOfDay())->compare(CarbonInterval::createFromDateString("1 $interval"));
+        $compare = $this->start->diffAsCarbonInterval($this->end->clone()->addDay()->startOfDay())->compare(
+            CarbonInterval::createFromDateString("1 $interval")
+        );
 
         if ($compare !== 0) {
             $this->end = $this->start->clone()->add(1, $interval)->subDay()->endOfDay();
@@ -77,19 +79,12 @@ class AnalyticsDateInterval
     public function isDateWithinPreviousPeriod(Carbon $date): bool
     {
         return $date
-            ->between(
-                $this->previousStart,
-                $this->previousEnd
-            );
+            ->between($this->previousStart, $this->previousEnd);
     }
 
     public function isDateWithinCurrentPeriod(Carbon $date): bool
     {
         return $date
-            ->between(
-                $this->start,
-                $this->end
-            );
+            ->between($this->start, $this->end);
     }
-
 }
