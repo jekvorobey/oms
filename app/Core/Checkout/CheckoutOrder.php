@@ -405,7 +405,6 @@ class CheckoutOrder
                     $shipmentItem = new ShipmentItem();
                     $shipmentItem->shipment_id = $shipment->id;
                     $shipmentItem->basket_item_id = $basketItemId;
-                    $shipmentItem->bundle_item_id = $bundleItemId;
 
                     $shipmentItem->save();
                 }
