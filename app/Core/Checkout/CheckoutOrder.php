@@ -394,9 +394,9 @@ class CheckoutOrder
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
                 $shipment->save();
 
-                foreach ($checkoutShipment->items as [$offerId, $bundleId]) {
+                foreach ($checkoutShipment->items as [$offerId, $bundleId, $bundleItemId]) {
                     $key = $bundleId ?
-                        $offerId . ':' . $bundleId :
+                        $offerId . ':' . $bundleId . ':' . $bundleItemId :
                         $offerId;
                     $basketItemId = $offerToBasketMap[$key] ?? null;
                     if (!$basketItemId) {
@@ -405,6 +405,7 @@ class CheckoutOrder
                     $shipmentItem = new ShipmentItem();
                     $shipmentItem->shipment_id = $shipment->id;
                     $shipmentItem->basket_item_id = $basketItemId;
+                    $shipmentItem->bundle_item_id = $bundleItemId;
 
                     $shipmentItem->save();
                 }
@@ -519,7 +520,7 @@ class CheckoutOrder
         $basket = $this->basket();
         foreach ($basket->items as $basketItem) {
             $key = $basketItem->bundle_id ?
-                $basketItem->offer_id . ':' . $basketItem->bundle_id :
+                $basketItem->offer_id . ':' . $basketItem->bundle_id . ':' . $basketItem->bundle_item_id :
                 $basketItem->offer_id;
             $result[$key] = $basketItem->id;
         }

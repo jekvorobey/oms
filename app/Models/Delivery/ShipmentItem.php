@@ -22,6 +22,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *
  * @property int $shipment_id
  * @property int $basket_item_id
+ * @property ?int $bundle_item_id
  *
  * @property-read Shipment $shipment
  * @property-read BasketItem $basketItem
