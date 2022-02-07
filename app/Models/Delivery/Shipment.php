@@ -579,6 +579,10 @@ class Shipment extends AbstractModel
         $filterByDeliveryField('delivery_service', 'delivery_service');
         //Фильтр по времени доставки отправления
         $filterByDeliveryField('delivery_at', 'delivery_at');
+        // Фильтр по данным покупателя
+        $filterByDeliveryField('receiver_name', 'receiver_name');
+        // Фильтр по pdd
+        $filterByDeliveryField('pdd', 'pdd');
 
         //Фильтр по службе доставки на нулевой миле
         $deliveryServiceZeroMileFilter = $restQuery->getFilter('delivery_service_zero_mile');
@@ -619,7 +623,39 @@ class Shipment extends AbstractModel
         $filterByDeliveryAddressFields('floor');
         $filterByDeliveryAddressFields('flat');
 
+        self::filterByCargoField('cargo_xml_id', 'cdek_intake_number', $restQuery, $query, $modifiedRestQuery, 'xml_id');
+
         return parent::modifyQuery($query, $modifiedRestQuery);
+    }
+
+    private static function filterByCargoField(
+        string $filterName,
+        string $fieldName,
+        RestQuery $restQuery,
+        Builder $query,
+        RestQuery $modifiedRestQuery,
+        ?string $secondField = null
+    ): void {
+        $filter = $restQuery->getFilter($filterName);
+        if ($filter) {
+            [$op, $value] = reset($filter);
+
+            $query->whereHas('cargo', function (Builder $query) use ($fieldName, $op, $value, $secondField) {
+                if (is_array($value)) {
+                    $query = $query->whereIn($fieldName, $value);
+                    if ($secondField) {
+                        $query->orWhereIn($secondField, $value);
+                    }
+                } else {
+                    $query = $query->where($fieldName, $op, $value);
+                    if ($secondField) {
+                        $query->orWhere($secondField, $op, $value);
+                    }
+                }
+            });
+
+            $modifiedRestQuery->removeFilter($filterName);
+        }
     }
 
     /**
