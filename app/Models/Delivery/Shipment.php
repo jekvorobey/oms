@@ -593,7 +593,7 @@ class Shipment extends AbstractModel
         //Фильтр по времени доставки отправления
         $filterByDeliveryField('delivery_at', 'delivery_at');
         // Фильтр по данным покупателя
-        $filterByDeliveryField('receiver_name', 'receiver_name');
+        $filterByDeliveryField('receiver_name', 'receiver_name', ['receiver_phone', 'receiver_email']);
         // Фильтр по pdd
         $filterByDeliveryField('pdd', 'pdd');
 
