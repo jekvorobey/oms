@@ -558,16 +558,29 @@ class Shipment extends AbstractModel
         }
 
         //Функция-фильтр по полям доставки связанной с отправлением
-        $filterByDeliveryField = function (string $filterName, string $fieldName) use ($restQuery, $query, $modifiedRestQuery) {
+        $filterByDeliveryField = function (
+            string $filterName,
+            string $fieldName,
+            ?array $additionalFields = null
+        ) use (
+            $restQuery,
+            $query,
+            $modifiedRestQuery
+        ) {
             $deliveryFieldFilter = $restQuery->getFilter($filterName);
             if ($deliveryFieldFilter) {
                 [$op, $value] = $deliveryFieldFilter[0];
 
-                $query->whereHas('delivery', function (Builder $query) use ($fieldName, $op, $value) {
+                $query->whereHas('delivery', function (Builder $query) use ($fieldName, $op, $value, $additionalFields) {
                     if (is_array($value)) {
                         $query->whereIn($fieldName, $value);
                     } else {
                         $query->where($fieldName, $op, $value);
+                    }
+                    if (!empty($additionalFields)) {
+                        foreach ($additionalFields as $field) {
+                            $query->orWhere($field, $op, $value);
+                        }
                     }
                 });
                 $modifiedRestQuery->removeFilter($filterName);
