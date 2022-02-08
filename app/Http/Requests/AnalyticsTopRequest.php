@@ -17,6 +17,6 @@ class AnalyticsTopRequest extends AnalyticsRequest
     {
         parent::prepareForValidation();
 
-        unset($this->allowedIntervalTypes[AnalyticsDateInterval::TYPE_DAY]);
+        $this->allowedIntervalTypes = AnalyticsDateInterval::TYPES;
     }
 }

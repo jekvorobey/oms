@@ -27,6 +27,6 @@ class AnalyticsRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-        $this->allowedIntervalTypes = AnalyticsDateInterval::TYPES;
+        $this->allowedIntervalTypes = collect(AnalyticsDateInterval::TYPES)->except(AnalyticsDateInterval::TYPE_DAY)->toArray();
     }
 }

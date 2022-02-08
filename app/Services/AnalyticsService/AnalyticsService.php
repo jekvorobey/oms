@@ -115,17 +115,17 @@ class AnalyticsService
             ->get();
 
         $intervalCallback = fn(Shipment $shipment) => [
-            Carbon::createFromTimeString($shipment->status_at)->{$groupBy} => $shipment,
+            Carbon::parse($shipment->status_at)->{$groupBy} => $shipment,
         ];
         $shipmentGroups = [];
         /** @var Collection[] $shipmentGroups */
 
         $shipmentGroups['current'] = $shipments
-            ->filter(fn(Shipment $shipment) => $interval->isDateWithinCurrentPeriod(Carbon::createFromTimeString($shipment->status_at)))
+            ->filter(fn(Shipment $shipment) => $interval->isDateWithinCurrentPeriod(Carbon::parse($shipment->status_at)))
             ->mapToGroups($intervalCallback);
 
         $shipmentGroups['previous'] = $shipments
-            ->filter(fn(Shipment $shipment) => $interval->isDateWithinPreviousPeriod(Carbon::createFromTimeString($shipment->status_at)))
+            ->filter(fn(Shipment $shipment) => $interval->isDateWithinPreviousPeriod(Carbon::parse($shipment->status_at)))
             ->mapToGroups($intervalCallback);
 
         $result = [];
@@ -154,14 +154,16 @@ class AnalyticsService
         $topProductsQuery = BasketItem::query()->select('id', 'offer_id', 'name', 'price', 'qty');
 
         $currentTopProductsQuery = (clone $topProductsQuery)
-            ->whereHas('shipmentItem.shipment', $this->shipmentQuery($interval->currentPeriod(), $merchantId));
+            ->whereHas('shipmentItem.shipment', $this->shipmentQuery($interval->currentPeriod(), $merchantId))
+            ->limit($limit);
         /** @var BasketItem[]|Collection $currentTopProducts */
         $currentTopProducts = $currentTopProductsQuery->get();
         $currentGroupedTopProducts = $currentTopProducts->groupBy('offer_id');
 
         $previousTopProductsQuery = (clone $topProductsQuery)
             ->whereHas('shipmentItem.shipment', $this->shipmentQuery($interval->previousPeriod(), $merchantId))
-            ->whereIn('offer_id', $currentTopProducts->pluck('offer_id')->unique());
+            ->whereIn('offer_id', $currentTopProducts->pluck('offer_id'))
+            ->limit($limit);
         $previousTopProducts = $previousTopProductsQuery->get();
 
         /** @var Collection $previousGroupedTopProducts */

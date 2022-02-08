@@ -19,6 +19,7 @@ use Faker\Factory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithoutEvents;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AnalyticsTest extends TestCase
@@ -82,7 +83,7 @@ class AnalyticsTest extends TestCase
         $response['bestsellers'] = $this->get("$urlBase/merchant_analytics/top/bestsellers$urlQueryString");
 
         foreach (array_keys($expectedData) as $key) {
-            $response[$key]->assertOk();
+            $this->assertEquals(200, $response[$key]->getStatusCode(), "$key request returns returns wrong status code");
             $response[$key] = json_decode($response[$key]->getContent(), true);
             if ($key === 'sales') {
                 foreach (array_keys(self::PERIODS) as $period) {
