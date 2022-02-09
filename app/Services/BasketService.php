@@ -56,11 +56,15 @@ class BasketService
     /**
      * Получить объект товар корзины, даже если его нет в БД
      */
-    protected function itemByOffer(Basket $basket, int $offerId, ?int $bundleId = null): BasketItem
-    {
-        $item = $basket->items->first(function (BasketItem $item) use ($offerId, $bundleId) {
+    protected function itemByOffer(
+        Basket $basket,
+        int $offerId,
+        ?int $bundleId = null,
+        ?int $bundleItemId = null
+    ): BasketItem {
+        $item = $basket->items->first(function (BasketItem $item) use ($offerId, $bundleId, $bundleItemId) {
             return $bundleId
-                ? $item->offer_id == $offerId && $item->bundle_id == $bundleId
+                ? $item->offer_id == $offerId && $item->bundle_id == $bundleId && $item->bundle_item_id === $bundleItemId
                 : $item->offer_id == $offerId && is_null($item->bundle_id);
         });
 
@@ -82,8 +86,7 @@ class BasketService
      */
     public function setItem(Basket $basket, int $offerId, array $data): bool
     {
-        $item = $this->itemByOffer($basket, $offerId, $data['bundle_id'] ?? null);
-
+        $item = $this->itemByOffer($basket, $offerId, $data['bundle_id'] ?? null, $data['bundle_item_id'] ?? null);
         if ($item->id && isset($data['qty']) && !$data['qty']) {
             $ok = $item->delete();
         } else {
@@ -93,6 +96,7 @@ class BasketService
             if (array_key_exists('referrer_id', $data) && !$data['referrer_id']) {
                 unset($data['referrer_id']);
             }
+
             $item->fill($data);
             $item->setDataByType($data);
             $ok = $item->save();
