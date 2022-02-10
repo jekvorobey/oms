@@ -292,6 +292,17 @@ class Cargo extends AbstractModel
             $modifiedRestQuery->removeFilter('shipment_number');
         }
 
+        foreach ($restQuery->filterIterator() as [$field, $op, $value]) {
+            $restQuery->removeFilter($field);
+
+            switch ($field) {
+                case 'cdek_intake_number':
+                    $query->where($field, $op, $value)
+                        ->orWhere('xml_id', $op, $value);
+                    break;
+            }
+        }
+
         return parent::modifyQuery($query, $modifiedRestQuery);
     }
 
