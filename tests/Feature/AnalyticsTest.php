@@ -19,7 +19,6 @@ use Faker\Factory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithoutEvents;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AnalyticsTest extends TestCase
