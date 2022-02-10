@@ -13,17 +13,24 @@ class AnalyticsDateInterval
     public Carbon $start;
     public Carbon $end;
 
-    const TYPE_YEAR = 'year';
-    const TYPE_MONTH = 'month';
-    const TYPE_DAY = 'day';
+    public const TYPE_YEAR = 'year';
+    public const TYPE_MONTH = 'month';
+    public const TYPE_WEEK = 'week';
+    public const TYPE_DAY = 'day';
 
-    const TYPES = [
-      self::TYPE_YEAR => [
-          'groupBy' => self::TYPE_MONTH
-      ],
-      self::TYPE_MONTH => [
-          'groupBy' => self::TYPE_DAY
-      ]
+    public const TYPES = [
+        self::TYPE_YEAR => [
+            'groupBy' => self::TYPE_MONTH,
+        ],
+        self::TYPE_MONTH => [
+            'groupBy' => self::TYPE_DAY,
+        ],
+        self::TYPE_WEEK => [
+            'groupBy' => self::TYPE_DAY,
+        ],
+        self::TYPE_DAY => [
+            'groupBy' => self::TYPE_DAY,
+        ],
     ];
 
     /** @throws Exception */
@@ -32,8 +39,17 @@ class AnalyticsDateInterval
         $intervalScaleUnit = self::TYPES[$interval]['groupBy'];
         $this->start = Carbon::createFromFormat('Y-m-d', $start)->startOfDay();
         $this->end = Carbon::createFromFormat('Y-m-d', $end)->endOfDay();
-        $this->previousEnd = $this->start->clone()->sub(1, $intervalScaleUnit)->endOfDay();
-        $this->previousStart = $this->start->clone()->sub(1, $intervalScaleUnit)->startOfDay();
+
+        $compare = $this->start->diffAsCarbonInterval($this->end->clone()->addDay()->startOfDay())->compare(
+            CarbonInterval::createFromDateString("1 $interval")
+        );
+
+        if ($compare !== 0) {
+            $this->end = $this->start->clone()->add(1, $interval)->subDay()->endOfDay();
+        }
+
+        $this->previousStart = $this->start->clone()->sub(1, $interval)->startOf($interval);
+        $this->previousEnd = $this->start->clone()->sub(1, $intervalScaleUnit)->endOf($interval);
     }
 
     /**
@@ -41,7 +57,7 @@ class AnalyticsDateInterval
      */
     public function previousPeriod(): array
     {
-        return [$this->previousStart->format('Y-m-d'), $this->previousEnd->format('Y-m-d')];
+        return [$this->previousStart->format('Y-m-d H:i:s'), $this->previousEnd->format('Y-m-d H:i:s')];
     }
 
     /**
@@ -49,7 +65,7 @@ class AnalyticsDateInterval
      */
     public function currentPeriod(): array
     {
-        return [$this->start->format('Y-m-d'), $this->end->format('Y-m-d')];
+        return [$this->start->format('Y-m-d H:i:s'), $this->end->format('Y-m-d H:i:s')];
     }
 
     /**
@@ -57,25 +73,18 @@ class AnalyticsDateInterval
      */
     public function fullPeriod(): array
     {
-        return [$this->previousStart->format('Y-m-d'), $this->end->format('Y-m-d')];
+        return [$this->previousStart->format('Y-m-d H:i:s'), $this->end->format('Y-m-d H:i:s')];
     }
 
     public function isDateWithinPreviousPeriod(Carbon $date): bool
     {
         return $date
-            ->between(
-                $this->previousStart,
-                $this->previousEnd
-            );
+            ->between($this->previousStart, $this->previousEnd);
     }
 
     public function isDateWithinCurrentPeriod(Carbon $date): bool
     {
         return $date
-            ->between(
-                $this->start,
-                $this->end
-            );
+            ->between($this->start, $this->end);
     }
-
 }

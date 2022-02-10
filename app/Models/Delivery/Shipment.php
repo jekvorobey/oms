@@ -213,6 +213,11 @@ class Shipment extends AbstractModel
         'delivery_service_zero_mile',
     ];
 
+    protected $dates = ['created_at'];
+    protected $casts = [
+        'status' => 'int',
+    ];
+
     /** @var array */
     protected $fillable = self::FILLABLE;
 
