@@ -151,6 +151,9 @@ class Cargo extends AbstractModel
         'cdek_intake_number',
         'xml_id',
         'shipping_problem_comment',
+        'intake_date',
+        'intake_time_from',
+        'intake_time_to',
     ];
 
     /** @var array */
@@ -168,6 +171,9 @@ class Cargo extends AbstractModel
         'width' => 'float',
         'height' => 'float',
         'length' => 'float',
+        'intake_date' => 'date',
+        'intake_time_from' => 'datetime',
+        'intake_time_to' => 'datetime',
     ];
 
     /** @var array */
