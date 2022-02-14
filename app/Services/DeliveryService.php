@@ -394,6 +394,10 @@ class DeliveryService
             throw new Exception($cargo->error_xml_id);
         }
 
+        $cargo->intake_date - $deliveryCargoDto->date;
+        $cargo->intake_time_from - $deliveryCargoDto->time_start;
+        $cargo->intake_time_to - $deliveryCargoDto->time_end;
+
         $cargo->save();
     }
 

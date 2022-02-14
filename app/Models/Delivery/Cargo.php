@@ -128,6 +128,10 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property float $weight - вес (расчитывается автоматически)
  * @property string $shipping_problem_comment - последнее сообщение мерчанта о проблеме с отгрузкой
  *
+ * @property Carbon|null $intake_date - Дата задания на забор груза
+ * @property Carbon|null $intake_time_from - Время на забор груза от
+ * @property Carbon|null $intake_time_to - Время на забор груза до
+ *
  * //dynamic attributes
  * @property int $package_qty - кол-во коробок груза
  *
