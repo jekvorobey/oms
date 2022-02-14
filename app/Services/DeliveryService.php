@@ -381,6 +381,9 @@ class DeliveryService
                 if ($courierCallOutputDto->success) {
                     $cargo->xml_id = $courierCallOutputDto->xml_id;
                     $cargo->error_xml_id = $courierCallOutputDto->special_courier_call_status;
+                    $cargo->intake_date = $deliveryCargoDto->date;
+                    $cargo->intake_time_from = $deliveryCargoDto->time_start;
+                    $cargo->intake_time_to = $deliveryCargoDto->time_end;
                     break;
                 } else {
                     $cargo->error_xml_id = $courierCallOutputDto->message;
@@ -393,10 +396,6 @@ class DeliveryService
             $cargo->save();
             throw new Exception($cargo->error_xml_id);
         }
-
-        $cargo->intake_date - $deliveryCargoDto->date;
-        $cargo->intake_time_from - $deliveryCargoDto->time_start;
-        $cargo->intake_time_to - $deliveryCargoDto->time_end;
 
         $cargo->save();
     }
