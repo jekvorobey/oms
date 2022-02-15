@@ -15,8 +15,8 @@ class AddIntakeDateIntakeTimeFromIntakeTimeToToCargo extends Migration
     {
         Schema::table('cargo', function (Blueprint $table) {
             $table->date('intake_date')->nullable();
-            $table->dateTime('intake_time_from')->nullable();
-            $table->dateTime('intake_time_to')->nullable();
+            $table->time('intake_time_from')->nullable();
+            $table->time('intake_time_to')->nullable();
         });
     }
 

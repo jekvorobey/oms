@@ -176,8 +176,8 @@ class Cargo extends AbstractModel
         'height' => 'float',
         'length' => 'float',
         'intake_date' => 'date',
-        'intake_time_from' => 'datetime',
-        'intake_time_to' => 'datetime',
+        'intake_time_from' => 'time',
+        'intake_time_to' => 'time',
     ];
 
     /** @var array */
