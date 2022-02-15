@@ -298,7 +298,7 @@
                                         <div class="text">
                                             <ul class="dates">
                                                 @foreach($publicEvent->stages as $stage)
-                                                    @if(!in_array($stage->id, $ticketsInfo->stageIds))
+                                                    @if(!in_array($stage->id, $ticketsInfo->stageIds ?? []))
                                                         @continue
                                                     @endif
                                                     <li>
@@ -445,7 +445,7 @@
                                 <img class="logo" src="{{ public_path() }}/img/logo.svg">
                                 <div class="title space">ПРОГРАММА</div>
                                 @foreach($publicEvent->stages as $stage)
-                                    @if(!in_array($stage->id, $ticketsInfo->stageIds))
+                                    @if(!in_array($stage->id, $ticketsInfo->stageIds ?: []))
                                         @continue
                                     @endif
                                     <div class="program" style="padding-top: 20.5px">

@@ -100,6 +100,10 @@ class BasketService
             $item->fill($data);
             $item->setDataByType($data);
             $ok = $item->save();
+
+            if ($item->wasRecentlyCreated) {
+                $basket->items->push($item);
+            }
         }
 
         return $ok;
