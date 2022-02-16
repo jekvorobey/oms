@@ -303,12 +303,11 @@ class Cargo extends AbstractModel
         }
 
         foreach ($modifiedRestQuery->filterIterator() as [$field, $op, $value]) {
-            $modifiedRestQuery->removeFilter($field);
-
             switch ($field) {
                 case 'cdek_intake_number':
                     $query->where($field, $op, $value)
                         ->orWhere('xml_id', $op, $value);
+                    $modifiedRestQuery->removeFilter($field);
                     break;
             }
         }
