@@ -302,8 +302,8 @@ class Cargo extends AbstractModel
             $modifiedRestQuery->removeFilter('shipment_number');
         }
 
-        foreach ($restQuery->filterIterator() as [$field, $op, $value]) {
-            $restQuery->removeFilter($field);
+        foreach ($modifiedRestQuery->filterIterator() as [$field, $op, $value]) {
+            $modifiedRestQuery->removeFilter($field);
 
             switch ($field) {
                 case 'cdek_intake_number':
