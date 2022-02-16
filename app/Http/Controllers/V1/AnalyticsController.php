@@ -28,7 +28,10 @@ class AnalyticsController extends Controller
     public function productsShipments(AnalyticsRequest $request, AnalyticsService $service): JsonResponse
     {
         $data = $request->validated();
-        return response()->json($service->getCountedByStatusProductItemsForPeriod($data['merchantId'], $data['start'], $data['end'], $data['intervalType']));
+
+        return response()->json(
+            $service->getCountedByStatusProductItemsForPeriod($data['merchantId'], $data['start'], $data['end'])
+        );
     }
 
     /**
@@ -48,7 +51,10 @@ class AnalyticsController extends Controller
     public function sales(AnalyticsRequest $request, AnalyticsService $service): JsonResponse
     {
         $data = $request->validated();
-        return response()->json($service->getMerchantSalesAnalytics($data['merchantId'], $data['start'], $data['end'], $data['intervalType']));
+
+        return response()->json(
+            $service->getMerchantSalesAnalytics($data['merchantId'], $data['start'], $data['end'])
+        );
     }
 
     /**
@@ -68,8 +74,9 @@ class AnalyticsController extends Controller
     public function bestsellers(AnalyticsTopRequest $request, AnalyticsService $service): JsonResponse
     {
         $data = $request->validated();
+
         return response()->json(
-            $service->getMerchantBestsellers($data['merchantId'], $data['start'], $data['end'], $data['intervalType'], $data['limit'])
+            $service->getMerchantBestsellers($data['merchantId'], $data['start'], $data['end'], $data['limit'])
         );
     }
 }

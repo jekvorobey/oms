@@ -30,15 +30,12 @@ class AnalyticsService
     public const STATUS_RETURNED = 'returned';
 
     /** @throws Exception */
-    public function getCountedByStatusProductItemsForPeriod(
-        int $merchantId,
-        string $start,
-        string $end,
-        string $intervalType
-    ): ?array {
-        $interval = new AnalyticsDateInterval($start, $end, $intervalType);
+    public function getCountedByStatusProductItemsForPeriod(int $merchantId, string $start, string $end): ?array
+    {
+        $interval = new AnalyticsDateInterval($start, $end);
         /** @var Shipment[]|Collection $shipments */
-        $shipments = Shipment::with(['basketItems' => fn(BelongsToMany $relation) => $relation->selectRaw('price*qty as sum, qty')
+        $shipments = Shipment::with([
+            'basketItems' => fn(BelongsToMany $relation) => $relation->selectRaw('price*qty as sum, qty')
                 ->where('is_returned', false),
         ])
             ->select(['id', 'status', 'created_at', 'is_canceled'])
@@ -87,14 +84,9 @@ class AnalyticsService
     }
 
     /** @throws Exception */
-    public function getMerchantSalesAnalytics(
-        int $merchantId,
-        string $start,
-        string $end,
-        string $intervalType = AnalyticsDateInterval::TYPE_MONTH
-    ): array {
-        $groupBy = AnalyticsDateInterval::TYPES[$intervalType]['groupBy'];
-        $interval = new AnalyticsDateInterval($start, $end, $intervalType);
+    public function getMerchantSalesAnalytics(int $merchantId, string $start, string $end): array
+    {
+        $interval = new AnalyticsDateInterval($start, $end);
         /** @var SimpleCollection|Collection[] $shipments */
         $shipments = Shipment::with([
             'basketItems' => fn($query) => $query->selectRaw('price*qty as sum')->where('is_returned', false),
@@ -115,10 +107,11 @@ class AnalyticsService
             ->get();
 
         $intervalCallback = fn(Shipment $shipment) => [
-            Carbon::parse($shipment->status_at)->{$groupBy} => $shipment,
+            Carbon::parse($shipment->status_at)->format('Y-m-d') => $shipment,
         ];
-        $shipmentGroups = [];
+
         /** @var Collection[] $shipmentGroups */
+        $shipmentGroups = [];
 
         $shipmentGroups['current'] = $shipments
             ->filter(fn(Shipment $shipment) => $interval->isDateWithinCurrentPeriod(Carbon::parse($shipment->status_at)))
@@ -143,14 +136,9 @@ class AnalyticsService
     }
 
     /** @throws Exception */
-    public function getMerchantBestsellers(
-        int $merchantId,
-        string $start,
-        string $end,
-        string $intervalType,
-        int $limit
-    ): SimpleCollection {
-        $interval = new AnalyticsDateInterval($start, $end, $intervalType);
+    public function getMerchantBestsellers(int $merchantId, string $start, string $end, int $limit): SimpleCollection
+    {
+        $interval = new AnalyticsDateInterval($start, $end);
         $topProductsQuery = BasketItem::query()->select('id', 'offer_id', 'name', 'price', 'qty');
 
         $currentTopProductsQuery = (clone $topProductsQuery)
@@ -192,10 +180,12 @@ class AnalyticsService
     private function lfl(int $currentSum, int $prevSum): int
     {
         if ($prevSum === 0) {
-            return 100;
+            return 0;
         }
+
         $diff = $currentSum - $prevSum;
-        return (int) ( $diff / $prevSum * 100);
+
+        return (int) ($diff / $prevSum * 100);
     }
 
     private function shipmentQuery(array $period, int $merchantId): \Closure

@@ -13,43 +13,14 @@ class AnalyticsDateInterval
     public Carbon $start;
     public Carbon $end;
 
-    public const TYPE_YEAR = 'year';
-    public const TYPE_MONTH = 'month';
-    public const TYPE_WEEK = 'week';
-    public const TYPE_DAY = 'day';
-
-    public const TYPES = [
-        self::TYPE_YEAR => [
-            'groupBy' => self::TYPE_MONTH,
-        ],
-        self::TYPE_MONTH => [
-            'groupBy' => self::TYPE_DAY,
-        ],
-        self::TYPE_WEEK => [
-            'groupBy' => self::TYPE_DAY,
-        ],
-        self::TYPE_DAY => [
-            'groupBy' => self::TYPE_DAY,
-        ],
-    ];
-
     /** @throws Exception */
-    public function __construct(string $start, string $end, $interval = self::TYPE_YEAR)
+    public function __construct(string $start, string $end)
     {
-        $intervalScaleUnit = self::TYPES[$interval]['groupBy'];
         $this->start = Carbon::createFromFormat('Y-m-d', $start)->startOfDay();
         $this->end = Carbon::createFromFormat('Y-m-d', $end)->endOfDay();
 
-        $compare = $this->start->diffAsCarbonInterval($this->end->clone()->addDay()->startOfDay())->compare(
-            CarbonInterval::createFromDateString("1 $interval")
-        );
-
-        if ($compare !== 0) {
-            $this->end = $this->start->clone()->add(1, $interval)->subDay()->endOfDay();
-        }
-
-        $this->previousStart = $this->start->clone()->sub(1, $interval)->startOf($interval);
-        $this->previousEnd = $this->start->clone()->sub(1, $intervalScaleUnit)->endOf($interval);
+        $this->previousEnd = $this->start->copy()->subDay();
+        $this->previousStart = $this->previousEnd->copy()->subDays($this->end->diffInDays($this->start));
     }
 
     /**

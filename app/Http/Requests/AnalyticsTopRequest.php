@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Services\AnalyticsService\AnalyticsDateInterval;
-
 class AnalyticsTopRequest extends AnalyticsRequest
 {
     public function rules(): array
@@ -16,7 +14,5 @@ class AnalyticsTopRequest extends AnalyticsRequest
     protected function prepareForValidation()
     {
         parent::prepareForValidation();
-
-        $this->allowedIntervalTypes = AnalyticsDateInterval::TYPES;
     }
 }
