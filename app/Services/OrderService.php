@@ -327,105 +327,113 @@ class OrderService
         $orderInfoDto->receiverName = $order->receiver_name;
         $orderInfoDto->receiverEmail = $order->receiver_email;
         $orderInfoDto->receiverPhone = $order->receiver_phone;
-        foreach ($cardStructs as $cardStruct) {
-            $publicEventInfoDto = new PublicEventOrder\PublicEventInfoDto();
-            $orderInfoDto->addPublicEvent($publicEventInfoDto);
-            $publicEventInfoDto->id = $cardStruct->id;
-            $publicEventInfoDto->code = $cardStruct->code;
-            $publicEventInfoDto->dateFrom = $cardStruct->dateFrom;
-            $publicEventInfoDto->dateTo = $cardStruct->dateTo;
 
-            foreach ($cardStruct->speakers as $speaker) {
-                $speakerInfoDto = new PublicEventOrder\SpeakerInfoDto();
-                $speakerInfoDto->id = $speaker['id'];
-                $speakerInfoDto->firstName = $speaker['first_name'];
-                $speakerInfoDto->middleName = $speaker['middle_name'];
-                $speakerInfoDto->lastName = $speaker['last_name'];
-                $speakerInfoDto->phone = $speaker['phone'];
-                $speakerInfoDto->email = $speaker['email'];
-                $speakerInfoDto->lastName = $speaker['last_name'];
-                $speakerInfoDto->profession = $speaker['profession'];
-                $speakerInfoDto->avatar = $speaker['avatar'];
-                $speakerInfoDto->setInstagram($speaker['instagram']);
-                $speakerInfoDto->setFacebook($speaker['facebook']);
-                $speakerInfoDto->setLinkedin($speaker['linkedin']);
-                $publicEventInfoDto->addSpeaker($speakerInfoDto);
-            }
+        if (empty($cardStructs)) {
+            $orderInfoDto->canRepeat = false;
+            $orderInfoDto->hasBadOffers = false;
+        } else {
+            foreach ($cardStructs as $cardStruct) {
+                $publicEventInfoDto = new PublicEventOrder\PublicEventInfoDto();
+                $orderInfoDto->addPublicEvent($publicEventInfoDto);
+                $publicEventInfoDto->id = $cardStruct->id;
+                $publicEventInfoDto->code = $cardStruct->code;
+                $publicEventInfoDto->dateFrom = $cardStruct->dateFrom;
+                $publicEventInfoDto->dateTo = $cardStruct->dateTo;
+                $publicEventInfoDto->active = $cardStruct->active;
+                $publicEventInfoDto->availableForSale = $cardStruct->availableForSale;
 
-            foreach ($cardStruct->places as $place) {
-                $placeInfoDto = new PublicEventOrder\PlaceInfoDto();
-                $placeInfoDto->id = $place['id'];
-                $placeInfoDto->name = $place['name'];
-                $placeInfoDto->description = $place['description'];
-                $placeInfoDto->cityId = $place['city_id'];
-                $placeInfoDto->cityName = $place['city_name'];
-                $placeInfoDto->address = $place['address'];
-                $placeInfoDto->latitude = $place['latitude'];
-                $placeInfoDto->longitude = $place['longitude'];
-                foreach ($place['gallery'] as $gallery) {
-                    $galleryItemInfoDto = new PublicEventOrder\GalleryItemInfoDto();
-                    $placeInfoDto->addGalleryItem($galleryItemInfoDto);
-                    $galleryItemInfoDto->fileId = $gallery['value'];
-                    $galleryItemInfoDto->collection = $gallery['collection'];
-                    $galleryItemInfoDto->type = $gallery['type'];
+                foreach ($cardStruct->speakers as $speaker) {
+                    $speakerInfoDto = new PublicEventOrder\SpeakerInfoDto();
+                    $speakerInfoDto->id = $speaker['id'];
+                    $speakerInfoDto->firstName = $speaker['first_name'];
+                    $speakerInfoDto->middleName = $speaker['middle_name'];
+                    $speakerInfoDto->lastName = $speaker['last_name'];
+                    $speakerInfoDto->phone = $speaker['phone'];
+                    $speakerInfoDto->email = $speaker['email'];
+                    $speakerInfoDto->lastName = $speaker['last_name'];
+                    $speakerInfoDto->profession = $speaker['profession'];
+                    $speakerInfoDto->avatar = $speaker['avatar'];
+                    $speakerInfoDto->setInstagram($speaker['instagram']);
+                    $speakerInfoDto->setFacebook($speaker['facebook']);
+                    $speakerInfoDto->setLinkedin($speaker['linkedin']);
+                    $publicEventInfoDto->addSpeaker($speakerInfoDto);
                 }
-                $publicEventInfoDto->addPlace($placeInfoDto);
-            }
 
-            foreach ($cardStruct->stages as $stage) {
-                $stageInfoDto = new PublicEventOrder\StageInfoDto();
-                $stageInfoDto->id = $stage['id'];
-                $stageInfoDto->name = $stage['name'];
-                $stageInfoDto->description = $stage['description'];
-                $stageInfoDto->result = $stage['result'];
-                $stageInfoDto->raider = $stage['raider'];
-                $stageInfoDto->setDateFrom($stage['date_from']);
-                $stageInfoDto->setDateTo($stage['date_to']);
-                $stageInfoDto->setTimeFrom($stage['time_from']);
-                $stageInfoDto->setTimeTo($stage['time_to']);
-                $stageInfoDto->placeId = $stage['place_id'];
-                $stageInfoDto->speakerIds = $stage['speaker_ids'];
-                $publicEventInfoDto->addStage($stageInfoDto);
-            }
+                foreach ($cardStruct->places as $place) {
+                    $placeInfoDto = new PublicEventOrder\PlaceInfoDto();
+                    $placeInfoDto->id = $place['id'];
+                    $placeInfoDto->name = $place['name'];
+                    $placeInfoDto->description = $place['description'];
+                    $placeInfoDto->cityId = $place['city_id'];
+                    $placeInfoDto->cityName = $place['city_name'];
+                    $placeInfoDto->address = $place['address'];
+                    $placeInfoDto->latitude = $place['latitude'];
+                    $placeInfoDto->longitude = $place['longitude'];
+                    foreach ($place['gallery'] as $gallery) {
+                        $galleryItemInfoDto = new PublicEventOrder\GalleryItemInfoDto();
+                        $placeInfoDto->addGalleryItem($galleryItemInfoDto);
+                        $galleryItemInfoDto->fileId = $gallery['value'];
+                        $galleryItemInfoDto->collection = $gallery['collection'];
+                        $galleryItemInfoDto->type = $gallery['type'];
+                    }
+                    $publicEventInfoDto->addPlace($placeInfoDto);
+                }
 
-            $organizerInfoDto = new PublicEventOrder\OrganizerInfoDto();
-            $publicEventInfoDto->organizer = $organizerInfoDto;
-            $organizerInfoDto->name = $cardStruct->organizer['name'];
-            $organizerInfoDto->description = $cardStruct->organizer['description'];
-            $organizerInfoDto->phone = $cardStruct->organizer['phone'];
-            $organizerInfoDto->email = $cardStruct->organizer['email'];
-            $organizerInfoDto->site = $cardStruct->organizer['site'];
-            $organizerInfoDto->messengerPhone = $cardStruct->organizer['messenger_phone'] ?: $cardStruct->organizer['phone'];
-            foreach ($basketItems as $item) {
-                if ($cardStruct->sprintId == $item->getSprintId()) {
-                    $ticketsInfoDto = new PublicEventOrder\TicketsInfoDto();
-                    $publicEventInfoDto->addTicketInfo($ticketsInfoDto);
-                    $ticketsInfoDto->id = $item->id;
-                    $ticketsInfoDto->code = $item->code;
-                    $ticketsInfoDto->name = $item->name;
-                    $ticketsInfoDto->stageIds = $item->getTicketStageIds();
-                    $ticketsInfoDto->ticketTypeName = $item->getTicketTypeName();
-                    $ticketsInfoDto->photoId = $cardStruct->image;
-                    $ticketsInfoDto->nearestDate = $cardStruct->nearestDate;
-                    $ticketsInfoDto->nearestTimeFrom = $cardStruct->nearestTimeFrom;
-                    $ticketsInfoDto->nearestPlaceName = $cardStruct->nearestPlaceName;
-                    $ticketsInfoDto->ticketsQty = count($item->getTicketIds());
-                    $ticketsInfoDto->price = (float) $item->price;
-                    $ticketsInfoDto->pricePerOne = $ticketsInfoDto->price / $ticketsInfoDto->ticketsQty;
+                foreach ($cardStruct->stages as $stage) {
+                    $stageInfoDto = new PublicEventOrder\StageInfoDto();
+                    $stageInfoDto->id = $stage['id'];
+                    $stageInfoDto->name = $stage['name'];
+                    $stageInfoDto->description = $stage['description'];
+                    $stageInfoDto->result = $stage['result'];
+                    $stageInfoDto->raider = $stage['raider'];
+                    $stageInfoDto->setDateFrom($stage['date_from']);
+                    $stageInfoDto->setDateTo($stage['date_to']);
+                    $stageInfoDto->setTimeFrom($stage['time_from']);
+                    $stageInfoDto->setTimeTo($stage['time_to']);
+                    $stageInfoDto->placeId = $stage['place_id'];
+                    $stageInfoDto->speakerIds = $stage['speaker_ids'];
+                    $publicEventInfoDto->addStage($stageInfoDto);
+                }
 
-                    if ($loadTickets) {
-                        foreach ($item->getTicketIds() as $ticketId) {
-                            if ($tickets->has($ticketId)) {
-                                $ticket = $tickets[$ticketId];
-                                $ticketDto = new PublicEventOrder\TicketInfoDto();
-                                $ticketsInfoDto->addTicket($ticketDto);
-                                $ticketDto->id = $ticket->id;
-                                $ticketDto->code = $ticket->code;
-                                $ticketDto->firstName = $ticket->first_name;
-                                $ticketDto->middleName = $ticket->middle_name;
-                                $ticketDto->lastName = $ticket->last_name;
-                                $ticketDto->phone = OrderObserver::formatNumber($ticket->phone);
-                                $ticketDto->email = $ticket->email;
+                $organizerInfoDto = new PublicEventOrder\OrganizerInfoDto();
+                $publicEventInfoDto->organizer = $organizerInfoDto;
+                $organizerInfoDto->name = $cardStruct->organizer['name'];
+                $organizerInfoDto->description = $cardStruct->organizer['description'];
+                $organizerInfoDto->phone = $cardStruct->organizer['phone'];
+                $organizerInfoDto->email = $cardStruct->organizer['email'];
+                $organizerInfoDto->site = $cardStruct->organizer['site'];
+                $organizerInfoDto->messengerPhone = $cardStruct->organizer['messenger_phone'] ?: $cardStruct->organizer['phone'];
+                foreach ($basketItems as $item) {
+                    if ($cardStruct->sprintId == $item->getSprintId()) {
+                        $ticketsInfoDto = new PublicEventOrder\TicketsInfoDto();
+                        $publicEventInfoDto->addTicketInfo($ticketsInfoDto);
+                        $ticketsInfoDto->id = $item->id;
+                        $ticketsInfoDto->code = $item->code;
+                        $ticketsInfoDto->name = $item->name;
+                        $ticketsInfoDto->stageIds = $item->getTicketStageIds();
+                        $ticketsInfoDto->ticketTypeName = $item->getTicketTypeName();
+                        $ticketsInfoDto->photoId = $cardStruct->image;
+                        $ticketsInfoDto->nearestDate = $cardStruct->nearestDate;
+                        $ticketsInfoDto->nearestTimeFrom = $cardStruct->nearestTimeFrom;
+                        $ticketsInfoDto->nearestPlaceName = $cardStruct->nearestPlaceName;
+                        $ticketsInfoDto->ticketsQty = count($item->getTicketIds());
+                        $ticketsInfoDto->price = (float)$item->price;
+                        $ticketsInfoDto->pricePerOne = $ticketsInfoDto->price / $ticketsInfoDto->ticketsQty;
+
+                        if ($loadTickets) {
+                            foreach ($item->getTicketIds() as $ticketId) {
+                                if ($tickets->has($ticketId)) {
+                                    $ticket = $tickets[$ticketId];
+                                    $ticketDto = new PublicEventOrder\TicketInfoDto();
+                                    $ticketsInfoDto->addTicket($ticketDto);
+                                    $ticketDto->id = $ticket->id;
+                                    $ticketDto->code = $ticket->code;
+                                    $ticketDto->firstName = $ticket->first_name;
+                                    $ticketDto->middleName = $ticket->middle_name;
+                                    $ticketDto->lastName = $ticket->last_name;
+                                    $ticketDto->phone = OrderObserver::formatNumber($ticket->phone);
+                                    $ticketDto->email = $ticket->email;
+                                }
                             }
                         }
                     }

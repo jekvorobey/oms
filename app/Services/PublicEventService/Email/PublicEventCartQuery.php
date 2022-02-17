@@ -2,6 +2,7 @@
 
 namespace App\Services\PublicEventService\Email;
 
+use App\Models\PublicEvent\Card\PublicEventCardQuery;
 use Pim\Dto\Search\PublicEventQuery;
 
 /**
@@ -28,6 +29,23 @@ class PublicEventCartQuery
     public function whereOfferIds(array $offerIds): self
     {
         $this->pimPublicEventQuery->offer_ids = $offerIds;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function whereActive(?bool $flag = true): self
+    {
+        $this->pimPublicEventQuery->active = $flag;
+
+        return $this;
+    }
+
+    public function whereAvailableForSale(?bool $flag = true): self
+    {
+        $this->pimPublicEventQuery->available_for_sale = $flag;
 
         return $this;
     }
@@ -67,6 +85,8 @@ class PublicEventCartQuery
             PublicEventQuery::SPEAKERS,
             PublicEventQuery::CODE,
             PublicEventQuery::ACTIVE,
+            PublicEventQuery::AVAILABLE_FOR_SALE,
+            PublicEventQuery::OFFER_IDS,
             PublicEventQuery::DATE_FROM,
             PublicEventQuery::DATE_TO,
             PublicEventQuery::NEAREST_DATE,
