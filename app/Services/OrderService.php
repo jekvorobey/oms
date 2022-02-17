@@ -417,7 +417,7 @@ class OrderService
                         $ticketsInfoDto->nearestTimeFrom = $cardStruct->nearestTimeFrom;
                         $ticketsInfoDto->nearestPlaceName = $cardStruct->nearestPlaceName;
                         $ticketsInfoDto->ticketsQty = count($item->getTicketIds());
-                        $ticketsInfoDto->price = (float)$item->price;
+                        $ticketsInfoDto->price = (float) $item->price;
                         $ticketsInfoDto->pricePerOne = $ticketsInfoDto->price / $ticketsInfoDto->ticketsQty;
 
                         if ($loadTickets) {

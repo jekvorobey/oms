@@ -2,7 +2,6 @@
 
 namespace App\Services\PublicEventService\Email;
 
-use App\Models\PublicEvent\Card\PublicEventCardQuery;
 use Pim\Dto\Search\PublicEventQuery;
 
 /**
