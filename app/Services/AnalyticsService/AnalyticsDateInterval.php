@@ -3,7 +3,6 @@
 namespace App\Services\AnalyticsService;
 
 use Carbon\Carbon;
-use Carbon\CarbonInterval;
 use Exception;
 
 class AnalyticsDateInterval
@@ -21,6 +20,11 @@ class AnalyticsDateInterval
 
         $this->previousEnd = $this->start->copy()->subDay();
         $this->previousStart = $this->previousEnd->copy()->subDays($this->end->diffInDays($this->start));
+    }
+
+    public function currentPeriodDays(): int
+    {
+        return $this->start->diffInDays($this->end) + 1;
     }
 
     /**

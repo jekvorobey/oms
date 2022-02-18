@@ -10,9 +10,4 @@ class AnalyticsTopRequest extends AnalyticsRequest
             'limit' => 'required|int',
         ];
     }
-
-    protected function prepareForValidation()
-    {
-        parent::prepareForValidation();
-    }
 }

@@ -149,6 +149,8 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::get('products_shipments', 'AnalyticsController@productsShipments')->name('analytics.products_shipments');
         Route::prefix('top')->group(function () {
             Route::get('bestsellers', 'AnalyticsController@bestsellers')->name('analytics.bestsellers');
+            Route::get('fastest', 'AnalyticsController@fastest')->name('analytics.fastest');
+            Route::get('outsiders', 'AnalyticsController@outsiders')->name('analytics.outsiders');
         });
         Route::get('sales', 'AnalyticsController@sales')->name('analytics.sales');
     });
