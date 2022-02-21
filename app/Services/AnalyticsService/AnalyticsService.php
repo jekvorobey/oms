@@ -208,25 +208,21 @@ class AnalyticsService
         $groupedBasketItems = BasketItem::query()->select('id', 'offer_id', 'name', 'qty')
             ->whereHas('shipmentItem.shipment', $shipmentQueryCallback)
             ->get()
-            ->mapToGroups(fn(BasketItem $item) => [$item->offer_id => $item])
+            ->groupBy('offer_id')
         ;
 
         $periodDays = $interval->currentPeriodDays();
-        $res = collect();
+        $result = collect();
         foreach ($groupedBasketItems as $offerId => $basketItemOfferGroup) {
             if (isset($averageStocks[$offerId])) {
-                $res->push([
+                $result->push([
                     'name' => $basketItemOfferGroup->first()['name'],
                     'days' => (int) round($averageStocks[$offerId] / $basketItemOfferGroup->sum('qty') * $periodDays),
                 ]);
             }
         }
 
-        $res = $res->sortBy('days', SORT_REGULAR, $descending);
-        return $res->slice(0, $limit)->values()->map(function ($item, $key) {
-            $item['top'] = $key + 1;
-            return $item;
-        });
+        return $result->sortBy('days', SORT_REGULAR, $descending)->take($limit)->values();
     }
 
     private function calculateAverageStock(SimpleCollection $collection)
