@@ -8,6 +8,7 @@ use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Services\BasketService;
+use App\Services\GuestBasketService;
 use App\Services\OrderService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
@@ -15,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -203,7 +205,7 @@ class BasketController extends Controller
      *     path="api/v1/baskets/{basketId}",
      *     tags={"Корзина"},
      *     description="Удалить корзину",
-     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="basketId", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Response(response="204", description=""),
      *     @OA\Response(response="500", description="unable to delete basket"),
      * )
@@ -271,9 +273,6 @@ class BasketController extends Controller
         return response('', 204);
     }
 
-    /**
-     * @return array
-     */
     protected function getItems(Basket $basket): array
     {
         return $basket->items->toArray();
@@ -369,5 +368,151 @@ class BasketController extends Controller
                     'tovardostupnost_kh_tovarov_v_korzine_izmenilas'
                 );
             });
+    }
+
+    /**
+     * @OA\Get(
+     *     path="api/v1/baskets/guest/{basketId}",
+     *     tags={"Корзина"},
+     *     description="Получить корзину с id",
+     *     @OA\Parameter(name="basketId", required=true, in="path", @OA\Schema(type="string")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"type"},
+     *          @OA\Property(property="items", type="json", example="{}"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/Basket"))
+     *         )
+     *     )
+     * )
+     */
+    public function getBasketFromGuest(
+        string $basketId,
+        Request $request,
+        GuestBasketService $basketService
+    ): JsonResponse {
+        $basket = $basketService->getBasketFromGuest($basketId);
+        $response = [
+            'id' => $basket->id,
+            'type' => $basket->type,
+            'customer_id' => $basket->customer_id,
+        ];
+        if ($request->get('items')) {
+            $response['items'] = $this->getItems($basket);
+        }
+
+        return response()->json($response);
+    }
+
+    public function getCurrentBasketFromGuest(
+        string $customerId,
+        Request $request,
+        GuestBasketService $basketService
+    ): JsonResponse {
+        $data = $this->validate($request, [
+            'type' => 'required|string',
+        ]);
+
+        $basket = $basketService->findFreeUserBasketInGuest($data['type'], $customerId);
+        $response = [
+            'id' => $basket->id,
+        ];
+        if ($request->get('items')) {
+            $response['items'] = $this->getItems($basket);
+        }
+
+        return response()->json($response);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="api/v1/baskets/guest/{basketId}",
+     *     tags={"Корзина"},
+     *     description="Удалить корзину",
+     *     @OA\Parameter(name="basketId", required=true, in="path", @OA\Schema(type="string")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="500", description="unable to delete basket"),
+     * )
+     * @throws \Exception
+     */
+    public function dropBasketFromGuest(string $basketId, GuestBasketService $basketService): Response
+    {
+        $basket = $basketService->getBasketFromGuest($basketId);
+
+        if (!$basketService->dropBasketInGuest($basket)) {
+            throw new HttpException(500, 'unable to delete basket from cache');
+        }
+
+        return response('', 204);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="api/v1/baskets/guest/{basketId}/items/{offerId}",
+     *     tags={"Корзина"},
+     *     description="Добавить товар в корзину",
+     *     @OA\Parameter(name="basketId", required=true, in="path", @OA\Schema(type="string")),
+     *     @OA\Parameter(name="offerId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          required={"type"},
+     *          @OA\Property(property="items[0].offerId", type="integer", format="text", example="0"),
+     *          @OA\Property(property="items[0].cost", type="numeric", format="text", example="0"),
+     *          @OA\Property(property="items[0].price", type="numeric", format="text", example="0"),
+     *          @OA\Property(property="referrer_id", type="integer", format="text", example="0"),
+     *          @OA\Property(property="qty", type="numeric", format="text", example="0"),
+     *          @OA\Property(property="product['store_id']", type="integer", example="0"),
+     *          @OA\Property(property="product['bundle_id']", type="integer", example="0"),
+     *      ),
+     *     ),
+     *     @OA\Response(response="200", description="", @OA\JsonContent(ref="#/components/schemas/Basket")),
+     *     @OA\Response(response="404", description="basket not found"),
+     * )
+     * @throws \Exception
+     */
+    public function setItemByGuestBasket(string $basketId, int $offerId, Request $request): JsonResponse
+    {
+        return $this->setItemToGuest($basketId, $offerId, $request);
+    }
+
+    protected function setItemToGuest(string $basketId, int $offerId, Request $request): JsonResponse
+    {
+        Log::debug(json_encode($basketId));
+        die();
+        /** @var GuestBasketService $basketService */
+        $basketService = resolve(GuestBasketService::class);
+        $basket = $basketService->getBasketFromGuest($basketId);
+
+        $data = $this->validate($request, [
+            'referrer_id' => 'nullable|integer',
+            'qty' => 'integer',
+            'product' => 'array',
+            'product.store_id' => 'nullable|integer',
+            'product.bundle_id' => 'nullable|integer',
+        ]);
+
+        $respondWithItems = (bool) ($data['items'] ?? false);
+        unset($data['items']);
+
+        $ok = $basketService->setItem($basket, $offerId, $data);
+        if (!$ok) {
+            throw new HttpException(500, 'unable to save basket item');
+        }
+
+        $response = [];
+        if ($respondWithItems) {
+            $response['items'] = $this->getItems($basket);
+        }
+
+        return response()->json($response);
     }
 }

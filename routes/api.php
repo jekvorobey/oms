@@ -29,6 +29,16 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::get('', 'BasketController@getBasket');
             Route::delete('', 'BasketController@dropBasket');
         });
+
+        Route::prefix('guest')->group(function () {
+            Route::get('by-customer/{customerId}', 'BasketController@getCurrentBasketFromGuest');
+
+            Route::prefix('{basketId}')->group(function () {
+                Route::put('items/{offerId}', 'BasketController@setItemByGuestBasket');
+                Route::get('', 'BasketController@getBasketFromGuest');
+                Route::delete('', 'BasketController@dropBasketFromGuest');
+            });
+        });
     });
 
     Route::prefix('orders')->group(function () {
