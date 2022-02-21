@@ -8,8 +8,10 @@ use App\Models\Delivery\ShipmentStatus;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection as SimpleCollection;
+use Illuminate\Database\Eloquent\Builder;
 
 class AnalyticsService
 {
@@ -175,6 +177,62 @@ class AnalyticsService
             ]);
         }
         return $result->sortByDesc('sum')->values()->slice(0, $limit);
+    }
+
+    /** @throws Exception */
+    public function getProductsTurnover(
+        int $merchantId,
+        string $start,
+        string $end,
+        int $limit,
+        array $stockHistory,
+        bool $descending = false
+    ): SimpleCollection {
+        $averageStocks = collect($stockHistory)->groupBy('offer_id')->map(fn(SimpleCollection $collection) => $this->calculateAverageStock($collection));
+        $interval = new AnalyticsDateInterval($start, $end);
+        /** @var Builder|BelongsTo $query */
+        $shipmentQueryCallback = fn($query) => $query
+            ->where('merchant_id', $merchantId)
+            ->whereBetween('status_at', $interval->currentPeriod())
+            ->where('status', ShipmentStatus::DONE)
+            ->where('is_canceled', false)
+            ->addSelect([
+                'id',
+                'merchant_id',
+                'status',
+                'is_canceled',
+                'status_at',
+            ])
+            ->orderBy('status_at');
+
+        $groupedBasketItems = BasketItem::query()->select('id', 'offer_id', 'name', 'qty')
+            ->whereHas('shipmentItem.shipment', $shipmentQueryCallback)
+            ->get()
+            ->groupBy('offer_id')
+        ;
+
+        $periodDays = $interval->currentPeriodDays();
+        $result = collect();
+        foreach ($groupedBasketItems as $offerId => $basketItemOfferGroup) {
+            if (isset($averageStocks[$offerId])) {
+                $result->push([
+                    'name' => $basketItemOfferGroup->first()['name'],
+                    'days' => (int) round($averageStocks[$offerId] / $basketItemOfferGroup->sum('qty') * $periodDays),
+                ]);
+            }
+        }
+
+        return $result->sortBy('days', SORT_REGULAR, $descending)->take($limit)->values();
+    }
+
+    private function calculateAverageStock(SimpleCollection $collection)
+    {
+        $first = $collection->first();
+        $last = $collection->last();
+        $n = $collection->count();
+        $sliced = $collection->slice(1, -1);
+        $sum = ($first['qty'] / 2) + $sliced->sum('qty') + ($last['qty'] / 2);
+        return $sum / ($n - 1);
     }
 
     private function lfl(int $currentSum, int $prevSum): int

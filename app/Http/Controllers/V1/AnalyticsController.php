@@ -7,6 +7,7 @@ use App\Http\Requests\AnalyticsRequest;
 use App\Http\Requests\AnalyticsTopRequest;
 use App\Services\AnalyticsService\AnalyticsService;
 use Exception;
+use Greensight\Store\Services\StockService\StockService;
 use Illuminate\Http\JsonResponse;
 
 class AnalyticsController extends Controller
@@ -77,6 +78,58 @@ class AnalyticsController extends Controller
 
         return response()->json(
             $service->getMerchantBestsellers($data['merchantId'], $data['start'], $data['end'], $data['limit'])
+        );
+    }
+
+    /**
+     * @OA\Get(
+     *     path="api/v1/merchant_analytics/fastest",
+     *     tags={"Поставки"},
+     *     description="Получить топ продуктов мерчанта по скорости продаж",
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent()
+     *     )
+     * )
+     * Получить топ продуктов мерчанта по скорости продаж.
+     * @throws Exception
+     */
+    public function fastest(
+        AnalyticsTopRequest $request,
+        AnalyticsService $service,
+        StockService $stockService
+    ): JsonResponse {
+        $data = $request->validated();
+        $stockHistory = $stockService->merchantStockHistory($data['merchantId'], $data['start'], $data['end']);
+        return response()->json(
+            $service->getProductsTurnover($data['merchantId'], $data['start'], $data['end'], $data['limit'], $stockHistory)
+        );
+    }
+
+    /**
+     * @OA\Get(
+     *     path="api/v1/merchant_analytics/outsiders",
+     *     tags={"Поставки"},
+     *     description="Получить топ продуктов-аутсайдеров мерчанта",
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent()
+     *     )
+     * )
+     * Получить топ продуктов-аутсайдеров мерчанта.
+     * @throws Exception
+     */
+    public function outsiders(
+        AnalyticsTopRequest $request,
+        AnalyticsService $service,
+        StockService $stockService
+    ): JsonResponse {
+        $data = $request->validated();
+        $stockHistory = $stockService->merchantStockHistory($data['merchantId'], $data['start'], $data['end']);
+        return response()->json(
+            $service->getProductsTurnover($data['merchantId'], $data['start'], $data['end'], $data['limit'], $stockHistory, true)
         );
     }
 }
