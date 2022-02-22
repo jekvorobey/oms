@@ -394,11 +394,11 @@ class BasketController extends Controller
      * )
      */
     public function getBasketFromGuest(
-        string $basketId,
+        int $basketId,
         Request $request,
         GuestBasketService $basketService
     ): JsonResponse {
-        $basket = $basketService->getBasketFromGuest($basketId);
+        $basket = $basketService->getGuestBasket($basketId);
         $response = [
             'id' => $basket->id,
             'type' => $basket->type,
@@ -420,7 +420,7 @@ class BasketController extends Controller
             'type' => 'required|string',
         ]);
 
-        $basket = $basketService->findFreeUserBasketInGuest($data['type'], $customerId);
+        $basket = $basketService->findFreeUserGuestBasket($data['type'], $customerId);
         $response = [
             'id' => $basket->id,
         ];
@@ -442,11 +442,11 @@ class BasketController extends Controller
      * )
      * @throws \Exception
      */
-    public function dropBasketFromGuest(string $basketId, GuestBasketService $basketService): Response
+    public function dropBasketFromGuest(int $basketId, GuestBasketService $basketService): Response
     {
-        $basket = $basketService->getBasketFromGuest($basketId);
+        $basket = $basketService->getGuestBasket($basketId);
 
-        if (!$basketService->dropBasketInGuest($basket)) {
+        if (!$basketService->dropGuestBasket($basket)) {
             throw new HttpException(500, 'unable to delete basket from cache');
         }
 
@@ -479,18 +479,17 @@ class BasketController extends Controller
      * )
      * @throws \Exception
      */
-    public function setItemByGuestBasket(string $basketId, int $offerId, Request $request): JsonResponse
+    public function setItemByGuestBasket(int $basketId, int $offerId, Request $request): JsonResponse
     {
         return $this->setItemToGuest($basketId, $offerId, $request);
     }
 
-    protected function setItemToGuest(string $basketId, int $offerId, Request $request): JsonResponse
+    protected function setItemToGuest(int $basketId, int $offerId, Request $request): JsonResponse
     {
-        Log::debug(json_encode($basketId));
-        die();
         /** @var GuestBasketService $basketService */
         $basketService = resolve(GuestBasketService::class);
-        $basket = $basketService->getBasketFromGuest($basketId);
+        $basket = $basketService->getGuestBasket($basketId);
+        Log::debug(json_encode($basket));
 
         $data = $this->validate($request, [
             'referrer_id' => 'nullable|integer',
@@ -499,6 +498,7 @@ class BasketController extends Controller
             'product.store_id' => 'nullable|integer',
             'product.bundle_id' => 'nullable|integer',
         ]);
+        Log::debug(json_encode(['data' => $data, 'basket' => $basket]));
 
         $respondWithItems = (bool) ($data['items'] ?? false);
         unset($data['items']);
