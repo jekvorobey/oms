@@ -49,7 +49,7 @@ class GuestBasketService extends BasketService
         $basket->type = $type;
         $basket->is_belongs_to_order = false;
 
-        Cache::put($basket->id, $basket,self::CACHE_LIFETIME);
+        Cache::put($basket->id, $basket, self::CACHE_LIFETIME);
         $basketMapping = Cache::get($basket->customer_id);
 
         $key = $this->getBasketKey($type);
@@ -105,7 +105,7 @@ class GuestBasketService extends BasketService
             }
         }
 
-        Cache::put($basket->id, $basket,self::CACHE_LIFETIME);
+        Cache::put($basket->id, $basket, self::CACHE_LIFETIME);
 
         return true;
     }
