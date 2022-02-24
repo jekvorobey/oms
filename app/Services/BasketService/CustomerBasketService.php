@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\BasketService;
 
 use App\Models\Basket\Basket;
-use App\Models\Basket\BasketItem;
 use Exception;
 
 /**
  * Класс-бизнес логики по работе с корзинами
- * Class BasketService
+ * Class CustomerBasketService
  * @package App\Services
  */
-class BasketService
+class CustomerBasketService extends BasketService
 {
     /**
      * Получить объект корзины по его id
@@ -51,31 +50,6 @@ class BasketService
         $basket->save();
 
         return $basket;
-    }
-
-    /**
-     * Получить объект товар корзины, даже если его нет в БД
-     */
-    protected function itemByOffer(
-        Basket $basket,
-        int $offerId,
-        ?int $bundleId = null,
-        ?int $bundleItemId = null
-    ): BasketItem {
-        $item = $basket->items->first(function (BasketItem $item) use ($offerId, $bundleId, $bundleItemId) {
-            return $bundleId
-                ? $item->offer_id == $offerId && $item->bundle_id == $bundleId && $item->bundle_item_id === $bundleItemId
-                : $item->offer_id == $offerId && is_null($item->bundle_id);
-        });
-
-        if (!$item) {
-            $item = new BasketItem();
-            $item->offer_id = $offerId;
-            $item->basket_id = $basket->id;
-            $item->type = $basket->type;
-        }
-
-        return $item;
     }
 
     /**

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetCurrentBasketRequest;
+use App\Http\Requests\SetItemToBasketRequest;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
-use App\Services\BasketService;
-use App\Services\GuestBasketService;
+use App\Services\BasketService\CustomerBasketService;
+use App\Services\BasketService\GuestBasketService;
 use App\Services\OrderService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
@@ -16,7 +18,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -46,21 +47,16 @@ class BasketController extends Controller
      *     )
      * )
      */
-    public function getCurrentBasket(int $customerId, Request $request, BasketService $basketService): JsonResponse
-    {
-        $data = $this->validate($request, [
-            'type' => 'required|integer',
-        ]);
+    public function getCurrentBasket(
+        int $customerId,
+        GetCurrentBasketRequest $request,
+        CustomerBasketService $basketService
+    ): JsonResponse {
+        $data = $request->all();
 
         $basket = $basketService->findFreeUserBasket($data['type'], $customerId);
-        $response = [
-            'id' => $basket->id,
-        ];
-        if ($request->get('items')) {
-            $response['items'] = $this->getItems($basket);
-        }
 
-        return response()->json($response);
+        return $this->getCurrentBasketResponse($basket, $request);
     }
 
     /**
@@ -89,7 +85,7 @@ class BasketController extends Controller
      * )
      * @throws \Exception
      */
-    public function setItemByBasket(int $basketId, int $offerId, Request $request): JsonResponse
+    public function setItemByBasket(int $basketId, int $offerId, SetItemToBasketRequest $request): JsonResponse
     {
         return $this->setItem($basketId, $offerId, $request);
     }
@@ -121,7 +117,7 @@ class BasketController extends Controller
     public function setItemByOrder(
         int $orderId,
         int $offerId,
-        Request $request,
+        SetItemToBasketRequest $request,
         OrderService $orderService
     ): JsonResponse {
         $order = $orderService->getOrder($orderId);
@@ -132,19 +128,13 @@ class BasketController extends Controller
     /**
      * @throws \Exception
      */
-    protected function setItem(int $basketId, int $offerId, Request $request): JsonResponse
+    protected function setItem(int $basketId, int $offerId, SetItemToBasketRequest $request): JsonResponse
     {
-        /** @var BasketService $basketService */
-        $basketService = resolve(BasketService::class);
+        /** @var CustomerBasketService $basketService */
+        $basketService = resolve(CustomerBasketService::class);
         $basket = $basketService->getBasket($basketId);
 
-        $data = $this->validate($request, [
-            'referrer_id' => 'nullable|integer',
-            'qty' => 'integer',
-            'product' => 'array',
-            'product.store_id' => 'nullable|integer',
-            'product.bundle_id' => 'nullable|integer',
-        ]);
+        $data = $request->all();
 
         $respondWithItems = (bool) ($data['items'] ?? false);
         unset($data['items']);
@@ -185,19 +175,11 @@ class BasketController extends Controller
      *     )
      * )
      */
-    public function getBasket(int $basketId, Request $request, BasketService $basketService): JsonResponse
+    public function getBasket(int $basketId, Request $request, CustomerBasketService $basketService): JsonResponse
     {
         $basket = $basketService->getBasket($basketId);
-        $response = [
-            'id' => $basket->id,
-            'type' => $basket->type,
-            'customer_id' => $basket->customer_id,
-        ];
-        if ($request->get('items')) {
-            $response['items'] = $this->getItems($basket);
-        }
 
-        return response()->json($response);
+        return $this->getBasketResponse($basket, $request);
     }
 
     /**
@@ -211,7 +193,7 @@ class BasketController extends Controller
      * )
      * @throws \Exception
      */
-    public function dropBasket(int $basketId, BasketService $basketService): Response
+    public function dropBasket(int $basketId, CustomerBasketService $basketService): Response
     {
         $basket = $basketService->getBasket($basketId);
 
@@ -242,7 +224,7 @@ class BasketController extends Controller
      *     @OA\Response(response="404", description="product not found"),
      * )
      */
-    public function commitItemsPrice(int $basketId, Request $request, BasketService $basketService): Response
+    public function commitItemsPrice(int $basketId, Request $request, CustomerBasketService $basketService): Response
     {
         $data = $this->validate($request, [
             'items' => 'required|array',
@@ -393,42 +375,23 @@ class BasketController extends Controller
      *     )
      * )
      */
-    public function getBasketFromGuest(
-        int $basketId,
-        Request $request,
-        GuestBasketService $basketService
-    ): JsonResponse {
-        $basket = $basketService->getGuestBasket($basketId);
-        $response = [
-            'id' => $basket->id,
-            'type' => $basket->type,
-            'customer_id' => $basket->customer_id,
-        ];
-        if ($request->get('items')) {
-            $response['items'] = $this->getItems($basket);
-        }
+    public function getBasketFromGuest(int $basketId, Request $request, GuestBasketService $basketService): JsonResponse
+    {
+        $basket = $basketService->getBasket($basketId);
 
-        return response()->json($response);
+        return $this->getBasketResponse($basket, $request);
     }
 
     public function getCurrentBasketFromGuest(
         string $customerId,
-        Request $request,
+        GetCurrentBasketRequest $request,
         GuestBasketService $basketService
     ): JsonResponse {
-        $data = $this->validate($request, [
-            'type' => 'required|string',
-        ]);
+        $data = $request->all();
 
-        $basket = $basketService->findFreeUserGuestBasket($data['type'], $customerId);
-        $response = [
-            'id' => $basket->id,
-        ];
-        if ($request->get('items')) {
-            $response['items'] = $this->getItems($basket);
-        }
+        $basket = $basketService->findFreeUserBasket($data['type'], $customerId);
 
-        return response()->json($response);
+        return $this->getCurrentBasketResponse($basket, $request);
     }
 
     /**
@@ -444,9 +407,9 @@ class BasketController extends Controller
      */
     public function dropBasketFromGuest(int $basketId, GuestBasketService $basketService): Response
     {
-        $basket = $basketService->getGuestBasket($basketId);
+        $basket = $basketService->getBasket($basketId);
 
-        if (!$basketService->dropGuestBasket($basket)) {
+        if (!$basketService->dropBasket($basket)) {
             throw new HttpException(500, 'unable to delete basket from cache');
         }
 
@@ -479,26 +442,18 @@ class BasketController extends Controller
      * )
      * @throws \Exception
      */
-    public function setItemByGuestBasket(int $basketId, int $offerId, Request $request): JsonResponse
+    public function setItemByGuestBasket(int $basketId, int $offerId, SetItemToBasketRequest $request): JsonResponse
     {
         return $this->setItemToGuest($basketId, $offerId, $request);
     }
 
-    protected function setItemToGuest(int $basketId, int $offerId, Request $request): JsonResponse
+    protected function setItemToGuest(int $basketId, int $offerId, SetItemToBasketRequest $request): JsonResponse
     {
         /** @var GuestBasketService $basketService */
         $basketService = resolve(GuestBasketService::class);
-        $basket = $basketService->getGuestBasket($basketId);
-        Log::debug(json_encode($basket));
+        $basket = $basketService->getBasket($basketId);
 
-        $data = $this->validate($request, [
-            'referrer_id' => 'nullable|integer',
-            'qty' => 'integer',
-            'product' => 'array',
-            'product.store_id' => 'nullable|integer',
-            'product.bundle_id' => 'nullable|integer',
-        ]);
-        Log::debug(json_encode(['data' => $data, 'basket' => $basket]));
+        $data = $request->all();
 
         $respondWithItems = (bool) ($data['items'] ?? false);
         unset($data['items']);
@@ -510,6 +465,32 @@ class BasketController extends Controller
 
         $response = [];
         if ($respondWithItems) {
+            $response['items'] = $this->getItems($basket);
+        }
+
+        return response()->json($response);
+    }
+
+    private function getBasketResponse(Basket $basket, Request $request): JsonResponse
+    {
+        $response = [
+            'id' => $basket->id,
+            'type' => $basket->type,
+            'customer_id' => $basket->customer_id,
+        ];
+        if ($request->get('items')) {
+            $response['items'] = $this->getItems($basket);
+        }
+
+        return response()->json($response);
+    }
+
+    private function getCurrentBasketResponse(Basket $basket, GetCurrentBasketRequest $request): JsonResponse
+    {
+        $response = [
+            'id' => $basket->id,
+        ];
+        if ($request->get('items')) {
             $response['items'] = $this->getItems($basket);
         }
 

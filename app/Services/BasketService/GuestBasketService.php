@@ -1,17 +1,15 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\BasketService;
 
 use App\Models\Basket\Basket;
-use App\Models\Basket\BasketItem;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
-class GuestBasketService
+class GuestBasketService extends AbstractBasketService
 {
     private const CACHE_LIFETIME = 7 * 24 * 60;
 
-    public function getGuestBasket(int $basketId): Basket
+    public function getBasket(int $basketId): Basket
     {
         $basket = Cache::get($basketId);
 
@@ -22,34 +20,17 @@ class GuestBasketService
         return $basket;
     }
 
-    public function findFreeUserGuestBasket(int $type, string $customerId): Basket
+    public function findFreeUserBasket(int $type, string $customerId): Basket
     {
         $basketMappings = Cache::get($customerId);
-        $key = '';
-        switch ($type) {
-            case Basket::TYPE_PRODUCT:
-                $key = 'product';
-                break;
-            case Basket::TYPE_CERTIFICATE:
-                $key = 'certificate';
-                break;
-            case Basket::TYPE_MASTER:
-                $key = 'master';
-                break;
-        }
+        $key = $this->getBasketKey($type);
 
-        if ($key) {
-            if (isset($basketMappings[$key])) {
-                $basketUuid = $basketMappings[$key];
-                $basket = Cache::get($basketUuid);
-            } else {
-                $basket = $this->createGuestBasket($type, $customerId);
-            }
+        if (isset($basketMappings[$key])) {
+            $basketUuid = $basketMappings[$key];
+            $basket = Cache::get($basketUuid);
+        } else {
+            $basket = $this->createBasket($type, $customerId);
         }
-
-        Log::debug(json_encode([
-            'basket' => $basket
-        ]));
 
         return $basket;
     }
@@ -57,7 +38,7 @@ class GuestBasketService
     /**
      * Создать корзину в кэше
      */
-    protected function createGuestBasket(int $type, string $customerId): Basket
+    protected function createBasket(int $type, string $customerId): Basket
     {
         $basket = new Basket();
         $basket->id = random_int(
@@ -71,18 +52,7 @@ class GuestBasketService
         Cache::put($basket->id, $basket,self::CACHE_LIFETIME);
         $basketMapping = Cache::get($basket->customer_id);
 
-        $key = '';
-        switch ($type) {
-            case Basket::TYPE_PRODUCT:
-                $key = 'product';
-                break;
-            case Basket::TYPE_CERTIFICATE:
-                $key = 'certificate';
-                break;
-            case Basket::TYPE_MASTER:
-                $key = 'master';
-                break;
-        }
+        $key = $this->getBasketKey($type);
 
         if ($key) {
             Cache::forget($basket->customer_id);
@@ -93,7 +63,7 @@ class GuestBasketService
         return $basket;
     }
 
-    public function dropGuestBasket(Basket $basket): bool
+    public function dropBasket(Basket $basket): bool
     {
         return Cache::forget($basket->id);
     }
@@ -103,9 +73,11 @@ class GuestBasketService
      */
     public function setItem(Basket $basket, int $offerId, array $data): bool
     {
-        $this->dropGuestBasket($basket);
+        $this->dropBasket($basket);
 
         $item = $this->itemByOffer($basket, $offerId, $data['bundle_id'] ?? null, $data['bundle_item_id'] ?? null);
+        $item->id = random_int(round(10 ** 7), round(99 ** 7));
+
         $itemIndex = $basket->items->search(fn($savedItem) => $savedItem->id === $item->id);
         if ($item->id && isset($data['qty']) && !$data['qty']) {
             $basket->items->forget($itemIndex);
@@ -134,37 +106,21 @@ class GuestBasketService
         }
 
         Cache::put($basket->id, $basket,self::CACHE_LIFETIME);
-        Log::debug(json_encode([
-            'method' => 'setItem',
-            'basket' => $basket
-        ]));
 
         return true;
     }
 
-    /**
-     * Получить объект товар корзины
-     */
-    protected function itemByOffer(
-        Basket $basket,
-        int $offerId,
-        ?int $bundleId = null,
-        ?int $bundleItemId = null
-    ): BasketItem {
-        $item = $basket->items->first(function (BasketItem $item) use ($offerId, $bundleId, $bundleItemId) {
-            return $bundleId
-                ? $item->offer_id == $offerId && $item->bundle_id == $bundleId && $item->bundle_item_id === $bundleItemId
-                : $item->offer_id == $offerId && is_null($item->bundle_id);
-        });
-
-        if (!$item) {
-            $item = new BasketItem();
-            $item->id = random_int(round(10 ** 7), round(99 ** 7));
-            $item->offer_id = $offerId;
-            $item->basket_id = $basket->id;
-            $item->type = $basket->type;
+    private function getBasketKey(int $type): string
+    {
+        switch ($type) {
+            case Basket::TYPE_PRODUCT:
+                return 'product';
+            case Basket::TYPE_CERTIFICATE:
+                return 'certificate';
+            case Basket::TYPE_MASTER:
+                return 'master';
+            default:
+                throw new \RuntimeException("Type of basket $type not found");
         }
-
-        return $item;
     }
 }
