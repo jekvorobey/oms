@@ -5,7 +5,7 @@ namespace App\Services\BasketService;
 use App\Models\Basket\Basket;
 use Illuminate\Support\Facades\Cache;
 
-class GuestBasketService extends AbstractBasketService
+class GuestBasketService extends BasketService
 {
     private const CACHE_LIFETIME = 7 * 24 * 60;
 
