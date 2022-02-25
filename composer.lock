@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2c77623fd150bf51963aef72c608eb5a",
+    "content-hash": "7bf16a66b1151bde389e4d546fb75f64",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1399,7 +1399,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
-                "reference": "a9f776c60a0611fda76f7568c270376799666f5c"
+                "reference": "8754dddea4e9d9a4b80626645c92ebc93a18eca2"
             },
             "require": {
                 "ext-json": "*",
@@ -1433,7 +1433,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2021-12-02T10:12:20+00:00"
+            "time": "2022-02-25T10:40:50+00:00"
         },
         {
             "name": "iwengo/ibt-cms-lib",
@@ -1468,11 +1468,11 @@
         },
         {
             "name": "iwengo/ibt-common-lib",
-            "version": "dev-feature/IBT-489-user-role-refactoring",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-common-ms-code.git",
-                "reference": "298fdc7d5f5a9cbe89cb6720ca36077f925002db"
+                "reference": "7ef213db99a9becfe3276b38757967e1863b1e3f"
             },
             "require": {
                 "ext-json": "*",
@@ -1522,7 +1522,7 @@
                 }
             ],
             "description": "iBT common code for all microservices",
-            "time": "2022-02-18T12:24:14+00:00"
+            "time": "2022-02-25T09:35:34+00:00"
         },
         {
             "name": "iwengo/ibt-logistics-lib",
@@ -1530,7 +1530,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-logistics-lib",
-                "reference": "4fa98a25d62c61b9738344a0b958d12d1ee43c1d"
+                "reference": "04ab0bcebd9002e1f98b9a9c008660d5ea6a84ab"
             },
             "require": {
                 "ext-json": "*",
@@ -1564,7 +1564,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2022-01-24T09:49:22+00:00"
+            "time": "2022-02-25T10:39:55+00:00"
         },
         {
             "name": "iwengo/ibt-marketing-lib",
@@ -10117,9 +10117,9 @@
         },
         {
             "package": "iwengo/ibt-common-lib",
-            "version": "dev-feature/IBT-489-user-role-refactoring",
-            "alias": "dev-master-ylab",
-            "alias_normalized": "dev-master-ylab"
+            "version": "dev-master-ylab",
+            "alias": "dev-master",
+            "alias_normalized": "dev-master"
         },
         {
             "package": "iwengo/ibt-logistics-lib",
