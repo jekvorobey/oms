@@ -128,6 +128,10 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property float $weight - вес (расчитывается автоматически)
  * @property string $shipping_problem_comment - последнее сообщение мерчанта о проблеме с отгрузкой
  *
+ * @property Carbon|null $intake_date - Дата задания на забор груза
+ * @property Carbon|null $intake_time_from - Время на забор груза от
+ * @property Carbon|null $intake_time_to - Время на забор груза до
+ *
  * //dynamic attributes
  * @property int $package_qty - кол-во коробок груза
  *
@@ -151,6 +155,9 @@ class Cargo extends AbstractModel
         'cdek_intake_number',
         'xml_id',
         'shipping_problem_comment',
+        'intake_date',
+        'intake_time_from',
+        'intake_time_to',
     ];
 
     /** @var array */
@@ -168,6 +175,9 @@ class Cargo extends AbstractModel
         'width' => 'float',
         'height' => 'float',
         'length' => 'float',
+        'intake_date' => 'date',
+        'intake_time_from' => 'time',
+        'intake_time_to' => 'time',
     ];
 
     /** @var array */
@@ -290,6 +300,16 @@ class Cargo extends AbstractModel
                 ->all());
             $modifiedRestQuery->setFilter('id', $cargoIds);
             $modifiedRestQuery->removeFilter('shipment_number');
+        }
+
+        foreach ($modifiedRestQuery->filterIterator() as [$field, $op, $value]) {
+            switch ($field) {
+                case 'cdek_intake_number':
+                    $query->where($field, $op, $value)
+                        ->orWhere('xml_id', $op, $value);
+                    $modifiedRestQuery->removeFilter($field);
+                    break;
+            }
         }
 
         return parent::modifyQuery($query, $modifiedRestQuery);
