@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "efe897ea2af72d06fe304f26fe160ec6",
+    "content-hash": "7bf16a66b1151bde389e4d546fb75f64",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1399,7 +1399,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
-                "reference": "a9f776c60a0611fda76f7568c270376799666f5c"
+                "reference": "8754dddea4e9d9a4b80626645c92ebc93a18eca2"
             },
             "require": {
                 "ext-json": "*",
@@ -1433,7 +1433,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2021-12-02T10:12:20+00:00"
+            "time": "2022-02-25T10:40:50+00:00"
         },
         {
             "name": "iwengo/ibt-cms-lib",
@@ -1472,7 +1472,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-common-ms-code.git",
-                "reference": "cc5f61aa4881df224dd39d6a141510c3a2419359"
+                "reference": "7ef213db99a9becfe3276b38757967e1863b1e3f"
             },
             "require": {
                 "ext-json": "*",
@@ -1481,7 +1481,7 @@
                 "firebase/php-jwt": "^5.0",
                 "guzzlehttp/guzzle": "^6.3",
                 "mikehaertl/phpwkhtmltopdf": "^2.4",
-                "php": "^7.1.3"
+                "php": "^7.4"
             },
             "require-dev": {
                 "fzaninotto/faker": "^1.4",
@@ -1490,6 +1490,13 @@
                 "phpunit/phpunit": "^7.5"
             },
             "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Greensight\\CommonMsa\\CommonLibServiceProvider"
+                    ]
+                }
+            },
             "autoload": {
                 "files": [
                     "src/helpers.php"
@@ -1515,7 +1522,7 @@
                 }
             ],
             "description": "iBT common code for all microservices",
-            "time": "2021-10-29T12:53:20+00:00"
+            "time": "2022-02-25T09:35:34+00:00"
         },
         {
             "name": "iwengo/ibt-logistics-lib",
@@ -1523,7 +1530,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-logistics-lib",
-                "reference": "4fa98a25d62c61b9738344a0b958d12d1ee43c1d"
+                "reference": "04ab0bcebd9002e1f98b9a9c008660d5ea6a84ab"
             },
             "require": {
                 "ext-json": "*",
@@ -1557,7 +1564,7 @@
                 }
             ],
             "description": "iBT logistics client",
-            "time": "2022-01-24T09:49:22+00:00"
+            "time": "2022-02-25T10:39:55+00:00"
         },
         {
             "name": "iwengo/ibt-marketing-lib",
@@ -1676,11 +1683,11 @@
         },
         {
             "name": "iwengo/ibt-pim-lib",
-            "version": "dev-feature/IBT-595-free-buy",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-pim-lib",
-                "reference": "ca08f38f721b525f65f8e506851df0f94d85ee62"
+                "reference": "d201b6e694fecce4343c6be7864eeb83b03c27ee"
             },
             "require": {
                 "ext-json": "*",
@@ -1703,7 +1710,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2022-02-08T12:35:28+00:00"
+            "time": "2021-12-03T12:26:20+00:00"
         },
         {
             "name": "iwengo/ibt-store-lib",
@@ -10140,7 +10147,7 @@
         },
         {
             "package": "iwengo/ibt-pim-lib",
-            "version": "dev-feature/IBT-595-free-buy",
+            "version": "dev-master-ylab",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         },
@@ -10171,5 +10178,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.0.0"
 }
