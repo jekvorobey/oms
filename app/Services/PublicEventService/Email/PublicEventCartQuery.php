@@ -35,6 +35,23 @@ class PublicEventCartQuery
     /**
      * @return $this
      */
+    public function whereActive(?bool $flag = true): self
+    {
+        $this->pimPublicEventQuery->active = $flag;
+
+        return $this;
+    }
+
+    public function whereAvailableForSale(?bool $flag = true): self
+    {
+        $this->pimPublicEventQuery->available_for_sale = $flag;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
     public function pageNumber(int $page, int $size): self
     {
         $this->pimPublicEventQuery->page($page, $size);
@@ -67,6 +84,8 @@ class PublicEventCartQuery
             PublicEventQuery::SPEAKERS,
             PublicEventQuery::CODE,
             PublicEventQuery::ACTIVE,
+            PublicEventQuery::AVAILABLE_FOR_SALE,
+            PublicEventQuery::OFFER_IDS,
             PublicEventQuery::DATE_FROM,
             PublicEventQuery::DATE_TO,
             PublicEventQuery::NEAREST_DATE,
