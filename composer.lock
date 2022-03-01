@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "82b109c02f3f53b8e92377dff7b1ce31",
+    "content-hash": "7bf16a66b1151bde389e4d546fb75f64",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1683,11 +1683,11 @@
         },
         {
             "name": "iwengo/ibt-pim-lib",
-            "version": "dev-feature/IBT-347-repeat-order-fix",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-pim-lib",
-                "reference": "c4e31dbe846a80e3008eac59abab3b546db647bb"
+                "reference": "752c3e40700274354769a64a01408d95316974a4"
             },
             "require": {
                 "ext-json": "*",
@@ -1710,7 +1710,7 @@
                 }
             ],
             "description": "iBT PIM service client",
-            "time": "2022-02-17T09:45:27+00:00"
+            "time": "2022-03-01T13:33:50+00:00"
         },
         {
             "name": "iwengo/ibt-store-lib",
@@ -10147,7 +10147,7 @@
         },
         {
             "package": "iwengo/ibt-pim-lib",
-            "version": "dev-feature/IBT-347-repeat-order-fix",
+            "version": "dev-master-ylab",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         },
@@ -10178,5 +10178,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.1.0"
 }
