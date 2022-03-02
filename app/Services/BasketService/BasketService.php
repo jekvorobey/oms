@@ -31,4 +31,20 @@ abstract class BasketService
 
         return $item;
     }
+
+    abstract public function getBasket(int $basketId): Basket;
+
+    abstract public function setItem(Basket $basket, int $offerId, array $data): bool;
+
+    abstract public function deleteBasket(Basket $basket): bool;
+
+    /**
+     * @param string|int $customerId
+     */
+    abstract public function findFreeUserBasket(int $type, $customerId): Basket;
+
+    /**
+     * @param string|int $customerId
+     */
+    abstract protected function createBasket(int $type, $customerId): Basket;
 }

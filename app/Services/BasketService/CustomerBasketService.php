@@ -23,7 +23,7 @@ class CustomerBasketService extends BasketService
     /**
      * Получить текущую корзину пользователя
      */
-    public function findFreeUserBasket(int $type, int $customerId): Basket
+    public function findFreeUserBasket(int $type, $customerId): Basket
     {
         $basket = Basket::query()
             ->select('id')
@@ -38,10 +38,7 @@ class CustomerBasketService extends BasketService
         return $basket;
     }
 
-    /**
-     * Создать корзину
-     */
-    protected function createBasket(int $type, int $customerId): Basket
+    protected function createBasket(int $type, $customerId): Basket
     {
         $basket = new Basket();
         $basket->customer_id = $customerId;

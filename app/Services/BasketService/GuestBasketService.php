@@ -3,7 +3,9 @@
 namespace App\Services\BasketService;
 
 use App\Models\Basket\Basket;
+use Http\Discovery\Exception\NotFoundException;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class GuestBasketService extends BasketService
 {
@@ -20,7 +22,7 @@ class GuestBasketService extends BasketService
         return $basket;
     }
 
-    public function findFreeUserBasket(int $type, string $customerId): Basket
+    public function findFreeUserBasket(int $type, $customerId): Basket
     {
         $basketMappings = Cache::get($customerId);
         $key = $this->getBasketKey($type);
@@ -35,16 +37,10 @@ class GuestBasketService extends BasketService
         return $basket;
     }
 
-    /**
-     * Создать корзину в кэше
-     */
-    protected function createBasket(int $type, string $customerId): Basket
+    protected function createBasket(int $type, $customerId): Basket
     {
         $basket = new Basket();
-        $basket->id = random_int(
-            round(10 ** 7),
-            round(99 ** 7)
-        );
+        $basket->id = $this->generateId();
         $basket->customer_id = $customerId;
         $basket->type = $type;
         $basket->is_belongs_to_order = false;
@@ -63,7 +59,7 @@ class GuestBasketService extends BasketService
         return $basket;
     }
 
-    public function dropBasket(Basket $basket): bool
+    public function deleteBasket(Basket $basket): bool
     {
         return Cache::forget($basket->id);
     }
@@ -73,10 +69,13 @@ class GuestBasketService extends BasketService
      */
     public function setItem(Basket $basket, int $offerId, array $data): bool
     {
-        $this->dropBasket($basket);
+        $this->deleteBasket($basket);
 
         $item = $this->itemByOffer($basket, $offerId, $data['bundle_id'] ?? null, $data['bundle_item_id'] ?? null);
-        $item->id = random_int(round(10 ** 7), round(99 ** 7));
+
+        if (!$item->id) {
+            $item->id = $this->generateId();
+        }
 
         $itemIndex = $basket->items->search(fn($savedItem) => $savedItem->id === $item->id);
         if ($item->id && isset($data['qty']) && !$data['qty']) {
@@ -92,7 +91,7 @@ class GuestBasketService extends BasketService
             $item->fill($data);
             $item->setDataByType($data);
 
-            if ($basket->items->contains('id', $item->id)) {
+            if ($itemIndex !== false) {
                 $basket->items->transform(function ($savedBasketItem) use ($item) {
                     if ($savedBasketItem->id !== $item->id) {
                         return $savedBasketItem;
@@ -107,6 +106,8 @@ class GuestBasketService extends BasketService
 
         Cache::put($basket->id, $basket, self::CACHE_LIFETIME);
 
+        Log::debug(json_encode($basket));
+
         return true;
     }
 
@@ -120,7 +121,15 @@ class GuestBasketService extends BasketService
             case Basket::TYPE_MASTER:
                 return 'master';
             default:
-                throw new \RuntimeException("Type of basket $type not found");
+                throw new NotFoundException("Type of basket $type not found");
         }
+    }
+
+    private function generateId(): int
+    {
+        return random_int(
+            round(10 ** 7),
+            round(99 ** 7)
+        );
     }
 }
