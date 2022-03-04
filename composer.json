@@ -62,7 +62,7 @@
         "iwengo/ibt-marketing-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-merchant-management-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-message-lib": "dev-master-ylab as dev-master",
-        "iwengo/ibt-pim-lib": "dev-feature/IBT-595-free-buy as dev-master",
+        "iwengo/ibt-pim-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-store-lib": "dev-master-ylab as dev-master",
         "jenssegers/date": "^4.0",
         "laravel/framework": "5.8.*",
