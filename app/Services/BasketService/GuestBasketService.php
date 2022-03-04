@@ -3,9 +3,9 @@
 namespace App\Services\BasketService;
 
 use App\Models\Basket\Basket;
+use App\Models\Basket\BasketItem;
 use Http\Discovery\Exception\NotFoundException;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 class GuestBasketService extends BasketService
 {
@@ -106,8 +106,6 @@ class GuestBasketService extends BasketService
 
         Cache::put($basket->id, $basket, self::CACHE_LIFETIME);
 
-        Log::debug(json_encode($basket));
-
         return true;
     }
 
@@ -131,5 +129,36 @@ class GuestBasketService extends BasketService
             round(10 ** 7),
             round(99 ** 7)
         );
+    }
+
+    public function replaceToCustomer(string $guestId, int $customerId): void
+    {
+        /** @var CustomerBasketService $customerBasketService */
+        $customerBasketService = resolve(CustomerBasketService::class);
+        $basketMappings = Cache::get($guestId);
+        foreach ($basketMappings as $type => $basketId) {
+            $guestBasket = Cache::get($basketId);
+
+            if (!$guestBasket) {
+                continue;
+            }
+
+            $customerBasket = $customerBasketService->findFreeUserBasket($type, $customerId);
+
+            foreach ($guestBasket->items as $basketItem) {
+                $basketItemIndex = $customerBasket->items->search(
+                    fn(BasketItem $customerBasketItem) => $customerBasketItem->offer_id === $basketItem->offer_id
+                        && $customerBasketItem->bundle_id === $basketItem->bundle_id
+                        && $customerBasketItem->bundle_item_id === $basketItem->bundle_item_id
+                );
+                if ($basketItemIndex) {
+                    $customerBasket->items->forget($basketItemIndex);
+                }
+
+                $customerBasket->items->push($basketItem);
+            }
+            $customerBasket->save();
+            $this->deleteBasket($guestBasket);
+        }
     }
 }
