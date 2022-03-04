@@ -173,11 +173,6 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *         description="Фактическая дата доставки"
  *     ),
  *     @OA\Property(
- *         property="delivered_at",
- *         type="string",
- *         description="Фактическая дата доставки"
- *     ),
- *     @OA\Property(
  *         property="delivery_time_start",
  *         type="string",
  *         description="желаемое клиентом время доставки от"

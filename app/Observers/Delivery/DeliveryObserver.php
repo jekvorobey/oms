@@ -75,7 +75,6 @@ class DeliveryObserver
         $this->setIsCanceledToShipments($delivery);
         $this->setStatusToOrder($delivery);
         $this->setIsCanceledToOrder($delivery);
-        $this->setDeliveredAt($delivery);
         // $this->notifyIfShipped($delivery);
         // $this->notifyIfReadyForRecipient($delivery);
         $this->sendNotification($delivery);
@@ -324,8 +323,8 @@ class DeliveryObserver
      */
     protected function setDeliveredAt(Delivery $delivery): void
     {
-        if ($delivery->status === DeliveryStatus::DONE && is_null($delivery->delivery_at)) {
-            $delivery->delivery_at = now();
+        if ($delivery->isDirty('status') && ($delivery->status === DeliveryStatus::DONE && is_null($delivery->delivered_at))) {
+            $delivery->delivered_at = now();
         }
     }
 
