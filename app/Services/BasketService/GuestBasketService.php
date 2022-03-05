@@ -123,6 +123,20 @@ class GuestBasketService extends BasketService
         }
     }
 
+    private function getBasketTypeByKey(string $type): int
+    {
+        switch ($type) {
+            case 'product':
+                return Basket::TYPE_PRODUCT;
+            case 'certificate':
+                return Basket::TYPE_CERTIFICATE;
+            case 'master':
+                return Basket::TYPE_MASTER;
+            default:
+                throw new NotFoundException("Type of basket $type not found");
+        }
+    }
+
     private function generateId(): int
     {
         return random_int(
@@ -136,29 +150,43 @@ class GuestBasketService extends BasketService
         /** @var CustomerBasketService $customerBasketService */
         $customerBasketService = resolve(CustomerBasketService::class);
         $basketMappings = Cache::get($guestId);
-        foreach ($basketMappings as $type => $basketId) {
+
+        if (!$basketMappings) {
+            return;
+        }
+
+        $basketItemsIdToDelete = [];
+        foreach ($basketMappings as $cacheType => $basketId) {
+            /** @var Basket $guestBasket */
             $guestBasket = Cache::get($basketId);
 
             if (!$guestBasket) {
                 continue;
             }
 
-            $customerBasket = $customerBasketService->findFreeUserBasket($type, $customerId);
+            $basketType = $this->getBasketTypeByKey($cacheType);
+            $customerBasket = $customerBasketService->findFreeUserBasket($basketType, $customerId);
 
-            foreach ($guestBasket->items as $basketItem) {
+            $guestBasket->items->each(function (BasketItem $basketItem) use ($customerBasket, &$basketItemsIdToDelete) {
                 $basketItemIndex = $customerBasket->items->search(
                     fn(BasketItem $customerBasketItem) => $customerBasketItem->offer_id === $basketItem->offer_id
                         && $customerBasketItem->bundle_id === $basketItem->bundle_id
                         && $customerBasketItem->bundle_item_id === $basketItem->bundle_item_id
                 );
-                if ($basketItemIndex) {
-                    $customerBasket->items->forget($basketItemIndex);
+                if ($basketItemToDelete = $customerBasket->items->get($basketItemIndex)) {
+                    $basketItemsIdToDelete[] = $basketItemToDelete->id;
                 }
-
-                $customerBasket->items->push($basketItem);
-            }
-            $customerBasket->save();
+                $basketItem->basket_id = $customerBasket->id;
+                $basketItem->save();
+            });
             $this->deleteBasket($guestBasket);
         }
+
+        if ($basketItemsIdToDelete) {
+            BasketItem::query()
+                ->whereIn('id', $basketItemsIdToDelete)
+                ->delete();
+        }
+        Cache::forget($guestId);
     }
 }
