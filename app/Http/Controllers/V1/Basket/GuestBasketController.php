@@ -13,7 +13,7 @@ class GuestBasketController extends BasketController
         $this->basketService = resolve(GuestBasketService::class);
     }
 
-    public function replaceBasket(string $guestId, ReplaceBasketRequest $request): Response
+    public function moveGuestBasketToCustomer(string $guestId, ReplaceBasketRequest $request): Response
     {
         $customerId = $request->get('customerId');
         $this->basketService->replaceToCustomer($guestId, $customerId);

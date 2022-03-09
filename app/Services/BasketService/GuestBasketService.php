@@ -155,7 +155,6 @@ class GuestBasketService extends BasketService
             return;
         }
 
-        $basketItemsIdToDelete = [];
         foreach ($basketMappings as $cacheType => $basketId) {
             /** @var Basket $guestBasket */
             $guestBasket = Cache::get($basketId);
@@ -167,26 +166,23 @@ class GuestBasketService extends BasketService
             $basketType = $this->getBasketTypeByKey($cacheType);
             $customerBasket = $customerBasketService->findFreeUserBasket($basketType, $customerId);
 
-            $guestBasket->items->each(function (BasketItem $basketItem) use ($customerBasket, &$basketItemsIdToDelete) {
-                $basketItemIndex = $customerBasket->items->search(
+            $guestBasket->items->each(function (BasketItem $basketItem) use ($customerBasket) {
+                $customerBasketItemIndex = $customerBasket->items->search(
                     fn(BasketItem $customerBasketItem) => $customerBasketItem->offer_id === $basketItem->offer_id
                         && $customerBasketItem->bundle_id === $basketItem->bundle_id
                         && $customerBasketItem->bundle_item_id === $basketItem->bundle_item_id
                 );
-                if ($basketItemToDelete = $customerBasket->items->get($basketItemIndex)) {
-                    $basketItemsIdToDelete[] = $basketItemToDelete->id;
+                if ($basketItemToUpdate = $customerBasket->items->get($customerBasketItemIndex)) {
+                    $basketItemToUpdate->qty = max($basketItem->qty, $basketItemToUpdate->qty);
+                    $basketItemToUpdate->save();
+                } else {
+                    $basketItem->basket_id = $customerBasket->id;
+                    $basketItem->save();
                 }
-                $basketItem->basket_id = $customerBasket->id;
-                $basketItem->save();
             });
             $this->deleteBasket($guestBasket);
         }
 
-        if ($basketItemsIdToDelete) {
-            BasketItem::query()
-                ->whereIn('id', $basketItemsIdToDelete)
-                ->delete();
-        }
         Cache::forget($guestId);
     }
 }
