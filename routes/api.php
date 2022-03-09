@@ -19,15 +19,25 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('baskets')->group(function () {
-        Route::post('notify-expired/{offer}', 'BasketController@notifyExpiredOffers');
-        Route::get('by-customer/{customerId}', 'BasketController@getCurrentBasket');
-        Route::get('qty-by-offer-ids', 'BasketController@qtyByOfferIds');
+        Route::post('notify-expired/{offer}', 'Basket\CustomerBasketController@notifyExpiredOffers');
+        Route::get('by-customer/{customerId}', 'Basket\CustomerBasketController@getCurrentBasket');
+        Route::get('qty-by-offer-ids', 'Basket\CustomerBasketController@qtyByOfferIds');
 
         Route::prefix('{basketId}')->group(function () {
-            Route::put('items/{offerId}', 'BasketController@setItemByBasket');
-            Route::put('commit', 'BasketController@commitItemsPrice');
-            Route::get('', 'BasketController@getBasket');
-            Route::delete('', 'BasketController@dropBasket');
+            Route::put('items/{offerId}', 'Basket\CustomerBasketController@setItemByBasket');
+            Route::put('commit', 'Basket\CustomerBasketController@commitItemsPrice');
+            Route::get('', 'Basket\CustomerBasketController@getBasket');
+            Route::delete('', 'Basket\CustomerBasketController@dropBasket');
+        });
+
+        Route::prefix('guest')->group(function () {
+            Route::get('by-customer/{customerId}', 'Basket\GuestBasketController@getCurrentBasket');
+
+            Route::prefix('{basketId}')->group(function () {
+                Route::put('items/{offerId}', 'Basket\GuestBasketController@setItemByBasket');
+                Route::get('', 'Basket\GuestBasketController@getBasket');
+                Route::delete('', 'Basket\GuestBasketController@dropBasket');
+            });
         });
     });
 
@@ -60,7 +70,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::put('payments', 'OrdersController@setPayments');
             Route::put('comment', 'OrdersController@setComment');
 
-            Route::put('items/{offerId}', 'BasketController@setItemByOrder');
+            Route::put('items/{offerId}', 'Basket\CustomerBasketController@setItemByOrder');
 
             Route::prefix('exports')->group(function () {
                 Route::get('count', 'OrdersExportController@count');
