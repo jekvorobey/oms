@@ -54,12 +54,7 @@ class DeliveryObserver
      * Автоматическая установка статуса для заказа, если все его доставки получили нужный статус
      */
     protected const STATUS_TO_ORDER = [
-        DeliveryStatus::CREATED => OrderStatus::CREATED,
-        DeliveryStatus::AWAITING_CHECK => OrderStatus::AWAITING_CHECK,
-        DeliveryStatus::CHECKING => OrderStatus::CHECKING,
-        DeliveryStatus::AWAITING_CONFIRMATION => OrderStatus::AWAITING_CONFIRMATION,
         DeliveryStatus::ASSEMBLING => OrderStatus::IN_PROCESSING,
-        DeliveryStatus::ASSEMBLED => OrderStatus::TRANSFERRED_TO_DELIVERY,
         DeliveryStatus::SHIPPED => OrderStatus::TRANSFERRED_TO_DELIVERY,
         DeliveryStatus::ON_POINT_IN => OrderStatus::DELIVERING,
         DeliveryStatus::ARRIVED_AT_DESTINATION_CITY => OrderStatus::DELIVERING,
@@ -67,8 +62,6 @@ class DeliveryObserver
         DeliveryStatus::READY_FOR_RECIPIENT => OrderStatus::READY_FOR_RECIPIENT,
         DeliveryStatus::DELIVERING => OrderStatus::DELIVERING,
         DeliveryStatus::DONE => OrderStatus::DONE,
-        DeliveryStatus::CANCELLATION_EXPECTED => OrderStatus::DELIVERING,
-        DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER => OrderStatus::DELIVERING,
         DeliveryStatus::RETURNED => OrderStatus::RETURNED,
     ];
 
@@ -419,7 +412,7 @@ class DeliveryObserver
             }
             $orderStatus = $order->deliveries->where('is_canceled', false)->min('status');
 
-            if ($orderStatus) {
+            if ($orderStatus && isset(self::STATUS_TO_ORDER[$orderStatus])) {
                 $order->status = self::STATUS_TO_ORDER[$orderStatus];
                 $order->save();
             }
