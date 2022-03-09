@@ -15,6 +15,7 @@ use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use Carbon\Carbon;
+use Exception;
 use Greensight\Logistics\Dto\Lists\DeliveryService as DeliveryServiceDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
@@ -67,7 +68,7 @@ class DeliveryObserver
     /**
      * Handle the delivery "updated" event.
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function updated(Delivery $delivery)
     {
@@ -78,6 +79,7 @@ class DeliveryObserver
         // $this->notifyIfShipped($delivery);
         // $this->notifyIfReadyForRecipient($delivery);
         $this->sendNotification($delivery);
+        $this->checkOrderStatusIfDeliveryCanceled($delivery);
 
         rescue(fn() => $this->cdekDeliverySumUpdate($delivery));
     }
@@ -261,7 +263,7 @@ class DeliveryObserver
                 $delivery->total_sum = $deliveryDetail->total_sum;
                 Delivery::withoutEvents(fn() => $delivery->save());
             } else {
-                throw new \Exception('Get cdek delivery sum error: ' . $deliveryDetail->message);
+                throw new Exception('Get cdek delivery sum error: ' . $deliveryDetail->message);
             }
         }
     }
@@ -337,7 +339,7 @@ class DeliveryObserver
 
     /**
      * Установить флаг отмены всем отправлениям
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setIsCanceledToShipments(Delivery $delivery): void
     {
@@ -398,8 +400,28 @@ class DeliveryObserver
     }
 
     /**
+     * Актуализировать статус заказа если текущее отправление отменено
+     * @throws Exception
+     */
+    protected function checkOrderStatusIfDeliveryCanceled(Delivery $delivery): void
+    {
+        if ($delivery->is_canceled && $delivery->is_canceled != $delivery->getOriginal('is_canceled')) {
+            $order = $delivery->order;
+            if ($order->is_canceled) {
+                return;
+            }
+            $orderStatus = $order->deliveries->where('is_canceled', false)->min('status');
+
+            if ($orderStatus && isset(self::STATUS_TO_ORDER[$orderStatus])) {
+                $order->status = self::STATUS_TO_ORDER[$orderStatus];
+                $order->save();
+            }
+        }
+    }
+
+    /**
      * Автоматическая установка флага отмены для заказа, если все его доставки отменены
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setIsCanceledToOrder(Delivery $delivery): void
     {
