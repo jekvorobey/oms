@@ -228,6 +228,9 @@ class DeliveryObserver
             }
 
             if ($delivery->getOriginal('is_canceled') != $delivery->is_canceled && $delivery->is_canceled) {
+                if ($delivery->order->is_canceled) {
+                    return;
+                }
                 if (!$delivery->order->isConsolidatedDelivery()) {
                     $notificationService->send(
                         $customer,
