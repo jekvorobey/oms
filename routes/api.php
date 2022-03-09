@@ -32,6 +32,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
 
         Route::prefix('guest')->group(function () {
             Route::get('by-customer/{customerId}', 'Basket\GuestBasketController@getCurrentBasket');
+            Route::post('replace-to-customer/{guestId}', 'Basket\GuestBasketController@moveGuestBasketToCustomer');
 
             Route::prefix('{basketId}')->group(function () {
                 Route::put('items/{offerId}', 'Basket\GuestBasketController@setItemByBasket');

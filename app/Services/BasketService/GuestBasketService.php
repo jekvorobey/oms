@@ -3,9 +3,9 @@
 namespace App\Services\BasketService;
 
 use App\Models\Basket\Basket;
+use App\Models\Basket\BasketItem;
 use Http\Discovery\Exception\NotFoundException;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 class GuestBasketService extends BasketService
 {
@@ -106,8 +106,6 @@ class GuestBasketService extends BasketService
 
         Cache::put($basket->id, $basket, self::CACHE_LIFETIME);
 
-        Log::debug(json_encode($basket));
-
         return true;
     }
 
@@ -125,11 +123,66 @@ class GuestBasketService extends BasketService
         }
     }
 
+    private function getBasketTypeByKey(string $type): int
+    {
+        switch ($type) {
+            case 'product':
+                return Basket::TYPE_PRODUCT;
+            case 'certificate':
+                return Basket::TYPE_CERTIFICATE;
+            case 'master':
+                return Basket::TYPE_MASTER;
+            default:
+                throw new NotFoundException("Type of basket $type not found");
+        }
+    }
+
     private function generateId(): int
     {
         return random_int(
             round(10 ** 7),
             round(99 ** 7)
         );
+    }
+
+    public function replaceToCustomer(string $guestId, int $customerId): void
+    {
+        /** @var CustomerBasketService $customerBasketService */
+        $customerBasketService = resolve(CustomerBasketService::class);
+        $basketMappings = Cache::get($guestId);
+
+        if (!$basketMappings) {
+            return;
+        }
+
+        foreach ($basketMappings as $cacheType => $basketId) {
+            /** @var Basket $guestBasket */
+            $guestBasket = Cache::get($basketId);
+
+            if (!$guestBasket) {
+                continue;
+            }
+
+            $basketType = $this->getBasketTypeByKey($cacheType);
+            $customerBasket = $customerBasketService->findFreeUserBasket($basketType, $customerId);
+
+            $guestBasket->items->each(function (BasketItem $basketItem) use ($customerBasket) {
+                $customerBasketItemIndex = $customerBasket->items->search(
+                    fn(BasketItem $customerBasketItem) => $customerBasketItem->offer_id === $basketItem->offer_id
+                        && $customerBasketItem->bundle_id === $basketItem->bundle_id
+                        && $customerBasketItem->bundle_item_id === $basketItem->bundle_item_id
+                );
+                if ($basketItemToUpdate = $customerBasket->items->get($customerBasketItemIndex)) {
+                    $basketItemToUpdate->qty = max($basketItem->qty, $basketItemToUpdate->qty);
+                    $basketItemToUpdate->save();
+                } else {
+                    $basketItem->basket_id = $customerBasket->id;
+                    $basketItem->save();
+                }
+            });
+            $this->deleteBasket($guestBasket);
+        }
+
+        Cache::forget($guestId);
     }
 }
