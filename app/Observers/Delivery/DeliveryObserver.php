@@ -277,6 +277,7 @@ class DeliveryObserver
         $this->setPaymentStatusAt($delivery);
         $this->setProblemAt($delivery);
         $this->setCanceledAt($delivery);
+        $this->setDeliveredAt($delivery);
     }
 
     /**
@@ -316,6 +317,16 @@ class DeliveryObserver
     {
         if ($delivery->is_canceled != $delivery->getOriginal('is_canceled')) {
             $delivery->is_canceled_at = now();
+        }
+    }
+
+    /**
+     * Установить дату отмены доставки
+     */
+    protected function setDeliveredAt(Delivery $delivery): void
+    {
+        if ($delivery->isDirty('status') && ($delivery->status === DeliveryStatus::DONE && is_null($delivery->delivered_at))) {
+            $delivery->delivered_at = now();
         }
     }
 
