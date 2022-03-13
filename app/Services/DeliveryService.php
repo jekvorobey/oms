@@ -624,11 +624,14 @@ class DeliveryService
             }
             $deliveryOrderCostDto->cod_cost += $shipment->basketItems->sum('cost');
         }
-        //todo Удалить поле delivery_cost_pay из DeliveryOrderCostDto
-        $deliveryOrderCostDto->delivery_cost_pay = 0;
+        if ($delivery->isPostPaid()) {
+            $deliveryOrderCostDto->delivery_cost_pay = round($delivery->order->delivery_price / $delivery->order->deliveries->count(), 2);
+            $deliveryOrderCostDto->is_delivery_payed_by_recipient = true;
+        } else {
+            $deliveryOrderCostDto->delivery_cost_pay = 0;
+            $deliveryOrderCostDto->is_delivery_payed_by_recipient = false;
+        }
         $deliveryOrderCostDto->assessed_cost = $deliveryOrderCostDto->cod_cost;
-        //todo Когда будет постоплата, указать true в поле ниже
-        $deliveryOrderCostDto->is_delivery_payed_by_recipient = false;
 
         //Информация об отправителе заказа
         if ($delivery->shipments->count() == 1) {
@@ -766,8 +769,11 @@ class DeliveryService
                         $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int) ceil($basketItem->product['length']) : 0;
                         $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int) ceil($basketItem->product['weight']) : 0;
                         $deliveryOrderItemDto->cost = round($item->qty > 0 ? $basketItem->price / $item->qty : 0, 2);
-                        //todo Когда будет постоплата, передавать реальную стоимость к оплате за товары доставки в поле ниже
-                        $deliveryOrderItemDto->price = 0;
+                        if ($delivery->isPostPaid()) {
+                            $deliveryOrderItemDto->price = $basketItem->price;
+                        } else {
+                            $deliveryOrderItemDto->price = 0;
+                        }
                         $deliveryOrderItemDto->assessed_cost = $deliveryOrderItemDto->cost;
                     }
                 }
@@ -795,8 +801,11 @@ class DeliveryService
                     $deliveryOrderItemDto->length = isset($basketItem->product['length']) ? (int) ceil($basketItem->product['length']) : 0;
                     $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int) ceil($basketItem->product['weight']) : 0;
                     $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->cost / $basketItem->qty : 0, 2);
-                    //todo Когда будет постоплата, передавать реальную стоимость к оплате за товары доставки в поле ниже
-                    $deliveryOrderItemDto->price = 0;
+                    if ($delivery->isPostPaid()) {
+                        $deliveryOrderItemDto->price = $basketItem->price;
+                    } else {
+                        $deliveryOrderItemDto->price = 0;
+                    }
                     $deliveryOrderItemDto->assessed_cost = $deliveryOrderItemDto->cost;
                 }
             }
