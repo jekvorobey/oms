@@ -207,6 +207,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property bool $is_returned - флаг возврата выполненного заказа
  *
  * @property string $number - номер
+ * @property bool $is_post_payed - Оплата при получении
  *
  * //dynamic attributes
  * @property-read float $cashless_price - cумма заказа без учета подарочных сертификатов
@@ -417,5 +418,15 @@ class Order extends AbstractModel
     public function isFullyPaidByCertificate(): bool
     {
         return $this->spent_certificate > 0 && ($this->price - $this->spent_certificate) === 0.0;
+    }
+
+    public function getIsPostPayedAttribute(): bool
+    {
+        return true;
+    }
+
+    public function setIsPostPayedAttribute(): bool
+    {
+        return true;
     }
 }

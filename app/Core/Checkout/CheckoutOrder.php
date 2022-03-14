@@ -13,6 +13,7 @@ use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderPromoCode;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentMethod;
 use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
 use Exception;
@@ -323,6 +324,14 @@ class CheckoutOrder
         $order->delivery_type = $this->deliveryTypeId;
         $order->delivery_cost = $this->deliveryCost;
         $order->delivery_price = $this->deliveryPrice;
+
+        $paymentMethod = PaymentMethod::query()
+            ->where('id', $this->paymentMethodId)
+            ->first();
+
+        if ($paymentMethod) {
+            $order->is_post_payed = $paymentMethod->is_post_payed;
+        }
 
         $order->save();
         return $order;
