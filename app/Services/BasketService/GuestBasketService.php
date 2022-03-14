@@ -167,13 +167,13 @@ class GuestBasketService extends BasketService
             $customerBasket = $customerBasketService->findFreeUserBasket($basketType, $customerId);
 
             $guestBasket->items->each(function (BasketItem $basketItem) use ($customerBasket) {
-                $customerBasketItemIndex = $customerBasket->items->search(
+                $basketItemToUpdate = $customerBasket->items->first(
                     fn(BasketItem $customerBasketItem) => $customerBasketItem->offer_id === $basketItem->offer_id
                         && $customerBasketItem->bundle_id === $basketItem->bundle_id
                         && $customerBasketItem->bundle_item_id === $basketItem->bundle_item_id
                 );
 
-                if ($customerBasketItemIndex !== false && $basketItemToUpdate = $customerBasket->items->get($customerBasketItemIndex)) {
+                if ($basketItemToUpdate) {
                     $basketItemToUpdate->qty = max($basketItem->qty, $basketItemToUpdate->qty);
                     $basketItemToUpdate->save();
                 } else {
