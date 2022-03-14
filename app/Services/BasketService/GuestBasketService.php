@@ -173,12 +173,14 @@ class GuestBasketService extends BasketService
                         && $customerBasketItem->bundle_item_id === $basketItem->bundle_item_id
                 );
 
-                if ($customerBasketItemIndex && $basketItemToUpdate = $customerBasket->items->get($customerBasketItemIndex)) {
+                if ($customerBasketItemIndex !== false && $basketItemToUpdate = $customerBasket->items->get($customerBasketItemIndex)) {
                     $basketItemToUpdate->qty = max($basketItem->qty, $basketItemToUpdate->qty);
                     $basketItemToUpdate->save();
                 } else {
-                    $basketItem->basket_id = $customerBasket->id;
-                    $basketItem->save();
+                    $basketItemToCreate = clone $basketItem;
+                    $basketItemToCreate->id = null;
+                    $basketItemToCreate->basket_id = $customerBasket->id;
+                    $basketItemToCreate->save();
                 }
             });
             $this->deleteBasket($guestBasket);
