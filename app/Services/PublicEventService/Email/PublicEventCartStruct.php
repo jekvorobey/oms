@@ -38,4 +38,8 @@ class PublicEventCartStruct
     public $places;
     /** @var array */
     public $stages;
+    /** @var array */
+    public $offerIds;
+    /** @var bool */
+    public $availableForSale;
 }

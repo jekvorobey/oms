@@ -37,7 +37,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command(SetWaitingStatus2Payment::class)->everyMinute();
-        $schedule->command(CancelExpiredOrders::class)->everyMinute();
+//        $schedule->command(CancelExpiredOrders::class)->everyMinute();
         $schedule->command(UpdateDeliveriesStatus::class)->everyTenMinutes();
         $schedule->command(CommitPayments::class)->hourly();
         $schedule->command(ApproveBonus::class)->dailyAt('00:00');

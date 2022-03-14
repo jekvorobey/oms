@@ -29,6 +29,10 @@ class PublicEventInfoDto implements Arrayable
     public $ticketsInfo;
     /** @var OrganizerInfoDto */
     public $organizer;
+    /** @var bool */
+    public $active;
+    /** @var bool */
+    public $availableForSale;
 
     /**
      * PublicEventInfoDto constructor.
