@@ -11,6 +11,7 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
+use App\Models\Payment\PaymentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
 use Cms\Core\CmsException;
 use Cms\Dto\OptionDto;
@@ -844,6 +845,10 @@ class DeliveryService
                                     $deliveryOrderStatusDto->status_xml_id,
                                     new Carbon($deliveryOrderStatusDto->status_date)
                                 );
+                                // для отправлений с постоплатой
+                                if ($delivery->status === DeliveryStatus::DONE) {
+                                    $delivery->payment_status = PaymentStatus::PAID;
+                                }
                                 $delivery->save();
                             }
                         }

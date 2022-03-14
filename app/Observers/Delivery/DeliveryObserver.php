@@ -11,6 +11,7 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\OrderStatus;
+use App\Models\Payment\PaymentStatus;
 use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
@@ -392,6 +393,36 @@ class DeliveryObserver
 
             if ($allDeliveriesHasStatus) {
                 $order->status = self::STATUS_TO_ORDER[$delivery->status];
+                $order->save();
+            }
+        }
+    }
+
+    /**
+     * Автоматическая установка статуса оплаты для заказа, если все его доставки получили статус "оплачено"
+     */
+    protected function setPaymentStatusToOrder(Delivery $delivery): void
+    {
+        if (isset(self::STATUS_TO_ORDER[$delivery->status]) && $delivery->status === DeliveryStatus::DONE) {
+            $order = $delivery->order;
+            if ($order->payment_status === $delivery->payment_status) {
+                return;
+            }
+
+            $allDeliveriesHasPaid = true;
+            foreach ($order->deliveries as $orderDelivery) {
+                if ($orderDelivery->is_canceled) {
+                    continue;
+                }
+
+                if ($orderDelivery->payment_status !== PaymentStatus::PAID) {
+                    $allDeliveriesHasPaid = false;
+                    break;
+                }
+            }
+
+            if ($allDeliveriesHasPaid) {
+                $order->payment_status = PaymentStatus::PAID;
                 $order->save();
             }
         }
