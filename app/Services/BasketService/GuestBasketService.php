@@ -173,14 +173,12 @@ class GuestBasketService extends BasketService
                         && $customerBasketItem->bundle_item_id === $basketItem->bundle_item_id
                 );
 
-                if ($customerBasketItemIndex) {
-                    if ($basketItemToUpdate = $customerBasket->items->get($customerBasketItemIndex)) {
-                        $basketItemToUpdate->qty = max($basketItem->qty, $basketItemToUpdate->qty);
-                        $basketItemToUpdate->save();
-                    } else {
-                        $basketItem->basket_id = $customerBasket->id;
-                        $basketItem->save();
-                    }
+                if ($customerBasketItemIndex && $basketItemToUpdate = $customerBasket->items->get($customerBasketItemIndex)) {
+                    $basketItemToUpdate->qty = max($basketItem->qty, $basketItemToUpdate->qty);
+                    $basketItemToUpdate->save();
+                } else {
+                    $basketItem->basket_id = $customerBasket->id;
+                    $basketItem->save();
                 }
             });
             $this->deleteBasket($guestBasket);
