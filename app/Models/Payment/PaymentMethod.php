@@ -41,7 +41,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property string|array|null $excluded_customers - Недоступен для указанных пользователей
  * @property int|bool $active - Статус метода оплаты
  *
- * @property-read bool $is_post_payed - Оплата при получении
+ * @property-read bool $is_postpaid - Оплата при получении
  */
 class PaymentMethod extends AbstractModel
 {
@@ -61,7 +61,7 @@ class PaymentMethod extends AbstractModel
         ];
     }
 
-    public function getIsPostPayedAttribute(): bool
+    public function getIsPostPaidAttribute(): bool
     {
         return true;
     }

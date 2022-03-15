@@ -207,7 +207,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property bool $is_returned - флаг возврата выполненного заказа
  *
  * @property string $number - номер
- * @property bool $is_post_payed - Оплата при получении
+ * @property bool $is_postpaid - Оплата при получении
  *
  * //dynamic attributes
  * @property-read float $cashless_price - cумма заказа без учета подарочных сертификатов
@@ -373,7 +373,7 @@ class Order extends AbstractModel
      */
     public function canBeProcessed(): bool
     {
-        return $this->is_post_payed || $this->isPaid();
+        return $this->is_postpaid || $this->isPaid();
     }
 
     /**
@@ -416,12 +416,12 @@ class Order extends AbstractModel
         return $this->spent_certificate > 0 && ($this->price - $this->spent_certificate) === 0.0;
     }
 
-    public function getIsPostPayedAttribute(): bool
+    public function getIsPostPaidAttribute(): bool
     {
         return true;
     }
 
-    public function setIsPostPayedAttribute(): bool
+    public function setIsPostPaidAttribute(): bool
     {
         return true;
     }

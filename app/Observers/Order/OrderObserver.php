@@ -354,7 +354,7 @@ class OrderObserver
 
     private function commitPaymentIfOrderDelivered(Order $order): void
     {
-        if ($order->status == OrderStatus::DONE && $order->wasChanged('status') && !$order->is_post_payed) {
+        if ($order->status == OrderStatus::DONE && $order->wasChanged('status') && !$order->is_postpaid) {
             /** @var Payment $payment */
             $payment = $order->payments->last();
 

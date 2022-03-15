@@ -169,7 +169,7 @@ class CheckoutOrder
             $this->createShipments($order);
             $this->createTickets($order);
 
-            if (!$order->is_post_payed) {
+            if (!$order->is_postpaid) {
                 $this->createPayment($order);
             }
             $this->createOrderDiscounts($order);
@@ -331,14 +331,12 @@ class CheckoutOrder
         $order->delivery_price = $this->deliveryPrice;
 
         /** @var PaymentMethod $paymentMethod */
-        $paymentMethod = PaymentMethod::query()
-            ->where('id', $this->paymentMethodId)
-            ->first();
+        $paymentMethod = PaymentMethod::find($this->paymentMethodId);
 
         if ($paymentMethod) {
-            $order->is_post_payed = $paymentMethod->is_post_payed;
+            $order->is_postpaid = $paymentMethod->is_postpaid;
             $order->status = OrderStatus::defaultValue();
-            $order->payment_status = $order->is_post_payed ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+            $order->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
         }
 
         $order->save();
@@ -439,7 +437,7 @@ class CheckoutOrder
             $delivery->delivery_time_code = $checkoutDelivery->deliveryTimeCode;
             $delivery->dt = $checkoutDelivery->dt;
             $delivery->pdd = $checkoutDelivery->pdd;
-            $delivery->payment_status = $order->is_post_payed ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+            $delivery->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
 
             $delivery->save();
 
@@ -451,7 +449,7 @@ class CheckoutOrder
                 $shipment->required_shipping_at = $checkoutShipment->psd;
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
-                $shipment->payment_status = $order->is_post_payed ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+                $shipment->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
                 $shipment->save();
 
                 foreach ($checkoutShipment->items as [$offerId, $bundleId, $bundleItemId]) {
