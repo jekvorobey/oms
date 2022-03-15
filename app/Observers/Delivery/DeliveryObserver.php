@@ -16,6 +16,7 @@ use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use Carbon\Carbon;
+use Exception;
 use Greensight\Logistics\Dto\Lists\DeliveryService as DeliveryServiceDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
@@ -68,13 +69,14 @@ class DeliveryObserver
     /**
      * Handle the delivery "updated" event.
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function updated(Delivery $delivery)
     {
         $this->setStatusToShipments($delivery);
         $this->setIsCanceledToShipments($delivery);
         $this->setStatusToOrder($delivery);
+        $this->setPaymentStatusToOrder($delivery);
         $this->setIsCanceledToOrder($delivery);
         // $this->notifyIfShipped($delivery);
         // $this->notifyIfReadyForRecipient($delivery);
@@ -262,7 +264,7 @@ class DeliveryObserver
                 $delivery->total_sum = $deliveryDetail->total_sum;
                 Delivery::withoutEvents(fn() => $delivery->save());
             } else {
-                throw new \Exception('Get cdek delivery sum error: ' . $deliveryDetail->message);
+                throw new Exception('Get cdek delivery sum error: ' . $deliveryDetail->message);
             }
         }
     }
@@ -338,7 +340,7 @@ class DeliveryObserver
 
     /**
      * Установить флаг отмены всем отправлениям
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setIsCanceledToShipments(Delivery $delivery): void
     {
@@ -403,13 +405,14 @@ class DeliveryObserver
      */
     protected function setPaymentStatusToOrder(Delivery $delivery): void
     {
-        if (isset(self::STATUS_TO_ORDER[$delivery->status]) && $delivery->status === DeliveryStatus::DONE) {
+        if ($delivery->isPostPaid() && $delivery->wasChanged('payment_status')) {
             $order = $delivery->order;
             if ($order->payment_status === $delivery->payment_status) {
                 return;
             }
 
             $allDeliveriesHasPaid = true;
+            $allDeliveriesHasTimeout = true;
             foreach ($order->deliveries as $orderDelivery) {
                 if ($orderDelivery->is_canceled) {
                     continue;
@@ -417,7 +420,10 @@ class DeliveryObserver
 
                 if ($orderDelivery->payment_status !== PaymentStatus::PAID) {
                     $allDeliveriesHasPaid = false;
-                    break;
+                }
+
+                if ($orderDelivery->payment_status !== PaymentStatus::TIMEOUT) {
+                    $allDeliveriesHasTimeout = false;
                 }
             }
 
@@ -425,12 +431,41 @@ class DeliveryObserver
                 $order->payment_status = PaymentStatus::PAID;
                 $order->save();
             }
+
+            if ($allDeliveriesHasTimeout) {
+                $order->payment_status = PaymentStatus::TIMEOUT;
+                $order->save();
+            }
+        }
+    }
+
+    /**
+     * Автоматическая установка статуса оплаты для отправления, если все его доставки получили статус "оплачено"
+     */
+    protected function setPaymentStatusToShipment(Delivery $delivery): void
+    {
+        if ($delivery->isPostPaid() && $delivery->wasChanged('payment_status')) {
+            foreach ($delivery->shipments as $shipment) {
+                if ($shipment->is_canceled) {
+                    continue;
+                }
+
+                if ($delivery->payment_status === PaymentStatus::PAID) {
+                    $shipment->payment_status = PaymentStatus::PAID;
+                    $shipment->save();
+                }
+
+                if ($delivery->payment_status === PaymentStatus::TIMEOUT) {
+                    $shipment->payment_status = PaymentStatus::TIMEOUT;
+                    $shipment->save();
+                }
+            }
         }
     }
 
     /**
      * Автоматическая установка флага отмены для заказа, если все его доставки отменены
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setIsCanceledToOrder(Delivery $delivery): void
     {
@@ -478,7 +513,7 @@ class DeliveryObserver
         }
     }
 
-    protected function createNotificationType(int $status, bool $postomat)
+    protected function createNotificationType(int $status, bool $postomat): string
     {
         $type = $this->statusToType($status);
 
@@ -493,7 +528,7 @@ class DeliveryObserver
         return $type;
     }
 
-    protected function statusToType(int $status)
+    protected function statusToType(int $status): string
     {
         switch ($status) {
             case DeliveryStatus::ON_POINT_IN:
@@ -513,7 +548,7 @@ class DeliveryObserver
         }
     }
 
-    protected function makeArray(Delivery $delivery, string $text)
+    protected function makeArray(Delivery $delivery, string $text): array
     {
         $link_order = sprintf('%s/profile/orders/%d', config('app.showcase_host'), $delivery->order->id);
         $user = $delivery->order->getUser();
@@ -595,7 +630,7 @@ class DeliveryObserver
         ];
     }
 
-    protected function getDeliveryDate(Delivery $delivery)
+    protected function getDeliveryDate(Delivery $delivery): string
     {
         if (!empty($delivery->delivery_time_start) && !empty($delivery->delivery_time_end)) {
             return sprintf(

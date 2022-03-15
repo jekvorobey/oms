@@ -131,6 +131,11 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *         description="флаг, что заказ отменен"
  *     ),
  *     @OA\Property(
+ *         property="is_postpaid",
+ *         type="integer",
+ *         description="флаг, что заказ с постоплатой"
+ *     ),
+ *     @OA\Property(
  *         property="is_canceled_at",
  *         type="string",
  *         description="дата установки флага отмены заказа"
@@ -205,6 +210,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property string $manager_comment - комментарий менеджера
  * @property int $confirmation_type - тип подтверждения заказа (см. \App\Models\Order\OrderConfirmationType)
  * @property bool $is_returned - флаг возврата выполненного заказа
+ * @property bool is_postpaid -флаг заказа с постоплатой
  *
  * @property string $number - номер
  *
@@ -417,5 +423,13 @@ class Order extends AbstractModel
     public function isFullyPaidByCertificate(): bool
     {
         return $this->spent_certificate > 0 && ($this->price - $this->spent_certificate) === 0.0;
+    }
+
+    /**
+     * Заказ с постоплатой?
+     */
+    public function getIsPostpaidAttribute(): bool
+    {
+        return false;
     }
 }

@@ -840,15 +840,20 @@ class DeliveryService
                             if ($deliveryOrderStatusDto->success) {
                                 if ($deliveryOrderStatusDto->status && $delivery->status != $deliveryOrderStatusDto->status) {
                                     $delivery->status = $deliveryOrderStatusDto->status;
+                                    // для отправлений с постоплатой
+                                    if ($delivery->isPostPaid()) {
+                                        if ($delivery->status === DeliveryStatus::DONE) {
+                                            $delivery->payment_status = PaymentStatus::PAID;
+                                        }
+                                        if (in_array($delivery->status, [DeliveryStatus::CANCELLATION_EXPECTED, DeliveryStatus::RETURNED])) {
+                                            $delivery->payment_status = PaymentStatus::TIMEOUT;
+                                        }
+                                    }
                                 }
                                 $delivery->setStatusXmlId(
                                     $deliveryOrderStatusDto->status_xml_id,
                                     new Carbon($deliveryOrderStatusDto->status_date)
                                 );
-                                // для отправлений с постоплатой
-                                if ($delivery->status === DeliveryStatus::DONE) {
-                                    $delivery->payment_status = PaymentStatus::PAID;
-                                }
                                 $delivery->save();
                             }
                         }

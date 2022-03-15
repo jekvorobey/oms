@@ -293,12 +293,14 @@ class OrderObserver
         if ($order->payment_status != $order->getOriginal('payment_status')) {
             $order->loadMissing('deliveries.shipments');
             foreach ($order->deliveries as $delivery) {
-                $delivery->payment_status = $order->payment_status;
-                $delivery->save();
+                if (!$delivery->isPostPaid()) {
+                    $delivery->payment_status = $order->payment_status;
+                    $delivery->save();
 
-                foreach ($delivery->shipments as $shipment) {
-                    $shipment->payment_status = $order->payment_status;
-                    $shipment->save();
+                    foreach ($delivery->shipments as $shipment) {
+                        $shipment->payment_status = $order->payment_status;
+                        $shipment->save();
+                    }
                 }
             }
         }
@@ -371,6 +373,10 @@ class OrderObserver
 
     private function commitPaymentIfOrderDelivered(Order $order): void
     {
+        if ($order->is_postpaid) {
+            return;
+        }
+
         if ($order->status == OrderStatus::DONE && $order->wasChanged('status')) {
             /** @var Payment $payment */
             $payment = $order->payments->last();
