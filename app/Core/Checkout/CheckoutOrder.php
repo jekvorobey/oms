@@ -14,6 +14,7 @@ use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderPromoCode;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentMethod;
+use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
 use Exception;
@@ -165,7 +166,10 @@ class CheckoutOrder
             $this->debitingBonus($order);
             $this->createShipments($order);
             $this->createTickets($order);
-            $this->createPayment($order);
+
+            if (!$order->is_post_payed) {
+                $this->createPayment($order);
+            }
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
             $this->createOrderBonuses($order);
@@ -325,12 +329,14 @@ class CheckoutOrder
         $order->delivery_cost = $this->deliveryCost;
         $order->delivery_price = $this->deliveryPrice;
 
+        /** @var PaymentMethod $paymentMethod */
         $paymentMethod = PaymentMethod::query()
             ->where('id', $this->paymentMethodId)
             ->first();
 
         if ($paymentMethod) {
             $order->is_post_payed = $paymentMethod->is_post_payed;
+            $order->payment_status = PaymentStatus::WAITING;
         }
 
         $order->save();
