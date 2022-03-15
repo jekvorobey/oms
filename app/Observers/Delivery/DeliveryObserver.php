@@ -427,13 +427,8 @@ class DeliveryObserver
                 }
             }
 
-            if ($allDeliveriesHasPaid) {
-                $order->payment_status = PaymentStatus::PAID;
-                $order->save();
-            }
-
-            if ($allDeliveriesHasTimeout) {
-                $order->payment_status = PaymentStatus::TIMEOUT;
+            if ($allDeliveriesHasPaid || $allDeliveriesHasTimeout) {
+                $order->payment_status = $allDeliveriesHasTimeout ? PaymentStatus::TIMEOUT : PaymentStatus::PAID;
                 $order->save();
             }
         }
@@ -450,15 +445,8 @@ class DeliveryObserver
                     continue;
                 }
 
-                if ($delivery->payment_status === PaymentStatus::PAID) {
-                    $shipment->payment_status = PaymentStatus::PAID;
-                    $shipment->save();
-                }
-
-                if ($delivery->payment_status === PaymentStatus::TIMEOUT) {
-                    $shipment->payment_status = PaymentStatus::TIMEOUT;
-                    $shipment->save();
-                }
+                $shipment->payment_status = $delivery->payment_status;
+                $shipment->save();
             }
         }
     }

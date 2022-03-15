@@ -844,8 +844,7 @@ class DeliveryService
                                     if ($delivery->isPostPaid()) {
                                         if ($delivery->status === DeliveryStatus::DONE) {
                                             $delivery->payment_status = PaymentStatus::PAID;
-                                        }
-                                        if (in_array($delivery->status, [DeliveryStatus::CANCELLATION_EXPECTED, DeliveryStatus::RETURNED])) {
+                                        } elseif (in_array($delivery->status, [DeliveryStatus::CANCELLATION_EXPECTED, DeliveryStatus::RETURNED])) {
                                             $delivery->payment_status = PaymentStatus::TIMEOUT;
                                         }
                                     }

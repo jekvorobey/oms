@@ -290,17 +290,19 @@ class OrderObserver
      */
     protected function setPaymentStatusToChildren(Order $order): void
     {
+        if ($order->is_postpaid) {
+            return;
+        }
+
         if ($order->payment_status != $order->getOriginal('payment_status')) {
             $order->loadMissing('deliveries.shipments');
             foreach ($order->deliveries as $delivery) {
-                if (!$delivery->isPostPaid()) {
-                    $delivery->payment_status = $order->payment_status;
-                    $delivery->save();
+                $delivery->payment_status = $order->payment_status;
+                $delivery->save();
 
-                    foreach ($delivery->shipments as $shipment) {
-                        $shipment->payment_status = $order->payment_status;
-                        $shipment->save();
-                    }
+                foreach ($delivery->shipments as $shipment) {
+                    $shipment->payment_status = $order->payment_status;
+                    $shipment->save();
                 }
             }
         }
