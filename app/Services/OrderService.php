@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Basket\BasketItem;
+use App\Models\Delivery\DeliveryStatus;
+use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
 use App\Models\Order\OrderStatus;
@@ -26,6 +28,21 @@ use App\Observers\Order\OrderObserver;
  */
 class OrderService
 {
+    public const STATUS_TO_CHILDREN = [
+        OrderStatus::AWAITING_CHECK => [
+            'deliveriesStatusTo' => DeliveryStatus::AWAITING_CHECK,
+            'shipmentsStatusTo' => ShipmentStatus::AWAITING_CHECK,
+        ],
+        OrderStatus::CHECKING => [
+            'deliveriesStatusTo' => DeliveryStatus::CHECKING,
+            'shipmentsStatusTo' => ShipmentStatus::CHECKING,
+        ],
+        OrderStatus::AWAITING_CONFIRMATION => [
+            'deliveriesStatusTo' => DeliveryStatus::AWAITING_CONFIRMATION,
+            'shipmentsStatusTo' => ShipmentStatus::AWAITING_CONFIRMATION,
+        ],
+    ];
+
     /**
      * Получить объект заказа по его id
      *

@@ -373,11 +373,7 @@ class Order extends AbstractModel
      */
     public function canBeProcessed(): bool
     {
-        /*
-         * todo В будущем, когда будут заказы с постоплатой, добавить сюда доп проверку,
-         * что заказ с постоплатой и может быть обработан без оплаты
-         */
-        return $this->isPaid();
+        return $this->is_post_payed || $this->isPaid();
     }
 
     /**
