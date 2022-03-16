@@ -333,7 +333,7 @@ class CheckoutOrder
         /** @var PaymentMethod $paymentMethod */
         $paymentMethod = PaymentMethod::find($this->paymentMethodId);
 
-        if ($paymentMethod && $order->type === Basket::TYPE_PRODUCT) {
+        if ($paymentMethod && $order->isProductOrder()) {
             $order->is_postpaid = $paymentMethod->is_postpaid;
             $order->status = OrderStatus::defaultValue();
             $order->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
@@ -437,7 +437,7 @@ class CheckoutOrder
             $delivery->delivery_time_code = $checkoutDelivery->deliveryTimeCode;
             $delivery->dt = $checkoutDelivery->dt;
             $delivery->pdd = $checkoutDelivery->pdd;
-            if ($order->type === Basket::TYPE_PRODUCT) {
+            if ($order->isProductOrder()) {
                 $delivery->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
             }
 
@@ -451,7 +451,7 @@ class CheckoutOrder
                 $shipment->required_shipping_at = $checkoutShipment->psd;
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
-                if ($order->type === Basket::TYPE_PRODUCT) {
+                if ($order->isProductOrder()) {
                     $shipment->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
                 }
                 $shipment->save();
@@ -470,12 +470,12 @@ class CheckoutOrder
 
                     $shipmentItem->save();
                 }
-                if ($order->type === Basket::TYPE_PRODUCT) {
+                if ($order->isProductOrder()) {
                     $shipment->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo']]);
                 }
             }
 
-            if ($order->type === Basket::TYPE_PRODUCT) {
+            if ($order->isProductOrder()) {
                 $delivery->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['deliveriesStatusTo']]);
             }
         }
