@@ -139,7 +139,7 @@ class OrderObserver
                     && (
                         $this->shouldSendPaidNotification($order)
                         // || $order->payment_status == PaymentStatus::TIMEOUT
-                        || $order->payment_status == PaymentStatus::WAITING
+                        || ($order->payment_status == PaymentStatus::WAITING && !$order->is_postpaid)
                     )
                 ) {
                     $delivery_method = !empty($order->deliveries()->first()->delivery_method)
@@ -1171,7 +1171,9 @@ class OrderObserver
     protected function shouldSendPaidNotification(Order $order)
     {
         $paid = ($order->payment_status == PaymentStatus::HOLD) || (
-            $order->payment_status == PaymentStatus::PAID && $order->getOriginal('payment_status') != PaymentStatus::HOLD
+            $order->payment_status == PaymentStatus::PAID
+            && $order->getOriginal('payment_status') != PaymentStatus::HOLD
+            && !$order->is_postpaid
         );
 
         $created = ($order->status == OrderStatus::CREATED) || ($order->status == OrderStatus::AWAITING_CONFIRMATION);

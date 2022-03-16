@@ -333,7 +333,7 @@ class CheckoutOrder
         /** @var PaymentMethod $paymentMethod */
         $paymentMethod = PaymentMethod::find($this->paymentMethodId);
 
-        if ($paymentMethod) {
+        if ($paymentMethod && $order->type === Basket::TYPE_PRODUCT) {
             $order->is_postpaid = $paymentMethod->is_postpaid;
             $order->status = OrderStatus::defaultValue();
             $order->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
@@ -437,7 +437,9 @@ class CheckoutOrder
             $delivery->delivery_time_code = $checkoutDelivery->deliveryTimeCode;
             $delivery->dt = $checkoutDelivery->dt;
             $delivery->pdd = $checkoutDelivery->pdd;
-            $delivery->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+            if ($order->type === Basket::TYPE_PRODUCT) {
+                $delivery->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+            }
 
             $delivery->save();
 
@@ -449,7 +451,9 @@ class CheckoutOrder
                 $shipment->required_shipping_at = $checkoutShipment->psd;
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
-                $shipment->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+                if ($order->type === Basket::TYPE_PRODUCT) {
+                    $shipment->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+                }
                 $shipment->save();
 
                 foreach ($checkoutShipment->items as [$offerId, $bundleId, $bundleItemId]) {
@@ -466,10 +470,14 @@ class CheckoutOrder
 
                     $shipmentItem->save();
                 }
-                $shipment->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo']]);
+                if ($order->type === Basket::TYPE_PRODUCT) {
+                    $shipment->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo']]);
+                }
             }
 
-            $delivery->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['deliveriesStatusTo']]);
+            if ($order->type === Basket::TYPE_PRODUCT) {
+                $delivery->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['deliveriesStatusTo']]);
+            }
         }
     }
 

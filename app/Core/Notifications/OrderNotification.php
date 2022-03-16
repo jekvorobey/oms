@@ -40,7 +40,7 @@ class OrderNotification extends AbstractNotification implements NotificationInte
                     $notification->setPayloadField('title', 'Проблемный заказ');
                     $notification->setPayloadField('body', "Заказ {$order->number} помечен как проблемный");
                 }
-                if ($order->payment_status == PaymentStatus::PAID) {
+                if ($order->payment_status == PaymentStatus::PAID && !$order->is_postpaid) {
                     $notification->type = NotificationDto::TYPE_ORDER_PAYED;
                     $notification->setPayloadField('title', 'Оплачен заказ');
                     $notification->setPayloadField('body', "Заказ {$order->number} оплачен");
