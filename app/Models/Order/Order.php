@@ -373,7 +373,7 @@ class Order extends AbstractModel
      */
     public function canBeProcessed(): bool
     {
-        return $this->is_postpaid || $this->isPaid();
+        return ($this->is_postpaid && $this->payment_status === PaymentStatus::WAITING) || $this->isPaid();
     }
 
     /**
