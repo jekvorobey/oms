@@ -209,6 +209,7 @@ class OrderObserver
                 $notificationService->sendToAdmin('aozzakazzakaz_izmenen');
             }
         } catch (\Throwable $e) {
+            report($e);
             logger($e->getMessage(), $e->getTrace());
         }
     }

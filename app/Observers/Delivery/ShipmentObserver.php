@@ -404,8 +404,10 @@ class ShipmentObserver
     {
         if ($shipment->wasChanged('is_canceled') && $shipment->is_canceled) {
             $order = $shipment->delivery->order;
-            $order->is_partially_cancelled = true;
-            $order->save();
+            if (!$order->is_canceled) {
+                $order->is_partially_cancelled = true;
+                $order->save();
+            }
         }
     }
 
