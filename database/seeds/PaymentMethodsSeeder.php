@@ -9,10 +9,12 @@ class PaymentMethodsSeeder extends Seeder
         [
             'name' => 'Предоплата (онлайн)',
             'code' => 'prepaid',
+            'active' => true,
         ],
         [
             'name' => 'Постоплата (Наличными или картой при получении)',
             'code' => 'postpaid',
+            'active' => true,
             'is_postpaid' => true,
         ],
     ];

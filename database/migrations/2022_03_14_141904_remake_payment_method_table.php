@@ -18,7 +18,7 @@ class RemakePaymentMethodTable extends Migration
             $table->string('name');
             $table->string('code');
             $table->boolean('active')->default(false);
-            $table->boolean('is_prepaid')->default(false);
+            $table->boolean('is_postpaid')->default(false);
             $table->timestamps();
         });
 

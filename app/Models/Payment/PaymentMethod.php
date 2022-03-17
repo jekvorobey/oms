@@ -32,6 +32,6 @@ class PaymentMethod extends AbstractModel
 
     protected $casts = [
         'active' => 'bool',
-        'is_prepaid' => 'bool',
+        'is_postpaid' => 'bool',
     ];
 }

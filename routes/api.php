@@ -106,7 +106,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     Route::prefix('payments')->group(function () {
         Route::prefix('methods')->group(function () {
             Route::get('', 'PaymentMethodsController@read');
-            Route::prefix('{id}')->group(function () {
+            Route::prefix('{paymentMethod}')->group(function () {
                 Route::get('', 'PaymentMethodsController@read');
                 Route::put('', 'PaymentMethodsController@update');
             });
