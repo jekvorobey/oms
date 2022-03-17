@@ -46,7 +46,7 @@ class PaymentMethodsController extends Controller
      *     @OA\Response(response="400", description="bad request"),
      * )
      *
-     * Обновить параметры для способа оплаты
+     * Обновить способ оплаты
      */
     public function update(PaymentMethod $paymentMethod, UpdateRequest $request): Response
     {
