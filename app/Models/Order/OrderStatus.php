@@ -163,4 +163,9 @@ class OrderStatus
             return in_array($type, $orderStatus->types);
         }));
     }
+
+    public static function defaultValue(): int
+    {
+        return self::CREATED;
+    }
 }
