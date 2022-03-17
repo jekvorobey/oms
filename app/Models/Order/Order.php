@@ -415,14 +415,4 @@ class Order extends AbstractModel
     {
         return $this->spent_certificate > 0 && ($this->price - $this->spent_certificate) === 0.0;
     }
-
-    public function getIsPostPaidAttribute(): bool
-    {
-        return true;
-    }
-
-    public function setIsPostPaidAttribute(): bool
-    {
-        return true;
-    }
 }
