@@ -881,17 +881,15 @@ class ShipmentsController extends Controller
         $items = $query
             ->with(['basketItems', 'delivery.order'])
             ->where('status', '>=', ShipmentStatus::AWAITING_CONFIRMATION)
-            ->where(function (Builder $builder) {
-                $builder
-                    ->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
-                    ->orWhereHas('delivery', function (Builder $builder) {
-                        $builder
-                            ->whereHas('order', function (Builder $builder) {
-                                $builder->where('payment_status', PaymentStatus::WAITING)
-                                    ->where('is_postpaid', true);
-                            });
-                    });
-            })
+            ->where(
+                function (Builder $builder) {
+                    $builder->whereIn('payment_status', [PaymentStatus::HOLD, PaymentStatus::PAID])
+                        ->orWhereHas('delivery.order', function (Builder $builder) {
+                            $builder->where('payment_status', PaymentStatus::WAITING)
+                                ->where('is_postpaid', true);
+                        });
+                }
+            )
             ->where('is_canceled', false)
             ->doesntHave('exports')
             ->get();
