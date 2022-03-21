@@ -16,7 +16,9 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
 use Exception;
+use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\Customer\Dto\CustomerBonusDto;
+use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Store\Dto\StockDto;
 use Greensight\Store\Services\StockService\StockService;
@@ -25,9 +27,12 @@ use Illuminate\Support\Facades\DB;
 use Pim\Dto\PublicEvent\PublicEventTicketTypeDto;
 use Pim\Dto\PublicEvent\TicketDto;
 use Pim\Dto\PublicEvent\TicketStatus;
+use Pim\Dto\Search\ProductQuery;
 use Pim\Services\CertificateService\CertificateService;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use Pim\Services\PublicEventTicketTypeService\RestPublicEventTicketTypeService;
+use Pim\Services\SearchService\SearchService;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
 
 class CheckoutOrder
 {
@@ -150,6 +155,7 @@ class CheckoutOrder
     public function save(): array
     {
         return DB::transaction(function () {
+            $this->checkProducts();
             $this->checkOffersStocks();
             $this->commitPrices();
 
@@ -166,6 +172,41 @@ class CheckoutOrder
 
             return [$order->id, $order->number];
         });
+    }
+
+    private function checkProducts(): void
+    {
+        if (!$this->basket()->isProductBasket()) {
+            return;
+        }
+        $basket = $this->basket();
+        $offerIds = $basket->items->pluck('offer_id');
+        /** @var SearchService $searchService */
+        $searchService = resolve(SearchService::class);
+        $customerService = resolve(CustomerService::class);
+
+        $searchProductQuery = (new ProductQuery());
+        $searchProductQuery->active = true;
+        $searchProductQuery->offer_id = $offerIds->toArray();
+        $searchProductQuery->fields([ProductQuery::OFFER_ID, ProductQuery::FREE_BUY]);
+        $offersInfo = collect(
+            $searchService->products($searchProductQuery)->products
+        )->keyBy(ProductQuery::OFFER_ID);
+
+        /** @var CustomerDto $customer */
+        $customer = $customerService->customers((new RestQuery())->setFilter('id', $basket->customer_id))->first();
+
+        if ($customer->canBuy()) {
+            return;
+        }
+
+        foreach ($offersInfo as $offerInfo) {
+            if (!$offerInfo[ProductQuery::FREE_BUY]) {
+                throw new AccessDeniedException(
+                    'Товар с закрытой продажей доступен только для Профессионалов'
+                );
+            }
+        }
     }
 
     /**
@@ -394,9 +435,9 @@ class CheckoutOrder
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
                 $shipment->save();
 
-                foreach ($checkoutShipment->items as [$offerId, $bundleId]) {
+                foreach ($checkoutShipment->items as [$offerId, $bundleId, $bundleItemId]) {
                     $key = $bundleId ?
-                        $offerId . ':' . $bundleId :
+                        $offerId . ':' . $bundleId . ':' . $bundleItemId :
                         $offerId;
                     $basketItemId = $offerToBasketMap[$key] ?? null;
                     if (!$basketItemId) {
@@ -519,7 +560,7 @@ class CheckoutOrder
         $basket = $this->basket();
         foreach ($basket->items as $basketItem) {
             $key = $basketItem->bundle_id ?
-                $basketItem->offer_id . ':' . $basketItem->bundle_id :
+                $basketItem->offer_id . ':' . $basketItem->bundle_id . ':' . $basketItem->bundle_item_id :
                 $basketItem->offer_id;
             $result[$key] = $basketItem->id;
         }

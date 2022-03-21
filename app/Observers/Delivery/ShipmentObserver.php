@@ -524,6 +524,13 @@ class ShipmentObserver
     protected function sendStatusNotification(Shipment $shipment)
     {
         try {
+            $isNeedSendCancelledNotification = $this->isNeedSendCancelledNotification($shipment);
+            $isNeedSendProblemNotification = $shipment->wasChanged('is_problem') && $shipment->is_problem;
+
+            if (!$isNeedSendCancelledNotification && !$isNeedSendProblemNotification) {
+                return;
+            }
+
             $serviceNotificationService = app(ServiceNotificationService::class);
             $operatorService = app(OperatorService::class);
             $userService = app(UserService::class);
@@ -533,13 +540,6 @@ class ShipmentObserver
                 '=',
                 $shipment->merchant_id
             ));
-
-            $isNeedSendCancelledNotification = $this->isNeedSendCancelledNotification($shipment);
-            $isNeedSendProblemNotification = $shipment->wasChanged('is_problem') && $shipment->is_problem;
-
-            if (!$isNeedSendCancelledNotification && !$isNeedSendProblemNotification) {
-                return;
-            }
 
             foreach ($operators as $i => $operator) {
                 /** @var UserDto $user */

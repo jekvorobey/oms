@@ -72,6 +72,9 @@ class OrderReader
         if ($restQuery->isIncluded('deliveries.shipments.packages')) {
             $query->with('deliveries.shipments.packages');
         }
+        if ($restQuery->isIncluded('deliveries.shipments.exports')) {
+            $query->with('deliveries.shipments.exports');
+        }
         if ($restQuery->isIncluded('all')) {
             $query->with('history')
                 ->with('basket.items')
@@ -80,7 +83,8 @@ class OrderReader
                 ->with('payments')
                 ->with('deliveries.shipments.basketItems')
                 ->with('deliveries.shipments.packages.items.basketItem')
-                ->with('deliveries.shipments.cargo');
+                ->with('deliveries.shipments.cargo')
+                ->with('deliveries.shipments.exports');
         }
     }
 
@@ -280,6 +284,16 @@ class OrderReader
                 $query->where('delivery_address->city_guid', $value);
             });
             $modifiedRestQuery->removeFilter('delivery_city');
+        }
+
+        // Фильтр по ШК
+        $trackXmlIdFilter = $restQuery->getFilter('delivery_xml_id');
+        if ($trackXmlIdFilter) {
+            [$op, $value] = current($trackXmlIdFilter);
+            $query->whereHas('deliveries', function (Builder $query) use ($value) {
+                $query->where('xml_id', $value);
+            });
+            $modifiedRestQuery->removeFilter('delivery_xml_id');
         }
 
         //Фильтр по PSD
