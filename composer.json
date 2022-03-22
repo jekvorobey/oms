@@ -64,7 +64,7 @@
         "iwengo/ibt-merchant-management-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-message-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-pim-lib": "dev-master-ylab as dev-master",
-        "iwengo/ibt-store-lib": "dev-feature/IBT-512-fastest-and-outsiders as dev-master",
+        "iwengo/ibt-store-lib": "dev-feature/IBT-512 as dev-master",
         "jenssegers/date": "^4.0",
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",

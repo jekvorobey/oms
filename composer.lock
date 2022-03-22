@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0dc64a60b8d2079550f2ee0480f407d9",
+    "content-hash": "2fd18ded8e60212a0896a3037603465b",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1778,11 +1778,11 @@
         },
         {
             "name": "iwengo/ibt-store-lib",
-            "version": "dev-feature/IBT-512-fastest-and-outsiders",
+            "version": "dev-feature/IBT-512",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-store-lib",
-                "reference": "17a7b82013bf7fe511d3568efea01a58197f3c84"
+                "reference": "a0dcc37b6cc75162e117097b18f53ac64f75976f"
             },
             "require": {
                 "ext-json": "*",
@@ -1816,7 +1816,7 @@
                 }
             ],
             "description": "iBT store client",
-            "time": "2022-02-17T15:31:38+00:00"
+            "time": "2022-03-21T15:40:35+00:00"
         },
         {
             "name": "jean85/pretty-package-versions",
@@ -10336,7 +10336,7 @@
         },
         {
             "package": "iwengo/ibt-store-lib",
-            "version": "dev-feature/IBT-512-fastest-and-outsiders",
+            "version": "dev-feature/IBT-512",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         }
@@ -10361,5 +10361,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.1.0"
 }
