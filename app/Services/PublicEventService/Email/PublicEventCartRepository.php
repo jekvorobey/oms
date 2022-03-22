@@ -54,11 +54,12 @@ class PublicEventCartRepository
             $card->places = $publicEvent[PublicEventQuery::PLACES];
             $card->stages = $publicEvent[PublicEventQuery::STAGES];
             $card->organizer = $publicEvent[PublicEventQuery::ORGANIZER];
-            $card->code = $publicEvent[PublicEventQuery::CODE];
             $card->dateFrom = $publicEvent[PublicEventQuery::DATE_FROM];
             $card->dateTo = $publicEvent[PublicEventQuery::DATE_TO];
             $card->code = $publicEvent[PublicEventQuery::CODE];
             $card->active = $publicEvent[PublicEventQuery::ACTIVE];
+            $card->offerIds = $publicEvent[PublicEventQuery::OFFER_IDS];
+            $card->availableForSale = $publicEvent[PublicEventQuery::AVAILABLE_FOR_SALE];
             $card->nearestDate = $publicEvent[PublicEventQuery::NEAREST_DATE];
             $card->nearestTimeFrom = $publicEvent[PublicEventQuery::NEAREST_TIME_FROM];
             $card->nearestPlaceName = $publicEvent[PublicEventQuery::NEAREST_PLACE_NAME];

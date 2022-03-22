@@ -103,6 +103,9 @@ class CargoObserver
         if (isset(self::STATUS_TO_SHIPMENTS[$cargo->status]) && $cargo->status != $cargo->getOriginal('status')) {
             $cargo->loadMissing('shipments');
             foreach ($cargo->shipments as $shipment) {
+                if (self::STATUS_TO_SHIPMENTS[$cargo->status] < $shipment->status) {
+                    continue;
+                }
                 $shipment->status = self::STATUS_TO_SHIPMENTS[$cargo->status];
                 $shipment->save();
             }
