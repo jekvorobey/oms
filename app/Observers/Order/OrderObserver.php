@@ -201,7 +201,7 @@ class OrderObserver
                     $user_id,
                     $this->createCancelledNotificationType(
                         $order->isConsolidatedDelivery(),
-                        $orderDelivery ? $orderDelivery->delivery_method === DeliveryMethod::METHOD_PICKUP : null,
+                        $orderDelivery ? $orderDelivery->delivery_method === DeliveryMethod::METHOD_PICKUP : false,
                     ),
                     $this->generateNotificationVariables($order, self::OVERRIDE_CANCEL)
                 );
