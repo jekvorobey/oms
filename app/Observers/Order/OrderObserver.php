@@ -196,11 +196,12 @@ class OrderObserver
             }
 
             if ($order->is_canceled != $order->getOriginal('is_canceled') && $order->is_canceled) {
+                $orderDelivery = $order->deliveries()->first();
                 $notificationService->send(
                     $user_id,
                     $this->createCancelledNotificationType(
                         $order->isConsolidatedDelivery(),
-                        $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        $orderDelivery ? $orderDelivery->delivery_method === DeliveryMethod::METHOD_PICKUP : false,
                     ),
                     $this->generateNotificationVariables($order, self::OVERRIDE_CANCEL)
                 );
