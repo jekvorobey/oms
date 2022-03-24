@@ -337,6 +337,7 @@ class CheckoutOrder
             $order->is_postpaid = $paymentMethod->is_postpaid;
             $order->status = OrderStatus::defaultValue();
             $order->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+            $order->payment_method_id = $this->paymentMethodId;
         }
 
         $order->save();

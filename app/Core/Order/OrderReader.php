@@ -63,8 +63,8 @@ class OrderReader
         if ($restQuery->isIncluded('payments')) {
             $query->with('payments');
         }
-        if ($restQuery->isIncluded('payments.paymentMethod')) {
-            $query->with('payments.paymentMethod');
+        if ($restQuery->isIncluded('paymentMethod')) {
+            $query->with('paymentMethod');
         }
         if ($restQuery->isIncluded('deliveries.shipments')) {
             $query->with('deliveries.shipments');
@@ -84,7 +84,7 @@ class OrderReader
                 ->with('promoCodes')
                 ->with('discounts')
                 ->with('payments')
-                ->with('payments.paymentMethod')
+                ->with('paymentMethod')
                 ->with('deliveries.shipments.basketItems')
                 ->with('deliveries.shipments.packages.items.basketItem')
                 ->with('deliveries.shipments.cargo')

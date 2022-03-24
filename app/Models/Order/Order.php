@@ -7,6 +7,7 @@ use App\Core\Notifications\OrderNotification;
 use App\Models\Basket\Basket;
 use App\Models\Delivery\Delivery;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentMethod;
 use App\Models\Payment\PaymentStatus;
 use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Dto\UserDto;
@@ -193,6 +194,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property int $status - статус (см. \App\Models\Order\OrderStatus)
  * @property Carbon|null $status_at - дата установки статуса заказа
  * @property int $payment_status - статус оплаты (см. \App\Models\Payment\PaymentStatus)
+ * @property int $payment_method_id - способ оплаты (см. \App\Models\Payment\PaymentMethod)
  * @property Carbon|null $payment_status_at - дата установки статуса оплаты
  * @property int $is_problem - флаг, что заказ проблемный
  * @property Carbon|null $is_problem_at - дата установки флага проблемного заказа
@@ -215,6 +217,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *
  * @property Basket $basket - корзина
  * @property Collection|Payment[] $payments - оплаты заказа
+ * @property PaymentMethod $paymentMethod
  * @property Collection|Delivery[] $deliveries - доставка заказа
  * @property OrderComment $comment - коментарий покупателя к заказу
  * @property Collection|OrderDiscount[] $discounts - скидки к заказу
@@ -248,6 +251,11 @@ class Order extends AbstractModel
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method_id', 'id');
     }
 
     public function deliveries(): HasMany
