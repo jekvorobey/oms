@@ -538,6 +538,6 @@ class Delivery extends AbstractModel
      */
     public function isPostPaid(): bool
     {
-        return false;
+        return $this->order->is_postpaid;
     }
 }

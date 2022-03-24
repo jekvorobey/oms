@@ -821,6 +821,7 @@ class DeliveryService
     public function updateDeliveryStatusFromDeliveryService(): void
     {
         $deliveries = Delivery::deliveriesInDelivery()->keyBy('number');
+        $deliveries->load('order');
 
         if ($deliveries->isNotEmpty()) {
             /** @var DeliveryOrderService $deliveryOrderService */

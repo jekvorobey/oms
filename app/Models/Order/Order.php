@@ -210,10 +210,9 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property string $manager_comment - комментарий менеджера
  * @property int $confirmation_type - тип подтверждения заказа (см. \App\Models\Order\OrderConfirmationType)
  * @property bool $is_returned - флаг возврата выполненного заказа
- * @property bool is_postpaid -флаг заказа с постоплатой
+ * @property bool is_postpaid - флаг заказа с постоплатой
  *
  * @property string $number - номер
- * @property bool $is_postpaid - Оплата при получении
  *
  * //dynamic attributes
  * @property-read float $cashless_price - cумма заказа без учета подарочных сертификатов
@@ -420,13 +419,5 @@ class Order extends AbstractModel
     public function isFullyPaidByCertificate(): bool
     {
         return $this->spent_certificate > 0 && ($this->price - $this->spent_certificate) === 0.0;
-    }
-
-    /**
-     * Заказ с постоплатой?
-     */
-    public function getIsPostpaidAttribute(): bool
-    {
-        return false;
     }
 }
