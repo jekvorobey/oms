@@ -149,8 +149,8 @@ class CheckoutOrder
     }
 
     /**
-     * @throws Exception
      * @return array
+     * @throws Exception
      */
     public function save(): array
     {
@@ -285,8 +285,8 @@ class CheckoutOrder
      */
     private function commitPrices(): void
     {
-        $basket = $this->basket();
-        foreach ($basket->items as $item) {
+        $basketItems = $this->getBasketItemsFromRequest();
+        foreach ($basketItems as $item) {
             $priceItem = $this->prices[$item->id] ?? null;
             if (!$priceItem) {
                 throw new Exception('price is not supplied for basket item');
@@ -324,8 +324,52 @@ class CheckoutOrder
         $order->delivery_cost = $this->deliveryCost;
         $order->delivery_price = $this->deliveryPrice;
 
+        $basket = $this->basket();
+
+        if ($basket && $basket->isProductBasket()) {
+            $savedBasketItems = $basket->items->keyBy('offer_id');
+            $basketItemsFromRequest = $this->getBasketItemsFromRequest();
+
+            $offerIdToReplace = $savedBasketItems->keys()->diff($basketItemsFromRequest->pluck('offer_id'));
+
+            if ($offerIdToReplace->isNotEmpty()) {
+                $basketForReplacing = new Basket();
+                $basketForReplacing->customer_id = $basket->customer_id;
+                $basketForReplacing->type = $basket->type;
+                $basketForReplacing->is_belongs_to_order = false;
+                $basketForReplacing->save();
+
+                $offerIdToReplace->each(function ($offerId) use ($basketForReplacing, $savedBasketItems) {
+                    /** @var BasketItem $savedBasketItem */
+                    $savedBasketItem = $savedBasketItems->get($offerId);
+                    $savedBasketItem->basket_id = $basketForReplacing->id;
+                    $savedBasketItem->save();
+                    $basketForReplacing->items->push($savedBasketItem);
+                });
+            }
+        }
+
         $order->save();
         return $order;
+    }
+
+    private function getBasketItemsFromRequest(): Collection
+    {
+        $result = collect();
+        $basket = $this->basket();
+
+        if ($basket) {
+            $savedBasketItems = $basket->items->keyBy('offer_id');
+            foreach ($this->deliveries as $i => $checkoutDelivery) {
+                foreach ($checkoutDelivery->shipments as $checkoutShipment) {
+                    foreach ($checkoutShipment->items as [$offerId, $bundleId, $bundleItemId]) {
+                        $result->push($savedBasketItems->get($offerId));
+                    }
+                }
+            }
+        }
+
+        return $result;
     }
 
     private function debitingBonus(Order $order)
