@@ -273,6 +273,10 @@ class OrderObserver
      */
     protected function setPaymentStatusToChildren(Order $order): void
     {
+        if ($order->is_postpaid) {
+            return;
+        }
+
         if ($order->payment_status != $order->getOriginal('payment_status')) {
             $order->loadMissing('deliveries.shipments');
             foreach ($order->deliveries as $delivery) {
@@ -354,7 +358,11 @@ class OrderObserver
 
     private function commitPaymentIfOrderDelivered(Order $order): void
     {
-        if ($order->status == OrderStatus::DONE && $order->wasChanged('status') && !$order->is_postpaid) {
+        if ($order->is_postpaid) {
+            return;
+        }
+
+        if ($order->status == OrderStatus::DONE && $order->wasChanged('status')) {
             /** @var Payment $payment */
             $payment = $order->payments->last();
 

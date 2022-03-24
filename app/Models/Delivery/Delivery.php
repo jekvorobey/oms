@@ -532,4 +532,12 @@ class Delivery extends AbstractModel
     {
         return $this->delivery_method == DeliveryMethod::METHOD_DELIVERY;
     }
+
+    /**
+     * Доставка с постоплатой?
+     */
+    public function isPostPaid(): bool
+    {
+        return $this->order->is_postpaid;
+    }
 }
