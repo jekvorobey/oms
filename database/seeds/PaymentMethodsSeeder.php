@@ -5,50 +5,26 @@ use Illuminate\Database\Seeder;
 
 class PaymentMethodsSeeder extends Seeder
 {
-    public const AVAILABLE_METHODS = [
-        1 => [
-            'name' => 'Сертификат подарочный',
-            'code' => 'gift_certificate',
+    private array $data = [
+        [
+            'name' => 'Предоплата (онлайн)',
+            'code' => 'prepaid',
+            'active' => true,
         ],
-        2 => [
-            'name' => 'Бонусный счет',
-            'code' => 'bonus_balance',
-        ],
-        3 => [
-            'name' => 'Банковская карта',
-            'code' => 'credit_card',
-        ],
-        4 => [
-            'name' => 'Google Pay / Apple Pay',
-            'code' => 'mobile_acquiring',
-        ],
-        5 => [
-            'name' => 'Пользовательский счет',
-            'code' => 'internal_balance',
-        ],
-        6 => [
-            'name' => 'Наличные или картой при получении',
-            'code' => 'cash',
+        [
+            'name' => 'Постоплата (Наличными или картой при получении)',
+            'code' => 'postpaid',
+            'active' => true,
+            'is_postpaid' => true,
         ],
     ];
 
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        // Защита от дубликатов: очистить таблицу перед заполнением //
-        PaymentMethod::query()->truncate();
-
-        foreach (self::AVAILABLE_METHODS as $key => $value) {
-            $record = new PaymentMethod();
-            $record->id = $key;
-            $record->name = $value['name'];
-            $record->code = $value['code'];
-
-            $record->save();
+        foreach ($this->data as $item) {
+            PaymentMethod::query()->updateOrCreate([
+                'code' => $item['code'],
+            ], $item);
         }
     }
 }

@@ -168,6 +168,11 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *         description="желаемая клиентом дата доставки"
  *     ),
  *     @OA\Property(
+ *         property="delivered_at",
+ *         type="string",
+ *         description="Фактическая дата доставки"
+ *     ),
+ *     @OA\Property(
  *         property="delivery_time_start",
  *         type="string",
  *         description="желаемое клиентом время доставки от"
@@ -238,6 +243,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property string $receiver_email - e-mail получателя
  * @property array $delivery_address - адрес доставки
  * @property Carbon $delivery_at - желаемая клиентом дата доставки
+ * @property Carbon $delivered_at - Фактическая дата доставки
  * @property string $delivery_time_start - желаемое клиентом время доставки от
  * @property string $delivery_time_end - желаемое клиентом время доставки до
  * @property string $delivery_time_code - код времени доставки
@@ -281,6 +287,7 @@ class Delivery extends AbstractModel
         'receiver_phone',
         'receiver_email',
         'delivery_address',
+        'delivered_at',
     ];
 
     /** @var array */
@@ -296,6 +303,7 @@ class Delivery extends AbstractModel
     protected $casts = [
         'delivery_address' => 'array',
         'delivery_at' => 'datetime',
+        'delivered_at' => 'datetime',
         'weight' => 'float',
         'width' => 'float',
         'height' => 'float',

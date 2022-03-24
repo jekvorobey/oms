@@ -54,6 +54,7 @@
         "ext-json": "*",
         "barryvdh/laravel-snappy": "^0.4.8",
         "darkaonline/l5-swagger": "5.8.*",
+        "doctrine/dbal": "^2.5",
         "fideloper/proxy": "^4.0",
         "iwengo/ibt-cm-lib": "dev-master-ylab as dev-master",
         "iwengo/ibt-cms-lib": "dev-master-ylab as dev-master",
@@ -70,10 +71,10 @@
         "letsgoi/laravel-health-check": "dev-master",
         "ncjoes/office-converter": "^1.0",
         "phpoffice/phpword": "^0.17.0",
+        "predis/predis": "^1.1",
         "sentry/sentry-laravel": "^2.7",
         "spatie/calendar-links": "^1.4",
-        "yoomoney/yookassa-sdk-php": "^2.0",
-        "doctrine/dbal": "^2.5"
+        "yoomoney/yookassa-sdk-php": "^2.0"
     },
     "require-dev": {
         "beyondcode/laravel-dump-server": "^1.0",

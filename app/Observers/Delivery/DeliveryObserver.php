@@ -81,6 +81,7 @@ class DeliveryObserver
         // $this->notifyIfShipped($delivery);
         // $this->notifyIfReadyForRecipient($delivery);
         $this->sendNotification($delivery);
+        $this->checkOrderStatusIfDeliveryCanceled($delivery);
 
         rescue(fn() => $this->cdekDeliverySumUpdate($delivery));
     }
@@ -229,7 +230,7 @@ class DeliveryObserver
             }
 
             if ($delivery->getOriginal('is_canceled') != $delivery->is_canceled && $delivery->is_canceled) {
-                if (!$delivery->order->isConsolidatedDelivery()) {
+                if (!$delivery->order->isConsolidatedDelivery() && !$delivery->order->is_canceled) {
                     $notificationService->send(
                         $customer,
                         (function () use ($delivery) {
@@ -278,6 +279,7 @@ class DeliveryObserver
         $this->setPaymentStatusAt($delivery);
         $this->setProblemAt($delivery);
         $this->setCanceledAt($delivery);
+        $this->setDeliveredAt($delivery);
     }
 
     /**
@@ -317,6 +319,16 @@ class DeliveryObserver
     {
         if ($delivery->is_canceled != $delivery->getOriginal('is_canceled')) {
             $delivery->is_canceled_at = now();
+        }
+    }
+
+    /**
+     * Установить дату отмены доставки
+     */
+    protected function setDeliveredAt(Delivery $delivery): void
+    {
+        if ($delivery->isDirty('status') && ($delivery->status === DeliveryStatus::DONE && is_null($delivery->delivered_at))) {
+            $delivery->delivered_at = now();
         }
     }
 
@@ -447,6 +459,26 @@ class DeliveryObserver
 
                 $shipment->payment_status = $delivery->payment_status;
                 $shipment->save();
+            }
+        }
+    }
+
+    /**
+     * Актуализировать статус заказа если текущее отправление отменено
+     * @throws Exception
+     */
+    protected function checkOrderStatusIfDeliveryCanceled(Delivery $delivery): void
+    {
+        if ($delivery->is_canceled && $delivery->is_canceled != $delivery->getOriginal('is_canceled')) {
+            $order = $delivery->order;
+            if ($order->is_canceled) {
+                return;
+            }
+            $orderStatus = $order->deliveries->where('is_canceled', false)->min('status');
+
+            if ($orderStatus && isset(self::STATUS_TO_ORDER[$orderStatus])) {
+                $order->status = self::STATUS_TO_ORDER[$orderStatus];
+                $order->save();
             }
         }
     }

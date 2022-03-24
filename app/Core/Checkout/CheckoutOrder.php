@@ -12,8 +12,12 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderPromoCode;
+use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentMethod;
+use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentSystem;
+use App\Services\OrderService;
 use Carbon\Carbon;
 use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -164,11 +168,13 @@ class CheckoutOrder
             $this->debitingBonus($order);
             $this->createShipments($order);
             $this->createTickets($order);
-            $this->createPayment($order);
+
+            if (!$order->is_postpaid) {
+                $this->createPayment($order);
+            }
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
             $this->createOrderBonuses($order);
-
 
             return [$order->id, $order->number];
         });
@@ -324,6 +330,15 @@ class CheckoutOrder
         $order->delivery_cost = $this->deliveryCost;
         $order->delivery_price = $this->deliveryPrice;
 
+        /** @var PaymentMethod $paymentMethod */
+        $paymentMethod = PaymentMethod::find($this->paymentMethodId);
+
+        if ($paymentMethod && $order->isProductOrder()) {
+            $order->is_postpaid = $paymentMethod->is_postpaid;
+            $order->status = OrderStatus::defaultValue();
+            $order->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+        }
+
         $order->save();
         return $order;
     }
@@ -422,6 +437,9 @@ class CheckoutOrder
             $delivery->delivery_time_code = $checkoutDelivery->deliveryTimeCode;
             $delivery->dt = $checkoutDelivery->dt;
             $delivery->pdd = $checkoutDelivery->pdd;
+            if ($order->isProductOrder()) {
+                $delivery->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+            }
 
             $delivery->save();
 
@@ -433,6 +451,9 @@ class CheckoutOrder
                 $shipment->required_shipping_at = $checkoutShipment->psd;
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
+                if ($order->isProductOrder()) {
+                    $shipment->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+                }
                 $shipment->save();
 
                 foreach ($checkoutShipment->items as [$offerId, $bundleId, $bundleItemId]) {
@@ -449,6 +470,13 @@ class CheckoutOrder
 
                     $shipmentItem->save();
                 }
+                if ($order->isProductOrder()) {
+                    $shipment->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo']]);
+                }
+            }
+
+            if ($order->isProductOrder()) {
+                $delivery->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['deliveriesStatusTo']]);
             }
         }
     }
