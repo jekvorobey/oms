@@ -148,10 +148,6 @@ class CheckoutOrder
         return $order;
     }
 
-    /**
-     * @return array
-     * @throws Exception
-     */
     public function save(): array
     {
         return DB::transaction(function () {
