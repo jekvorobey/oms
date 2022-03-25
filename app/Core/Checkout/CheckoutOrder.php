@@ -324,12 +324,19 @@ class CheckoutOrder
         $order->delivery_cost = $this->deliveryCost;
         $order->delivery_price = $this->deliveryPrice;
 
+        $this->replaceProductBasketItemsToNewBasket();
+
+        $order->save();
+        return $order;
+    }
+
+    private function replaceProductBasketItemsToNewBasket(): void
+    {
         $basket = $this->basket();
 
         if ($basket && $basket->isProductBasket()) {
             $savedBasketItems = $basket->items->keyBy('offer_id');
             $basketItemsFromRequest = $this->getBasketItemsFromRequest();
-
             $offerIdToReplace = $savedBasketItems->keys()->diff($basketItemsFromRequest->pluck('offer_id'));
 
             if ($offerIdToReplace->isNotEmpty()) {
@@ -348,9 +355,6 @@ class CheckoutOrder
                 });
             }
         }
-
-        $order->save();
-        return $order;
     }
 
     private function getBasketItemsFromRequest(): Collection
@@ -360,12 +364,12 @@ class CheckoutOrder
 
         if ($basket) {
             $savedBasketItems = $basket->items->keyBy('offer_id');
-            foreach ($this->deliveries as $i => $checkoutDelivery) {
-                foreach ($checkoutDelivery->shipments as $checkoutShipment) {
-                    foreach ($checkoutShipment->items as [$offerId, $bundleId, $bundleItemId]) {
-                        $result->push($savedBasketItems->get($offerId));
-                    }
-                }
+            $shipmentItems = collect($this->deliveries)
+                ->pluck('shipments.*.items')
+                ->flatten(2);
+
+            foreach ($shipmentItems as [$offerId, $bundleId, $bundleItemId]) {
+                $result->push($savedBasketItems->get($offerId));
             }
         }
 
