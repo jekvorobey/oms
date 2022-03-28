@@ -330,22 +330,31 @@ class CheckoutOrder
         $basket = $this->basket();
 
         if ($basket && $basket->isProductBasket()) {
-            $savedBasketItems = $basket->items->keyBy('offer_id');
+            $savedBasketItems = $basket->items;
             $basketItemsFromRequest = $this->getBasketItemsFromRequest();
-            $offerIdToReplace = $savedBasketItems->keys()->diff($basketItemsFromRequest->pluck('offer_id'));
+            $basketItemsToReplace = collect();
 
-            if ($offerIdToReplace->isNotEmpty()) {
+            foreach ($savedBasketItems as $basketItem) {
+                $basketItemFromRequest = $basketItemsFromRequest->where('offer_id', $basketItem->offer_id)
+                    ->where('bundle_id', $basketItem->bundle_id)
+                    ->where('bundle_item_id', $basketItem->bundle_item_id)
+                    ->first();
+
+                if ($basketItemFromRequest) {
+                    $basketItemsToReplace->push($basketItem);
+                }
+            }
+
+            if ($basketItemsToReplace->isNotEmpty()) {
                 $basketForReplacing = new Basket();
                 $basketForReplacing->customer_id = $basket->customer_id;
                 $basketForReplacing->type = $basket->type;
                 $basketForReplacing->is_belongs_to_order = false;
                 $basketForReplacing->save();
 
-                $offerIdToReplace->each(function ($offerId) use ($basketForReplacing, $savedBasketItems) {
-                    /** @var BasketItem $savedBasketItem */
-                    $savedBasketItem = $savedBasketItems->get($offerId);
-                    $savedBasketItem->basket_id = $basketForReplacing->id;
-                    $savedBasketItem->save();
+                $basketItemsToReplace->each(function (BasketItem $basketItem) use ($basketForReplacing) {
+                    $basketItem->basket_id = $basketForReplacing->id;
+                    $basketItem->save();
                 });
                 $basket->load('items');
             }
@@ -366,11 +375,9 @@ class CheckoutOrder
             foreach ($shipmentItems as [$offerId, $bundleId, $bundleItemId]) {
                 $savedBasketItem = $savedBasketItems
                     ->where('offer_id', $offerId);
-                if ($bundleId && $bundleItemId) {
-                    $savedBasketItem = $savedBasketItem
-                        ->where('bundle_id', $bundleId)
-                        ->where('bundle_item_id', $bundleItemId);
-                }
+                $savedBasketItem = $savedBasketItem
+                    ->where('bundle_id', $bundleId)
+                    ->where('bundle_item_id', $bundleItemId);
 
                 if ($savedBasketItem->isNotEmpty()) {
                     $result->push($savedBasketItem->first());
