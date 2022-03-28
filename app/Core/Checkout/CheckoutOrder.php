@@ -153,6 +153,7 @@ class CheckoutOrder
         return DB::transaction(function () {
             $this->checkProducts();
             $this->checkOffersStocks();
+            $this->replaceProductBasketItemsToNewBasket();
             $this->commitPrices();
 
             $order = $this->createOrder();
@@ -281,8 +282,8 @@ class CheckoutOrder
      */
     private function commitPrices(): void
     {
-        $basketItems = $this->getBasketItemsFromRequest();
-        foreach ($basketItems as $item) {
+        $basket = $this->basket();
+        foreach ($basket->items as $item) {
             $priceItem = $this->prices[$item->id] ?? null;
             if (!$priceItem) {
                 throw new Exception('price is not supplied for basket item');
@@ -320,8 +321,6 @@ class CheckoutOrder
         $order->delivery_cost = $this->deliveryCost;
         $order->delivery_price = $this->deliveryPrice;
 
-        $this->replaceProductBasketItemsToNewBasket();
-
         $order->save();
         return $order;
     }
@@ -347,8 +346,8 @@ class CheckoutOrder
                     $savedBasketItem = $savedBasketItems->get($offerId);
                     $savedBasketItem->basket_id = $basketForReplacing->id;
                     $savedBasketItem->save();
-                    $basketForReplacing->items->push($savedBasketItem);
                 });
+                $basket->load('items');
             }
         }
     }
@@ -359,13 +358,23 @@ class CheckoutOrder
         $basket = $this->basket();
 
         if ($basket) {
-            $savedBasketItems = $basket->items->keyBy('offer_id');
+            $savedBasketItems = $basket->items;
             $shipmentItems = collect($this->deliveries)
                 ->pluck('shipments.*.items')
                 ->flatten(2);
 
             foreach ($shipmentItems as [$offerId, $bundleId, $bundleItemId]) {
-                $result->push($savedBasketItems->get($offerId));
+                $savedBasketItem = $savedBasketItems
+                    ->where('offer_id', $offerId);
+                if ($bundleId && $bundleItemId) {
+                    $savedBasketItem = $savedBasketItem
+                        ->where('bundle_id', $bundleId)
+                        ->where('bundle_item_id', $bundleItemId);
+                }
+
+                if ($savedBasketItem->isNotEmpty()) {
+                    $result->push($savedBasketItem->first());
+                }
             }
         }
 
