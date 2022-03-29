@@ -375,8 +375,7 @@ class CheckoutOrder
 
             foreach ($shipmentItems as [$offerId, $bundleId, $bundleItemId]) {
                 $savedBasketItem = $savedBasketItems
-                    ->where('offer_id', $offerId);
-                $savedBasketItem = $savedBasketItem
+                    ->where('offer_id', $offerId)
                     ->where('bundle_id', $bundleId)
                     ->where('bundle_item_id', $bundleItemId);
 
