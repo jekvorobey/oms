@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class AnalyticsService
 {
-    public const SIMPLIFIED_STATUSES = [
+    public const SHIPMENT_STATUS_GROUPS = [
         self::STATUS_ACCEPTED,
         self::STATUS_SHIPPED,
         self::STATUS_TRANSITION,
@@ -47,6 +47,7 @@ class AnalyticsService
             ->select(['id', 'status', 'created_at', 'is_canceled'])
             ->where('merchant_id', $request->merchantId)
             ->whereBetween('created_at', $interval->fullPeriod())
+            ->where('status', '>=', ShipmentStatus::AWAITING_CONFIRMATION)
             ->orderBy('created_at')
             ->get();
 
@@ -71,14 +72,14 @@ class AnalyticsService
             'countProducts' => 0,
         ];
 
-        $result = array_map(fn() => $defaultAssocArray, array_flip(self::SIMPLIFIED_STATUSES));
+        $result = array_map(fn() => $defaultAssocArray, array_flip(self::SHIPMENT_STATUS_GROUPS));
 
         foreach ($shipments as $shipment) {
             /** @var Shipment $shipment */
-            if ($status = $this->getAnalyticsStatus($shipment)) {
-                $this->fillShipmentProductData($result[$status], $shipment);
+            if ($statusGroup = $this->getShipmentStatusGroup($shipment)) {
+                $this->fillShipmentProductData($result[$statusGroup], $shipment);
 
-                if ($status !== self::STATUS_ACCEPTED) {
+                if ($statusGroup !== self::STATUS_ACCEPTED) {
                     $this->fillShipmentProductData($result[self::STATUS_ACCEPTED], $shipment);
                 }
             }
@@ -87,7 +88,7 @@ class AnalyticsService
         return $result;
     }
 
-    private function getAnalyticsStatus(Shipment $shipment): ?string
+    private function getShipmentStatusGroup(Shipment $shipment): ?string
     {
         $shipmentStatus = (int) $shipment->status;
 
@@ -128,9 +129,9 @@ class AnalyticsService
             ->whereHas('basketItems', fn($query) => $query->where('is_returned', false))
             ->where('merchant_id', $request->merchantId)
             ->whereBetween('status_at', $interval->fullPeriod())
-            ->where('status', ShipmentStatus:: DONE)
+            ->where('status', ShipmentStatus::DONE)
             ->where('is_canceled', false)
-            ->addSelect([
+            ->select([
                 'id',
                 'merchant_id',
                 'status',
@@ -241,8 +242,7 @@ class AnalyticsService
         $groupedBasketItems = BasketItem::query()->select('id', 'offer_id', 'name', 'qty')
             ->whereHas('shipmentItem.shipment', $shipmentQueryCallback)
             ->get()
-            ->groupBy('offer_id')
-        ;
+            ->groupBy('offer_id');
 
         $periodDays = $interval->currentPeriodDays();
         $result = collect();
