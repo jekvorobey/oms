@@ -851,6 +851,7 @@ class DeliveryService
 
                             $delivery->save();
                         } catch (\Throwable $e) {
+                            logger()->error("Error when updating status of Delivery #{$delivery->id} ({$delivery->xml_id})");
                             report($e);
                             continue;
                         }
