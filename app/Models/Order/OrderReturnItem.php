@@ -70,7 +70,7 @@ class OrderReturnItem extends AbstractModel
             $order = $item->orderReturn->order;
             $basketItem = $item->basketItem;
 
-            if ($basketItem->shipmentItem) {
+            if ($basketItem->shipmentItem && !$order->is_canceled) {
                 app(ServiceNotificationService::class)->send($order->getUser()->id, 'servisnyeizmenenie_zakaza_sostav_zakaza', [
                     'ORDER_ID' => $order->id,
                     'CUSTOMER_NAME' => $order->getUser()->first_name,
