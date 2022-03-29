@@ -335,12 +335,13 @@ class CheckoutOrder
             $basketItemsToReplace = collect();
 
             foreach ($savedBasketItems as $basketItem) {
-                $basketItemFromRequest = $basketItemsFromRequest->where('offer_id', $basketItem->offer_id)
+                $basketItemFromRequest = $basketItemsFromRequest
+                    ->where('offer_id', $basketItem->offer_id)
                     ->where('bundle_id', $basketItem->bundle_id)
                     ->where('bundle_item_id', $basketItem->bundle_item_id)
                     ->first();
 
-                if ($basketItemFromRequest) {
+                if (!$basketItemFromRequest) {
                     $basketItemsToReplace->push($basketItem);
                 }
             }
