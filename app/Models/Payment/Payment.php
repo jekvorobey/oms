@@ -80,6 +80,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property array $data
  *
  * @property-read Order $order
+ * @property-read PaymentMethod $paymentMethod
  *
  * @property string|null $external_payment_id
  * @property string|null $payment_link
@@ -139,6 +140,11 @@ class Payment extends AbstractModel
     protected function historyMainModel(): ?Order
     {
         return $this->order;
+    }
+
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method');
     }
 
     public function getExternalPaymentIdAttribute(): ?string
