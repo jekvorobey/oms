@@ -61,7 +61,20 @@ class GuestBasketService extends BasketService
 
     public function deleteBasket(Basket $basket): bool
     {
-        return Cache::forget($basket->id);
+        Cache::forget($basket->id);
+        $key = $this->getBasketKey($basket->type);
+
+        if ($key) {
+            $basketMapping = Cache::get($basket->customer_id);
+            Cache::forget($basket->customer_id);
+            unset($basketMapping[$key]);
+
+            if (!empty($basketMapping)) {
+                Cache::put($basket->customer_id, $basketMapping, self::CACHE_LIFETIME);
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -69,8 +82,6 @@ class GuestBasketService extends BasketService
      */
     public function setItem(Basket $basket, int $offerId, array $data): bool
     {
-        $this->deleteBasket($basket);
-
         $item = $this->itemByOffer($basket, $offerId, $data['bundle_id'] ?? null, $data['bundle_item_id'] ?? null);
 
         if (!$item->id) {

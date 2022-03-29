@@ -135,7 +135,9 @@ class OrderObserver
                 ->first()
                 ->user_id;
 
-            if ($order->status != $order->getOriginal('status') && $order->status == OrderStatus::DONE) {
+            $statusWasChanged = $order->status != $order->getOriginal('status');
+
+            if ($statusWasChanged && $order->status == OrderStatus::DONE) {
                 $this->sendStatusNotification($notificationService, $order, $user_id);
             }
 
@@ -186,14 +188,14 @@ class OrderObserver
             }
 
             if (
-                $order->status != $order->getOriginal('status')
+                $statusWasChanged
                 && !in_array($order->status, [OrderStatus::CREATED, OrderStatus::AWAITING_CONFIRMATION, OrderStatus::DONE])
                 && !$sent_notification
             ) {
                 $this->sendStatusNotification($notificationService, $order, $user_id);
             }
 
-            if ($order->wasChanged('is_canceled') && $order->is_canceled) {
+            if ($order->is_canceled != $order->getOriginal('is_canceled') && $order->is_canceled) {
                 $notificationService->send(
                     $user_id,
                     $this->createCancelledNotificationType(
@@ -207,6 +209,7 @@ class OrderObserver
                 $notificationService->sendToAdmin('aozzakazzakaz_izmenen');
             }
         } catch (\Throwable $e) {
+            report($e);
             logger($e->getMessage(), $e->getTrace());
         }
     }
