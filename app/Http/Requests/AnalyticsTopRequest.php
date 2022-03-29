@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests;
 
+/**
+ * @property int $limit
+ */
 class AnalyticsTopRequest extends AnalyticsRequest
 {
     public function rules(): array
     {
-        return parent::rules() + [
+        return array_merge(parent::rules(), [
             'limit' => 'required|int',
-        ];
+        ]);
     }
 }

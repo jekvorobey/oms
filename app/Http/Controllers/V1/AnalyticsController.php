@@ -7,7 +7,6 @@ use App\Http\Requests\AnalyticsRequest;
 use App\Http\Requests\AnalyticsTopRequest;
 use App\Services\AnalyticsService\AnalyticsService;
 use Exception;
-use Greensight\Store\Services\StockService\StockService;
 use Illuminate\Http\JsonResponse;
 
 class AnalyticsController extends Controller
@@ -28,10 +27,8 @@ class AnalyticsController extends Controller
      */
     public function productsShipments(AnalyticsRequest $request, AnalyticsService $service): JsonResponse
     {
-        $data = $request->validated();
-
         return response()->json(
-            $service->getCountedByStatusProductItemsForPeriod($data['merchantId'], $data['start'], $data['end'])
+            $service->getCountedByStatusProductItemsForPeriod($request)
         );
     }
 
@@ -51,10 +48,8 @@ class AnalyticsController extends Controller
      */
     public function sales(AnalyticsRequest $request, AnalyticsService $service): JsonResponse
     {
-        $data = $request->validated();
-
         return response()->json(
-            $service->getMerchantSalesAnalytics($data['merchantId'], $data['start'], $data['end'])
+            $service->getMerchantSalesAnalytics($request)
         );
     }
 
@@ -74,10 +69,8 @@ class AnalyticsController extends Controller
      */
     public function bestsellers(AnalyticsTopRequest $request, AnalyticsService $service): JsonResponse
     {
-        $data = $request->validated();
-
         return response()->json(
-            $service->getMerchantBestsellers($data['merchantId'], $data['start'], $data['end'], $data['limit'])
+            $service->getMerchantBestsellers($request)
         );
     }
 
@@ -95,15 +88,10 @@ class AnalyticsController extends Controller
      * Получить топ продуктов мерчанта по скорости продаж.
      * @throws Exception
      */
-    public function fastest(
-        AnalyticsTopRequest $request,
-        AnalyticsService $service,
-        StockService $stockService
-    ): JsonResponse {
-        $data = $request->validated();
-        $stockHistory = $stockService->merchantStockHistory($data['merchantId'], $data['start'], $data['end']);
+    public function fastest(AnalyticsTopRequest $request, AnalyticsService $service): JsonResponse
+    {
         return response()->json(
-            $service->getProductsTurnover($data['merchantId'], $data['start'], $data['end'], $data['limit'], $stockHistory)
+            $service->getProductsTurnover($request)
         );
     }
 
@@ -121,15 +109,10 @@ class AnalyticsController extends Controller
      * Получить топ продуктов-аутсайдеров мерчанта.
      * @throws Exception
      */
-    public function outsiders(
-        AnalyticsTopRequest $request,
-        AnalyticsService $service,
-        StockService $stockService
-    ): JsonResponse {
-        $data = $request->validated();
-        $stockHistory = $stockService->merchantStockHistory($data['merchantId'], $data['start'], $data['end']);
+    public function outsiders(AnalyticsTopRequest $request, AnalyticsService $service): JsonResponse
+    {
         return response()->json(
-            $service->getProductsTurnover($data['merchantId'], $data['start'], $data['end'], $data['limit'], $stockHistory, true)
+            $service->getProductsTurnover($request, true)
         );
     }
 }
