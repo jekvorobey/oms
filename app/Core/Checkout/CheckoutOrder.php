@@ -471,12 +471,12 @@ class CheckoutOrder
 
                     $shipmentItem->save();
                 }
-                if ($order->isProductOrder()) {
+                if ($order->isProductOrder() && $order->is_postpaid) {
                     $shipment->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo']]);
                 }
             }
 
-            if ($order->isProductOrder()) {
+            if ($order->isProductOrder() && $order->is_postpaid) {
                 $delivery->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['deliveriesStatusTo']]);
             }
         }
