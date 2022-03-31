@@ -77,6 +77,7 @@ class DeliveryObserver
         $this->setIsCanceledToShipments($delivery);
         $this->setStatusToOrder($delivery);
         $this->setPaymentStatusToOrder($delivery);
+        $this->setPaymentStatusToShipment($delivery);
         $this->setIsCanceledToOrder($delivery);
         // $this->notifyIfShipped($delivery);
         // $this->notifyIfReadyForRecipient($delivery);
