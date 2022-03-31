@@ -9,7 +9,6 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
-use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
@@ -41,22 +40,6 @@ use Pim\Services\CategoryService\CategoryService;
  */
 class OrderObserver
 {
-    /** автоматическая установка статусов для всех дочерних доставок и отправлений заказа */
-    protected const STATUS_TO_CHILDREN = [
-        OrderStatus::AWAITING_CHECK => [
-            'deliveriesStatusTo' => DeliveryStatus::AWAITING_CHECK,
-            'shipmentsStatusTo' => ShipmentStatus::AWAITING_CHECK,
-        ],
-        OrderStatus::CHECKING => [
-            'deliveriesStatusTo' => DeliveryStatus::CHECKING,
-            'shipmentsStatusTo' => ShipmentStatus::CHECKING,
-        ],
-        OrderStatus::AWAITING_CONFIRMATION => [
-            'deliveriesStatusTo' => DeliveryStatus::AWAITING_CONFIRMATION,
-            'shipmentsStatusTo' => ShipmentStatus::AWAITING_CONFIRMATION,
-        ],
-    ];
-
     public const OVERRIDE_CANCEL = 1;
     public const OVERRIDE_AWAITING_PAYMENT = 2;
     public const OVERRIDE_SUCCESSFUL_PAYMENT = 3;
@@ -158,7 +141,7 @@ class OrderObserver
                     && (
                         $this->shouldSendPaidNotification($order)
                         // || $order->payment_status == PaymentStatus::TIMEOUT
-                        || $order->payment_status == PaymentStatus::WAITING
+                        || ($order->payment_status == PaymentStatus::WAITING && !$order->is_postpaid)
                     )
                 ) {
                     $delivery_method = !empty($order->deliveries()->first()->delivery_method)
@@ -293,6 +276,10 @@ class OrderObserver
      */
     protected function setPaymentStatusToChildren(Order $order): void
     {
+        if ($order->is_postpaid) {
+            return;
+        }
+
         if ($order->payment_status != $order->getOriginal('payment_status')) {
             $order->loadMissing('deliveries.shipments');
             foreach ($order->deliveries as $delivery) {
@@ -374,6 +361,10 @@ class OrderObserver
 
     private function commitPaymentIfOrderDelivered(Order $order): void
     {
+        if ($order->is_postpaid) {
+            return;
+        }
+
         if ($order->status == OrderStatus::DONE && $order->wasChanged('status')) {
             /** @var Payment $payment */
             $payment = $order->payments->last();
@@ -421,14 +412,14 @@ class OrderObserver
      */
     protected function setStatusToChildren(Order $order): void
     {
-        if (isset(self::STATUS_TO_CHILDREN[$order->status]) && $order->status != $order->getOriginal('status')) {
+        if (isset(OrderService::STATUS_TO_CHILDREN[$order->status]) && $order->status != $order->getOriginal('status')) {
             $order->loadMissing('deliveries.shipments');
             foreach ($order->deliveries as $delivery) {
-                $delivery->status = self::STATUS_TO_CHILDREN[$order->status]['deliveriesStatusTo'];
+                $delivery->status = OrderService::STATUS_TO_CHILDREN[$order->status]['deliveriesStatusTo'];
                 $delivery->save();
 
                 foreach ($delivery->shipments as $shipment) {
-                    $shipment->status = self::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo'];
+                    $shipment->status = OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo'];
                     $shipment->save();
                 }
             }
@@ -1191,7 +1182,9 @@ class OrderObserver
     protected function shouldSendPaidNotification(Order $order)
     {
         $paid = ($order->payment_status == PaymentStatus::HOLD) || (
-            $order->payment_status == PaymentStatus::PAID && $order->getOriginal('payment_status') != PaymentStatus::HOLD
+            $order->payment_status == PaymentStatus::PAID
+            && $order->getOriginal('payment_status') != PaymentStatus::HOLD
+            && !$order->is_postpaid
         );
 
         $created = ($order->status == OrderStatus::CREATED) || ($order->status == OrderStatus::AWAITING_CONFIRMATION);
