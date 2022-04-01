@@ -3,6 +3,7 @@
 namespace App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 class Kernel extends HttpKernel
 {
@@ -20,7 +21,14 @@ class Kernel extends HttpKernel
      *
      * @var array
      */
-    protected $middlewareGroups = [];
+    protected $middlewareGroups = [
+        'web' => [
+            'bindings',
+        ],
+        'api' => [
+            'bindings',
+        ],
+    ];
 
     /**
      * The application's route middleware.
@@ -29,7 +37,9 @@ class Kernel extends HttpKernel
      *
      * @var array
      */
-    protected $routeMiddleware = [];
+    protected $routeMiddleware = [
+        'bindings' => SubstituteBindings::class,
+    ];
 
     /**
      * The priority-sorted list of middleware.
