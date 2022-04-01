@@ -155,9 +155,9 @@ class CheckoutOrder
     public function save(): array
     {
         return DB::transaction(function () {
+            $this->replaceProductBasketItemsToNewBasket();
             $this->checkProducts();
             $this->checkOffersStocks();
-            $this->replaceProductBasketItemsToNewBasket();
             $this->commitPrices();
 
             $order = $this->createOrder();
