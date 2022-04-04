@@ -731,7 +731,7 @@ class OrderObserver
         $withoutParams = false;
         $hideShipmentsDate = false;
         $receiverFullNameByParts = explode($receiverFullName, ' ');
-        $receiveFirstName = $receiverFullNameByParts[1] ?: $receiverFullNameByParts[0];
+        $receiveFirstName = $receiverFullNameByParts[1] ?? $receiverFullNameByParts[0];
 
         [$title, $text] = (function () use (
             $order,
