@@ -1022,7 +1022,7 @@ class OrderObserver
                 sprintf('%s/profile', config('app.showcase_host'))
             ),
             'ORDER_ID' => $order->number,
-            'FULL_NAME' => sprintf('%s %s', $receiverFullNameByParts[0], $receiverFullNameByParts[1]),
+            'FULL_NAME' => sprintf('%s %s', $receiverFullNameByParts[0], $receiverFullNameByParts[1] ?? ''),
             'LINK_ACCOUNT' => (string) static::shortenLink(sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id)),
             'LINK_PAY' => (string) static::shortenLink($link),
             'ORDER_DATE' => $order->created_at->toDateString(),
