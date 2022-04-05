@@ -730,7 +730,7 @@ class OrderObserver
         $params = [];
         $withoutParams = false;
         $hideShipmentsDate = false;
-        $receiverFullNameByParts = explode($receiverFullName, ' ');
+        $receiverFullNameByParts = explode(' ', $receiverFullName);
         $receiveFirstName = $receiverFullNameByParts[1] ?? $receiverFullNameByParts[0];
 
         [$title, $text] = (function () use (
@@ -1145,9 +1145,9 @@ class OrderObserver
     public function parseName(string $userFullName, Order $order)
     {
         if ($order->receiver_name) {
-            $words = explode($order->receiver_name, ' ');
+            $words = explode(' ', $order->receiver_name);
         } else {
-            $words = explode($userFullName, ' ');
+            $words = explode(' ', $userFullName);
         }
 
         if (isset($words[1])) {
