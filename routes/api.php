@@ -209,6 +209,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                         Route::get('', 'ShipmentsController@readItem');
                         Route::post('', 'ShipmentsController@createItem');
                         Route::delete('', 'ShipmentsController@deleteItem');
+                        Route::put('', 'ShipmentsController@cancelItem');
                     });
                 });
 

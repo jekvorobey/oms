@@ -64,6 +64,9 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property array $product - данные зависящие от типа товара
  * @property int|null $bundle_id - id бандла, в который входит этот товар
  * @property int|null $bundle_item_id - id элемента бандла, в который входит товар
+ * @property bool $is_returned - флаг возврата товара
+ * @property bool $is_canceled - флаг отмены товара
+ * @property float $qty_canceled - кол-во отменённого товара
  *
  * @property-read Basket $basket
  * @property-read ShipmentItem $shipmentItem
@@ -298,5 +301,15 @@ class BasketItem extends AbstractModel
                     ->absoluteUrl();
             })
             ->toArray();
+    }
+
+    public function isReturned(): bool
+    {
+        return $this->is_returned;
+    }
+
+    public function isCanceled(): bool
+    {
+        return $this->is_canceled;
     }
 }
