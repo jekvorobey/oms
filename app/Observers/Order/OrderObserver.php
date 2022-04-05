@@ -597,7 +597,7 @@ class OrderObserver
             ->join('<br>');
 
         [$receiverFullName, $receiverPhone] = [$order->deliveries->first()->receiver_name, $order->deliveries->first()->receiver_phone];
-        /* Форматы хранения телефона в доставке и у пользователя, поэтому приводим к единому виду (как у пользователя) */
+        /* Форматы хранения телефона в доставке и у пользователя отличаются, поэтому приводим к единому виду (как у пользователя) */
         $receiverPhone = str_replace(['(', ')', '-', ' '], '', $receiverPhone);
 
         if (empty($deliveryAddress)) {
