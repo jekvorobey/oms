@@ -16,10 +16,11 @@ class AddIsCanceledToBasketItems extends Migration
     public function up()
     {
         Schema::table(self::TABLE_NAME, function (Blueprint $table) {
+            $table->unsignedBigInteger('return_reason_id')->after('is_returned')->nullable();
+            $table->unsignedBigInteger('canceled_by')->after('is_returned')->nullable();
             $table->boolean('is_canceled')->after('is_returned')->default(false);
             $table->decimal('qty_canceled', 18, 4)
                 ->unsigned()->after('is_returned')->nullable();
-            $table->bigInteger('canceled_by')->after('is_returned')->nullable();
         });
     }
 

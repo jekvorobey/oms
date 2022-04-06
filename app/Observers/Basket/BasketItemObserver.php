@@ -3,6 +3,9 @@
 namespace App\Observers\Basket;
 
 use App\Models\Basket\BasketItem;
+use App\Models\Delivery\Shipment;
+use App\Services\DeliveryService;
+use Exception;
 use Pim\Services\SearchService\SearchService;
 
 /**
@@ -65,7 +68,7 @@ class BasketItemObserver
 
     /**
      * Handle the basket item "deleting" event.
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleting(BasketItem $basketItem)
     {
@@ -80,5 +83,44 @@ class BasketItemObserver
         /** @var SearchService $searchService */
         $searchService = resolve(SearchService::class);
         $searchService->markProductForIndexViaOffer($basketItem->offer_id);
+    }
+
+    /**
+     * Handle the basket item "updated" event.
+     * @return void
+     * @throws Exception
+     */
+    public function updated(BasketItem $basketItem)
+    {
+        $this->setIsCanceledToShipment($basketItem);
+    }
+
+    /**
+     * Автоматическая установка флага отмены для отправления, если все её товары отменены
+     * @throws Exception
+     */
+    protected function setIsCanceledToShipment(BasketItem $basketItem): void
+    {
+        if ($basketItem->wasChanged('is_canceled') && $basketItem->is_canceled) {
+            /** @var Shipment $shipment */
+            $shipment = Shipment::find($basketItem->shipmentItem->shipment_id);
+            if ($shipment->is_canceled) {
+                return;
+            }
+
+            $allBasketItemsCanceled = true;
+            foreach ($shipment->basketItems as $shipmentBasketItem) {
+                if (!$shipmentBasketItem->isCanceled()) {
+                    $allBasketItemsCanceled = false;
+                    break;
+                }
+            }
+
+            if ($allBasketItemsCanceled) {
+                /** @var DeliveryService $deliveryService */
+                $deliveryService = resolve(DeliveryService::class);
+                $deliveryService->cancelShipment($shipment, $basketItem->return_reason_id);
+            }
+        }
     }
 }

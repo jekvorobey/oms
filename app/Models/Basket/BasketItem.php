@@ -69,6 +69,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property bool $is_canceled - флаг отмены товара
  * @property int|null $canceled_by - id пользователя отменившего товар
  * @property float $qty_canceled - кол-во отменённого товара
+ * @property int|null $return_reason_id - id причины отмены
  *
  * @property-read Basket $basket
  * @property-read ShipmentItem $shipmentItem

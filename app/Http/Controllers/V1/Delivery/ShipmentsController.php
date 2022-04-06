@@ -699,10 +699,17 @@ class ShipmentsController extends Controller
         $data = $this->validate($request, [
             'qty' => ['required', 'numeric'],
             'canceled_by' => ['required', 'integer'],
+            'return_reason_id' => ['required', 'integer'],
         ]);
 
         try {
-            $ok = $deliveryService->cancelShipmentItem($shipmentId, $basketItemId, $data['qty'], $data['canceled_by']);
+            $ok = $deliveryService->cancelShipmentItem(
+                $shipmentId,
+                $basketItemId,
+                $data['qty'],
+                $data['canceled_by'],
+                $data['return_reason_id'],
+            );
             if (!$ok) {
                 throw new HttpException(500);
             }

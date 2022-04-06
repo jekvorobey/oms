@@ -8,7 +8,6 @@ use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
-use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
@@ -24,6 +23,7 @@ use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
+use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
 use Greensight\Logistics\Dto\Order\CdekDeliveryOrderReceiptDto;
@@ -47,7 +47,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use MerchantManagement\Services\MerchantService\MerchantService;
-use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 
 /**
  * Класс-бизнес логики по работе с сущностями доставки:
@@ -178,32 +177,34 @@ class DeliveryService
      * Отменить элемент (товар с одного склада одного мерчанта) отправления
      * @throws Exception
      */
-    public function cancelShipmentItem(int $shipmentId, int $basketItemId, float $qty, int $cancelBy): bool
-    {
+    public function cancelShipmentItem(
+        int $shipmentId,
+        int $basketItemId,
+        float $qty,
+        int $cancelBy,
+        int $returnReasonId
+    ): bool {
         $ok = true;
-        $shipmentItem = ShipmentItem::query()
-            ->where('shipment_id', $shipmentId)
-            ->where('basket_item_id', $basketItemId)
-            ->first();
-        if (!$qty && !is_null($shipmentItem)) {
+        /** @var Shipment $shipment */
+        $shipment = Shipment::find($shipmentId);
+        if (!$qty && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
             throw new DeliveryServiceInvalidConditions('Shipment item not found');
-        } else {
-            /** @var BasketItem $basketItem */
-            $basketItem = BasketItem::find($basketItemId);
-            if ($basketItem->qty < $qty) {
-                throw new DeliveryServiceInvalidConditions('Shipment cancel qty can\'t be more than basket item qty');
-            } else {
-                $basketItem->updateOrCreate(
-                    ['id' => $basketItemId],
-                    [
-                        'qty' => $basketItem->qty - $qty,
-                        'qty_canceled' => $qty,
-                        'is_canceled' => $basketItem->qty - $qty == 0,
-                        'canceled_by' => $cancelBy,
-                    ]
-                );
-            }
         }
+        /** @var BasketItem $basketItem */
+        $basketItem = BasketItem::find($basketItemId);
+        if ($basketItem->qty < $qty) {
+            throw new DeliveryServiceInvalidConditions('Shipment cancel qty can\'t be more than basket item qty');
+        }
+        $basketItem->updateOrCreate(
+            ['id' => $basketItemId],
+            [
+                'qty' => $basketItem->qty - $qty,
+                'qty_canceled' => $qty,
+                'is_canceled' => $basketItem->qty - $qty == 0,
+                'canceled_by' => $cancelBy,
+                'return_reason_id' => $returnReasonId,
+            ]
+        );
 
         return $ok;
     }
