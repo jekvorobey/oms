@@ -11,6 +11,7 @@ use App\Services\PublicEventService\Cart\PublicEventCartRepository;
 use App\Services\PublicEventService\Cart\PublicEventCartStruct;
 use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -118,6 +119,14 @@ class BasketItem extends AbstractModel
     protected function historyMainModel(): ?Order
     {
         return $this->basket->order;
+    }
+
+    /**
+     * Диапазон запроса, не включающий отменные и возвращенные товары.
+     */
+    public function scopeActive(Builder $query): void
+    {
+        $query->where('is_returned', false)->where('is_canceled', false);
     }
 
     /**

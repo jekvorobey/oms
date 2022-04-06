@@ -154,6 +154,10 @@ class DeliveryService
             /** @var BasketItem $basketItem */
             $basketItem = BasketItem::find($basketItemId);
 
+            if ($basketItem->isCanceled()) {
+                throw new DeliveryServiceInvalidConditions('Shipment item is canceled');
+            }
+
             if ($basketItem->qty < $qty) {
                 throw new DeliveryServiceInvalidConditions('Shipment package qty can\'t be more than basket item qty');
             } else {

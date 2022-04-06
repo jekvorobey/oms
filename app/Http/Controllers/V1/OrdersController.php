@@ -708,7 +708,12 @@ class OrdersController extends Controller
             ->merge($returnShipments)
             ->merge($cancelShipments);
 
-        $shipments->load(['basketItems', 'delivery.order.discounts']);
+        $shipments->load([
+            'basketItems' => function ($q) {
+                $q->active();
+            },
+            'delivery.order.discounts',
+        ]);
 
         return response()->json([
             'items' => $shipments->map(function (Shipment $shipment) {
