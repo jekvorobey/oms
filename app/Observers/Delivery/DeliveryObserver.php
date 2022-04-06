@@ -246,6 +246,7 @@ class DeliveryObserver
                 }
             }
         } catch (\Throwable $e) {
+            report($e);
             logger($e->getMessage(), $e->getTrace());
         }
     }
