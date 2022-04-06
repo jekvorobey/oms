@@ -193,11 +193,15 @@ class DeliveryService
             if ($basketItem->qty < $qty) {
                 throw new DeliveryServiceInvalidConditions('Shipment cancel qty can\'t be more than basket item qty');
             } else {
-                $basketItem->updateOrCreate([
-                    'qty_canceled' => $qty,
-                    'is_canceled' => true,
-                    'canceled_by' => $cancelBy,
-                ]);
+                $basketItem->updateOrCreate(
+                    ['id' => $basketItemId],
+                    [
+                        'qty' => $basketItem->qty - $qty,
+                        'qty_canceled' => $qty,
+                        'is_canceled' => $basketItem->qty - $qty == 0,
+                        'canceled_by' => $cancelBy,
+                    ]
+                );
             }
         }
 

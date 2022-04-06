@@ -67,6 +67,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property int|null $bundle_item_id - id элемента бандла, в который входит товар
  * @property bool $is_returned - флаг возврата товара
  * @property bool $is_canceled - флаг отмены товара
+ * @property int|null $canceled_by - id пользователя отменившего товар
  * @property float $qty_canceled - кол-во отменённого товара
  *
  * @property-read Basket $basket

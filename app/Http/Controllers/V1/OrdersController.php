@@ -585,7 +585,13 @@ class OrdersController extends Controller
             $builder->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
         }
 
-        $orders = $builder->with(['basket.items', 'discounts', 'promoCodes'])->get();
+        $orders = $builder->with([
+            'basketItems' => function ($q) {
+                $q->active();
+            },
+            'discounts',
+            'promoCodes',
+        ])->get();
 
         return response()->json([
             'items' => $orders->map(function (Order $order) {
