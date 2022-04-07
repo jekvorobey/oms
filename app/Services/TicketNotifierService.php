@@ -352,7 +352,7 @@ class TicketNotifierService
             })
             ->join('~');
 
-        return sprintf('https://enterprise.static-maps.yandex.ru/1.x/?key=%s&l=map&pt=%s', config('app.y_maps_key'), $query);
+        return sprintf('https://enterprise.static-maps.yandex.ru/1.x/?key=%s&l=map&pt=%s', config('services.y_maps.key'), $query);
     }
 
     private function generateTicketWord(int $count): string

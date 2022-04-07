@@ -35,7 +35,7 @@ return [
     ],
 
     'stripe' => [
-        'model' => App\User::class,
+//        'model' => App\User::class,
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
         'webhook' => [
@@ -44,4 +44,12 @@ return [
         ],
     ],
 
+    'y_checkout' => [
+        'shop_id' => env('Y_CHECKOUT_SHOP_ID'),
+        'key' => env('Y_CHECKOUT_KEY'),
+    ],
+
+    'y_maps' => [
+        'key' => env('Y_MAPS_KEY'),
+    ],
 ];

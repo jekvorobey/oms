@@ -591,7 +591,7 @@ class DeliveryService
         //Информация о заказе
         $deliveryOrderDto = new DeliveryOrderDto();
         $deliveryOrderInputDto->order = $deliveryOrderDto;
-        $deliveryOrderDto->number = $delivery->number;
+        $deliveryOrderDto->number = $delivery->getDeliveryServiceNumber();
         $deliveryOrderDto->tracknumber = $delivery->tracknumber;
         $deliveryOrderDto->barcode = $delivery->barcode;
         $deliveryOrderDto->height = $delivery->height;
@@ -822,7 +822,7 @@ class DeliveryService
      */
     public function updateDeliveryStatusFromDeliveryService(): void
     {
-        $deliveries = Delivery::deliveriesInDelivery()->keyBy('number');
+        $deliveries = Delivery::deliveriesInDelivery()->keyBy(fn(Delivery $delivery) => $delivery->getDeliveryServiceNumber());
         $deliveries->load('order');
 
         if ($deliveries->isNotEmpty()) {
