@@ -212,7 +212,7 @@ class DeliveryService
             ]
         );
 
-        $basketItemReturnDto = (new OrderReturnDtoBuilder())->buildFromBasketItems($basketItem->basket->order, collect($basketItem));
+        $basketItemReturnDto = (new OrderReturnDtoBuilder())->buildFromBasketItems($basketItem->basket->order, collect($basketItem), true);
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturnService->create($basketItemReturnDto);
