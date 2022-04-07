@@ -17,16 +17,15 @@ class BasketItemObserver
 {
     /**
      * Handle the basket item "saving" event.
-     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public function saving(BasketItem $basketItem)
     {
-        /*if ($basketItem->qty != $basketItem->getOriginal('qty') ||
-            $basketItem->price != $basketItem->getOriginal('price') ||
-            $basketItem->discount != $basketItem->getOriginal('discount')
+        if (
+            $basketItem->qty != $basketItem->getOriginal('qty') ||
+            $basketItem->qty_canceled != $basketItem->getOriginal('qty_canceled')
         ) {
-            $basketItem->costRecalc(false);
-        }*/
+            $basketItem->priceRecalc(false);
+        }
     }
 
     /**

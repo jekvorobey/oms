@@ -68,7 +68,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property bool $is_returned - флаг возврата товара
  * @property bool $is_canceled - флаг отмены товара
  * @property int|null $canceled_by - id пользователя отменившего товар
- * @property float $qty_canceled - кол-во отменённого товара
+ * @property float|null $qty_canceled - кол-во отменённого товара
  * @property int|null $return_reason_id - id причины отмены
  *
  * @property-read Basket $basket
@@ -322,5 +322,18 @@ class BasketItem extends AbstractModel
     public function isCanceled(): bool
     {
         return $this->is_canceled;
+    }
+
+    /**
+     * Пересчитать цену элемента корзины
+     */
+    public function priceRecalc(bool $save = true): void
+    {
+        $price = $this->price / $this->qty * $this->qty_canceled;
+        $this->price = $price;
+
+        if ($save) {
+            $this->save();
+        }
     }
 }

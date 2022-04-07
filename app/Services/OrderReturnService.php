@@ -11,6 +11,7 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDto;
 use Carbon\Carbon;
 use App\Services\Dto\In\OrderReturn\OrderReturnItemDto;
+use Exception;
 use Greensight\Customer\Services\ReferralService\Dto\ReturnReferralBillOperationDto;
 use Greensight\Customer\Services\ReferralService\ReferralService;
 use Illuminate\Support\Collection;
@@ -28,7 +29,7 @@ class OrderReturnService
 {
     /**
      * Создать возврат по заказу
-     * @throws \Exception
+     * @throws Exception
      */
     public function create(OrderReturnDto $orderReturnDto): ?OrderReturn
     {
@@ -37,7 +38,7 @@ class OrderReturnService
 
         $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
 
-        if (!$this->needCreateOrderReturn($order, $orderReturnDto, $basketItemIds)) {
+        if (!$this->needCreateOrderReturn($order, $orderReturnDto)) {
             return null;
         }
 
@@ -50,7 +51,7 @@ class OrderReturnService
             foreach ($orderReturnDto->items as $item) {
                 $basketItem = $basketItems->get($item->basket_item_id);
                 if (!$basketItem) {
-                    throw new \Exception("BasketItem by id={$item->basket_item_id} not found");
+                    throw new Exception("BasketItem by id={$item->basket_item_id} not found");
                 }
 
                 $this->createOrderReturnItem($order, $orderReturn, $basketItem, $item);
@@ -67,21 +68,9 @@ class OrderReturnService
         return $orderReturn;
     }
 
-    private function needCreateOrderReturn(
-        Order $order,
-        OrderReturnDto $orderReturnDto,
-        Collection $basketItemIds
-    ): bool {
+    private function needCreateOrderReturn(Order $order, OrderReturnDto $orderReturnDto): bool
+    {
         if (!in_array((int) $order->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD])) {
-            return false;
-        }
-
-        //TODO Предусмотреть в дальнейшем условие возврата неполного количества одного товара
-        $existOrderReturnItems = OrderReturnItem::query()
-            ->whereIn('basket_item_id', $basketItemIds)
-            ->exists();
-
-        if ($existOrderReturnItems) {
             return false;
         }
 
@@ -114,6 +103,9 @@ class OrderReturnService
         return $orderReturn;
     }
 
+    /**
+     * @throws Exception
+     */
     private function createOrderReturnItem(
         Order $order,
         OrderReturn $orderReturn,
@@ -133,13 +125,13 @@ class OrderReturnService
              * Проверяем, что указаны id билетов для возврата
              */
             if (!$item->ticket_ids) {
-                throw new \Exception("Returning ticket_ids for BasketItem with id={$basketItem->id} not specified");
+                throw new Exception("Returning ticket_ids for BasketItem with id={$basketItem->id} not specified");
             }
             /**
              * Проверяем, что id билетов для возврата указаны у BasketItem корзины заказа
              */
             if ($item->ticket_ids != array_intersect($basketItem->getTicketIds(), $item->ticket_ids)) {
-                throw new \Exception("Returning ticket_ids for BasketItem with id={$basketItem->id} not contained at order");
+                throw new Exception("Returning ticket_ids for BasketItem with id={$basketItem->id} not contained at order");
             }
             $basketItem->setTicketIds($item->ticket_ids);
         }
@@ -149,8 +141,10 @@ class OrderReturnService
         /**
          * Проверяем, что кол-во возвращаемого товара не больше, чем в корзине
          */
-        if ($orderReturnItem->qty > $basketItem->qty) {
-            throw new \Exception("Returning qty for BasketItem with id={$basketItem->id} more than at order");
+        // Сколько уже создано возвратов
+        $qtyCanceled = OrderReturnItem::query()->where('basket_item_id', $orderReturnItem->id)->sum('qty');
+        if ($orderReturnItem->qty + $qtyCanceled > $basketItem->qty_canceled) {
+            throw new Exception("Returning qty for BasketItem with id={$basketItem->id} more than at order");
         }
         $orderReturnItem->price = $item->price; // $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
         $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии

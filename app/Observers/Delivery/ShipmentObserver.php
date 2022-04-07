@@ -58,6 +58,7 @@ class ShipmentObserver
     {
         $this->setStatusToDelivery($shipment);
         $this->setIsCanceledToDelivery($shipment);
+        $this->setIsCanceledToBasketItems($shipment);
         $this->setOrderIsPartiallyCancelled($shipment);
         $this->setTakenStatusToCargo($shipment);
         $this->sendStatusNotification($shipment);
@@ -393,6 +394,21 @@ class ShipmentObserver
                 /** @var DeliveryService $deliveryService */
                 $deliveryService = resolve(DeliveryService::class);
                 $deliveryService->cancelDelivery($delivery, $shipment->return_reason_id);
+            }
+        }
+    }
+
+    /**
+     * Установить флаг отмены всем элементам отправления
+     * @throws Exception
+     */
+    protected function setIsCanceledToBasketItems(Shipment $shipment): void
+    {
+        if ($shipment->is_canceled && $shipment->is_canceled != $shipment->getOriginal('is_canceled')) {
+            $shipment->loadMissing('basketItems');
+            foreach ($shipment->basketItems as $basketItem) {
+                $basketItem->is_canceled = true;
+                $basketItem->save();
             }
         }
     }

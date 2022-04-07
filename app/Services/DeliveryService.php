@@ -190,10 +190,16 @@ class DeliveryService
         if (!$qty && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
             throw new DeliveryServiceInvalidConditions('Shipment item not found');
         }
+        if ($shipment->status > DeliveryStatus::ASSEMBLING) {
+            throw new DeliveryServiceInvalidConditions('Shipment status is exceeded');
+        }
         /** @var BasketItem $basketItem */
         $basketItem = BasketItem::find($basketItemId);
+        if ($basketItem->isCanceled()) {
+            throw new DeliveryServiceInvalidConditions('Basket item is already canceled');
+        }
         if ($basketItem->qty < $qty) {
-            throw new DeliveryServiceInvalidConditions('Shipment cancel qty can\'t be more than basket item qty');
+            throw new DeliveryServiceInvalidConditions('Cancel qty can\'t be more than basket item qty');
         }
         $basketItem->updateOrCreate(
             ['id' => $basketItemId],
@@ -205,6 +211,11 @@ class DeliveryService
                 'return_reason_id' => $returnReasonId,
             ]
         );
+
+        $basketItemReturnDto = (new OrderReturnDtoBuilder())->buildFromBasketItems($basketItem->basket->order, collect($basketItem));
+        /** @var OrderReturnService $orderReturnService */
+        $orderReturnService = resolve(OrderReturnService::class);
+        $orderReturnService->create($basketItemReturnDto);
 
         return $ok;
     }

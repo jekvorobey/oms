@@ -674,7 +674,7 @@ class ShipmentsController extends Controller
      * @OA\Put (
      *     path="api/v1/shipments/{id}/items/{basketItemId}",
      *     tags={"Поставки"},
-     *     description="Отменить по-штучно элемент (собранный товар с одного склада одного мерчанта) отправления",
+     *     description="Отменить поштучно элемент (собранный товар с одного склада одного мерчанта) отправления",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\Parameter(name="basketItemId", required=true, in="path", @OA\Schema(type="integer")),
      *     @OA\RequestBody(
@@ -688,7 +688,7 @@ class ShipmentsController extends Controller
      *     @OA\Response(response="204", description=""),
      *     @OA\Response(response="500", description="bad request")
      * )
-     * Отменить по-штучно элемент (товар с одного склада одного мерчанта) отправления
+     * Отменить поштучно элемент (товар с одного склада одного мерчанта) отправления
      */
     public function cancelItem(
         int $shipmentId,
@@ -929,7 +929,12 @@ class ShipmentsController extends Controller
         $query = $modelClass::modifyQuery($modelClass::query(), $restQuery);
 
         $items = $query
-            ->with(['basketItems', 'delivery.order'])
+            ->with([
+                'basketItems' => function ($q) {
+                    $q->active();
+                },
+                'delivery.order',
+            ])
             ->where('status', '>=', ShipmentStatus::AWAITING_CONFIRMATION)
             ->where(
                 function (Builder $builder) {

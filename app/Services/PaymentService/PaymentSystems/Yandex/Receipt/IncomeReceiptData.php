@@ -38,10 +38,6 @@ class IncomeReceiptData extends ReceiptData
     protected function getReceiptItems(Order $order): array
     {
         $receiptItems = [];
-
-        $returnedItemIds = OrderReturnItem::query()
-            ->whereIn('basket_item_id', $order->basket->items->pluck('id'))
-            ->pluck('basket_item_id');
         $deliveryForReturn = OrderReturn::query()
             ->where('order_id', $order->id)
             ->where('is_delivery', true)
@@ -54,7 +50,7 @@ class IncomeReceiptData extends ReceiptData
         [$offers, $merchants] = $this->loadOffersAndMerchants($offerIds, $order);
 
         foreach ($order->basket->items as $item) {
-            if ($returnedItemIds->contains($item->id)) {
+            if ($item->isCanceled()) {
                 continue;
             }
 
