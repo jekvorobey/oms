@@ -205,14 +205,14 @@ class DeliveryService
             ['id' => $basketItemId],
             [
                 'qty' => $basketItem->qty - $qty,
-                'qty_canceled' => $qty,
+                'qty_canceled' => $basketItem->qty_canceled + $qty,
                 'is_canceled' => $basketItem->qty - $qty == 0,
                 'canceled_by' => $cancelBy,
                 'return_reason_id' => $returnReasonId,
             ]
         );
 
-        $basketItemReturnDto = (new OrderReturnDtoBuilder())->buildFromBasketItems($basketItem->basket->order, collect($basketItem), true);
+        $basketItemReturnDto = (new OrderReturnDtoBuilder())->buildFromCancelBasketItem($basketItem->basket->order, collect($basketItem), true);
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturnService->create($basketItemReturnDto);

@@ -683,6 +683,7 @@ class ShipmentsController extends Controller
      *      @OA\JsonContent(
      *          @OA\Property(property="qty", type="number"),
      *          @OA\Property(property="canceled_by", type="integer"),
+     *          @OA\Property(property="return_reason_id", type="integer"),
      *      ),
      *     ),
      *     @OA\Response(response="204", description=""),

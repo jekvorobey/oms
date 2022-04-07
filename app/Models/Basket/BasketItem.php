@@ -52,15 +52,15 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * Class BasketItem
  * @package App\Models
  *
- * @property int $basket_id - id корзины
- * @property int $offer_id - id предложения мерчанта
+ * @property int|null $basket_id - id корзины
+ * @property int|null $offer_id - id предложения мерчанта
  * @property int $type - тип товара (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER|Basket::TYPE_CERTIFICATE)
  * @property string $name - название товара
  * @property float $qty - кол-во товара
  * @property float|null $price - цена элемента корзины со скидкой
  * @property float|null $cost - стоимость элемента корзины без скидок (offerCost * qty)
- * @property int $bonus_spent - потраченные бонусы на элемент корзины ( * qty)
- * @property int $bonus_discount - оплачено бонусами ( * qty)
+ * @property int|null $bonus_spent - потраченные бонусы на элемент корзины ( * qty)
+ * @property int|null $bonus_discount - оплачено бонусами ( * qty)
  * @property int|null $referrer_id - ID РП, по чьей ссылке товар был добавлен в корзину
  * @property array $product - данные зависящие от типа товара
  * @property int|null $bundle_id - id бандла, в который входит этот товар
@@ -332,14 +332,22 @@ class BasketItem extends AbstractModel
         //изменение количества
         $qtyDiff = $this->getOriginal('qty') - $this->qty;
 
-        $price = $this->price - $this->price / $this->getOriginal('qty') * $qtyDiff;
-        $cost = $this->cost - $this->cost / $this->getOriginal('qty') * $qtyDiff;
-        $bonusSpent = $this->bonus_spent - $this->bonus_spent / $this->getOriginal('qty') * $qtyDiff;
-        $bonusDiscount = $this->bonus_discount - $this->bonus_discount / $this->getOriginal('qty') * $qtyDiff;
-        $this->price = $price;
-        $this->cost = $cost;
-        $this->bonus_spent = $bonusSpent;
-        $this->bonus_discount = $bonusDiscount;
+        if ($this->price) {
+            $price = $this->price - $this->price / $this->getOriginal('qty') * $qtyDiff;
+            $this->price = $price;
+        }
+        if ($this->cost) {
+            $cost = $this->cost - $this->cost / $this->getOriginal('qty') * $qtyDiff;
+            $this->cost = $cost;
+        }
+        if ($this->bonus_spent) {
+            $bonusSpent = $this->bonus_spent - $this->bonus_spent / $this->getOriginal('qty') * $qtyDiff;
+            $this->bonus_spent = $bonusSpent;
+        }
+        if ($this->bonus_discount) {
+            $bonusDiscount = $this->bonus_discount - $this->bonus_discount / $this->getOriginal('qty') * $qtyDiff;
+            $this->bonus_discount = $bonusDiscount;
+        }
 
         if ($save) {
             $this->save();
