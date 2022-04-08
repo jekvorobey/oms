@@ -22,8 +22,8 @@ class AlterOrderDiscountsTable extends Migration
             $table->integer('change')->unsigned()->after('type');
             $table->bigInteger('merchant_id')->unsigned()->nullable()->after('change');
             $table->boolean('promo_code_only')->after('merchant_id');
-            $table->boolean('visible_in_catalog')->nullable()->after('promo_code_only');
-            $table->json('items')->after('visible_in_catalog');
+            $table->boolean('visible_in_catalog')->after('promo_code_only');
+            $table->json('items')->nullable()->after('visible_in_catalog');
         });
 
         Schema::table('order_discounts', function (Blueprint $table) {
