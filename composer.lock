@@ -1782,7 +1782,7 @@
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-store-lib",
-                "reference": "a0dcc37b6cc75162e117097b18f53ac64f75976f"
+                "reference": "e0e7b3e3856c4b485181403c98eade9e576bee3b"
             },
             "require": {
                 "ext-json": "*",
@@ -1816,7 +1816,7 @@
                 }
             ],
             "description": "iBT store client",
-            "time": "2022-03-21T15:40:35+00:00"
+            "time": "2022-04-08T12:39:16+00:00"
         },
         {
             "name": "jean85/pretty-package-versions",
@@ -10361,5 +10361,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.2.0"
 }

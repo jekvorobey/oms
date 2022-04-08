@@ -9,6 +9,7 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
 use Carbon\Carbon;
 use Exception;
+use Greensight\Store\Dto\StockHistoryDto;
 use Greensight\Store\Services\StockService\StockService;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -217,11 +218,6 @@ class AnalyticsService
     /** @throws Exception */
     public function getProductsTurnover(AnalyticsTopRequest $request, bool $descending = false): Collection
     {
-        /** @var StockService $stockService */
-        $stockService = resolve(StockService::class);
-        $stockHistory = $stockService->merchantStockHistory($request->merchantId, $request->start, $request->end);
-        $averageStocks = collect($stockHistory)->groupBy('offer_id')->map(fn(Collection $collection) => $this->calculateAverageStock($collection));
-
         $interval = new AnalyticsDateInterval($request->start, $request->end);
 
         /** @var Builder|BelongsTo $query */
@@ -244,27 +240,61 @@ class AnalyticsService
             ->get()
             ->groupBy('offer_id');
 
+        $stockHistory = $this->getStockHistory($request);
+
         $periodDays = $interval->currentPeriodDays();
         $result = collect();
         foreach ($groupedBasketItems as $offerId => $basketItemOfferGroup) {
-            if (isset($averageStocks[$offerId])) {
-                $result->push([
-                    'name' => $basketItemOfferGroup->first()['name'],
-                    'days' => (int) round($averageStocks[$offerId] / $basketItemOfferGroup->sum('qty') * $periodDays),
-                ]);
+            if (!$stockHistory->has($offerId)) {
+                continue;
             }
+
+            $averageStock = $this->calculateAverageStock($stockHistory->get($offerId));
+
+            $result->push([
+                'name' => $basketItemOfferGroup->first()['name'],
+                'days' => round($averageStock / $basketItemOfferGroup->sum('qty') * $periodDays),
+            ]);
         }
 
         return $result->sortBy('days', SORT_REGULAR, $descending)->take($request->limit)->values();
     }
 
-    private function calculateAverageStock(Collection $collection): float
+    private function getStockHistory(AnalyticsTopRequest $request): Collection
     {
-        $first = $collection->first();
-        $last = $collection->last();
-        $n = $collection->count();
-        $sliced = $collection->slice(1, -1);
-        $sum = ($first['qty'] / 2) + $sliced->sum('qty') + ($last['qty'] / 2);
+        /** @var StockService $stockService */
+        $stockService = resolve(StockService::class);
+        $stockHistoryQuery = $stockService->newQuery()
+            ->addFields('offer_id', 'qty')
+            ->setFilter('date', '>=', $request->start)
+            ->setFilter('date', '<=', $request->end)
+            ->addSort('date');
+
+        return $stockService->history($stockHistoryQuery, $request->merchantId)
+            ->groupBy('offer_id');
+    }
+
+    /**
+     * @param Collection|StockHistoryDto[] $offerStockHistory
+     */
+    private function calculateAverageStock(Collection $offerStockHistory): float
+    {
+        if ($offerStockHistory->isEmpty()) {
+            return 0;
+        }
+
+        if ($offerStockHistory->count() === 1) {
+            return $offerStockHistory->first()->qty;
+        }
+
+        /** @var StockHistoryDto $first */
+        $first = $offerStockHistory->first();
+        /** @var StockHistoryDto $first */
+        $last = $offerStockHistory->last();
+
+        $n = $offerStockHistory->count();
+        $sliced = $offerStockHistory->slice(1, -1);
+        $sum = ($first->qty / 2) + $sliced->sum('qty') + ($last->qty / 2);
 
         return $sum / ($n - 1);
     }
