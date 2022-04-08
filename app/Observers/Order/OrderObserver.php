@@ -20,6 +20,8 @@ use App\Services\PaymentService\PaymentService;
 use App\Services\TicketNotifierService;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
+use Greensight\CommonMsa\Dto\UserDto;
+use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Services\ListsService\ListsService;
@@ -553,6 +555,7 @@ class OrderObserver
         ?Delivery $override_delivery = null,
         bool $delivery_canceled = false
     ) {
+        /** @var CustomerService $customerService */
         $customerService = app(CustomerService::class);
 
         /** @var Payment $payment */
@@ -595,6 +598,13 @@ class OrderObserver
             })
             ->unique('delivery_address')
             ->join('<br>');
+
+        /** @var UserService $userService */
+        $userService = app(UserService::class);
+
+        $customer = $customerService->customers($customerService->newQuery()->setFilter('id', '=', $order->customer_id))->first();
+        /** @var UserDto $user */
+        $user = $userService->users($userService->newQuery()->setFilter('id', '=', $customer->user_id))->first();
 
         [$receiverFullName, $receiverPhone] = [$order->deliveries->first()->receiver_name, $order->deliveries->first()->receiver_phone];
         /* Форматы хранения телефона в доставке и у пользователя отличаются, поэтому приводим к единому виду (как у пользователя) */
@@ -738,7 +748,7 @@ class OrderObserver
         [$title, $text] = (function () use (
             $order,
             $override,
-            $receiveFirstName,
+            $user,
             $override_delivery,
             $delivery_canceled,
             $part_price,
@@ -775,7 +785,7 @@ class OrderObserver
                     $hideShipmentsDate = true;
 
                     return [
-                        sprintf('%s, ВАШ ЗАКАЗ %s ВЫПОЛНЕН', mb_strtoupper($receiveFirstName), $order->number),
+                        sprintf('%s, ВАШ ЗАКАЗ %s ВЫПОЛНЕН', mb_strtoupper($user->first_name), $order->number),
                         'Спасибо что выбрали нас! Надеемся что процесс покупки доставил
                         <br>вам исключительно положительные эмоции.
                         <br><br>Пожалуйста, оставьте свой отзыв о покупках, чтобы помочь нам стать
@@ -908,7 +918,7 @@ class OrderObserver
                     sprintf(
                         '%s, заказ %s оплачен и принят в обработку.
                     Статус заказа вы можете отслеживать в личном кабинете на сайте: %s',
-                        $receiveFirstName,
+                        $user->first_name,
                         $order->number,
                         sprintf('<a href="%s/profile" target="_blank">%s/profile</a>', config('app.showcase_host'), config('app.showcase_host'))
                     ),
@@ -991,7 +1001,7 @@ class OrderObserver
         })();
 
         if (!$withoutParams) {
-            $params['Получатель'] = $this->parseName($receiverFullName, $order);
+            $params['Получатель'] = $this->parseFullName($receiverFullName, $order);
             $params['Телефон'] = static::formatNumber($receiverPhone);
             $params['Сумма заказа'] = sprintf('%s ₽', (int) $order->price);
             $params['Получение'] = $deliveryMethod;
@@ -1002,7 +1012,7 @@ class OrderObserver
         }
 
         return [
-            'title' => sprintf($title, mb_strtoupper($this->parseName($receiverFullName, $order))),
+            'title' => sprintf($title, mb_strtoupper($user->first_name)),
             'text' => $text,
             'button' => $button,
             'params' => $params,
@@ -1102,7 +1112,7 @@ class OrderObserver
                         ->setFilter('id', $point_id)
                 )->first()->phone;
             })(),
-            'CUSTOMER_NAME' => $this->parseName($receiverFullName, $order),
+            'CUSTOMER_NAME' => $this->parseFullName($user->full_name, $order),
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'RETURN_REPRICE' => (int) $order->price,
@@ -1144,7 +1154,7 @@ class OrderObserver
         return $date;
     }
 
-    public function parseName(string $userFullName, Order $order)
+    public function parseFullName(string $userFullName, Order $order): string
     {
         if ($order->receiver_name) {
             $words = explode(' ', $order->receiver_name);
@@ -1152,11 +1162,11 @@ class OrderObserver
             $words = explode(' ', $userFullName);
         }
 
-        if (isset($words[1])) {
-            return $words[1];
+        if (!isset($words[1])) {
+            return $words[0];
         }
 
-        return $words[0];
+        return $words[0] . ' ' . $words[1];
     }
 
     public static function formatNumber(string $number)
