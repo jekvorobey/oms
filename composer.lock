@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2fd18ded8e60212a0896a3037603465b",
+    "content-hash": "0dc64a60b8d2079550f2ee0480f407d9",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1778,11 +1778,11 @@
         },
         {
             "name": "iwengo/ibt-store-lib",
-            "version": "dev-feature/IBT-512",
+            "version": "dev-master-ylab",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-store-lib",
-                "reference": "e0e7b3e3856c4b485181403c98eade9e576bee3b"
+                "reference": "40c82c1e00306d2745be1d8c4cb132db47795812"
             },
             "require": {
                 "ext-json": "*",
@@ -1816,7 +1816,7 @@
                 }
             ],
             "description": "iBT store client",
-            "time": "2022-04-08T12:39:16+00:00"
+            "time": "2022-04-08T13:06:39+00:00"
         },
         {
             "name": "jean85/pretty-package-versions",
@@ -10336,7 +10336,7 @@
         },
         {
             "package": "iwengo/ibt-store-lib",
-            "version": "dev-feature/IBT-512",
+            "version": "dev-master-ylab",
             "alias": "dev-master",
             "alias_normalized": "dev-master"
         }
