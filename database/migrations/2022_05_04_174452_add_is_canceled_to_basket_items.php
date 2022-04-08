@@ -30,6 +30,7 @@ class AddIsCanceledToBasketItems extends Migration
             $table->dropColumn('is_canceled');
             $table->dropColumn('qty_canceled');
             $table->dropColumn('canceled_by');
+            $table->dropColumn('return_reason_id');
         });
     }
 }
