@@ -1000,7 +1000,7 @@ class OrderObserver
         })();
 
         if (!$withoutParams) {
-            $params['Получатель'] = $this->parseFullName($receiverFullName, $order);
+            $params['Получатель'] = $receiverFullName;
             $params['Телефон'] = static::formatNumber($receiverPhone);
             $params['Сумма заказа'] = sprintf('%s ₽', (int) $order->price);
             $params['Получение'] = $deliveryMethod;
@@ -1111,7 +1111,7 @@ class OrderObserver
                         ->setFilter('id', $point_id)
                 )->first()->phone;
             })(),
-            'CUSTOMER_NAME' => $this->parseFullName($user->full_name, $order),
+            'CUSTOMER_NAME' => $this->parseName($user->full_name, $order),
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'RETURN_REPRICE' => (int) $order->price,
@@ -1153,7 +1153,7 @@ class OrderObserver
         return $date;
     }
 
-    public function parseFullName(string $userFullName, Order $order): string
+    public function parseName(string $userFullName, Order $order)
     {
         if ($order->receiver_name) {
             $words = explode(' ', $order->receiver_name);
@@ -1161,11 +1161,11 @@ class OrderObserver
             $words = explode(' ', $userFullName);
         }
 
-        if (!isset($words[1])) {
-            return $words[0];
+        if (isset($words[1])) {
+            return $words[1];
         }
 
-        return $words[0] . ' ' . $words[1];
+        return $words[0];
     }
 
     public static function formatNumber(string $number)
