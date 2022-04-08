@@ -329,23 +329,20 @@ class BasketItem extends AbstractModel
      */
     public function pricesRecalc(bool $save = true): void
     {
-        //изменение количества
-        $qtyDiff = $this->getOriginal('qty') - $this->qty;
-
         if ($this->price) {
-            $price = $this->price - $this->price / $this->getOriginal('qty') * $qtyDiff;
+            $price = $this->price / $this->getOriginal('qty') * $this->qty;
             $this->price = $price;
         }
         if ($this->cost) {
-            $cost = $this->cost - $this->cost / $this->getOriginal('qty') * $qtyDiff;
+            $cost = $this->cost / $this->getOriginal('qty') * $this->qty;
             $this->cost = $cost;
         }
         if ($this->bonus_spent) {
-            $bonusSpent = $this->bonus_spent - $this->bonus_spent / $this->getOriginal('qty') * $qtyDiff;
+            $bonusSpent = $this->bonus_spent / $this->getOriginal('qty') * $this->qty;
             $this->bonus_spent = $bonusSpent;
         }
         if ($this->bonus_discount) {
-            $bonusDiscount = $this->bonus_discount - $this->bonus_discount / $this->getOriginal('qty') * $qtyDiff;
+            $bonusDiscount = $this->bonus_discount / $this->getOriginal('qty') * $this->qty;
             $this->bonus_discount = $bonusDiscount;
         }
 
