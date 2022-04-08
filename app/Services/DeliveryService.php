@@ -184,7 +184,6 @@ class DeliveryService
         int $cancelBy,
         int $returnReasonId
     ): bool {
-        $ok = true;
         /** @var Shipment $shipment */
         $shipment = Shipment::find($shipmentId);
         if (!$qty && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
@@ -201,23 +200,25 @@ class DeliveryService
         if ($basketItem->qty < $qty) {
             throw new DeliveryServiceInvalidConditions('Cancel qty can\'t be more than basket item qty');
         }
+        $newQty = $basketItem->qty - $qty;
+        $newPrice = $basketItem->price / $basketItem->qty * $newQty;
         $basketItem->updateOrCreate(
             ['id' => $basketItemId],
             [
-                'qty' => $basketItem->qty - $qty,
+                'qty' => $newQty,
                 'qty_canceled' => $basketItem->qty_canceled + $qty,
-                'is_canceled' => $basketItem->qty - $qty == 0,
+                'is_canceled' => $newQty == 0,
                 'canceled_by' => $cancelBy,
                 'return_reason_id' => $returnReasonId,
             ]
         );
-
-        $basketItemReturnDto = (new OrderReturnDtoBuilder())->buildFromCancelBasketItem($basketItem->basket->order, collect($basketItem), true);
+        $basketItemReturnDto = (new OrderReturnDtoBuilder())
+            ->buildFromCancelBasketItem($basketItem->basket->order, $basketItem, $newQty, $newPrice);
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
-        $orderReturnService->create($basketItemReturnDto);
+        $orderReturn = $orderReturnService->create($basketItemReturnDto);
 
-        return $ok;
+        return (bool) $orderReturn;
     }
 
     /**

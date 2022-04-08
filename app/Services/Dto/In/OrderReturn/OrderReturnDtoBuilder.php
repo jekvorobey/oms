@@ -108,16 +108,25 @@ class OrderReturnDtoBuilder
 
     /**
      * Создание поштучного возврата
-     * @param Collection|BasketItem[] $basketItems
-     * @param bool $basketItemCancel - если отменяем товар поштучно
      */
     public function buildFromCancelBasketItem(
         Order $order,
-        Collection $basketItems,
-        bool $basketItemCancel = false
+        BasketItem $basketItem,
+        float $newQty,
+        float $newPrice
     ): OrderReturnDto {
-        $orderReturnDto = $this->buildBase($order->id, $basketItems, $basketItemCancel);
+        $orderReturnDto = new OrderReturnDto();
+        $orderReturnDto->order_id = $order->id;
+        $orderReturnDto->status = OrderReturn::STATUS_CREATED;
         $orderReturnDto->is_delivery = false;
+
+        $orderReturnItemDto = new OrderReturnItemDto();
+        $orderReturnItemDto->basket_item_id = $basketItem->id;
+        $orderReturnItemDto->qty = $basketItem->getOriginal('qty') - $newQty;
+        $orderReturnItemDto->ticket_ids = $basketItem->getTicketIds();
+        $orderReturnItemDto->price = $basketItem->getOriginal('price') - $newPrice;
+
+        $orderReturnDto->items->push($orderReturnItemDto);
 
         return $orderReturnDto;
     }
@@ -125,18 +134,18 @@ class OrderReturnDtoBuilder
     /**
      * Формирование базового объекта возврата заказа
      */
-    protected function buildBase(int $orderId, Collection $basketItems, bool $basketItemCancel = false): OrderReturnDto
+    protected function buildBase(int $orderId, Collection $basketItems): OrderReturnDto
     {
         $orderReturnDto = new OrderReturnDto();
         $orderReturnDto->order_id = $orderId;
         $orderReturnDto->status = OrderReturn::STATUS_CREATED;
 
-        $orderReturnDto->items = $basketItems->map(static function (BasketItem $item) use ($basketItemCancel) {
+        $orderReturnDto->items = $basketItems->map(static function (BasketItem $item) {
             $orderReturnItemDto = new OrderReturnItemDto();
             $orderReturnItemDto->basket_item_id = $item->id;
-            $orderReturnItemDto->qty = $basketItemCancel ? $item->getOriginal('qty') - $item->qty : $item->qty;
+            $orderReturnItemDto->qty = $item->qty;
             $orderReturnItemDto->ticket_ids = $item->getTicketIds();
-            $orderReturnItemDto->price = $basketItemCancel ? $item->getOriginal('price') - $item->price : $item->price;
+            $orderReturnItemDto->price = $item->price;
 
             return $orderReturnItemDto;
         });
