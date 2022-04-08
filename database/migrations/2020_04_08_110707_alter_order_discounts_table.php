@@ -20,9 +20,9 @@ class AlterOrderDiscountsTable extends Migration
             $table->string('name')->after('discount_id');
             $table->tinyInteger('type')->unsigned()->after('name');
             $table->integer('change')->unsigned()->after('type');
-            $table->bigInteger('merchant_id')->after('change');
+            $table->bigInteger('merchant_id')->unsigned()->nullable()->after('change');
             $table->boolean('promo_code_only')->after('merchant_id');
-            $table->boolean('visible_in_catalog')->after('promo_code_only');
+            $table->boolean('visible_in_catalog')->nullable()->after('promo_code_only');
             $table->json('items')->after('visible_in_catalog');
         });
 
