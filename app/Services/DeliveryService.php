@@ -1036,9 +1036,11 @@ class DeliveryService
 
         $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
 
-        /** @var OrderReturnService $orderReturnService */
-        $orderReturnService = resolve(OrderReturnService::class);
-        $orderReturnService->create($orderReturnDto);
+        if ($orderReturnDto) {
+            /** @var OrderReturnService $orderReturnService */
+            $orderReturnService = resolve(OrderReturnService::class);
+            $orderReturnService->create($orderReturnDto);
+        }
 
         if ($shipment->status > ShipmentStatus::CREATED) {
             $attributes = [

@@ -134,13 +134,15 @@ class OrderReturnDtoBuilder
     /**
      * Формирование базового объекта возврата заказа
      */
-    protected function buildBase(int $orderId, Collection $basketItems): OrderReturnDto
+    protected function buildBase(int $orderId, Collection $basketItems): ?OrderReturnDto
     {
         $orderReturnDto = new OrderReturnDto();
         $orderReturnDto->order_id = $orderId;
         $orderReturnDto->status = OrderReturn::STATUS_CREATED;
 
-        $orderReturnDto->items = $basketItems->map(static function (BasketItem $item) {
+        $orderReturnDto->items = $basketItems->filter(function (BasketItem $item) {
+            return !$item->is_canceled;
+        })->map(static function (BasketItem $item) {
             $orderReturnItemDto = new OrderReturnItemDto();
             $orderReturnItemDto->basket_item_id = $item->id;
             $orderReturnItemDto->qty = $item->qty;
@@ -150,7 +152,7 @@ class OrderReturnDtoBuilder
             return $orderReturnItemDto;
         });
 
-        return $orderReturnDto;
+        return $orderReturnDto->items ? $orderReturnDto : null;
     }
 
     private function getCertificates(int $orderId): Collection

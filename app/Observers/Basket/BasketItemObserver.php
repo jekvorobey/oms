@@ -17,14 +17,6 @@ use Pim\Services\SearchService\SearchService;
 class BasketItemObserver
 {
     /**
-     * Handle the basket item "saving" event.
-     */
-    public function saving(BasketItem $basketItem)
-    {
-        $this->pricesRecalc($basketItem);
-    }
-
-    /**
      * Handle the basket item "saved" event.
      */
     public function saved(BasketItem $basketItem)
@@ -64,6 +56,14 @@ class BasketItemObserver
         /** @var SearchService $searchService */
         $searchService = resolve(SearchService::class);
         $searchService->markProductForIndexViaOffer($basketItem->offer_id);
+    }
+
+    /**
+     * Handle the basket item "updating" event.
+     */
+    public function updating(BasketItem $basketItem)
+    {
+        $this->pricesRecalc($basketItem);
     }
 
     /**
