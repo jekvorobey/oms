@@ -574,6 +574,8 @@ class DeliveryObserver
                 return 'status_dostavkivozvrashchena';
             case DeliveryStatus::PRE_ORDER:
                 return 'status_dostavkipredzakaz_ozhidaem_postupleniya_tovara';
+            default:
+                return null;
         }
     }
 
