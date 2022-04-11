@@ -342,6 +342,17 @@ class Delivery extends AbstractModel
         return $this->order;
     }
 
+    /** Номер для заказа в системе ЛО */
+    public function getDeliveryServiceNumber(): string
+    {
+        $number = $this->number;
+        if (!in_prod_stage()) {
+            $number .= '-' . config('app.stage');
+        }
+
+        return $number;
+    }
+
     protected function setDeliveryAddressAttribute($value)
     {
         $value = (array) $value;
@@ -531,5 +542,13 @@ class Delivery extends AbstractModel
     public function isDelivery(): bool
     {
         return $this->delivery_method == DeliveryMethod::METHOD_DELIVERY;
+    }
+
+    /**
+     * Доставка с постоплатой?
+     */
+    public function isPostPaid(): bool
+    {
+        return $this->order->is_postpaid;
     }
 }

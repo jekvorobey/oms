@@ -1,5 +1,9 @@
 <?php
 
+use Doctrine\DBAL\Query\QueryBuilder;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
+
 if (! function_exists('in_production')) {
     /**
      * Находится ли приложение в прод режиме
@@ -7,6 +11,17 @@ if (! function_exists('in_production')) {
     function in_production(): bool
     {
         return app()->environment('production');
+    }
+}
+
+if (! function_exists('in_prod_stage')) {
+    /**
+     * Находится ли приложение на прод стенде
+     * отличается от in_production, т.к. environment=production так же и в настройках stage-стенда
+     */
+    function in_prod_stage(): bool
+    {
+        return config('app.stage') === 'prod';
     }
 }
 
@@ -67,5 +82,18 @@ if (! function_exists('phoneNumberFormat')) {
         return $phoneNumber
             ? preg_replace('/[^\d+]+/', '', $phoneNumber)
             : '';
+    }
+}
+
+if (!function_exists('query_builder_to_sql')) {
+    /** @param Builder|QueryBuilder|Relation $query */
+    function query_builder_to_sql($query): ?string
+    {
+        return config('app.debug')
+            ? vsprintf(str_replace('?', '%s', $query->toSql()), collect($query->getBindings())->map(function ($binding) {
+                $binding = addslashes($binding);
+                return is_numeric($binding) ? $binding : "'{$binding}'";
+            })->toArray())
+            : null;
     }
 }

@@ -59,13 +59,13 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(Client::class, function () {
             $client = new Client();
-            $client->setAuth(config('app.y_checkout_shop_id'), config('app.y_checkout_key'));
+            $client->setAuth(config('services.y_checkout.shop_id'), config('services.y_checkout.key'));
             return $client;
         });
 
         $this->app->singleton(LocalYandexClient::class, function () {
             $client = new LocalYandexClient();
-            $client->setAuth(config('app.y_checkout_shop_id'), config('app.y_checkout_key'));
+            $client->setAuth(config('services.y_checkout.shop_id'), config('services.y_checkout.key'));
             return $client;
         });
 

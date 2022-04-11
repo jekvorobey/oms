@@ -115,9 +115,12 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('payments')->group(function () {
-        Route::prefix('payment-methods')->group(function () {
+        Route::prefix('methods')->group(function () {
             Route::get('', 'PaymentMethodsController@read');
-            Route::put('{id}', 'PaymentMethodsController@update');
+            Route::prefix('{paymentMethod}')->group(function () {
+                Route::get('', 'PaymentMethodsController@read');
+                Route::put('', 'PaymentMethodsController@update');
+            });
         });
         Route::prefix('handler')->group(function () {
             Route::post('local', 'PaymentsController@handlerLocal')->name('handler.localPayment');
@@ -154,6 +157,16 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::get('acceptance-act', 'DocumentTemplatesController@acceptanceAct');
         Route::get('inventory', 'DocumentTemplatesController@inventory');
         Route::get('assembling-card', 'DocumentTemplatesController@assemblingCard');
+    });
+
+    Route::prefix('merchant-analytics')->group(function () {
+        Route::get('products-shipments', 'AnalyticsController@productsShipments')->name('analytics.productsShipments');
+        Route::get('sales', 'AnalyticsController@sales')->name('analytics.sales');
+        Route::prefix('top')->group(function () {
+            Route::get('bestsellers', 'AnalyticsController@bestsellers')->name('analytics.bestsellers');
+            Route::get('fastest', 'AnalyticsController@fastest')->name('analytics.fastest');
+            Route::get('outsiders', 'AnalyticsController@outsiders')->name('analytics.outsiders');
+        });
     });
 
     Route::namespace('Delivery')->group(function () {

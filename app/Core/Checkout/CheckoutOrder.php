@@ -12,8 +12,12 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderDiscount;
 use App\Models\Order\OrderPromoCode;
+use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentMethod;
+use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentSystem;
+use App\Services\OrderService;
 use Carbon\Carbon;
 use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -148,13 +152,10 @@ class CheckoutOrder
         return $order;
     }
 
-    /**
-     * @throws Exception
-     * @return array
-     */
     public function save(): array
     {
         return DB::transaction(function () {
+            $this->replaceProductBasketItemsToNewBasket();
             $this->checkProducts();
             $this->checkOffersStocks();
             $this->commitPrices();
@@ -164,11 +165,13 @@ class CheckoutOrder
             $this->debitingBonus($order);
             $this->createShipments($order);
             $this->createTickets($order);
-            $this->createPayment($order);
+
+            if (!$order->is_postpaid) {
+                $this->createPayment($order);
+            }
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
             $this->createOrderBonuses($order);
-
 
             return [$order->id, $order->number];
         });
@@ -324,8 +327,81 @@ class CheckoutOrder
         $order->delivery_cost = $this->deliveryCost;
         $order->delivery_price = $this->deliveryPrice;
 
+        /** @var PaymentMethod $paymentMethod */
+        $paymentMethod = PaymentMethod::find($this->paymentMethodId);
+
+        if ($paymentMethod && $order->isProductOrder()) {
+            $order->is_postpaid = $paymentMethod->is_postpaid;
+            $order->status = OrderStatus::defaultValue();
+            $order->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+            $order->payment_method_id = $this->paymentMethodId;
+        }
+
         $order->save();
         return $order;
+    }
+
+    private function replaceProductBasketItemsToNewBasket(): void
+    {
+        $basket = $this->basket();
+
+        if ($basket && $basket->isProductBasket()) {
+            $savedBasketItems = $basket->items;
+            $basketItemsFromRequest = $this->getBasketItemsFromRequest();
+            $basketItemsToReplace = collect();
+
+            foreach ($savedBasketItems as $basketItem) {
+                $basketItemFromRequest = $basketItemsFromRequest
+                    ->where('offer_id', $basketItem->offer_id)
+                    ->where('bundle_id', $basketItem->bundle_id)
+                    ->where('bundle_item_id', $basketItem->bundle_item_id)
+                    ->first();
+
+                if (!$basketItemFromRequest) {
+                    $basketItemsToReplace->push($basketItem);
+                }
+            }
+
+            if ($basketItemsToReplace->isNotEmpty()) {
+                $basketForReplacing = new Basket();
+                $basketForReplacing->customer_id = $basket->customer_id;
+                $basketForReplacing->type = $basket->type;
+                $basketForReplacing->is_belongs_to_order = false;
+                $basketForReplacing->save();
+
+                $basketItemsToReplace->each(function (BasketItem $basketItem) use ($basketForReplacing) {
+                    $basketItem->basket_id = $basketForReplacing->id;
+                    $basketItem->save();
+                });
+                $basket->load('items');
+            }
+        }
+    }
+
+    private function getBasketItemsFromRequest(): Collection
+    {
+        $result = collect();
+        $basket = $this->basket();
+
+        if ($basket) {
+            $savedBasketItems = $basket->items;
+            $shipmentItems = collect($this->deliveries)
+                ->pluck('shipments.*.items')
+                ->flatten(2);
+
+            foreach ($shipmentItems as [$offerId, $bundleId, $bundleItemId]) {
+                $savedBasketItem = $savedBasketItems
+                    ->where('offer_id', $offerId)
+                    ->where('bundle_id', $bundleId)
+                    ->where('bundle_item_id', $bundleItemId);
+
+                if ($savedBasketItem->isNotEmpty()) {
+                    $result->push($savedBasketItem->first());
+                }
+            }
+        }
+
+        return $result;
     }
 
     private function debitingBonus(Order $order)
@@ -422,6 +498,9 @@ class CheckoutOrder
             $delivery->delivery_time_code = $checkoutDelivery->deliveryTimeCode;
             $delivery->dt = $checkoutDelivery->dt;
             $delivery->pdd = $checkoutDelivery->pdd;
+            if ($order->isProductOrder()) {
+                $delivery->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+            }
 
             $delivery->save();
 
@@ -433,6 +512,9 @@ class CheckoutOrder
                 $shipment->required_shipping_at = $checkoutShipment->psd;
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
+                if ($order->isProductOrder()) {
+                    $shipment->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+                }
                 $shipment->save();
 
                 foreach ($checkoutShipment->items as [$offerId, $bundleId, $bundleItemId]) {
@@ -449,6 +531,13 @@ class CheckoutOrder
 
                     $shipmentItem->save();
                 }
+                if ($order->isProductOrder() && $order->is_postpaid) {
+                    $shipment->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo']]);
+                }
+            }
+
+            if ($order->isProductOrder() && $order->is_postpaid) {
+                $delivery->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['deliveriesStatusTo']]);
             }
         }
     }
