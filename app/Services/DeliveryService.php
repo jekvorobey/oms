@@ -180,13 +180,13 @@ class DeliveryService
     public function cancelShipmentItem(
         int $shipmentId,
         int $basketItemId,
-        float $qty,
+        float $qtyToCancel,
         int $cancelBy,
         int $returnReasonId
     ): bool {
         /** @var Shipment $shipment */
         $shipment = Shipment::find($shipmentId);
-        if (!$qty && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
+        if (!$qtyToCancel && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
             throw new DeliveryServiceInvalidConditions('Shipment item not found');
         }
         if ($shipment->status > DeliveryStatus::ASSEMBLING) {
@@ -197,23 +197,22 @@ class DeliveryService
         if ($basketItem->isCanceled()) {
             throw new DeliveryServiceInvalidConditions('Basket item is already canceled');
         }
-        if ($basketItem->qty < $qty) {
+        if ($basketItem->qty < $qtyToCancel) {
             throw new DeliveryServiceInvalidConditions('Cancel qty can\'t be more than basket item qty');
         }
-        $newQty = $basketItem->qty - $qty;
-        $newPrice = $basketItem->price / $basketItem->qty * $newQty;
-        $basketItem->updateOrCreate(
-            ['id' => $basketItemId],
+        $newQty = $basketItem->qty - $qtyToCancel;
+        $oldPrice = $basketItem->price;
+        $basketItem->update(
             [
                 'qty' => $newQty,
-                'qty_canceled' => $basketItem->qty_canceled + $qty,
+                'qty_canceled' => $basketItem->qty_canceled + $qtyToCancel,
                 'is_canceled' => $newQty == 0,
                 'canceled_by' => $cancelBy,
                 'return_reason_id' => $returnReasonId,
             ]
         );
         $basketItemReturnDto = (new OrderReturnDtoBuilder())
-            ->buildFromCancelBasketItem($basketItem->basket->order, $basketItem, $newQty, $newPrice);
+            ->buildFromCancelBasketItem($basketItem->basket->order, $basketItem, $qtyToCancel, $oldPrice);
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
         $orderReturn = $orderReturnService->create($basketItemReturnDto);

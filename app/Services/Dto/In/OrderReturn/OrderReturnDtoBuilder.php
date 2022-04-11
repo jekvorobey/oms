@@ -89,11 +89,12 @@ class OrderReturnDtoBuilder
     public function buildFromShipment(Shipment $shipment): ?OrderReturnDto
     {
         $orderReturnDto = $this->buildBase($shipment->delivery->order_id, $shipment->basketItems);
-        if ($orderReturnDto) {
-            $orderReturnDto->is_delivery = false;
+        if ($orderReturnDto->items->isEmpty()) {
+            return null;
         }
+        $orderReturnDto->is_delivery = false;
 
-        return $orderReturnDto ?? null;
+        return $orderReturnDto;
     }
 
     /**
@@ -114,8 +115,8 @@ class OrderReturnDtoBuilder
     public function buildFromCancelBasketItem(
         Order $order,
         BasketItem $basketItem,
-        float $newQty,
-        float $newPrice
+        float $qtyToCancel,
+        float $oldPrice
     ): OrderReturnDto {
         $orderReturnDto = new OrderReturnDto();
         $orderReturnDto->order_id = $order->id;
@@ -124,9 +125,9 @@ class OrderReturnDtoBuilder
 
         $orderReturnItemDto = new OrderReturnItemDto();
         $orderReturnItemDto->basket_item_id = $basketItem->id;
-        $orderReturnItemDto->qty = $basketItem->getOriginal('qty') - $newQty;
+        $orderReturnItemDto->qty = $qtyToCancel;
         $orderReturnItemDto->ticket_ids = $basketItem->getTicketIds();
-        $orderReturnItemDto->price = $basketItem->getOriginal('price') - $newPrice;
+        $orderReturnItemDto->price = $oldPrice - $basketItem->price;
 
         $orderReturnDto->items->push($orderReturnItemDto);
 
@@ -136,25 +137,28 @@ class OrderReturnDtoBuilder
     /**
      * Формирование базового объекта возврата заказа
      */
-    protected function buildBase(int $orderId, Collection $basketItems): ?OrderReturnDto
+    protected function buildBase(int $orderId, Collection $basketItems): OrderReturnDto
     {
         $orderReturnDto = new OrderReturnDto();
         $orderReturnDto->order_id = $orderId;
         $orderReturnDto->status = OrderReturn::STATUS_CREATED;
 
-        $orderReturnDto->items = $basketItems->filter(function (BasketItem $item) {
-            return !$item->is_canceled;
-        })->map(static function (BasketItem $item) {
-            $orderReturnItemDto = new OrderReturnItemDto();
-            $orderReturnItemDto->basket_item_id = $item->id;
-            $orderReturnItemDto->qty = $item->qty;
-            $orderReturnItemDto->ticket_ids = $item->getTicketIds();
-            $orderReturnItemDto->price = $item->price;
-
-            return $orderReturnItemDto;
+        $basketItems = $basketItems->filter(function (BasketItem $item) {
+            return $item->price > 0;
         });
+        if ($basketItems->isNotEmpty()) {
+            $orderReturnDto->items = $basketItems->map(static function (BasketItem $item) {
+                $orderReturnItemDto = new OrderReturnItemDto();
+                $orderReturnItemDto->basket_item_id = $item->id;
+                $orderReturnItemDto->qty = $item->qty;
+                $orderReturnItemDto->ticket_ids = $item->getTicketIds();
+                $orderReturnItemDto->price = $item->price;
 
-        return $orderReturnDto->items ? $orderReturnDto : null;
+                return $orderReturnItemDto;
+            });
+        }
+
+        return $orderReturnDto;
     }
 
     private function getCertificates(int $orderId): Collection

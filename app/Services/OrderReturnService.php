@@ -143,7 +143,7 @@ class OrderReturnService
          */
         // Сколько уже создано возвратов
         $qtyCanceled = OrderReturnItem::query()->where('basket_item_id', $orderReturnItem->id)->sum('qty');
-        if ($orderReturnItem->qty + $qtyCanceled > $basketItem->qty_canceled) {
+        if ($orderReturnItem->qty + $qtyCanceled > $basketItem->qty + $basketItem->qty_canceled) {
             throw new Exception("Returning qty for BasketItem with id={$basketItem->id} more than at order");
         }
         $orderReturnItem->price = $item->price; // $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
