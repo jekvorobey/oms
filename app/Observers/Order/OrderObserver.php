@@ -597,11 +597,8 @@ class OrderObserver
         /** @var UserDto $user */
         $user = $userService->users($userService->newQuery()->setFilter('id', '=', $customer->user_id))->first();
 
-        [$receiverFullName, $receiverPhone] = [
-            $order->receiver_name ?: $order->deliveries->first()->receiver_name,
-            /* Форматы хранения телефона в доставке и у пользователя отличаются, поэтому приводим к единому виду (как у пользователя) */
-            $order->receiver_phone ?: str_replace(['(', ')', '-', ' '], '', $order->deliveries->first()->receiver_phone),
-        ];
+        $receiverFullName = $order->receiver_name ?: $order->deliveries->first()->receiver_name;
+        $receiverPhone = $order->receiver_phone ?: str_replace(['(', ')', '-', ' '], '', $order->deliveries->first()->receiver_phone);
 
         if (empty($deliveryAddress)) {
             $deliveryAddress = 'ПВЗ';
