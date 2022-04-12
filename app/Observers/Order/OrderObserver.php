@@ -599,7 +599,6 @@ class OrderObserver
 
         [$receiverFullName, $receiverPhone] = [
             $order->receiver_name ?: $order->deliveries->first()->receiver_name,
-            
             /* Форматы хранения телефона в доставке и у пользователя отличаются, поэтому приводим к единому виду (как у пользователя) */
             $order->receiver_phone ?: str_replace(['(', ')', '-', ' '], '', $order->deliveries->first()->receiver_phone),
         ];
