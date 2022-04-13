@@ -473,6 +473,7 @@ class CheckoutOrder
         $offerToBasketMap = $this->offerToBasketMap();
 
         $shipmentNumber = 1;
+        $savedDeliveries = collect();
         foreach ($this->deliveries as $i => $checkoutDelivery) {
             $delivery = new Delivery();
             $delivery->order_id = $order->id;
@@ -504,6 +505,7 @@ class CheckoutOrder
             }
 
             $delivery->save();
+            $savedDeliveries->put($delivery->id, $delivery);
 
             foreach ($checkoutDelivery->shipments as $checkoutShipment) {
                 $shipment = new Shipment();
@@ -533,13 +535,13 @@ class CheckoutOrder
                     $shipmentItem->save();
                 }
             }
+        }
 
-            if ($order->isProductOrder() && $order->is_postpaid) {
-                $delivery->update([
-                    'status' => DeliveryStatus::AWAITING_CONFIRMATION,
-                    'payment_status' => PaymentStatus::WAITING,
-                ]);
-            }
+        if ($order->isProductOrder() && $order->is_postpaid && $savedDeliveries->isNotEmpty()) {
+            $savedDeliveries->each(fn(Delivery $delivery) => $delivery->update([
+                'status' => DeliveryStatus::AWAITING_CONFIRMATION,
+                'payment_status' => PaymentStatus::WAITING,
+            ]));
         }
     }
 
