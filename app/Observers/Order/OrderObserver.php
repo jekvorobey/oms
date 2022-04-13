@@ -98,9 +98,6 @@ class OrderObserver
 
             $this->sendStatusNotification($notificationService, $order, $user_id);
             $notificationService->sendToAdmin('aozzakazzakaz_oformlen');
-            if ($order->is_postpaid) {
-                $this->sendNotification($order);
-            }
         } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
         }
