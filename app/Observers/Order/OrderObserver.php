@@ -170,7 +170,7 @@ class OrderObserver
                             return null;
                         })())
                     );
-                } elseif ($order->payment_status === PaymentStatus::WAITING || $order->is_postpaid) {
+                } elseif ($order->payment_status === PaymentStatus::WAITING && $order->is_postpaid) {
                     $delivery_method = !empty($order->deliveries()->first()->delivery_method)
                         ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
                         : false;

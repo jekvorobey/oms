@@ -532,12 +532,6 @@ class CheckoutOrder
 
                     $shipmentItem->save();
                 }
-                if ($order->isProductOrder() && $order->is_postpaid) {
-                    $shipment->update([
-                        'status' => ShipmentStatus::AWAITING_CONFIRMATION,
-                        'payment_status' => PaymentStatus::WAITING,
-                    ]);
-                }
             }
 
             if ($order->isProductOrder() && $order->is_postpaid) {
