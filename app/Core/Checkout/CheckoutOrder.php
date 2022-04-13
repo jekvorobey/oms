@@ -6,8 +6,10 @@ use App\Core\Order\OrderWriter;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
+use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
+use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderDiscount;
@@ -333,7 +335,7 @@ class CheckoutOrder
         if ($paymentMethod && $order->isProductOrder()) {
             $order->is_postpaid = $paymentMethod->is_postpaid;
             $order->status = OrderStatus::defaultValue();
-            $order->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+            $order->payment_status = PaymentStatus::NOT_PAID;
             $order->payment_method_id = $this->paymentMethodId;
         }
 
@@ -499,7 +501,7 @@ class CheckoutOrder
             $delivery->dt = $checkoutDelivery->dt;
             $delivery->pdd = $checkoutDelivery->pdd;
             if ($order->isProductOrder()) {
-                $delivery->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+                $delivery->payment_status = PaymentStatus::NOT_PAID;
             }
 
             $delivery->save();
@@ -513,7 +515,7 @@ class CheckoutOrder
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
                 if ($order->isProductOrder()) {
-                    $shipment->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+                    $shipment->payment_status = PaymentStatus::NOT_PAID;
                 }
                 $shipment->save();
 
@@ -532,12 +534,18 @@ class CheckoutOrder
                     $shipmentItem->save();
                 }
                 if ($order->isProductOrder() && $order->is_postpaid) {
-                    $shipment->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo']]);
+                    $shipment->update([
+                        'status' => ShipmentStatus::AWAITING_CONFIRMATION,
+                        'payment_status' => PaymentStatus::WAITING,
+                    ]);
                 }
             }
 
             if ($order->isProductOrder() && $order->is_postpaid) {
-                $delivery->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['deliveriesStatusTo']]);
+                $delivery->update([
+                    'status' => DeliveryStatus::AWAITING_CONFIRMATION,
+                    'payment_status' => PaymentStatus::WAITING,
+                ]);
             }
         }
     }

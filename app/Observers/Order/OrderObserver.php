@@ -98,6 +98,9 @@ class OrderObserver
 
             $this->sendStatusNotification($notificationService, $order, $user_id);
             $notificationService->sendToAdmin('aozzakazzakaz_oformlen');
+            if ($order->is_postpaid) {
+                $this->sendNotification($order);
+            }
         } catch (\Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
         }
@@ -166,6 +169,15 @@ class OrderObserver
 
                             return null;
                         })())
+                    );
+                } elseif ($order->payment_status === PaymentStatus::WAITING || $order->is_postpaid) {
+                    $delivery_method = !empty($order->deliveries()->first()->delivery_method)
+                        ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        : false;
+                    $notificationService->send(
+                        $user_id,
+                        $this->appendTypeModifiers('status_zakazaoformlen', $order->isConsolidatedDelivery(), $delivery_method),
+                        $this->generateNotificationVariables($order, self::OVERRIDE_SUCCESS)
                     );
                 }
             }
