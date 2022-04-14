@@ -167,6 +167,15 @@ class OrderObserver
                             return null;
                         })())
                     );
+                } elseif ($order->payment_status === PaymentStatus::WAITING && $order->is_postpaid) {
+                    $delivery_method = !empty($order->deliveries()->first()->delivery_method)
+                        ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        : false;
+                    $notificationService->send(
+                        $user_id,
+                        $this->appendTypeModifiers('status_zakazaoformlen', $order->isConsolidatedDelivery(), $delivery_method),
+                        $this->generateNotificationVariables($order, self::OVERRIDE_SUCCESS)
+                    );
                 }
             }
 

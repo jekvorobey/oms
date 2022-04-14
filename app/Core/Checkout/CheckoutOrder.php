@@ -17,7 +17,6 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentMethod;
 use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentSystem;
-use App\Services\OrderService;
 use Carbon\Carbon;
 use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -333,7 +332,7 @@ class CheckoutOrder
         if ($paymentMethod && $order->isProductOrder()) {
             $order->is_postpaid = $paymentMethod->is_postpaid;
             $order->status = OrderStatus::defaultValue();
-            $order->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
+            $order->payment_status = PaymentStatus::NOT_PAID;
             $order->payment_method_id = $this->paymentMethodId;
         }
 
@@ -531,14 +530,12 @@ class CheckoutOrder
 
                     $shipmentItem->save();
                 }
-                if ($order->isProductOrder() && $order->is_postpaid) {
-                    $shipment->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo']]);
-                }
             }
+        }
 
-            if ($order->isProductOrder() && $order->is_postpaid) {
-                $delivery->update(['status' => OrderService::STATUS_TO_CHILDREN[$order->status]['deliveriesStatusTo']]);
-            }
+        if ($order->is_postpaid) {
+            $order->payment_status = PaymentStatus::WAITING;
+            $order->save();
         }
     }
 
