@@ -196,17 +196,14 @@ class DeliveryService
      */
     public function addShipment2Cargo(Shipment $shipment): void
     {
-        if ($shipment->is_canceled) {
-            throw new DeliveryServiceInvalidConditions('Отправление отменено');
+        if ($shipment->isInvalid()) {
+            throw new DeliveryServiceInvalidConditions('Отправление отменено или проблемное');
         }
-        if ($shipment->status != ShipmentStatus::ASSEMBLED) {
+        if ($shipment->status != ShipmentStatus::AWAITING_CONFIRMATION) {
             throw new DeliveryServiceInvalidConditions('Отправление не собрано');
         }
         if ($shipment->cargo_id) {
             throw new DeliveryServiceInvalidConditions('Отправление уже добавлено в груз');
-        }
-        if (!$shipment->delivery->xml_id) {
-            throw new DeliveryServiceInvalidConditions('Задание на доставку не создано');
         }
 
         $deliveryService = $this->getZeroMileShipmentDeliveryServiceId($shipment);

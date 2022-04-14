@@ -280,6 +280,11 @@ class Shipment extends AbstractModel
         return resolve(ShipmentNotification::class);
     }
 
+    public function isInvalid(): bool
+    {
+        return $this->is_canceled || $this->is_problem;
+    }
+
     /**
      * Пересчитать сумму товаров отправления
      */
