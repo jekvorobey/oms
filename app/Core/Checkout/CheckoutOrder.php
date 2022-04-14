@@ -471,7 +471,6 @@ class CheckoutOrder
         $offerToBasketMap = $this->offerToBasketMap();
 
         $shipmentNumber = 1;
-        $savedDeliveries = collect();
         foreach ($this->deliveries as $i => $checkoutDelivery) {
             $delivery = new Delivery();
             $delivery->order_id = $order->id;
@@ -503,7 +502,6 @@ class CheckoutOrder
             }
 
             $delivery->save();
-            $savedDeliveries->put($delivery->id, $delivery);
 
             foreach ($checkoutDelivery->shipments as $checkoutShipment) {
                 $shipment = new Shipment();
