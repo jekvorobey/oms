@@ -500,7 +500,7 @@ class CheckoutOrder
             $delivery->dt = $checkoutDelivery->dt;
             $delivery->pdd = $checkoutDelivery->pdd;
             if ($order->isProductOrder()) {
-                $delivery->payment_status = PaymentStatus::NOT_PAID;
+                $delivery->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
             }
 
             $delivery->save();
@@ -515,7 +515,7 @@ class CheckoutOrder
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
                 if ($order->isProductOrder()) {
-                    $shipment->payment_status = PaymentStatus::NOT_PAID;
+                    $shipment->payment_status = $order->is_postpaid ? PaymentStatus::WAITING : PaymentStatus::NOT_PAID;
                 }
                 $shipment->save();
 
@@ -536,11 +536,9 @@ class CheckoutOrder
             }
         }
 
-        if ($order->isProductOrder() && $order->is_postpaid && $savedDeliveries->isNotEmpty()) {
-            $savedDeliveries->each(fn(Delivery $delivery) => $delivery->update([
-                'status' => DeliveryStatus::AWAITING_CONFIRMATION,
-                'payment_status' => PaymentStatus::WAITING,
-            ]));
+        if ($order->is_postpaid) {
+            $order->payment_status = PaymentStatus::WAITING;
+            $order->save();
         }
     }
 
