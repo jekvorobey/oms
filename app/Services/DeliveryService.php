@@ -773,7 +773,7 @@ class DeliveryService
                         $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int) ceil($basketItem->product['weight']) : 0;
                         $deliveryOrderItemDto->cost = round($item->qty > 0 ? $basketItem->price / $item->qty : 0, 2);
                         if ($delivery->isPostPaid()) {
-                            $deliveryOrderItemDto->price = $basketItem->price;
+                            $deliveryOrderItemDto->price = $item->qty > 0 ? $basketItem->price / $item->qty : 0;
                         } else {
                             $deliveryOrderItemDto->price = 0;
                         }
@@ -805,7 +805,7 @@ class DeliveryService
                     $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int) ceil($basketItem->product['weight']) : 0;
                     $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->cost / $basketItem->qty : 0, 2);
                     if ($delivery->isPostPaid()) {
-                        $deliveryOrderItemDto->price = $basketItem->price;
+                        $deliveryOrderItemDto->price = $item->qty > 0 ? $basketItem->price / $item->qty : 0;
                     } else {
                         $deliveryOrderItemDto->price = 0;
                     }
