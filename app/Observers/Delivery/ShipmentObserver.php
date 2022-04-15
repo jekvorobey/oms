@@ -473,10 +473,10 @@ class ShipmentObserver
     protected function sendStatusNotification(Shipment $shipment)
     {
         try {
-            $isNeedSendCancelledNotification = $this->isNeedSendCancelledNotification($shipment);
+            $isNeedSendCanceledNotification = $this->isNeedSendCanceledNotification($shipment);
             $isNeedSendProblemNotification = $shipment->wasChanged('is_problem') && $shipment->is_problem;
 
-            if (!$isNeedSendCancelledNotification && !$isNeedSendProblemNotification) {
+            if (!$isNeedSendCanceledNotification && !$isNeedSendProblemNotification) {
                 return;
             }
 
@@ -497,7 +497,7 @@ class ShipmentObserver
                         ->setFilter('id', $operator->user_id)
                 )->first();
 
-                if ($i === 0 && $isNeedSendCancelledNotification) {
+                if ($i === 0 && $isNeedSendCanceledNotification) {
                     $serviceNotificationService->send(
                         $user->id,
                         'klientstatus_zakaza_otmenen',
@@ -518,7 +518,7 @@ class ShipmentObserver
                         continue 2;
                 }
 
-                if ($isNeedSendCancelledNotification) {
+                if ($isNeedSendCanceledNotification) {
                     $serviceNotificationService->sendDirect(
                         'klientstatus_zakaza_otmenen',
                         $receiver,
@@ -544,7 +544,7 @@ class ShipmentObserver
         }
     }
 
-    private function isNeedSendCancelledNotification(Shipment $shipment): bool
+    private function isNeedSendCanceledNotification(Shipment $shipment): bool
     {
         return $shipment->wasChanged('is_canceled')
             && $shipment->is_canceled

@@ -42,7 +42,7 @@ class ShipmentService
                 $attributes = $this->generateNotificationAttributes($shipment, $user);
 
                 if ($user) {
-                    if ($i === 0) { // TODO: добавить проверку, что оператор является админов
+                    if ($i === 0) { // TODO: добавить проверку, что оператор является админом
                         $serviceNotificationService->send(
                             $operator->user_id,
                             'klientoformlen_novyy_zakaz',

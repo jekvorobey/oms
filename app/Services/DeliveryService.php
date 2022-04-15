@@ -221,21 +221,27 @@ class DeliveryService
         }
         $cargo = $cargoQuery->first();
         if (is_null($cargo)) {
-            //todo Создание груза выделить в отдельный метод
-            $cargo = new Cargo();
-            $cargo->merchant_id = $shipment->merchant_id;
-            $cargo->store_id = $shipment->store_id;
-            $cargo->delivery_service = $deliveryService;
-            $cargo->status = CargoStatus::CREATED;
-            $cargo->width = 0;
-            $cargo->height = 0;
-            $cargo->length = 0;
-            $cargo->weight = 0;
-            $cargo->save();
+            $cargo = $this->createCargo($shipment, $deliveryService);
         }
 
         $shipment->cargo_id = $cargo->id;
         $shipment->save();
+    }
+
+    protected function createCargo(Shipment $shipment, int $deliveryService): Cargo
+    {
+        $cargo = new Cargo();
+        $cargo->merchant_id = $shipment->merchant_id;
+        $cargo->store_id = $shipment->store_id;
+        $cargo->delivery_service = $deliveryService;
+        $cargo->status = CargoStatus::CREATED;
+        $cargo->width = 0;
+        $cargo->height = 0;
+        $cargo->length = 0;
+        $cargo->weight = 0;
+        $cargo->save();
+
+        return $cargo;
     }
 
     /**
@@ -258,12 +264,12 @@ class DeliveryService
 
         /** @var StoreService $storeService */
         $storeService = resolve(StoreService::class);
-        $storeQuery = $storeService->newQuery()
-            ->include('storeContact', 'storePickupTime');
+        $storeQuery = $storeService->newQuery()->include('storeContact', 'storePickupTime');
         $store = $storeService->store($cargo->store_id, $storeQuery);
         if (is_null($store)) {
             $cargo->error_xml_id = 'Не найден склад с id="' . $cargo->store_id . '" для груза';
             $cargo->save();
+
             return;
         }
 
