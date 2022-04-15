@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Delivery\Cargo;
-use App\Services\ShipmentService;
+use App\Services\CargoService;
 use Exception;
 use Illuminate\Console\Command;
 
@@ -31,7 +31,7 @@ class CheckCargoShipmentsStatus extends Command
      * Execute the console command.
      * @throws Exception
      */
-    public function handle(ShipmentService $shipmentService)
+    public function handle(CargoService $cargoService)
     {
         $cargos = Cargo::query()->whereDate('intake_date', today())->get();
         if (!$cargos) {
@@ -39,7 +39,7 @@ class CheckCargoShipmentsStatus extends Command
         }
         /** @var Cargo $cargo */
         foreach ($cargos as $cargo) {
-            $shipmentService->checkShipmentsStatusInCargo($cargo);
+            $cargoService->checkShipmentsStatusInCargo($cargo);
         }
     }
 }
