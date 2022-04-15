@@ -7,6 +7,7 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use App\Services\DeliveryService;
+use App\Services\ShipmentPackageService;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
 use Greensight\CommonMsa\Rest\Controller\UpdateAction;
 use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
@@ -266,10 +267,10 @@ class ShipmentPackagesController extends Controller
      *
      * Удалить коробку отправления со всем её содержимым
      */
-    public function delete(int $id, DeliveryService $deliveryService): Response
+    public function delete(int $id, ShipmentPackageService $shipmentPackageService): Response
     {
         try {
-            $ok = $deliveryService->deleteShipmentPackage($id);
+            $ok = $shipmentPackageService->deleteShipmentPackage($id);
             if (!$ok) {
                 throw new HttpException(500);
             }
@@ -431,7 +432,7 @@ class ShipmentPackagesController extends Controller
         int $shipmentPackageId,
         int $basketItemId,
         Request $request,
-        DeliveryService $deliveryService
+        ShipmentPackageService $shipmentPackageService
     ): Response {
         $data = $this->validate($request, [
             'qty' => ['required', 'numeric'],
@@ -439,7 +440,7 @@ class ShipmentPackagesController extends Controller
         ]);
 
         try {
-            $ok = $deliveryService->setShipmentPackageItem(
+            $ok = $shipmentPackageService->setShipmentPackageItem(
                 $shipmentPackageId,
                 $basketItemId,
                 $data['qty'],

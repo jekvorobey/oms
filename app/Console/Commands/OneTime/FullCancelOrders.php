@@ -6,6 +6,7 @@ use App\Models\Delivery\Delivery;
 use App\Models\Order\Order;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
+use App\Services\ShipmentService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 
@@ -32,8 +33,11 @@ class FullCancelOrders extends Command
     /**
      * Execute the console command.
      */
-    public function handle(OrderService $orderService, DeliveryService $deliveryService)
-    {
+    public function handle(
+        OrderService $orderService,
+        DeliveryService $deliveryService,
+        ShipmentService $shipmentService
+    ) {
         /** @var Collection|Order[] $orders */
         $orders = Order::query()
             ->where('is_canceled', true)
@@ -53,7 +57,7 @@ class FullCancelOrders extends Command
 
                 foreach ($delivery->shipments as $shipment) {
                     try {
-                        $deliveryService->cancelShipment($shipment, $order->return_reason_id);
+                        $shipmentService->cancelShipment($shipment, $order->return_reason_id);
                     } catch (\Throwable $e) {
                     }
                 }
@@ -73,7 +77,7 @@ class FullCancelOrders extends Command
 
             foreach ($delivery->shipments as $shipment) {
                 try {
-                    $deliveryService->cancelShipment($shipment, $shipment->return_reason_id);
+                    $shipmentService->cancelShipment($shipment, $shipment->return_reason_id);
                 } catch (\Throwable $e) {
                 }
             }

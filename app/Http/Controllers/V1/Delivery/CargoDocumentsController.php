@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V1\Delivery;
 
+use App\Services\CargoService;
 use App\Services\DeliveryService;
 use App\Services\DocumentService\CargoAcceptanceActCreator;
 use Illuminate\Http\JsonResponse;
@@ -32,10 +33,10 @@ class CargoDocumentsController extends DocumentController
     public function acceptanceAct(
         int $cargoId,
         Request $request,
-        DeliveryService $deliveryService,
+        CargoService $cargoService,
         CargoAcceptanceActCreator $cargoAcceptanceActCreator
     ): JsonResponse {
-        $cargo = $deliveryService->getCargo($cargoId);
+        $cargo = $cargoService->getCargo($cargoId);
         if (!$cargo) {
             throw new NotFoundHttpException('cargo not found');
         }

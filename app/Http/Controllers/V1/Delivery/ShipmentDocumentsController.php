@@ -6,6 +6,7 @@ use App\Services\DeliveryService;
 use App\Services\DocumentService\ShipmentAcceptanceActCreator;
 use App\Services\DocumentService\ShipmentAssemblingCardCreator;
 use App\Services\DocumentService\ShipmentInventoryCreator;
+use App\Services\ShipmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -13,10 +14,12 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class ShipmentDocumentsController extends DocumentController
 {
     protected DeliveryService $deliveryService;
+    protected ShipmentService $shipmentService;
 
     public function __construct(DeliveryService $deliveryService)
     {
         $this->deliveryService = $deliveryService;
+        $this->shipmentService = resolve(ShipmentService::class);
     }
 
     /**
@@ -42,7 +45,7 @@ class ShipmentDocumentsController extends DocumentController
         Request $request,
         ShipmentAcceptanceActCreator $shipmentAcceptanceActCreator
     ): JsonResponse {
-        $shipment = $this->deliveryService->getShipment($shipmentId);
+        $shipment = $this->shipmentService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
@@ -75,7 +78,7 @@ class ShipmentDocumentsController extends DocumentController
         Request $request,
         ShipmentAssemblingCardCreator $shipmentAssemblingCardCreator
     ): JsonResponse {
-        $shipment = $this->deliveryService->getShipment($shipmentId);
+        $shipment = $this->shipmentService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
@@ -108,7 +111,7 @@ class ShipmentDocumentsController extends DocumentController
         Request $request,
         ShipmentInventoryCreator $shipmentInventoryCreator
     ): JsonResponse {
-        $shipment = $this->deliveryService->getShipment($shipmentId);
+        $shipment = $this->shipmentService->getShipment($shipmentId);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }

@@ -5,7 +5,9 @@ namespace App\Http\Controllers\V1\Delivery;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
+use App\Services\CargoService;
 use App\Services\DeliveryService as OmsDeliveryService;
+use Exception;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\CreateAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
@@ -163,15 +165,15 @@ class CargoController extends Controller
      *     @OA\Response(response="404", description="product not found"),
      * )
      * Отменить груз
-     * @throws \Exception
+     * @throws Exception
      */
-    public function cancel(int $id, OmsDeliveryService $deliveryService): Response
+    public function cancel(int $id, CargoService $cargoService): Response
     {
-        $cargo = $deliveryService->getCargo($id);
+        $cargo = $cargoService->getCargo($id);
         if (!$cargo) {
             throw new NotFoundHttpException('cargo not found');
         }
-        if (!$deliveryService->cancelCargo($cargo)) {
+        if (!$cargoService->cancelCargo($cargo)) {
             throw new HttpException(500);
         }
 
@@ -189,11 +191,14 @@ class CargoController extends Controller
      *     @OA\Response(response="500", description=""),
      * )
      * Создать заявку на вызов курьера для забора груза
-     * @throws \Exception
+     * @throws Exception
      */
-    public function createCourierCall(int $id, OmsDeliveryService $deliveryService): Response
-    {
-        $cargo = $deliveryService->getCargo($id);
+    public function createCourierCall(
+        int $id,
+        OmsDeliveryService $deliveryService,
+        CargoService $cargoService
+    ): Response {
+        $cargo = $cargoService->getCargo($id);
         if (!$cargo) {
             throw new NotFoundHttpException('cargo not found');
         }
@@ -213,9 +218,12 @@ class CargoController extends Controller
      * )
      * Отменить заявку на вызов курьера для забора груза
      */
-    public function cancelCourierCall(int $id, OmsDeliveryService $deliveryService): Response
-    {
-        $cargo = $deliveryService->getCargo($id);
+    public function cancelCourierCall(
+        int $id,
+        OmsDeliveryService $deliveryService,
+        CargoService $cargoService
+    ): Response {
+        $cargo = $cargoService->getCargo($id);
         if (!$cargo) {
             throw new NotFoundHttpException('cargo not found');
         }
@@ -236,9 +244,9 @@ class CargoController extends Controller
      * Проверить наличие ошибок в заявке на вызов курьера во внешнем сервисе
      * @return Application|ResponseFactory|Response
      */
-    public function checkExternalStatus(int $id, OmsDeliveryService $deliveryService)
+    public function checkExternalStatus(int $id, OmsDeliveryService $deliveryService, CargoService $cargoService)
     {
-        $cargo = $deliveryService->getCargo($id);
+        $cargo = $cargoService->getCargo($id);
         if (!$cargo) {
             throw new NotFoundHttpException('cargo not found');
         }

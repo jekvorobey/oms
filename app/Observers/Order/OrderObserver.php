@@ -16,9 +16,11 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
+use App\Services\ShipmentService;
 use App\Services\TicketNotifierService;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
+use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
@@ -239,7 +241,7 @@ class OrderObserver
 
     /**
      * Handle the order "deleting" event.
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleting(Order $order)
     {
@@ -297,7 +299,7 @@ class OrderObserver
 
     /**
      * Установить флаг отмены всем доставкам и отправлениями заказа
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setIsCanceledToChildren(Order $order): void
     {
@@ -313,17 +315,17 @@ class OrderObserver
 
     /**
      * Установить флаг проблемы всем доставкам и отправлениями заказа
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setIsProblemToChildren(Order $order): void
     {
         if ($order->is_problem && $order->is_problem != $order->getOriginal('is_problem')) {
             $order->loadMissing('deliveries.shipments');
-            /** @var DeliveryService $deliveryService */
-            $deliveryService = resolve(DeliveryService::class);
+            /** @var ShipmentService $shipmentService */
+            $shipmentService = resolve(ShipmentService::class);
             foreach ($order->deliveries as $delivery) {
                 foreach ($delivery->shipments as $shipment) {
-                    $deliveryService->markAsProblemShipment($shipment);
+                    $shipmentService->markAsProblemShipment($shipment);
                 }
             }
         }

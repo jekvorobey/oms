@@ -12,6 +12,8 @@ use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
+use App\Services\ShipmentService;
+use Exception;
 use Greensight\CommonMsa\Dto\FileDto;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
@@ -690,13 +692,13 @@ class ShipmentsController extends Controller
      *
      * Получить штрихкоды для мест (коробок) отправления
      */
-    public function barcodes(int $id, DeliveryService $deliveryService, FileService $fileService): JsonResponse
+    public function barcodes(int $id, ShipmentService $shipmentService, FileService $fileService): JsonResponse
     {
-        $shipment = $deliveryService->getShipment($id);
+        $shipment = $shipmentService->getShipment($id);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
-        $deliveryOrderBarcodesDto = $deliveryService->getShipmentBarcodes($shipment);
+        $deliveryOrderBarcodesDto = $shipmentService->getShipmentBarcodes($shipment);
 
         if ($deliveryOrderBarcodesDto) {
             if ($deliveryOrderBarcodesDto->success && $deliveryOrderBarcodesDto->file_id) {
@@ -734,13 +736,13 @@ class ShipmentsController extends Controller
      * )
      * Получить квитанцию cdek для заказа на доставку
      */
-    public function cdekReceipt(int $id, DeliveryService $deliveryService, FileService $fileService): JsonResponse
+    public function cdekReceipt(int $id, ShipmentService $shipmentService, FileService $fileService): JsonResponse
     {
-        $shipment = $deliveryService->getShipment($id);
+        $shipment = $shipmentService->getShipment($id);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
-        $cdekDeliveryOrderReceiptDto = $deliveryService->getShipmentCdekReceipt($shipment);
+        $cdekDeliveryOrderReceiptDto = $shipmentService->getShipmentCdekReceipt($shipment);
 
         if ($cdekDeliveryOrderReceiptDto) {
             if ($cdekDeliveryOrderReceiptDto->success && $cdekDeliveryOrderReceiptDto->file_id) {
@@ -773,9 +775,9 @@ class ShipmentsController extends Controller
      *
      * Пометить как проблемное
      */
-    public function markAsProblem(int $id, Request $request, DeliveryService $deliveryService): Response
+    public function markAsProblem(int $id, Request $request, ShipmentService $shipmentService): Response
     {
-        $shipment = $deliveryService->getShipment($id);
+        $shipment = $shipmentService->getShipment($id);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
@@ -783,7 +785,7 @@ class ShipmentsController extends Controller
             'assembly_problem_comment' => ['required'],
         ]);
 
-        if (!$deliveryService->markAsProblemShipment($shipment, $data['assembly_problem_comment'])) {
+        if (!$shipmentService->markAsProblemShipment($shipment, $data['assembly_problem_comment'])) {
             throw new HttpException(500);
         }
 
@@ -803,13 +805,13 @@ class ShipmentsController extends Controller
      *
      * Пометить как непроблемное
      */
-    public function markAsNonProblem(int $id, DeliveryService $deliveryService): Response
+    public function markAsNonProblem(int $id, ShipmentService $shipmentService): Response
     {
-        $shipment = $deliveryService->getShipment($id);
+        $shipment = $shipmentService->getShipment($id);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
-        if (!$deliveryService->markAsNonProblemShipment($shipment)) {
+        if (!$shipmentService->markAsNonProblemShipment($shipment)) {
             throw new HttpException(500);
         }
 
@@ -826,19 +828,19 @@ class ShipmentsController extends Controller
      *     @OA\Response(response="404", description="product not found"),
      * )
      * Отменить отправление
-     * @throws \Exception
+     * @throws Exception
      */
-    public function cancel(int $id, Request $request, DeliveryService $deliveryService): Response
+    public function cancel(int $id, Request $request, ShipmentService $shipmentService): Response
     {
         $data = $this->validate($request, [
             'orderReturnReason' => 'required|integer|exists:order_return_reasons,id',
         ]);
 
-        $shipment = $deliveryService->getShipment($id);
+        $shipment = $shipmentService->getShipment($id);
         if (!$shipment) {
             throw new NotFoundHttpException('shipment not found');
         }
-        if (!$deliveryService->cancelShipment($shipment, $data['orderReturnReason'])) {
+        if (!$shipmentService->cancelShipment($shipment, $data['orderReturnReason'])) {
             throw new HttpException(500);
         }
 
