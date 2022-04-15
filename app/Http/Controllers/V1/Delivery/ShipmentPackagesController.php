@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\V1\Delivery;
 
 use App\Http\Controllers\Controller;
-use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
-use App\Services\DeliveryService;
 use App\Services\ShipmentPackageService;
+use App\Services\ShipmentService;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
 use Greensight\CommonMsa\Rest\Controller\UpdateAction;
 use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
@@ -183,13 +182,9 @@ class ShipmentPackagesController extends Controller
      * )
      * Создать коробку отправления
      */
-    public function create(int $shipmentId, Request $request): JsonResponse
+    public function create(int $shipmentId, Request $request, ShipmentService $shipmentService): JsonResponse
     {
-        /** @var Shipment $shipment */
-        $shipment = Shipment::find($shipmentId);
-        if (!$shipment) {
-            throw new NotFoundHttpException('shipment not found');
-        }
+        $shipmentService->getShipment($shipmentId);
 
         $data = $request->all();
         $validator = Validator::make($data, $this->inputValidators());

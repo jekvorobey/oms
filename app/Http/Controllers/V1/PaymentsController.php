@@ -8,6 +8,7 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -46,6 +47,7 @@ class PaymentsController extends Controller
      *     @OA\Response(response="404", description="not found"),
      *     @OA\Response(response="405", description="access denied"),
      * )
+     * @throws Exception
      */
     public function start(int $id, Request $request, PaymentService $paymentService): JsonResponse
     {
@@ -198,7 +200,7 @@ class PaymentsController extends Controller
      *     ),
      *     @OA\Response(response="400", description="bad request"),
      * )
-     * @throws \Exception
+     * @throws Exception
      */
     public function handlerYandex(Request $request): JsonResponse
     {

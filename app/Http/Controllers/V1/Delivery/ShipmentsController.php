@@ -5,12 +5,12 @@ namespace App\Http\Controllers\V1\Delivery;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
-use App\Models\Delivery\Delivery;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentExport;
 use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Payment\PaymentStatus;
+use App\Services\CargoService;
 use App\Services\DeliveryService;
 use App\Services\ShipmentService;
 use Exception;
@@ -340,13 +340,9 @@ class ShipmentsController extends Controller
      *
      * Создать отправление
      */
-    public function create(int $deliveryId, Request $request): JsonResponse
+    public function create(int $deliveryId, Request $request, DeliveryService $deliveryService): JsonResponse
     {
-        /** @var Delivery $delivery */
-        $delivery = Delivery::find($deliveryId);
-        if (!$delivery) {
-            throw new NotFoundHttpException('delivery not found');
-        }
+        $deliveryService->getDelivery($deliveryId);
 
         $data = $request->all();
         $validator = Validator::make($data, $this->inputValidators());
@@ -389,13 +385,13 @@ class ShipmentsController extends Controller
      * )
      * Получить собранные неотгруженные отправления со схожими параметрами для текущего груза (склад, служба доставки)
      */
-    public function similarUnshippedShipments(Request $request): JsonResponse
+    public function similarUnshippedShipments(Request $request, CargoService $cargoService): JsonResponse
     {
         $validatedData = $this->validate($request, [
             'cargo_id' => 'integer|required',
         ]);
 
-        $cargo = Cargo::find($validatedData['cargo_id']);
+        $cargo = $cargoService->getCargo($validatedData['cargo_id']);
         $similarCargosIds = Cargo::query()
             ->select('id')
             ->where('id', '!=', $cargo->id)
@@ -617,13 +613,9 @@ class ShipmentsController extends Controller
      * )
      * Создать элемент (товар с одного склада одного мерчанта) отправления
      */
-    public function createItem(int $shipmentId, int $basketItemId): Response
+    public function createItem(int $shipmentId, int $basketItemId, ShipmentService $shipmentService): Response
     {
-        /** @var Shipment $shipment */
-        $shipment = Shipment::find($shipmentId);
-        if (!$shipment) {
-            throw new NotFoundHttpException('shipment not found');
-        }
+        $shipmentService->getShipment($shipmentId);
 
         $shipmentItem = new ShipmentItem();
         $shipmentItem->shipment_id = $shipmentId;
@@ -695,9 +687,6 @@ class ShipmentsController extends Controller
     public function barcodes(int $id, ShipmentService $shipmentService, FileService $fileService): JsonResponse
     {
         $shipment = $shipmentService->getShipment($id);
-        if (!$shipment) {
-            throw new NotFoundHttpException('shipment not found');
-        }
         $deliveryOrderBarcodesDto = $shipmentService->getShipmentBarcodes($shipment);
 
         if ($deliveryOrderBarcodesDto) {
@@ -739,9 +728,6 @@ class ShipmentsController extends Controller
     public function cdekReceipt(int $id, ShipmentService $shipmentService, FileService $fileService): JsonResponse
     {
         $shipment = $shipmentService->getShipment($id);
-        if (!$shipment) {
-            throw new NotFoundHttpException('shipment not found');
-        }
         $cdekDeliveryOrderReceiptDto = $shipmentService->getShipmentCdekReceipt($shipment);
 
         if ($cdekDeliveryOrderReceiptDto) {
@@ -778,9 +764,6 @@ class ShipmentsController extends Controller
     public function markAsProblem(int $id, Request $request, ShipmentService $shipmentService): Response
     {
         $shipment = $shipmentService->getShipment($id);
-        if (!$shipment) {
-            throw new NotFoundHttpException('shipment not found');
-        }
         $data = $this->validate($request, [
             'assembly_problem_comment' => ['required'],
         ]);
@@ -808,9 +791,6 @@ class ShipmentsController extends Controller
     public function markAsNonProblem(int $id, ShipmentService $shipmentService): Response
     {
         $shipment = $shipmentService->getShipment($id);
-        if (!$shipment) {
-            throw new NotFoundHttpException('shipment not found');
-        }
         if (!$shipmentService->markAsNonProblemShipment($shipment)) {
             throw new HttpException(500);
         }
@@ -837,9 +817,6 @@ class ShipmentsController extends Controller
         ]);
 
         $shipment = $shipmentService->getShipment($id);
-        if (!$shipment) {
-            throw new NotFoundHttpException('shipment not found');
-        }
         if (!$shipmentService->cancelShipment($shipment, $data['orderReturnReason'])) {
             throw new HttpException(500);
         }

@@ -20,7 +20,6 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class CargoController
@@ -170,9 +169,6 @@ class CargoController extends Controller
     public function cancel(int $id, CargoService $cargoService): Response
     {
         $cargo = $cargoService->getCargo($id);
-        if (!$cargo) {
-            throw new NotFoundHttpException('cargo not found');
-        }
         if (!$cargoService->cancelCargo($cargo)) {
             throw new HttpException(500);
         }
@@ -199,9 +195,6 @@ class CargoController extends Controller
         CargoService $cargoService
     ): Response {
         $cargo = $cargoService->getCargo($id);
-        if (!$cargo) {
-            throw new NotFoundHttpException('cargo not found');
-        }
         $deliveryService->createCourierCall($cargo);
 
         return response('', 204);
@@ -224,9 +217,6 @@ class CargoController extends Controller
         CargoService $cargoService
     ): Response {
         $cargo = $cargoService->getCargo($id);
-        if (!$cargo) {
-            throw new NotFoundHttpException('cargo not found');
-        }
         $deliveryService->cancelCourierCall($cargo);
 
         return response('', 204);
@@ -247,9 +237,6 @@ class CargoController extends Controller
     public function checkExternalStatus(int $id, OmsDeliveryService $deliveryService, CargoService $cargoService)
     {
         $cargo = $cargoService->getCargo($id);
-        if (!$cargo) {
-            throw new NotFoundHttpException('cargo not found');
-        }
         $deliveryService->checkExternalStatus($cargo);
 
         return response('', 204);

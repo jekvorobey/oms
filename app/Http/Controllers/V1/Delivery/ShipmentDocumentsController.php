@@ -9,7 +9,6 @@ use App\Services\DocumentService\ShipmentInventoryCreator;
 use App\Services\ShipmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShipmentDocumentsController extends DocumentController
 {
@@ -46,10 +45,6 @@ class ShipmentDocumentsController extends DocumentController
         ShipmentAcceptanceActCreator $shipmentAcceptanceActCreator
     ): JsonResponse {
         $shipment = $this->shipmentService->getShipment($shipmentId);
-        if (!$shipment) {
-            throw new NotFoundHttpException('shipment not found');
-        }
-
         $documentDto = $shipmentAcceptanceActCreator->setShipment($shipment)->setAsPdf($request->as_pdf ?: false)->create();
 
         return $this->documentResponse($documentDto);
@@ -79,10 +74,6 @@ class ShipmentDocumentsController extends DocumentController
         ShipmentAssemblingCardCreator $shipmentAssemblingCardCreator
     ): JsonResponse {
         $shipment = $this->shipmentService->getShipment($shipmentId);
-        if (!$shipment) {
-            throw new NotFoundHttpException('shipment not found');
-        }
-
         $documentDto = $shipmentAssemblingCardCreator->setShipment($shipment)->setAsPdf($request->as_pdf ?: false)->create();
 
         return $this->documentResponse($documentDto);
@@ -112,10 +103,6 @@ class ShipmentDocumentsController extends DocumentController
         ShipmentInventoryCreator $shipmentInventoryCreator
     ): JsonResponse {
         $shipment = $this->shipmentService->getShipment($shipmentId);
-        if (!$shipment) {
-            throw new NotFoundHttpException('shipment not found');
-        }
-
         $documentDto = $shipmentInventoryCreator->setShipment($shipment)->setAsPdf($request->as_pdf ?: false)->create();
 
         return $this->documentResponse($documentDto);

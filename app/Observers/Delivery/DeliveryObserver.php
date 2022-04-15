@@ -676,6 +676,7 @@ class DeliveryObserver
 
     public function testSend()
     {
+        /** @var Delivery $delivery */
         $delivery = Delivery::query()
             ->where('delivery_method', DeliveryMethod::METHOD_DELIVERY)
             ->where('status', '!=', DeliveryStatus::DONE)

@@ -35,6 +35,7 @@ use Pim\Services\CertificateService\CertificateService;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\ProductService\ProductService;
 use Pim\Services\CategoryService\CategoryService;
+use Throwable;
 
 /**
  * Class OrderObserver
@@ -66,7 +67,7 @@ class OrderObserver
     /**
      * Handle the order "updated" event.
      * @return void
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function updated(Order $order)
     {
@@ -100,7 +101,7 @@ class OrderObserver
 
             $this->sendStatusNotification($notificationService, $order, $user_id);
             $notificationService->sendToAdmin('aozzakazzakaz_oformlen');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
         }
     }
@@ -146,9 +147,8 @@ class OrderObserver
                         || ($order->payment_status == PaymentStatus::WAITING && !$order->is_postpaid)
                     )
                 ) {
-                    $delivery_method = !empty($order->deliveries()->first()->delivery_method)
-                        ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
-                        : false;
+                    $delivery_method = !empty($order->deliveries()->first()->delivery_method) &&
+                        $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP;
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
@@ -194,7 +194,7 @@ class OrderObserver
             } else {
                 $notificationService->sendToAdmin('aozzakazzakaz_izmenen');
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             report($e);
             logger($e->getMessage(), $e->getTrace());
         }
@@ -223,7 +223,7 @@ class OrderObserver
     /**
      * Handle the order "saving" event.
      * @return void
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function saving(Order $order)
     {
@@ -457,7 +457,7 @@ class OrderObserver
         }
     }
 
-    protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat)
+    protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat): string
     {
         switch ($payment_status) {
             // case PaymentStatus::TIMEOUT:
@@ -476,7 +476,7 @@ class OrderObserver
         bool $consolidation,
         bool $postomat,
         ?int $override = null
-    ) {
+    ): string {
         if ($override == self::OVERRIDE_SUCCESS) {
             $orderStatus = OrderStatus::CREATED;
         }
@@ -498,7 +498,7 @@ class OrderObserver
         return '';
     }
 
-    protected function intoStringStatus(int $orderStatus)
+    protected function intoStringStatus(int $orderStatus): string
     {
         switch ($orderStatus) {
             case OrderStatus::PRE_ORDER:
@@ -520,7 +520,7 @@ class OrderObserver
         }
     }
 
-    protected function appendTypeModifiers(string $slug, bool $consolidation, bool $postomat)
+    protected function appendTypeModifiers(string $slug, bool $consolidation, bool $postomat): string
     {
         if ($consolidation) {
             $slug .= '_pri_konsolidatsii';
@@ -537,7 +537,7 @@ class OrderObserver
         return $slug;
     }
 
-    protected function createCancelledNotificationType(bool $consolidation, bool $postomat)
+    protected function createCancelledNotificationType(bool $consolidation, bool $postomat): string
     {
         return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
     }
@@ -1125,7 +1125,7 @@ class OrderObserver
 
     /**
      * Отправить билеты на мастер-классы на почту покупателю заказа и всем участникам.
-     * @throws \Throwable
+     * @throws Throwable
      */
     protected function sendTicketsEmail(Order $order): void
     {
@@ -1187,7 +1187,7 @@ class OrderObserver
         ])->getBody();
     }
 
-    protected function shouldSendPaidNotification(Order $order)
+    protected function shouldSendPaidNotification(Order $order): bool
     {
         $paid = ($order->payment_status == PaymentStatus::HOLD) || (
             $order->payment_status == PaymentStatus::PAID

@@ -16,6 +16,7 @@ use Greensight\Logistics\Dto\Order\CdekDeliveryOrderReceiptDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderBarcodesDto;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use MerchantManagement\Dto\OperatorCommunicationMethod;
 use MerchantManagement\Dto\OperatorDto;
 use MerchantManagement\Services\OperatorService\OperatorService;
@@ -41,10 +42,12 @@ class ShipmentService
 
     /**
      * Получить объект отправления по его id
+     *
+     * @throws ModelNotFoundException
      */
-    public function getShipment(int $shipmentId): ?Shipment
+    public function getShipment(int $shipmentId): Shipment
     {
-        return Shipment::find($shipmentId);
+        return Shipment::findOrFail($shipmentId);
     }
 
     /**

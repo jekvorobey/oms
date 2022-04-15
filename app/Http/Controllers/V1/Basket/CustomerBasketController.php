@@ -8,6 +8,7 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Services\BasketService\CustomerBasketService;
 use App\Services\OrderService;
+use Exception;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Illuminate\Http\JsonResponse;
@@ -111,6 +112,7 @@ class CustomerBasketController extends BasketController
             ->whereIn('orders.status', [OrderStatus::IN_PROCESSING, OrderStatus::DELIVERING,
                 OrderStatus::READY_FOR_RECIPIENT, OrderStatus::DONE,
             ])
+            /** TODO проверить offer_id */
             ->groupBy('offer_id')
             ->pluck('total', 'offer_id')
             ->all();
@@ -187,7 +189,7 @@ class CustomerBasketController extends BasketController
      *     @OA\Response(response="404", description="order not found"),
      * )
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function setItemByOrder(
         int $orderId,

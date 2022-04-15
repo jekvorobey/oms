@@ -12,6 +12,8 @@ use App\Models\Payment\PaymentStatus;
 use Cms\Core\CmsException;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
+use DateTimeImmutable;
+use DateTimeZone;
 use Exception;
 use Greensight\CommonMsa\Dto\AbstractDto;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
@@ -33,10 +35,12 @@ use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\StoreService\StoreService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
+use Throwable;
 
 /**
  * Класс-бизнес логики по работе с сущностями доставки:
@@ -51,20 +55,26 @@ class DeliveryService
     protected ShipmentService $shipmentService;
     protected CargoService $cargoService;
     protected DeliveryOrderService $deliveryOrderService;
+    protected StoreService $storeService;
+    protected StoreService $courierCallService;
 
     public function __construct()
     {
         $this->shipmentService = resolve(ShipmentService::class);
         $this->cargoService = resolve(CargoService::class);
         $this->deliveryOrderService = app(DeliveryOrderService::class);
+        $this->storeService = resolve(StoreService::class);
+        $this->courierCallService = resolve(CourierCallService::class);
     }
 
     /**
      * Получить объект отправления по его id
+     *
+     * @throws ModelNotFoundException
      */
-    public function getDelivery(int $deliveryId): ?Delivery
+    public function getDelivery(int $deliveryId): Delivery
     {
-        return Delivery::find($deliveryId);
+        return Delivery::findOrFail($deliveryId);
     }
 
     /**
@@ -93,10 +103,8 @@ class DeliveryService
             throw new DeliveryServiceInvalidConditions('Груз не содержит отправлений');
         }
 
-        /** @var StoreService $storeService */
-        $storeService = resolve(StoreService::class);
-        $storeQuery = $storeService->newQuery()->include('storeContact', 'storePickupTime');
-        $store = $storeService->store($cargo->store_id, $storeQuery);
+        $storeQuery = $this->storeService->newQuery()->include('storeContact', 'storePickupTime');
+        $store = $this->storeService->store($cargo->store_id, $storeQuery);
         if (is_null($store)) {
             $cargo->error_xml_id = 'Не найден склад с id="' . $cargo->store_id . '" для груза';
             $cargo->save();
@@ -158,8 +166,7 @@ class DeliveryService
         }
         $deliveryCargoDto->order_ids = $orderIds;
 
-        /** @var CourierCallService $courierCallService */
-        $courierCallService = resolve(CourierCallService::class);
+
 
         //Получаем доступные дни недели для отгрузки грузов курьерам службы доставки текущего груза
         /** @var Collection|StorePickupTimeDto[] $storePickupTimes */
@@ -185,8 +192,8 @@ class DeliveryService
 
         $dayPlus = 0;
         // @todo: fix get timezone by store
-        $timezone = new \DateTimeZone('Europe/Moscow');
-        $dateNow = new \DateTimeImmutable('now', $timezone);
+        $timezone = new DateTimeZone('Europe/Moscow');
+        $dateNow = new DateTimeImmutable('now', $timezone);
         while ($dayPlus <= 6) {
             $date = $dateNow->modify('+' . $dayPlus . ' day' . ($dayPlus > 1 ? 's' : ''));
             //Получаем номер дня недели (1 - понедельник, ..., 7 - воскресенье)
@@ -197,7 +204,7 @@ class DeliveryService
                 continue;
             }
 
-            $deliveryDateTo = new \DateTimeImmutable($date->format('Y-m-d') . 'T' . $storePickupTimes[$dayOfWeek]->pickup_time_end, $timezone);
+            $deliveryDateTo = new DateTimeImmutable($date->format('Y-m-d') . 'T' . $storePickupTimes[$dayOfWeek]->pickup_time_end, $timezone);
             if ($dateNow > $deliveryDateTo) {
                 continue;
             }
@@ -209,7 +216,7 @@ class DeliveryService
 
             $courierCallInputDto->cargo = $deliveryCargoDto;
             try {
-                $courierCallOutputDto = $courierCallService->createCourierCall(
+                $courierCallOutputDto = $this->courierCallService->createCourierCall(
                     $cargo->delivery_service,
                     $courierCallInputDto
                 );
@@ -223,7 +230,7 @@ class DeliveryService
                 } else {
                     $cargo->error_xml_id = $courierCallOutputDto->message;
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $cargo->error_xml_id = $e->getMessage();
                 report($e);
             }
@@ -242,11 +249,7 @@ class DeliveryService
     public function cancelCourierCall(Cargo $cargo): void
     {
         if ($cargo->xml_id) {
-            /** @var CourierCallService $courierCallService */
-            $courierCallService = resolve(CourierCallService::class);
-            $courierCallService
-                ->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
-
+            $this->courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
             $cargo->xml_id = '';
             $cargo->cdek_intake_number = null;
             $cargo->error_xml_id = '';
@@ -260,11 +263,7 @@ class DeliveryService
     public function checkExternalStatus(Cargo $cargo): void
     {
         if ($cargo->xml_id) {
-            /** @var CourierCallService $courierCallService */
-            $courierCallService = resolve(CourierCallService::class);
-            $status = $courierCallService
-                ->checkExternalStatus($cargo->delivery_service, $cargo->xml_id);
-
+            $status = $this->courierCallService->checkExternalStatus($cargo->delivery_service, $cargo->xml_id);
             $cargo->error_xml_id = $status->error;
             $cargo->cdek_intake_number = $status->intake_number;
             $cargo->updated_at = Carbon::now();
@@ -365,7 +364,7 @@ class DeliveryService
                     }
                 }
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $delivery->error_xml_id = $e->getMessage();
             $delivery->save();
             report($e);
@@ -438,12 +437,10 @@ class DeliveryService
             /**
              * Если в доставке одно отправление, то в качестве данных отправителя указываем данные мерчанта
              */
-            /** @var StoreService $storeService */
-            $storeService = resolve(StoreService::class);
             /** @var MerchantService $merchantService */
             $merchantService = resolve(MerchantService::class);
             $shipment = $delivery->shipments[0];
-            $store = $storeService->store($shipment->store_id, $storeService->newQuery()->include('storeContact'));
+            $store = $this->storeService->store($shipment->store_id, $this->storeService->newQuery()->include('storeContact'));
             $merchant = $merchantService->merchant($shipment->merchant_id);
 
             $storeAddress = $store->address;
@@ -631,7 +628,7 @@ class DeliveryService
                         $deliveryServiceId,
                         $items->pluck('xml_id')->all()
                     );
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     report($e);
                     continue;
                 }
@@ -663,7 +660,7 @@ class DeliveryService
                             );
 
                             $delivery->save();
-                        } catch (\Throwable $e) {
+                        } catch (Throwable $e) {
                             logger()->error("Error when updating status of Delivery #{$delivery->id} ({$delivery->xml_id})");
                             report($e);
                             continue;

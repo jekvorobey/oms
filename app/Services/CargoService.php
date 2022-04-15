@@ -9,6 +9,7 @@ use App\Models\Delivery\ShipmentStatus;
 use Exception;
 use Greensight\CommonMsa\Dto\RoleDto;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -31,10 +32,12 @@ class CargoService
 
     /**
      * Получить объект груза по его id
+     *
+     * @throws ModelNotFoundException
      */
-    public function getCargo(int $cargoId): ?Cargo
+    public function getCargo(int $cargoId): Cargo
     {
-        return Cargo::find($cargoId);
+        return Cargo::findOrFail($cargoId);
     }
 
     public function createCargo(Shipment $shipment, int $deliveryService): Cargo
