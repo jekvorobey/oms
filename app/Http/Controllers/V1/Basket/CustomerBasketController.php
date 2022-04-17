@@ -112,7 +112,6 @@ class CustomerBasketController extends BasketController
             ->whereIn('orders.status', [OrderStatus::IN_PROCESSING, OrderStatus::DELIVERING,
                 OrderStatus::READY_FOR_RECIPIENT, OrderStatus::DONE,
             ])
-            /** TODO проверить offer_id */
             ->groupBy('offer_id')
             ->pluck('total', 'offer_id')
             ->all();

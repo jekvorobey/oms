@@ -33,13 +33,8 @@ class CheckCargoShipmentsStatus extends Command
      */
     public function handle(CargoService $cargoService)
     {
-        $cargos = Cargo::query()->whereDate('intake_date', today())->get();
-        if (!$cargos) {
-            throw new Exception('Грузы с текущей датой забора не найдены');
-        }
-        /** @var Cargo $cargo */
-        foreach ($cargos as $cargo) {
+        Cargo::query()->whereDate('intake_date', today())->each(function (Cargo $cargo) use ($cargoService) {
             $cargoService->checkShipmentsStatusInCargo($cargo);
-        }
+        });
     }
 }

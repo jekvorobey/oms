@@ -95,41 +95,41 @@ class CargoService
      * Проверить статус отправлений груза в день его забора
      * @throws Exception
      */
-    public function checkShipmentsStatusInCargo(Cargo $cargo)
+    public function checkShipmentsStatusInCargo(Cargo $cargo): void
     {
         if (!$cargo->intake_date) {
             throw new Exception('Дата забора груза не установлена');
         }
-        if ($cargo->intake_date->isToday()) {
-            if ($cargo->intake_date->isToday()) {
-                $cargo->loadMissing('shipments');
-                $isNeedToCancelCourierCall = true;
-                foreach ($cargo->shipments as $shipment) {
-                    if ($shipment->isInvalid()) {
-                        $shipment->cargo_id = null;
-                        $shipment->save();
-                    } else {
-                        $isNeedToCancelCourierCall = false;
-                    }
+        if (!$cargo->intake_date->isToday()) {
+            return;
+        }
 
-                    if ($shipment->status === ShipmentStatus::AWAITING_CONFIRMATION) {
-                        //Отправка повторного уведомления мерчанту
-                        $this->shipmentService->sendShipmentNotification($shipment);
-
-                        //Отправка повторного уведомления логистам
-                        $attributes = [
-                            'SHIPMENT_NUMBER' => $shipment->number,
-                            'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order_id),
-                            'LINK_CARGO' => sprintf('%s/orders/cargos/%d', config('app.admin_host'), $cargo->id),
-                        ];
-                        $this->notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logist_otpravlenie_need_processing', $attributes);
-                    }
-                }
-
-                if ($isNeedToCancelCourierCall) {
-                    $this->deliveryService->cancelCourierCall($cargo);
-                }
+        $cargo->loadMissing('shipments');
+        $isNeedToCancelCourierCall = true;
+        foreach ($cargo->shipments as $shipment) {
+            if ($shipment->isInvalid()) {
+                $shipment->cargo_id = null;
+                $shipment->save();
+            } else {
+                $isNeedToCancelCourierCall = false;
             }
+
+            if ($shipment->status === ShipmentStatus::AWAITING_CONFIRMATION) {
+                //Отправка повторного уведомления мерчанту
+                $this->shipmentService->sendShipmentNotification($shipment);
+
+                //Отправка повторного уведомления логистам
+                $attributes = [
+                    'SHIPMENT_NUMBER' => $shipment->number,
+                    'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order_id),
+                    'LINK_CARGO' => sprintf('%s/orders/cargos/%d', config('app.admin_host'), $cargo->id),
+                ];
+                $this->notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logist_otpravlenie_need_processing', $attributes);
+            }
+        }
+
+        if ($isNeedToCancelCourierCall) {
+            $this->deliveryService->cancelCourierCall($cargo);
         }
     }
 }
