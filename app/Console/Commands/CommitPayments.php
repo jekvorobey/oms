@@ -37,14 +37,13 @@ class CommitPayments extends Command
 
     private function commitHolded(Payment $payment): void
     {
-        logger()->info('Commit holded payment', ['paymentId' => $payment->id]);
         try {
             $paymentService = new PaymentService();
             $paymentService->capture($payment);
         } catch (\Throwable $e) {
             $payment->status = PaymentStatus::ERROR;
             $payment->save();
-            logger()->error('unable to commit payment', ['exception' => $e]);
+            report($e);
         }
     }
 }

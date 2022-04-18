@@ -661,6 +661,7 @@ class ShipmentsController extends Controller
             $ok = $shipmentItem->delete();
         } catch (\Throwable $e) {
             $ok = false;
+            report($e);
         }
 
         if (!$ok) {

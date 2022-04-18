@@ -442,6 +442,7 @@ class DeliveryService
                 }
             } catch (\Throwable $e) {
                 $cargo->error_xml_id = $e->getMessage();
+                report($e);
             }
         }
         if ($cargo->error_xml_id) {
@@ -621,6 +622,7 @@ class DeliveryService
         } catch (\Throwable $e) {
             $delivery->error_xml_id = $e->getMessage();
             $delivery->save();
+            report($e);
         }
     }
 
@@ -640,7 +642,7 @@ class DeliveryService
         //Информация о заказе
         $deliveryOrderDto = new DeliveryOrderDto();
         $deliveryOrderInputDto->order = $deliveryOrderDto;
-        $deliveryOrderDto->number = $delivery->number;
+        $deliveryOrderDto->number = $delivery->getDeliveryServiceNumber();
         $deliveryOrderDto->tracknumber = $delivery->tracknumber;
         $deliveryOrderDto->barcode = $delivery->barcode;
         $deliveryOrderDto->height = $delivery->height;
@@ -822,7 +824,7 @@ class DeliveryService
                         $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int) ceil($basketItem->product['weight']) : 0;
                         $deliveryOrderItemDto->cost = round($item->qty > 0 ? $basketItem->price / $item->qty : 0, 2);
                         if ($delivery->isPostPaid()) {
-                            $deliveryOrderItemDto->price = $basketItem->price;
+                            $deliveryOrderItemDto->price = $item->qty > 0 ? $basketItem->price / $item->qty : 0;
                         } else {
                             $deliveryOrderItemDto->price = 0;
                         }
@@ -854,7 +856,7 @@ class DeliveryService
                     $deliveryOrderItemDto->weight = isset($basketItem->product['weight']) ? (int) ceil($basketItem->product['weight']) : 0;
                     $deliveryOrderItemDto->cost = round($basketItem->qty > 0 ? $basketItem->cost / $basketItem->qty : 0, 2);
                     if ($delivery->isPostPaid()) {
-                        $deliveryOrderItemDto->price = $basketItem->price;
+                        $deliveryOrderItemDto->price = $item->qty > 0 ? $basketItem->price / $item->qty : 0;
                     } else {
                         $deliveryOrderItemDto->price = 0;
                     }
@@ -871,7 +873,7 @@ class DeliveryService
      */
     public function updateDeliveryStatusFromDeliveryService(): void
     {
-        $deliveries = Delivery::deliveriesInDelivery()->keyBy('number');
+        $deliveries = Delivery::deliveriesInDelivery()->keyBy(fn(Delivery $delivery) => $delivery->getDeliveryServiceNumber());
         $deliveries->load('order');
 
         if ($deliveries->isNotEmpty()) {
@@ -886,30 +888,44 @@ class DeliveryService
                         $deliveryServiceId,
                         $items->pluck('xml_id')->all()
                     );
-                    foreach ($deliveryOrderStatusDtos as $deliveryOrderStatusDto) {
-                        if ($deliveries->has($deliveryOrderStatusDto->number)) {
-                            $delivery = $deliveries[$deliveryOrderStatusDto->number];
-                            if ($deliveryOrderStatusDto->success) {
-                                if ($deliveryOrderStatusDto->status && $delivery->status != $deliveryOrderStatusDto->status) {
-                                    $delivery->status = $deliveryOrderStatusDto->status;
-                                    // для отправлений с постоплатой
-                                    if ($delivery->isPostPaid()) {
-                                        if ($delivery->status === DeliveryStatus::DONE) {
-                                            $delivery->payment_status = PaymentStatus::PAID;
-                                        } elseif (in_array($delivery->status, [DeliveryStatus::CANCELLATION_EXPECTED, DeliveryStatus::RETURNED])) {
-                                            $delivery->payment_status = PaymentStatus::TIMEOUT;
-                                        }
+                } catch (\Throwable $e) {
+                    report($e);
+                    continue;
+                }
+
+                foreach ($deliveryOrderStatusDtos as $deliveryOrderStatusDto) {
+                    if (!$deliveries->has($deliveryOrderStatusDto->number)) {
+                        continue;
+                    }
+
+                    $delivery = $deliveries[$deliveryOrderStatusDto->number];
+
+                    if ($deliveryOrderStatusDto->success) {
+                        try {
+                            if ($deliveryOrderStatusDto->status && $delivery->status != $deliveryOrderStatusDto->status) {
+                                $delivery->status = $deliveryOrderStatusDto->status;
+
+                                if ($delivery->isPostPaid()) {
+                                    if ($delivery->status === DeliveryStatus::DONE) {
+                                        $delivery->payment_status = PaymentStatus::PAID;
+                                    } elseif (in_array($delivery->status, [DeliveryStatus::CANCELLATION_EXPECTED, DeliveryStatus::RETURNED])) {
+                                        $delivery->payment_status = PaymentStatus::TIMEOUT;
                                     }
                                 }
-                                $delivery->setStatusXmlId(
-                                    $deliveryOrderStatusDto->status_xml_id,
-                                    new Carbon($deliveryOrderStatusDto->status_date)
-                                );
-                                $delivery->save();
                             }
+
+                            $delivery->setStatusXmlId(
+                                $deliveryOrderStatusDto->status_xml_id,
+                                new Carbon($deliveryOrderStatusDto->status_date)
+                            );
+
+                            $delivery->save();
+                        } catch (\Throwable $e) {
+                            logger()->error("Error when updating status of Delivery #{$delivery->id} ({$delivery->xml_id})");
+                            report($e);
+                            continue;
                         }
                     }
-                } catch (\Throwable $e) {
                 }
             }
         }
@@ -963,6 +979,7 @@ class DeliveryService
                 array_filter($shipment->packages->pluck('xml_id')->toArray())
             );
         } catch (\Throwable $e) {
+            report($e);
             return null;
         }
     }
@@ -987,6 +1004,7 @@ class DeliveryService
             $deliveryOrderService = resolve(DeliveryOrderService::class);
             return $deliveryOrderService->cdekReceiptOrder($delivery->delivery_service, $delivery->xml_id);
         } catch (\Throwable $e) {
+            report($e);
             return null;
         }
     }

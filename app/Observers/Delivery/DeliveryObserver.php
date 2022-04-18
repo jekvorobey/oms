@@ -111,36 +111,40 @@ class DeliveryObserver
                             || $delivery->status == DeliveryStatus::DONE
                             && $delivery->order->status == OrderStatus::DONE
                         ) {
-                            $notificationService->send(
-                                $customer,
-                                $this->createNotificationType(
-                                    $delivery->status,
-                                    $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
-                                ),
-                                (function () use ($delivery) {
-                                    switch ($delivery->status) {
-                                        case DeliveryStatus::DONE:
-                                        case DeliveryStatus::RETURNED:
-                                        case DeliveryStatus::ON_POINT_IN:
-                                        case DeliveryStatus::READY_FOR_RECIPIENT:
-                                            return app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery);
-                                    }
-
-                                    return [
-                                        'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->toDateString(),
-                                        'DELIVERY_TIME' => (function () use ($delivery) {
-                                            $time = Carbon::parse($delivery->pdd);
-
-                                            if ($time->isMidnight()) {
-                                                return '';
-                                            }
-
-                                            return $time->toTimeString();
-                                        })(),
-                                        'PART_PRICE' => $delivery->cost,
-                                    ];
-                                })()
+                            $notificationType = $this->createNotificationType(
+                                $delivery->status,
+                                $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
                             );
+
+                            if ($notificationType) {
+                                $notificationService->send(
+                                    $customer,
+                                    $notificationType,
+                                    (function () use ($delivery) {
+                                        switch ($delivery->status) {
+                                            case DeliveryStatus::DONE:
+                                            case DeliveryStatus::RETURNED:
+                                            case DeliveryStatus::ON_POINT_IN:
+                                            case DeliveryStatus::READY_FOR_RECIPIENT:
+                                                return app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery);
+                                        }
+
+                                        return [
+                                            'DELIVERY_DATE' => Carbon::parse($delivery->pdd)->toDateString(),
+                                            'DELIVERY_TIME' => (function () use ($delivery) {
+                                                $time = Carbon::parse($delivery->pdd);
+
+                                                if ($time->isMidnight()) {
+                                                    return '';
+                                                }
+
+                                                return $time->toTimeString();
+                                            })(),
+                                            'PART_PRICE' => $delivery->cost,
+                                        ];
+                                    })()
+                                );
+                            }
                         }
                     }
                 }
@@ -246,6 +250,7 @@ class DeliveryObserver
                 }
             }
         } catch (\Throwable $e) {
+            report($e);
             logger($e->getMessage(), $e->getTrace());
         }
     }
@@ -424,6 +429,13 @@ class DeliveryObserver
                 return;
             }
 
+            if ($delivery->payment_status === PaymentStatus::WAITING) {
+                $order->payment_status = PaymentStatus::WAITING;
+                $order->save();
+
+                return;
+            }
+
             $allDeliveriesHasPaid = true;
             $allDeliveriesHasTimeout = true;
             foreach ($order->deliveries as $orderDelivery) {
@@ -534,9 +546,12 @@ class DeliveryObserver
         }
     }
 
-    protected function createNotificationType(int $status, bool $postomat): string
+    protected function createNotificationType(int $status, bool $postomat): ?string
     {
         $type = $this->statusToType($status);
+        if (!$type) {
+            return null;
+        }
 
         $type .= '_bez_konsolidatsii';
 
@@ -549,7 +564,7 @@ class DeliveryObserver
         return $type;
     }
 
-    protected function statusToType(int $status): string
+    protected function statusToType(int $status): ?string
     {
         switch ($status) {
             case DeliveryStatus::ON_POINT_IN:
@@ -566,6 +581,8 @@ class DeliveryObserver
                 return 'status_dostavkivozvrashchena';
             case DeliveryStatus::PRE_ORDER:
                 return 'status_dostavkipredzakaz_ozhidaem_postupleniya_tovara';
+            default:
+                return null;
         }
     }
 

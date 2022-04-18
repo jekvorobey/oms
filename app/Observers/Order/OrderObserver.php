@@ -167,6 +167,15 @@ class OrderObserver
                             return null;
                         })())
                     );
+                } elseif ($order->payment_status === PaymentStatus::WAITING && $order->is_postpaid) {
+                    $delivery_method = !empty($order->deliveries()->first()->delivery_method)
+                        ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        : false;
+                    $notificationService->send(
+                        $user_id,
+                        $this->appendTypeModifiers('status_zakazaoformlen', $order->isConsolidatedDelivery(), $delivery_method),
+                        $this->generateNotificationVariables($order, self::OVERRIDE_SUCCESS)
+                    );
                 }
             }
 
@@ -179,11 +188,12 @@ class OrderObserver
             }
 
             if ($order->is_canceled != $order->getOriginal('is_canceled') && $order->is_canceled) {
+                $orderDelivery = $order->deliveries()->first();
                 $notificationService->send(
                     $user_id,
                     $this->createCancelledNotificationType(
                         $order->isConsolidatedDelivery(),
-                        $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        $orderDelivery ? $orderDelivery->delivery_method === DeliveryMethod::METHOD_PICKUP : false,
                     ),
                     $this->generateNotificationVariables($order, self::OVERRIDE_CANCEL)
                 );
@@ -545,11 +555,8 @@ class OrderObserver
         ?Delivery $override_delivery = null,
         bool $delivery_canceled = false
     ) {
+        /** @var CustomerService $customerService */
         $customerService = app(CustomerService::class);
-        $userService = app(UserService::class);
-
-        $customer = $customerService->customers($customerService->newQuery()->setFilter('id', '=', $order->customer_id))->first();
-        $user = $userService->users($userService->newQuery()->setFilter('id', '=', $customer->user_id))->first();
 
         /** @var Payment $payment */
         $payment = $order->payments->first();
@@ -591,6 +598,16 @@ class OrderObserver
             })
             ->unique('delivery_address')
             ->join('<br>');
+
+        /** @var UserService $userService */
+        $userService = app(UserService::class);
+
+        $customer = $customerService->customers($customerService->newQuery()->setFilter('id', '=', $order->customer_id))->first();
+        /** @var UserDto $user */
+        $user = $userService->users($userService->newQuery()->setFilter('id', '=', $customer->user_id))->first();
+
+        $receiverFullName = $order->receiver_name ?: $order->deliveries->first()->receiver_name;
+        $receiverPhone = $order->receiver_phone ?: str_replace(['(', ')', '-', ' '], '', $order->deliveries->first()->receiver_phone);
 
         if (empty($deliveryAddress)) {
             $deliveryAddress = 'ПВЗ';
@@ -724,6 +741,7 @@ class OrderObserver
         $params = [];
         $withoutParams = false;
         $hideShipmentsDate = false;
+        $receiverFullNameByParts = explode(' ', $receiverFullName);
 
         [$title, $text] = (function () use (
             $order,
@@ -981,8 +999,8 @@ class OrderObserver
         })();
 
         if (!$withoutParams) {
-            $params['Получатель'] = $this->parseName($user, $order);
-            $params['Телефон'] = static::formatNumber($order->customerPhone());
+            $params['Получатель'] = $receiverFullName;
+            $params['Телефон'] = static::formatNumber($receiverPhone);
             $params['Сумма заказа'] = sprintf('%s ₽', (int) $order->price);
             $params['Получение'] = $deliveryMethod;
             if ($deliveryDate !== null) {
@@ -992,7 +1010,7 @@ class OrderObserver
         }
 
         return [
-            'title' => sprintf($title, mb_strtoupper($this->parseName($user, $order))),
+            'title' => sprintf($title, mb_strtoupper($user->first_name)),
             'text' => $text,
             'button' => $button,
             'params' => $params,
@@ -1014,7 +1032,7 @@ class OrderObserver
                 sprintf('%s/profile', config('app.showcase_host'))
             ),
             'ORDER_ID' => $order->number,
-            'FULL_NAME' => sprintf('%s %s', $user->first_name, $user->last_name),
+            'FULL_NAME' => sprintf('%s %s', $receiverFullNameByParts[0], $receiverFullNameByParts[1] ?? ''),
             'LINK_ACCOUNT' => (string) static::shortenLink(sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id)),
             'LINK_PAY' => (string) static::shortenLink($link),
             'ORDER_DATE' => $order->created_at->toDateString(),
@@ -1092,7 +1110,7 @@ class OrderObserver
                         ->setFilter('id', $point_id)
                 )->first()->phone;
             })(),
-            'CUSTOMER_NAME' => $this->parseName($user, $order),
+            'CUSTOMER_NAME' => $this->parseName($user->full_name, $order),
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'RETURN_REPRICE' => (int) $order->price,
@@ -1134,17 +1152,13 @@ class OrderObserver
         return $date;
     }
 
-    public function parseName(UserDto $user, Order $order)
+    public function parseName(string $userFullName, Order $order)
     {
-        if (isset($user->first_name)) {
-            return $user->first_name;
+        if ($order->receiver_name) {
+            $words = explode(' ', $order->receiver_name);
+        } else {
+            $words = explode(' ', $userFullName);
         }
-
-        if (!$order->receiver_name) {
-            return '';
-        }
-
-        $words = explode($order->receiver_name, ' ');
 
         if (isset($words[1])) {
             return $words[1];

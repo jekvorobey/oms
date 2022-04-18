@@ -85,6 +85,7 @@ class OrderBonus extends AbstractModel
             $this->save();
             return true;
         } catch (\Throwable $exception) {
+            report($exception);
             return false;
         }
     }
