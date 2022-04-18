@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0dc64a60b8d2079550f2ee0480f407d9",
+    "content-hash": "64a18d2d4e9c704d61d1906dce7d4168",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -7554,17 +7554,11 @@
         },
         {
             "name": "yoomoney/yookassa-sdk-php",
-            "version": "2.2.6",
+            "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/yoomoney/yookassa-sdk-php.git",
-                "reference": "0bbd87d76310b3239b6e6de6534c9fab9e7db847"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/yoomoney/yookassa-sdk-php/zipball/0bbd87d76310b3239b6e6de6534c9fab9e7db847",
-                "reference": "0bbd87d76310b3239b6e6de6534c9fab9e7db847",
-                "shasum": ""
+                "url": "git@git.yiilab.com:ibt.studio/yookassa-sdk-php",
+                "reference": "fb189d0170d7e7661214c6ac8003b2625926392e"
             },
             "require": {
                 "ext-curl": "*",
@@ -7578,13 +7572,18 @@
                 "mockery/mockery": "^0.9.9",
                 "phpunit/phpunit": "^4.8.35 || ^5.7"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "YooKassa\\": "lib/"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\YooKassa\\": "tests/"
+                }
+            },
             "license": [
                 "MIT"
             ],
@@ -7603,11 +7602,7 @@
                 "yookassa",
                 "yoomoney"
             ],
-            "support": {
-                "issues": "https://github.com/yoomoney/yookassa-sdk-php/issues",
-                "source": "https://github.com/yoomoney/yookassa-sdk-php/tree/2.2.6"
-            },
-            "time": "2022-01-21T13:31:53+00:00"
+            "time": "2022-04-13T12:15:35+00:00"
         },
         {
             "name": "zendframework/zend-escaper",
@@ -10352,7 +10347,8 @@
         "iwengo/ibt-message-lib": 20,
         "iwengo/ibt-pim-lib": 20,
         "iwengo/ibt-store-lib": 20,
-        "letsgoi/laravel-health-check": 20
+        "letsgoi/laravel-health-check": 20,
+        "yoomoney/yookassa-sdk-php": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

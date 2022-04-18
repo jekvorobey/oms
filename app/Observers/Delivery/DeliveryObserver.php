@@ -429,6 +429,13 @@ class DeliveryObserver
                 return;
             }
 
+            if ($delivery->payment_status === PaymentStatus::WAITING) {
+                $order->payment_status = PaymentStatus::WAITING;
+                $order->save();
+
+                return;
+            }
+
             $allDeliveriesHasPaid = true;
             $allDeliveriesHasTimeout = true;
             foreach ($order->deliveries as $orderDelivery) {

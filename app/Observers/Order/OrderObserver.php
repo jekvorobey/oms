@@ -169,6 +169,15 @@ class OrderObserver
                             return null;
                         })())
                     );
+                } elseif ($order->payment_status === PaymentStatus::WAITING && $order->is_postpaid) {
+                    $delivery_method = !empty($order->deliveries()->first()->delivery_method)
+                        ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
+                        : false;
+                    $notificationService->send(
+                        $user_id,
+                        $this->appendTypeModifiers('status_zakazaoformlen', $order->isConsolidatedDelivery(), $delivery_method),
+                        $this->generateNotificationVariables($order, self::OVERRIDE_SUCCESS)
+                    );
                 }
             }
 
@@ -599,9 +608,8 @@ class OrderObserver
         /** @var UserDto $user */
         $user = $userService->users($userService->newQuery()->setFilter('id', '=', $customer->user_id))->first();
 
-        [$receiverFullName, $receiverPhone] = [$order->deliveries->first()->receiver_name, $order->deliveries->first()->receiver_phone];
-        /* Форматы хранения телефона в доставке и у пользователя отличаются, поэтому приводим к единому виду (как у пользователя) */
-        $receiverPhone = str_replace(['(', ')', '-', ' '], '', $receiverPhone);
+        $receiverFullName = $order->receiver_name ?: $order->deliveries->first()->receiver_name;
+        $receiverPhone = $order->receiver_phone ?: str_replace(['(', ')', '-', ' '], '', $order->deliveries->first()->receiver_phone);
 
         if (empty($deliveryAddress)) {
             $deliveryAddress = 'ПВЗ';
