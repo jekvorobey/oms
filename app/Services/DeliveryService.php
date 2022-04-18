@@ -225,7 +225,12 @@ class DeliveryService
      */
     public function checkAllShipmentProductsPacked(Shipment $shipment): bool
     {
-        $shipment->loadMissing('items.basketItem', 'packages.items');
+        $shipment->loadMissing([
+            'items.basketItem' => function ($q) {
+                $q->active();
+            },
+            'packages.items',
+        ]);
 
         $shipmentItems = [];
         foreach ($shipment->items as $shipmentItem) {
