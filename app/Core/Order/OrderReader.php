@@ -388,6 +388,7 @@ class OrderReader
         $modifiedRestQuery->removeFilter('max_price_for_current_discount');
 
         foreach ($modifiedRestQuery->filterIterator() as [$field, $op, $value]) {
+            logs('single')->info($field, [$op, $value]);
             if ($op == '=' && is_array($value)) {
                 $query->whereIn($field, $value);
             } else {
