@@ -18,6 +18,7 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DocumentService\OrderTicketsCreator;
 use App\Services\OrderService;
+use App\Services\PaymentService\PaymentService;
 use Carbon\Carbon;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Collection;
@@ -402,6 +403,29 @@ class OrdersController extends Controller
         }
 
         return response('', 204);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/capture-payment",
+     *     tags={"Заказы"},
+     *     description="Вручную подтвердить платеж",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description="Данные сохранены"),
+     *     @OA\Response(response="404", description="order not found"),
+     * )
+     *
+     * Вручную подтвердить платеж
+     * @throws \Exception
+     */
+    public function capturePayment(int $id, OrderService $orderService, PaymentService $paymentService): Response
+    {
+        $order = $orderService->getOrder($id);
+        $payment = $order->payments->last();
+
+        $paymentService->capture($payment);
+
+        return response()->noContent();
     }
 
     /**

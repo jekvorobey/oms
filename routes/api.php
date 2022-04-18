@@ -96,6 +96,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::put('return', 'OrdersController@returnCompleted');
             Route::put('refund-by-certificate', 'OrdersController@refundByCertificate');
             Route::put('pay', 'OrdersController@pay');
+            Route::put('capture-payment', 'OrdersController@capturePayment');
             Route::delete('', 'OrdersController@delete');
             Route::get('tickets', 'OrdersController@tickets');
         });
