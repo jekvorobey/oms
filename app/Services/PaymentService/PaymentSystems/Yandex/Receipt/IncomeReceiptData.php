@@ -57,7 +57,7 @@ class IncomeReceiptData extends ReceiptData
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $item->qty, $item->price);
+            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $item->qty, $item->unit_price);
             $receiptItems[] = new ReceiptItem($receiptItemInfo);
         }
 

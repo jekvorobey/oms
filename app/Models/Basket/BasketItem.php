@@ -58,6 +58,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property string $name - название товара
  * @property float $qty - кол-во товара
  * @property float|null $price - цена элемента корзины со скидкой
+ * @property float|null $unit_price - цена элемента корзины со скидкой за единицу
  * @property float|null $cost - стоимость элемента корзины без скидок (offerCost * qty)
  * @property int|null $bonus_spent - потраченные бонусы на элемент корзины ( * qty)
  * @property int|null $bonus_discount - оплачено бонусами ( * qty)
