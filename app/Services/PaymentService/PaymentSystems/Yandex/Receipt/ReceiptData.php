@@ -108,13 +108,8 @@ abstract class ReceiptData
         })->keyBy('id');
     }
 
-    protected function getReceiptItemInfo(
-        BasketItem $item,
-        ?object $offerInfo,
-        ?object $merchant,
-        float $qty,
-        float $amount
-    ): array {
+    protected function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant, float $qty): array
+    {
         $paymentMode = $this->getItemPaymentMode($item);
         $paymentSubject = $this->getItemPaymentSubject($item);
         $agentType = $this->getItemAgentType($item);
@@ -124,7 +119,7 @@ abstract class ReceiptData
             'description' => $item->name,
             'quantity' => $qty,
             'amount' => [
-                'value' => $amount,
+                'value' => $item->unit_price,
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => $vatCode,
