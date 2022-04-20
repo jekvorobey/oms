@@ -5,8 +5,8 @@ namespace App\Http\Controllers\V1\Delivery;
 use App\Http\Controllers\Controller;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
-use App\Models\Order\Order;
 use App\Services\DeliveryService as OmsDeliveryService;
+use App\Services\OrderService;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
@@ -25,7 +25,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class DeliveryController
@@ -257,13 +256,9 @@ class DeliveryController extends Controller
      * )
      * Создать доставку
      */
-    public function create(int $orderId, Request $request): JsonResponse
+    public function create(int $orderId, Request $request, OrderService $orderService): JsonResponse
     {
-        /** @var Order $order */
-        $order = Order::find($orderId);
-        if (!$order) {
-            throw new NotFoundHttpException('order not found');
-        }
+        $orderService->getOrder($orderId);
 
         $data = $request->all();
         $validator = Validator::make($data, $this->inputValidators());
@@ -345,9 +340,6 @@ class DeliveryController extends Controller
             'orderReturnReason' => 'required|integer|exists:order_return_reasons,id',
         ]);
         $delivery = $deliveryService->getDelivery($id);
-        if (!$delivery) {
-            throw new NotFoundHttpException('delivery not found');
-        }
         if (!$deliveryService->cancelDelivery($delivery, $data['orderReturnReason'])) {
             throw new HttpException(500);
         }
@@ -370,9 +362,6 @@ class DeliveryController extends Controller
     public function saveDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
     {
         $delivery = $deliveryService->getDelivery($id);
-        if (!$delivery) {
-            throw new NotFoundHttpException('delivery not found');
-        }
         $deliveryService->saveDeliveryOrder($delivery);
 
         return response('', 204);
@@ -393,9 +382,6 @@ class DeliveryController extends Controller
     public function cancelDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
     {
         $delivery = $deliveryService->getDelivery($id);
-        if (!$delivery) {
-            throw new NotFoundHttpException('delivery not found');
-        }
         $deliveryService->cancelDeliveryOrder($delivery);
 
         return response('', 204);
@@ -442,9 +428,6 @@ class DeliveryController extends Controller
             'status_date' => 'required|string',
         ]);
         $delivery = $deliveryService->getDeliveryByXmlId($data['xml_id']);
-        if (!$delivery) {
-            throw new NotFoundHttpException('delivery not found');
-        }
         $deliveryService->updateDeliveryStatus($delivery, $data);
 
         return response('', 204);

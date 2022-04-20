@@ -3,6 +3,7 @@
 namespace App\Observers\Basket;
 
 use App\Models\Basket\BasketItem;
+use Exception;
 use Pim\Services\SearchService\SearchService;
 
 /**
@@ -65,7 +66,7 @@ class BasketItemObserver
 
     /**
      * Handle the basket item "deleting" event.
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleting(BasketItem $basketItem)
     {

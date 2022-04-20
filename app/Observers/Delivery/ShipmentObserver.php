@@ -10,6 +10,7 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\HistoryType;
 use App\Services\DeliveryService;
 use App\Services\DeliveryServiceInvalidConditions;
+use App\Services\ShipmentPackageService;
 use App\Services\ShipmentService;
 use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
@@ -125,10 +126,10 @@ class ShipmentObserver
             $shipment->status != $shipment->getOriginal('status') &&
             $shipment->status == ShipmentStatus::ASSEMBLED
         ) {
-            /** @var DeliveryService $deliveryService */
-            $deliveryService = resolve(DeliveryService::class);
+            /** @var ShipmentPackageService $shipmentPackageService */
+            $shipmentPackageService = resolve(ShipmentPackageService::class);
 
-            return $deliveryService->checkAllShipmentProductsPacked($shipment);
+            return $shipmentPackageService->checkAllShipmentProductsPacked($shipment);
         }
 
         return true;
@@ -241,9 +242,9 @@ class ShipmentObserver
     protected function add2Cargo(Shipment $shipment): void
     {
         try {
-            /** @var DeliveryService $deliveryService */
-            $deliveryService = resolve(DeliveryService::class);
-            $deliveryService->addShipment2Cargo($shipment);
+            /** @var ShipmentService $shipmentService */
+            $shipmentService = resolve(ShipmentService::class);
+            $shipmentService->addShipment2Cargo($shipment);
         } catch (DeliveryServiceInvalidConditions $e) {
             logger(['addShipment2Cargo error' => $e->getMessage()]);
         } catch (\Throwable $e) {

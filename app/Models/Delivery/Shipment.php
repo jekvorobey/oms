@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Pim\Core\PimException;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
@@ -309,7 +310,7 @@ class Shipment extends AbstractModel
      */
     public function getPackageQtyAttribute(): int
     {
-        return (int) $this->packages()->count();
+        return $this->packages()->count();
     }
 
     /**
@@ -414,7 +415,7 @@ class Shipment extends AbstractModel
     }
 
     /**
-     * @throws \Pim\Core\PimException
+     * @throws PimException
      */
     public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
     {

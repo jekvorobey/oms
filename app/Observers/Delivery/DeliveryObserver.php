@@ -13,8 +13,8 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 use App\Observers\Order\OrderObserver;
-use App\Services\DeliveryService;
 use App\Services\OrderService;
+use App\Services\ShipmentService;
 use Carbon\Carbon;
 use Exception;
 use Greensight\Logistics\Dto\Lists\DeliveryService as DeliveryServiceDto;
@@ -364,14 +364,14 @@ class DeliveryObserver
     {
         if ($delivery->is_canceled && $delivery->is_canceled != $delivery->getOriginal('is_canceled')) {
             $delivery->loadMissing('shipments');
-            /** @var DeliveryService $deliveryService */
-            $deliveryService = resolve(DeliveryService::class);
+            /** @var ShipmentService $shipmentService */
+            $shipmentService = resolve(ShipmentService::class);
             foreach ($delivery->shipments as $shipment) {
                 if ($shipment->is_canceled) {
                     continue;
                 }
 
-                $deliveryService->cancelShipment($shipment, $delivery->return_reason_id);
+                $shipmentService->cancelShipment($shipment, $delivery->return_reason_id);
             }
         }
     }
@@ -683,6 +683,7 @@ class DeliveryObserver
 
     public function testSend()
     {
+        /** @var Delivery $delivery */
         $delivery = Delivery::query()
             ->where('delivery_method', DeliveryMethod::METHOD_DELIVERY)
             ->where('status', '!=', DeliveryStatus::DONE)

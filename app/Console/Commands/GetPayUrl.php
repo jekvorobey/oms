@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Order\Order;
 use App\Services\PaymentService\PaymentService;
+use Exception;
 use Illuminate\Console\Command;
 
 /**
@@ -27,7 +28,7 @@ class GetPayUrl extends Command
 
     /**
      * Execute the console command.
-     * @throws \Exception
+     * @throws Exception
      */
     public function handle(PaymentService $paymentService)
     {
@@ -35,7 +36,7 @@ class GetPayUrl extends Command
         /** @var Order $order */
         $order = Order::query()->where('id', $orderId)->with('payments')->first();
         if (!$order) {
-            throw new \Exception("Заказ с id=$orderId не найден");
+            throw new Exception("Заказ с id=$orderId не найден");
         }
 
         dump($paymentService->start($order->payments->first()->id, 'random'));
