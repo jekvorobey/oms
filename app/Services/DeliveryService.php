@@ -42,7 +42,6 @@ use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationSe
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
-use Http\Client\Exception\HttpException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
