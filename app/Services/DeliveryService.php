@@ -215,10 +215,7 @@ class DeliveryService
             ->buildFromCancelBasketItem($basketItem->basket->order, $basketItem, $qtyToCancel, $oldPrice);
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
-        $orderReturn = $orderReturnService->create($basketItemReturnDto);
-        if (!$orderReturn) {
-            throw new Exception('Order Return not created');
-        }
+        $orderReturnService->create($basketItemReturnDto);
     }
 
     /**
