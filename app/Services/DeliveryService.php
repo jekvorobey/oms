@@ -183,7 +183,7 @@ class DeliveryService
         float $qtyToCancel,
         int $cancelBy,
         int $returnReasonId
-    ): bool {
+    ): void {
         /** @var Shipment $shipment */
         $shipment = Shipment::find($shipmentId);
         if (!$qtyToCancel && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
@@ -215,9 +215,7 @@ class DeliveryService
             ->buildFromCancelBasketItem($basketItem->basket->order, $basketItem, $qtyToCancel, $oldPrice);
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
-        $orderReturn = $orderReturnService->create($basketItemReturnDto);
-
-        return (bool) $orderReturn;
+        $orderReturnService->create($basketItemReturnDto);
     }
 
     /**

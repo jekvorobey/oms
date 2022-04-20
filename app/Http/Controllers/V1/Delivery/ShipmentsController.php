@@ -705,16 +705,13 @@ class ShipmentsController extends Controller
         ]);
 
         try {
-            $ok = $deliveryService->cancelShipmentItem(
+            $deliveryService->cancelShipmentItem(
                 $shipmentId,
                 $basketItemId,
                 $data['qty'],
                 $data['canceled_by'],
                 $data['return_reason_id'],
             );
-            if (!$ok) {
-                throw new HttpException(500);
-            }
 
             return response('', 204);
         } catch (\Throwable $e) {
