@@ -77,7 +77,6 @@ class BasketItemObserver
     {
         $this->createOrderReturn($basketItem);
         $this->setIsCanceledToShipment($basketItem);
-        $this->returnBonusesWhenCancelled($basketItem);
     }
 
     /**
@@ -85,11 +84,7 @@ class BasketItemObserver
      */
     private function createOrderReturn(BasketItem $basketItem): void
     {
-        if (
-            $basketItem->wasChanged('qty')
-            && $basketItem->qty != $basketItem->getOriginal('qty')
-            && $basketItem->return_reason_id
-        ) {
+        if ($basketItem->wasChanged('qty') && $basketItem->wasChanged('qty_cancelled')) {
             $qtyToReturn = $basketItem->getOriginal('qty') - $basketItem->qty;
             $priceToReturn = $basketItem->getOriginal('price') - $basketItem->price;
             $basketItemReturnDto = (new OrderReturnDtoBuilder())
@@ -140,19 +135,8 @@ class BasketItemObserver
 
     private function returnBonuses(BasketItem $basketItem): void
     {
-        if ($basketItem->bonus_spent != $basketItem->getOriginal('bonus_spent') && !$basketItem->is_canceled) {
-            $spent = $basketItem->getOriginal('bonus_spent') - $basketItem->bonus_spent;
-            $order = $basketItem->basket->order;
-            /** @var CustomerService $customerService */
-            $customerService = resolve(CustomerService::class);
-            $customerService->returnDebitingBonus($order->customer_id, $order->id, $spent);
-        }
-    }
-
-    private function returnBonusesWhenCancelled(BasketItem $basketItem): void
-    {
-        if ($basketItem->wasChanged('is_canceled') && $basketItem->is_canceled) {
-            $spent = $basketItem->bonus_spent;
+        if ($basketItem->bonus_spent != $basketItem->getOriginal('bonus_spent')) {
+            $spent = $basketItem->is_canceled ? $basketItem->bonus_spent : $basketItem->getOriginal('bonus_spent') - $basketItem->bonus_spent;
             $order = $basketItem->basket->order;
             /** @var CustomerService $customerService */
             $customerService = resolve(CustomerService::class);

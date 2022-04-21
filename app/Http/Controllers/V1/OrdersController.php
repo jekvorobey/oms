@@ -610,7 +610,7 @@ class OrdersController extends Controller
         }
 
         $orders = $builder->with([
-            'basketItems' => function ($q) {
+            'basket.items' => function ($q) {
                 $q->active();
             },
             'discounts',
