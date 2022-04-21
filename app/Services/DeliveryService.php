@@ -201,7 +201,6 @@ class DeliveryService
             throw new DeliveryServiceInvalidConditions('Cancel qty can\'t be more than basket item qty');
         }
         $newQty = $basketItem->qty - $qtyToCancel;
-        $oldPrice = $basketItem->price;
         $basketItem->update(
             [
                 'qty' => $newQty,
@@ -211,11 +210,6 @@ class DeliveryService
                 'return_reason_id' => $returnReasonId,
             ]
         );
-        $basketItemReturnDto = (new OrderReturnDtoBuilder())
-            ->buildFromCancelBasketItem($basketItem->basket->order, $basketItem, $qtyToCancel, $oldPrice);
-        /** @var OrderReturnService $orderReturnService */
-        $orderReturnService = resolve(OrderReturnService::class);
-        $orderReturnService->create($basketItemReturnDto);
     }
 
     /**
@@ -1059,7 +1053,7 @@ class DeliveryService
         if ($orderReturnDto) {
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);
-            $orderReturnService->create($orderReturnDto);
+            rescue(fn() => $orderReturnService->create($orderReturnDto));
         }
 
         if ($shipment->status > ShipmentStatus::CREATED) {

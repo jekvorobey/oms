@@ -115,8 +115,8 @@ class OrderReturnDtoBuilder
     public function buildFromCancelBasketItem(
         Order $order,
         BasketItem $basketItem,
-        float $qtyToCancel,
-        float $oldPrice
+        float $qtyToReturn,
+        float $priceToReturn
     ): OrderReturnDto {
         $orderReturnDto = new OrderReturnDto();
         $orderReturnDto->order_id = $order->id;
@@ -125,9 +125,9 @@ class OrderReturnDtoBuilder
 
         $orderReturnItemDto = new OrderReturnItemDto();
         $orderReturnItemDto->basket_item_id = $basketItem->id;
-        $orderReturnItemDto->qty = $qtyToCancel;
+        $orderReturnItemDto->qty = $qtyToReturn;
         $orderReturnItemDto->ticket_ids = $basketItem->getTicketIds();
-        $orderReturnItemDto->price = $oldPrice - $basketItem->price;
+        $orderReturnItemDto->price = $priceToReturn;
 
         $orderReturnDto->items->push($orderReturnItemDto);
 

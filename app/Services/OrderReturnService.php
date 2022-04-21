@@ -20,6 +20,7 @@ use MerchantManagement\Dto\MerchantBillOperation\ShipmentStatusDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Services\OfferService\OfferService;
+use Throwable;
 
 /**
  * Class OrderReturnService
@@ -29,9 +30,9 @@ class OrderReturnService
 {
     /**
      * Создать возврат по заказу
-     * @throws Exception
+     * @throws Exception|Throwable
      */
-    public function create(OrderReturnDto $orderReturnDto): ?OrderReturn
+    public function create(OrderReturnDto $orderReturnDto): OrderReturn
     {
         /** @var Order $order */
         $order = Order::query()->findOrFail($orderReturnDto->order_id)->load('basket.items');
@@ -39,7 +40,7 @@ class OrderReturnService
         $basketItemIds = $orderReturnDto->items->pluck('basket_item_id');
 
         if (!$this->needCreateOrderReturn($order, $orderReturnDto)) {
-            return null;
+            throw new Exception('Невозможно создать отмену');
         }
 
         /** @var Collection|BasketItem[] $basketItems */

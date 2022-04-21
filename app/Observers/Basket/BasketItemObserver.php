@@ -5,6 +5,8 @@ namespace App\Observers\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
 use App\Services\DeliveryService;
+use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
+use App\Services\OrderReturnService;
 use Exception;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Pim\Services\SearchService\SearchService;
@@ -73,8 +75,29 @@ class BasketItemObserver
      */
     public function updated(BasketItem $basketItem)
     {
+        $this->createOrderReturn($basketItem);
         $this->setIsCanceledToShipment($basketItem);
         $this->returnBonusesWhenCancelled($basketItem);
+    }
+
+    /**
+     * Создать возврат по заказу
+     */
+    private function createOrderReturn(BasketItem $basketItem): void
+    {
+        if (
+            $basketItem->wasChanged('qty')
+            && $basketItem->qty != $basketItem->getOriginal('qty')
+            && $basketItem->return_reason_id
+        ) {
+            $qtyToReturn = $basketItem->getOriginal('qty') - $basketItem->qty;
+            $priceToReturn = $basketItem->getOriginal('price') - $basketItem->price;
+            $basketItemReturnDto = (new OrderReturnDtoBuilder())
+                ->buildFromCancelBasketItem($basketItem->basket->order, $basketItem, $qtyToReturn, $priceToReturn);
+            /** @var OrderReturnService $orderReturnService */
+            $orderReturnService = resolve(OrderReturnService::class);
+            rescue(fn() => $orderReturnService->create($basketItemReturnDto));
+        }
     }
 
     /**
