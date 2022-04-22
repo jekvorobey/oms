@@ -11,6 +11,7 @@ use App\Services\PublicEventService\Cart\PublicEventCartRepository;
 use App\Services\PublicEventService\Cart\PublicEventCartStruct;
 use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -51,19 +52,25 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * Class BasketItem
  * @package App\Models
  *
- * @property int $basket_id - id корзины
- * @property int $offer_id - id предложения мерчанта
+ * @property int|null $basket_id - id корзины
+ * @property int|null $offer_id - id предложения мерчанта
  * @property int $type - тип товара (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER|Basket::TYPE_CERTIFICATE)
  * @property string $name - название товара
  * @property float $qty - кол-во товара
  * @property float|null $price - цена элемента корзины со скидкой
+ * @property float|null $unit_price - цена элемента корзины со скидкой за единицу
  * @property float|null $cost - стоимость элемента корзины без скидок (offerCost * qty)
- * @property int $bonus_spent - потраченные бонусы на элемент корзины ( * qty)
- * @property int $bonus_discount - оплачено бонусами ( * qty)
+ * @property int|null $bonus_spent - потраченные бонусы на элемент корзины ( * qty)
+ * @property int|null $bonus_discount - оплачено бонусами ( * qty)
  * @property int|null $referrer_id - ID РП, по чьей ссылке товар был добавлен в корзину
  * @property array $product - данные зависящие от типа товара
  * @property int|null $bundle_id - id бандла, в который входит этот товар
  * @property int|null $bundle_item_id - id элемента бандла, в который входит товар
+ * @property bool $is_returned - флаг возврата товара
+ * @property bool $is_canceled - флаг отмены товара
+ * @property int|null $canceled_by - id пользователя отменившего товар
+ * @property float|null $qty_canceled - кол-во отменённого товара
+ * @property int|null $return_reason_id - id причины отмены
  *
  * @property-read Basket $basket
  * @property-read ShipmentItem $shipmentItem
@@ -115,6 +122,14 @@ class BasketItem extends AbstractModel
     protected function historyMainModel(): ?Order
     {
         return $this->basket->order;
+    }
+
+    /**
+     * Диапазон запроса, не включающий отменные и возвращенные товары.
+     */
+    public function scopeActive(Builder $query): void
+    {
+        $query->where('is_returned', false)->where('is_canceled', false);
     }
 
     /**
@@ -298,5 +313,42 @@ class BasketItem extends AbstractModel
                     ->absoluteUrl();
             })
             ->toArray();
+    }
+
+    public function isReturned(): bool
+    {
+        return $this->is_returned;
+    }
+
+    public function isCanceled(): bool
+    {
+        return $this->is_canceled;
+    }
+
+    /**
+     * Пересчитать цену элемента корзины
+     */
+    public function pricesRecalc(bool $save = true): void
+    {
+        if ($this->price) {
+            $price = $this->price / $this->getOriginal('qty') * $this->qty;
+            $this->price = $price;
+        }
+        if ($this->cost) {
+            $cost = $this->cost / $this->getOriginal('qty') * $this->qty;
+            $this->cost = $cost;
+        }
+        if ($this->bonus_spent) {
+            $bonusSpent = $this->bonus_spent / $this->getOriginal('qty') * $this->qty;
+            $this->bonus_spent = $bonusSpent;
+        }
+        if ($this->bonus_discount) {
+            $bonusDiscount = $this->bonus_discount / $this->getOriginal('qty') * $this->qty;
+            $this->bonus_discount = $bonusDiscount;
+        }
+
+        if ($save) {
+            $this->save();
+        }
     }
 }
