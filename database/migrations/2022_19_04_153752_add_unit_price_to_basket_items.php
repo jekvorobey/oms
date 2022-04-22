@@ -20,7 +20,7 @@ class AddUnitPriceToBasketItems extends Migration
             $table->decimal('unit_price', 18, 4)->unsigned()->after('price')->nullable();
         });
 
-        DB::table(self::TABLE_NAME)->select('id', 'qty', 'price')->each(function ($basketItem) {
+        DB::table(self::TABLE_NAME)->select('id', 'qty', 'price')->orderBy('id')->each(function ($basketItem) {
             if ($basketItem->price != 0 && $basketItem->qty != 0) {
                 DB::table(self::TABLE_NAME)
                     ->where('id', $basketItem->id)
