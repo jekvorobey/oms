@@ -189,7 +189,7 @@ class DeliveryService
         if (!$qtyToCancel && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
             throw new DeliveryServiceInvalidConditions('Shipment item not found');
         }
-        if ($shipment->status > DeliveryStatus::ASSEMBLING) {
+        if ($shipment->status > DeliveryStatus::SHIPPED) {
             throw new DeliveryServiceInvalidConditions('Shipment status is exceeded');
         }
         /** @var BasketItem $basketItem */
