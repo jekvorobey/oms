@@ -15,6 +15,8 @@ use App\Services\Dto\Internal\PublicEventOrder;
 use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
 use App\Services\PublicEventService\Email\PublicEventCartStruct;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
@@ -46,7 +48,7 @@ class OrderService
     /**
      * Получить объект заказа по его id
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function getOrder(int $orderId): Order
     {
@@ -56,14 +58,14 @@ class OrderService
     /**
      * Вручную оплатить заказ.
      * Примечание: оплата по заказам автоматически должна поступать от платежной системы!
-     * @throws \Exception
+     * @throws Exception
      */
     public function pay(Order $order): bool
     {
         /** @var Payment $payment */
         $payment = $order->payments->first();
         if (!$payment) {
-            throw new \Exception('Оплата для заказа не найдена');
+            throw new Exception('Оплата для заказа не найдена');
         }
         /** @var PaymentService $paymentService */
         $paymentService = resolve(PaymentService::class);
@@ -89,12 +91,12 @@ class OrderService
 
     /**
      * Отменить заказ
-     * @throws \Exception
+     * @throws Exception
      */
     public function cancel(Order $order, ?int $orderReturnReasonId = null): bool
     {
         if ($order->status >= OrderStatus::DONE) {
-            throw new \Exception('Заказ, начиная со статуса "Выполнен", нельзя отменить');
+            throw new Exception('Заказ, начиная со статуса "Выполнен", нельзя отменить');
         }
 
         $order->is_canceled = true;
@@ -120,17 +122,18 @@ class OrderService
 
     /**
      * Создать возврат для выполненного заказа
+     * @throws Exception
      */
     public function returnCompletedOrder(Order $order, ?array $basketItemIds = null): bool
     {
         if (!$order->isProductOrder()) {
-            throw new \Exception('Возврат возможен только для заказа товаров');
+            throw new Exception('Возврат возможен только для заказа товаров');
         }
         if ($order->is_canceled) {
-            throw new \Exception('Заказ уже отменен');
+            throw new Exception('Заказ уже отменен');
         }
         if ($order->is_returned) {
-            throw new \Exception('Заказ уже возвращен');
+            throw new Exception('Заказ уже возвращен');
         }
 
         $basketItems = $this->getNotReturnedBasketItemsFromOrder($order);
@@ -174,7 +177,7 @@ class OrderService
 
         $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $basketItems);
 
-        return $orderReturnService->create($orderReturnDtoItems);
+        return rescue(fn() => $orderReturnService->create($orderReturnDtoItems));
     }
 
     protected function createOrderReturnForDelivery(Order $order): ?OrderReturn
@@ -190,7 +193,7 @@ class OrderService
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
 
-        return $orderReturnService->create($orderReturnDto);
+        return rescue(fn() => $orderReturnService->create($orderReturnDto));
     }
 
     /**
