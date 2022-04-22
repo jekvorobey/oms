@@ -77,6 +77,7 @@ class BasketItemObserver
     {
         $this->createOrderReturn($basketItem);
         $this->setIsCanceledToShipment($basketItem);
+        $this->setOrderIsPartiallyCancelled($basketItem);
     }
 
     /**
@@ -92,6 +93,20 @@ class BasketItemObserver
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);
             rescue(fn() => $orderReturnService->create($basketItemReturnDto));
+        }
+    }
+
+    /**
+     * Установка заказу флага частичной отмены
+     */
+    private function setOrderIsPartiallyCancelled(BasketItem $basketItem): void
+    {
+        if ($basketItem->wasChanged('qty_canceled') && $basketItem->qty_canceled) {
+            $order = $basketItem->basket->order;
+            if (!$order->is_canceled) {
+                $order->is_partially_cancelled = true;
+                $order->save();
+            }
         }
     }
 
