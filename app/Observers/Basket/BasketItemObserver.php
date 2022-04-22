@@ -136,7 +136,7 @@ class BasketItemObserver
     private function returnBonuses(BasketItem $basketItem): void
     {
         if ($basketItem->bonus_spent != $basketItem->getOriginal('bonus_spent')) {
-            $spent = $basketItem->is_canceled ? $basketItem->bonus_spent : $basketItem->getOriginal('bonus_spent') - $basketItem->bonus_spent;
+            $spent = $basketItem->getOriginal('bonus_spent') - $basketItem->bonus_spent;
             $order = $basketItem->basket->order;
             /** @var CustomerService $customerService */
             $customerService = resolve(CustomerService::class);

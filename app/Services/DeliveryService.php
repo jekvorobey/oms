@@ -221,8 +221,10 @@ class DeliveryService
 
         $shipmentItems = [];
         foreach ($shipment->items as $shipmentItem) {
-            $shipmentItems[$shipmentItem->basket_item_id] =
-                $shipmentItem->basketItem && $shipmentItem->basketItem()->active() ? $shipmentItem->basketItem->qty : null;
+            $shipmentItems[$shipmentItem->basket_item_id] = null;
+            if ($shipmentItem->basketItem && !$shipmentItem->basketItem->isCanceled() && !$shipmentItem->basketItem->isReturned()) {
+                $shipmentItems[$shipmentItem->basket_item_id] = $shipmentItem->basketItem->qty;
+            }
         }
 
         foreach ($shipment->packages as $package) {
