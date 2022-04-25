@@ -91,15 +91,15 @@ class ShipmentPackageService
 
             if ($basketItem->qty < $qty) {
                 throw new DeliveryServiceInvalidConditions('Shipment package qty can\'t be more than basket item qty');
-            } else {
-                if (is_null($shipmentPackageItem)) {
-                    $shipmentPackageItem = new ShipmentPackageItem();
-                }
-                $shipmentPackageItem->updateOrCreate([
-                    'shipment_package_id' => $shipmentPackageId,
-                    'basket_item_id' => $basketItemId,
-                ], ['qty' => $qty, 'set_by' => $setBy]);
             }
+
+            if (is_null($shipmentPackageItem)) {
+                $shipmentPackageItem = new ShipmentPackageItem();
+            }
+            $shipmentPackageItem->updateOrCreate([
+                'shipment_package_id' => $shipmentPackageId,
+                'basket_item_id' => $basketItemId,
+            ], ['qty' => $qty, 'set_by' => $setBy]);
         }
 
         return $ok;

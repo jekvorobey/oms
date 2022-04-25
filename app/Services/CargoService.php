@@ -86,9 +86,9 @@ class CargoService
             $this->deliveryService->cancelCourierCall($cargo);
 
             return true;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**

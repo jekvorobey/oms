@@ -690,7 +690,7 @@ class ShipmentsController extends Controller
         int $shipmentId,
         int $basketItemId,
         Request $request,
-        DeliveryService $deliveryService
+        ShipmentService $shipmentService
     ): Response {
         $data = $this->validate($request, [
             'qty' => ['required', 'numeric'],
@@ -699,7 +699,7 @@ class ShipmentsController extends Controller
         ]);
 
         try {
-            $deliveryService->cancelShipmentItem(
+            $shipmentService->cancelShipmentItem(
                 $shipmentId,
                 $basketItemId,
                 $data['qty'],

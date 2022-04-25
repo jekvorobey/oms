@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
+use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
 use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
@@ -205,6 +207,45 @@ class ShipmentService
         }
 
         return true;
+    }
+
+    /**
+     * Отменить элемент (товар с одного склада одного мерчанта) отправления
+     * @throws Exception
+     */
+    public function cancelShipmentItem(
+        int $shipmentId,
+        int $basketItemId,
+        float $qtyToCancel,
+        int $cancelBy,
+        int $returnReasonId
+    ): void {
+        /** @var Shipment $shipment */
+        $shipment = Shipment::find($shipmentId);
+        if (!$qtyToCancel && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
+            throw new DeliveryServiceInvalidConditions('Shipment item not found');
+        }
+        if ($shipment->status > DeliveryStatus::ASSEMBLED) {
+            throw new DeliveryServiceInvalidConditions('Shipment status is exceeded');
+        }
+        /** @var BasketItem $basketItem */
+        $basketItem = BasketItem::find($basketItemId);
+        if ($basketItem->isCanceled()) {
+            throw new DeliveryServiceInvalidConditions('Basket item is already canceled');
+        }
+        if ($basketItem->qty < $qtyToCancel) {
+            throw new DeliveryServiceInvalidConditions('Cancel qty can\'t be more than basket item qty');
+        }
+        $newQty = $basketItem->qty - $qtyToCancel;
+        $basketItem->update(
+            [
+                'qty' => $newQty,
+                'qty_canceled' => $basketItem->qty_canceled + $qtyToCancel,
+                'is_canceled' => $newQty == 0,
+                'canceled_by' => $cancelBy,
+                'return_reason_id' => $returnReasonId,
+            ]
+        );
     }
 
     /**

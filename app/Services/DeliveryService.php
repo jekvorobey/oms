@@ -225,9 +225,9 @@ class DeliveryService
                     $cargo->intake_time_from = $deliveryCargoDto->time_start;
                     $cargo->intake_time_to = $deliveryCargoDto->time_end;
                     break;
-                } else {
-                    $cargo->error_xml_id = $courierCallOutputDto->message;
                 }
+
+                $cargo->error_xml_id = $courierCallOutputDto->message;
             } catch (Throwable $e) {
                 $cargo->error_xml_id = $e->getMessage();
                 report($e);
