@@ -4,9 +4,9 @@ namespace App\Observers\Basket;
 
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
-use App\Services\DeliveryService;
 use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
 use App\Services\OrderReturnService;
+use App\Services\ShipmentService;
 use Exception;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Pim\Services\SearchService\SearchService;
@@ -132,9 +132,9 @@ class BasketItemObserver
             }
 
             if ($allBasketItemsCanceled) {
-                /** @var DeliveryService $deliveryService */
-                $deliveryService = resolve(DeliveryService::class);
-                $deliveryService->cancelShipment($shipment, $basketItem->return_reason_id);
+                /** @var ShipmentService $shipmentService */
+                $shipmentService = resolve(ShipmentService::class);
+                $shipmentService->cancelShipment($shipment, $basketItem->return_reason_id);
             }
         }
     }
