@@ -209,7 +209,7 @@ class PaymentService
         }
 
         $paymentInfo = $paymentSystem->paymentInfo($payment);
-        if (!$paymentInfo && $payment->sum > 0 && $payment->refund_sum > 0) {
+        if (!$paymentInfo && !$payment->sum > 0 && !$payment->refund_sum > 0) {
             $this->timeout($payment);
             return;
         }
