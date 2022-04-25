@@ -1112,7 +1112,7 @@ class OrderObserver
                         ->setFilter('id', $point_id)
                 )->first()->phone;
             })(),
-            'CUSTOMER_NAME' => $this->parseName($user->full_name, $order),
+            'CUSTOMER_NAME' => $this->parseName($user, $order),
             'ORDER_CONTACT_NUMBER' => $order->number,
             'ORDER_TEXT' => optional($order->deliveries->first())->delivery_address['comment'] ?? '',
             'RETURN_REPRICE' => (int) $order->price,
@@ -1154,12 +1154,12 @@ class OrderObserver
         return $date;
     }
 
-    public function parseName(string $userFullName, Order $order)
+    public function parseName(UserDto $user, Order $order)
     {
         if ($order->receiver_name) {
             $words = explode(' ', $order->receiver_name);
         } else {
-            $words = explode(' ', $userFullName);
+            $words = explode(' ', $user->full_name);
         }
 
         if (isset($words[1])) {

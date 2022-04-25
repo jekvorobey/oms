@@ -295,6 +295,7 @@ class CheckoutOrder
             }
             $item->cost = $priceItem->cost;
             $item->price = $priceItem->price;
+            $item->unit_price = $item->qty != 0 ? (float) $priceItem->price / $item->qty : 0;
             $item->bonus_spent = $priceItem->bonusSpent ?? 0;
             $item->bonus_discount = $priceItem->bonusDiscount ?? 0;
             $item->save();

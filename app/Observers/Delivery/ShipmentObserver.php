@@ -16,7 +16,6 @@ use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\AuthService\UserService;
-use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use MerchantManagement\Dto\OperatorCommunicationMethod;
 use MerchantManagement\Services\OperatorService\OperatorService;
@@ -59,10 +58,10 @@ class ShipmentObserver
     {
         $this->setStatusToDelivery($shipment);
         $this->setIsCanceledToDelivery($shipment);
+        $this->setIsCanceledToBasketItems($shipment);
         $this->setOrderIsPartiallyCancelled($shipment);
         $this->setTakenStatusToCargo($shipment);
         $this->sendStatusNotification($shipment);
-        $this->returnBonusesWhenCancelled($shipment);
     }
 
     /**
@@ -399,6 +398,21 @@ class ShipmentObserver
     }
 
     /**
+     * Установить флаг отмены всем элементам отправления
+     * @throws Exception
+     */
+    protected function setIsCanceledToBasketItems(Shipment $shipment): void
+    {
+        if ($shipment->is_canceled && $shipment->is_canceled != $shipment->getOriginal('is_canceled')) {
+            $shipment->loadMissing('basketItems');
+            foreach ($shipment->basketItems as $basketItem) {
+                $basketItem->is_canceled = true;
+                $basketItem->save();
+            }
+        }
+    }
+
+    /**
      * Установка заказу флага частичной отмены
      */
     protected function setOrderIsPartiallyCancelled(Shipment $shipment): void
@@ -561,19 +575,5 @@ class ShipmentObserver
             'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
             'PRICE_GOODS' => (int) $shipment->items->first()->basketItem->price,
         ];
-    }
-
-    private function returnBonusesWhenCancelled(Shipment $shipment): void
-    {
-        if ($shipment->wasChanged('is_canceled') && $shipment->is_canceled) {
-            $spent = $shipment->basketItems()->sum('bonus_spent');
-
-            $order = $shipment->delivery->order;
-
-            /** @var CustomerService $customerService */
-            $customerService = resolve(CustomerService::class);
-
-            $customerService->returnDebitingBonus($order->customer_id, $order->id, $spent);
-        }
     }
 }

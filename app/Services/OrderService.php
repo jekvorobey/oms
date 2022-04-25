@@ -122,6 +122,7 @@ class OrderService
 
     /**
      * Создать возврат для выполненного заказа
+     * @throws Exception
      */
     public function returnCompletedOrder(Order $order, ?array $basketItemIds = null): bool
     {
@@ -176,7 +177,7 @@ class OrderService
 
         $orderReturnDtoItems = $returnDtoBuilder->buildFromBasketItems($order, $basketItems);
 
-        return $orderReturnService->create($orderReturnDtoItems);
+        return rescue(fn() => $orderReturnService->create($orderReturnDtoItems));
     }
 
     protected function createOrderReturnForDelivery(Order $order): ?OrderReturn
@@ -192,7 +193,7 @@ class OrderService
         /** @var OrderReturnService $orderReturnService */
         $orderReturnService = resolve(OrderReturnService::class);
 
-        return $orderReturnService->create($orderReturnDto);
+        return rescue(fn() => $orderReturnService->create($orderReturnDto));
     }
 
     /**

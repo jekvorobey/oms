@@ -5,7 +5,6 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex\Receipt;
 use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
-use App\Models\Order\OrderReturnItem;
 use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequest;
 use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequestBuilder;
 use YooKassa\Model\CurrencyCode;
@@ -38,10 +37,6 @@ class IncomeReceiptData extends ReceiptData
     protected function getReceiptItems(Order $order): array
     {
         $receiptItems = [];
-
-        $returnedItemIds = OrderReturnItem::query()
-            ->whereIn('basket_item_id', $order->basket->items->pluck('id'))
-            ->pluck('basket_item_id');
         $deliveryForReturn = OrderReturn::query()
             ->where('order_id', $order->id)
             ->where('is_delivery', true)
@@ -54,7 +49,7 @@ class IncomeReceiptData extends ReceiptData
         [$offers, $merchants] = $this->loadOffersAndMerchants($offerIds, $order);
 
         foreach ($order->basket->items as $item) {
-            if ($returnedItemIds->contains($item->id)) {
+            if ($item->isCanceled()) {
                 continue;
             }
 
@@ -62,7 +57,7 @@ class IncomeReceiptData extends ReceiptData
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant);
+            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $item->qty);
             $receiptItems[] = new ReceiptItem($receiptItemInfo);
         }
 

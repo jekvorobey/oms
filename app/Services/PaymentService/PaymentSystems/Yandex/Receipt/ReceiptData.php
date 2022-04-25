@@ -108,7 +108,7 @@ abstract class ReceiptData
         })->keyBy('id');
     }
 
-    protected function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant): array
+    protected function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant, float $qty): array
     {
         $paymentMode = $this->getItemPaymentMode($item);
         $paymentSubject = $this->getItemPaymentSubject($item);
@@ -117,9 +117,9 @@ abstract class ReceiptData
 
         $result = [
             'description' => $item->name,
-            'quantity' => $item->qty,
+            'quantity' => $qty,
             'amount' => [
-                'value' => (float) $item->price / $item->qty,
+                'value' => $item->unit_price,
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => $vatCode,

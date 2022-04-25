@@ -18,6 +18,7 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DocumentService\OrderTicketsCreator;
 use App\Services\OrderService;
+use App\Services\PaymentService\PaymentService;
 use Carbon\Carbon;
 use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -401,6 +402,29 @@ class OrdersController extends Controller
 
     /**
      * @OA\Put(
+     *     path="api/v1/orders/{id}/capture-payment",
+     *     tags={"Заказы"},
+     *     description="Вручную подтвердить платеж",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description="Данные сохранены"),
+     *     @OA\Response(response="404", description="order not found"),
+     * )
+     *
+     * Вручную подтвердить платеж
+     * @throws \Exception
+     */
+    public function capturePayment(int $id, OrderService $orderService, PaymentService $paymentService): Response
+    {
+        $order = $orderService->getOrder($id);
+        $payment = $order->payments->last();
+
+        $paymentService->capture($payment);
+
+        return response()->noContent();
+    }
+
+    /**
+     * @OA\Put(
      *     path="api/v1/orders/{id}/cancel",
      *     tags={"Заказы"},
      *     description="Отменить заказ.",
@@ -580,7 +604,13 @@ class OrdersController extends Controller
             $builder->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
         }
 
-        $orders = $builder->with(['basket.items', 'discounts', 'promoCodes'])->get();
+        $orders = $builder->with([
+            'basket.items' => function ($q) {
+                $q->active();
+            },
+            'discounts',
+            'promoCodes',
+        ])->get();
 
         return response()->json([
             'items' => $orders->map(function (Order $order) {
@@ -703,7 +733,12 @@ class OrdersController extends Controller
             ->merge($returnShipments)
             ->merge($cancelShipments);
 
-        $shipments->load(['basketItems', 'delivery.order.discounts']);
+        $shipments->load([
+            'basketItems' => function ($q) {
+                $q->active();
+            },
+            'delivery.order.discounts',
+        ]);
 
         return response()->json([
             'items' => $shipments->map(function (Shipment $shipment) {
