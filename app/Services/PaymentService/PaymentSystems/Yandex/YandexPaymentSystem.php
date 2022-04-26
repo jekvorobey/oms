@@ -93,8 +93,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'external_payment_id' => $paymentId,
                 'status' => $payment->getStatus(),
             ]);
+            /** @var Payment $localPayment */
+            $localPayment = Payment::byExternalPaymentId($paymentId)->firstOrFail();
 
-            $this->processExternalPayment($paymentId, $payment, $notification);
+            $this->processExternalPayment($localPayment, $payment);
         }
     }
 
@@ -116,37 +118,37 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
     }
 
-    private function processExternalPayment(
-        string $paymentId,
-        YooKassaPayment $payment,
-        AbstractNotification $notification
-    ): void {
-        /** @var Payment $localPayment */
-        $localPayment = Payment::byExternalPaymentId($paymentId)->firstOrFail();
-
-        switch ($notification->getEvent()) {
-            case NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE:
-                $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
-                $localPayment->status = Models\Payment\PaymentStatus::HOLD;
-                $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
+    private function processExternalPayment(Payment $localPayment, YooKassaPayment $payment): void
+    {
+        switch ($payment->status) {
+            case PaymentStatus::PENDING:
+                $this->logger->info('Set waiting', ['local_payment_id' => $localPayment->id]);
+                $localPayment->status = Models\Payment\PaymentStatus::WAITING;
                 $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
                 $localPayment->save();
 
                 break;
-            case NotificationEventType::PAYMENT_SUCCEEDED:
+            case PaymentStatus::WAITING_FOR_CAPTURE:
+                $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
+                $localPayment->status = Models\Payment\PaymentStatus::HOLD;
+                $localPayment->yandex_expires_at = $payment->getExpiresAt();
+                $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
+                $localPayment->save();
+
+                break;
+            case PaymentStatus::SUCCEEDED:
                 $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
                 $localPayment->status = Models\Payment\PaymentStatus::PAID;
                 $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
                 $localPayment->save();
 
                 break;
-            case NotificationEventType::PAYMENT_CANCELED:
+            case PaymentStatus::CANCELED:
                 $order = $localPayment->order;
                 // Если была оплата ПС+доплата и частично отменили на всю сумму доплаты, то платеж в Юкассе отменился, а у нас отменять не надо
                 if ($order->remaining_price && $order->remaining_price <= $order->spent_certificate) {
                     break;
                 }
-
                 $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
                 $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
                 $localPayment->save();
@@ -316,44 +318,13 @@ class YandexPaymentSystem implements PaymentSystemInterface
         return $response->jsonSerialize();
     }
 
-    public function paymentInfo(Payment $payment): ?YooKassaPayment
+    public function paymentInfo(string $paymentId): ?YooKassaPayment
     {
-        return $this->yandexService->getPaymentInfo($payment->id);
+        return $this->yandexService->getPaymentInfo($paymentId);
     }
 
-    public function updatePaymentStatus(YooKassaPayment $paymentInfo, Payment $localPayment): void
+    public function updatePaymentStatus(Payment $localPayment, YooKassaPayment $payment): void
     {
-        switch ($paymentInfo->status) {
-            case PaymentStatus::PENDING:
-                $this->logger->info('Set waiting', ['local_payment_id' => $localPayment->id]);
-                $localPayment->status = Models\Payment\PaymentStatus::WAITING;
-                $localPayment->save();
-
-                break;
-            case PaymentStatus::WAITING_FOR_CAPTURE:
-                $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
-                $localPayment->status = Models\Payment\PaymentStatus::HOLD;
-                $localPayment->save();
-
-                break;
-            case PaymentStatus::SUCCEEDED:
-                $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
-                $localPayment->status = Models\Payment\PaymentStatus::PAID;
-                $localPayment->save();
-
-                break;
-            case PaymentStatus::CANCELED:
-                $order = $localPayment->order;
-                // Если была оплата ПС+доплата и частично отменили на всю сумму доплаты, то платеж в Юкассе отменился, а у нас отменять не надо
-                if ($order->remaining_price && $order->remaining_price <= $order->spent_certificate) {
-                    break;
-                }
-
-                $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
-                $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
-                $localPayment->save();
-
-                break;
-        }
+        $this->processExternalPayment($localPayment, $payment);
     }
 }
