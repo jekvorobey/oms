@@ -208,12 +208,12 @@ class PaymentService
             return;
         }
 
-        $paymentInfo = $paymentSystem->paymentInfo($payment);
-        if (!$paymentInfo && !$payment->sum > 0 && !$payment->refund_sum > 0) {
+        $paymentInfo = $paymentSystem->paymentInfo($payment->external_payment_id);
+        if (!$paymentInfo) {
             $this->timeout($payment);
             return;
         }
 
-        $paymentSystem->updatePaymentStatus($paymentInfo, $payment);
+        $paymentSystem->updatePaymentStatus($payment, $paymentInfo);
     }
 }
