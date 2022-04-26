@@ -45,6 +45,8 @@ class GuestBasketService extends BasketService
         $basket->type = $type;
         $basket->is_belongs_to_order = false;
 
+        $basket->setRelation('items', collect());
+
         Cache::put($basket->id, $basket, self::CACHE_LIFETIME);
         $basketMapping = Cache::get($basket->customer_id);
 
