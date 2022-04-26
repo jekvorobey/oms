@@ -348,7 +348,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
         return $this->yandexService->getPaymentInfo($paymentId);
     }
 
-    public function updatePaymentStatus(Payment $localPayment, YooKassaPayment $payment): void
+    /**
+     * @param YooKassaPayment $payment
+     */
+    public function updatePaymentStatus(Payment $localPayment, $payment): void
     {
         $this->processExternalPayment($localPayment, $payment);
     }
