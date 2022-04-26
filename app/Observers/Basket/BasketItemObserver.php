@@ -86,7 +86,7 @@ class BasketItemObserver
      */
     private function createOrderReturn(BasketItem $basketItem): void
     {
-        if ($basketItem->wasChanged('qty') && $basketItem->wasChanged('qty_cancelled')) {
+        if ($basketItem->wasChanged('qty') && $basketItem->wasChanged('qty_canceled')) {
             $qtyToReturn = $basketItem->getOriginal('qty') - $basketItem->qty;
             $priceToReturn = $basketItem->getOriginal('price') - $basketItem->price;
             $basketItemReturnDto = (new OrderReturnDtoBuilder())
