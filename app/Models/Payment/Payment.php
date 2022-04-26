@@ -72,6 +72,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property Carbon $expires_at
  * @property Carbon $yandex_expires_at - Дата и время до которого в яндексе отменить или подтвердить платеж
  * @property int $status
+ * @property string $cancel_reason
  * @property int $payment_method
  * @property int $payment_system
  * @property string $payment_type
