@@ -8,8 +8,18 @@ use App\Models;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\IncomeReceiptData;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\RefundReceiptData;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
+use YooKassa\Common\Exceptions\ApiException;
+use YooKassa\Common\Exceptions\BadApiRequestException;
+use YooKassa\Common\Exceptions\ExtensionNotFoundException;
+use YooKassa\Common\Exceptions\ForbiddenException;
+use YooKassa\Common\Exceptions\InternalServerError;
+use YooKassa\Common\Exceptions\NotFoundException;
+use YooKassa\Common\Exceptions\ResponseProcessingException;
+use YooKassa\Common\Exceptions\TooManyRequestsException;
+use YooKassa\Common\Exceptions\UnauthorizedException;
 use YooKassa\Model\Notification\AbstractNotification;
 use YooKassa\Model\Notification\NotificationFactory;
 use YooKassa\Model\NotificationEventType;
@@ -37,7 +47,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
@@ -67,9 +77,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * Обработать данные от платёжной ситсемы о совершении платежа.
+     * Обработать данные от платёжной системы о совершении платежа.
      * @param array $data
-     * @throws \Exception
+     * @throws Exception
      */
     public function handlePushPayment(array $data): void
     {
@@ -149,8 +159,12 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 if ($order->remaining_price && $order->remaining_price <= $order->spent_certificate) {
                     break;
                 }
-                $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
+                $this->logger->info('Set canceled', [
+                    'local_payment_id' => $localPayment->id,
+                    'cancel_reason' => $payment->getCancellationDetails()->reason,
+                ]);
                 $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
+                $localPayment->cancel_reason = $payment->getCancellationDetails()->reason;
                 $localPayment->save();
 
                 break;
@@ -236,15 +250,15 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
     /**
      * @inheritDoc
-     * @throws \YooKassa\Common\Exceptions\ApiException
-     * @throws \YooKassa\Common\Exceptions\BadApiRequestException
-     * @throws \YooKassa\Common\Exceptions\ExtensionNotFoundException
-     * @throws \YooKassa\Common\Exceptions\ForbiddenException
-     * @throws \YooKassa\Common\Exceptions\InternalServerError
-     * @throws \YooKassa\Common\Exceptions\NotFoundException
-     * @throws \YooKassa\Common\Exceptions\ResponseProcessingException
-     * @throws \YooKassa\Common\Exceptions\TooManyRequestsException
-     * @throws \YooKassa\Common\Exceptions\UnauthorizedException
+     * @throws ApiException
+     * @throws BadApiRequestException
+     * @throws ExtensionNotFoundException
+     * @throws ForbiddenException
+     * @throws InternalServerError
+     * @throws NotFoundException
+     * @throws ResponseProcessingException
+     * @throws TooManyRequestsException
+     * @throws UnauthorizedException
      */
     public function cancel(string $paymentId): array
     {
@@ -318,6 +332,17 @@ class YandexPaymentSystem implements PaymentSystemInterface
         return $response->jsonSerialize();
     }
 
+    /**
+     * @throws NotFoundException
+     * @throws ResponseProcessingException
+     * @throws ApiException
+     * @throws ExtensionNotFoundException
+     * @throws BadApiRequestException
+     * @throws InternalServerError
+     * @throws ForbiddenException
+     * @throws TooManyRequestsException
+     * @throws UnauthorizedException
+     */
     public function paymentInfo(string $paymentId): ?YooKassaPayment
     {
         return $this->yandexService->getPaymentInfo($paymentId);
