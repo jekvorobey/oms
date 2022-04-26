@@ -23,6 +23,7 @@ use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
+use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
 use Greensight\Logistics\Dto\Order\CdekDeliveryOrderReceiptDto;
@@ -46,7 +47,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use MerchantManagement\Services\MerchantService\MerchantService;
-use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 
 /**
  * Класс-бизнес логики по работе с сущностями доставки:
@@ -153,6 +153,10 @@ class DeliveryService
             /** @var BasketItem $basketItem */
             $basketItem = BasketItem::find($basketItemId);
 
+            if ($basketItem->isCanceled()) {
+                throw new DeliveryServiceInvalidConditions('Shipment item is canceled');
+            }
+
             if ($basketItem->qty < $qty) {
                 throw new DeliveryServiceInvalidConditions('Shipment package qty can\'t be more than basket item qty');
             } else {
@@ -170,6 +174,45 @@ class DeliveryService
     }
 
     /**
+     * Отменить элемент (товар с одного склада одного мерчанта) отправления
+     * @throws Exception
+     */
+    public function cancelShipmentItem(
+        int $shipmentId,
+        int $basketItemId,
+        float $qtyToCancel,
+        int $cancelBy,
+        int $returnReasonId
+    ): void {
+        /** @var Shipment $shipment */
+        $shipment = Shipment::find($shipmentId);
+        if (!$qtyToCancel && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
+            throw new DeliveryServiceInvalidConditions('Shipment item not found');
+        }
+        if ($shipment->status > DeliveryStatus::ASSEMBLED) {
+            throw new DeliveryServiceInvalidConditions('Shipment status is exceeded');
+        }
+        /** @var BasketItem $basketItem */
+        $basketItem = BasketItem::find($basketItemId);
+        if ($basketItem->isCanceled()) {
+            throw new DeliveryServiceInvalidConditions('Basket item is already canceled');
+        }
+        if ($basketItem->qty < $qtyToCancel) {
+            throw new DeliveryServiceInvalidConditions('Cancel qty can\'t be more than basket item qty');
+        }
+        $newQty = $basketItem->qty - $qtyToCancel;
+        $basketItem->update(
+            [
+                'qty' => $newQty,
+                'qty_canceled' => $basketItem->qty_canceled + $qtyToCancel,
+                'is_canceled' => $newQty == 0,
+                'canceled_by' => $cancelBy,
+                'return_reason_id' => $returnReasonId,
+            ]
+        );
+    }
+
+    /**
      * Проверить, что все товары отправления упакованы по коробкам
      */
     public function checkAllShipmentProductsPacked(Shipment $shipment): bool
@@ -178,7 +221,10 @@ class DeliveryService
 
         $shipmentItems = [];
         foreach ($shipment->items as $shipmentItem) {
-            $shipmentItems[$shipmentItem->basket_item_id] = $shipmentItem->basketItem->qty;
+            $shipmentItems[$shipmentItem->basket_item_id] = null;
+            if ($shipmentItem->basketItem && !$shipmentItem->basketItem->isCanceled() && !$shipmentItem->basketItem->isReturned()) {
+                $shipmentItems[$shipmentItem->basket_item_id] = $shipmentItem->basketItem->qty;
+            }
         }
 
         foreach ($shipment->packages as $package) {
@@ -1002,9 +1048,11 @@ class DeliveryService
 
         $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
 
-        /** @var OrderReturnService $orderReturnService */
-        $orderReturnService = resolve(OrderReturnService::class);
-        $orderReturnService->create($orderReturnDto);
+        if ($orderReturnDto) {
+            /** @var OrderReturnService $orderReturnService */
+            $orderReturnService = resolve(OrderReturnService::class);
+            rescue(fn() => $orderReturnService->create($orderReturnDto));
+        }
 
         if ($shipment->status > ShipmentStatus::CREATED) {
             $attributes = [

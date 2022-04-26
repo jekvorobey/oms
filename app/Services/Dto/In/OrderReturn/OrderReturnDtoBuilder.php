@@ -86,9 +86,12 @@ class OrderReturnDtoBuilder
     /**
      * Создание dto возврата отправления
      */
-    public function buildFromShipment(Shipment $shipment): OrderReturnDto
+    public function buildFromShipment(Shipment $shipment): ?OrderReturnDto
     {
         $orderReturnDto = $this->buildBase($shipment->delivery->order_id, $shipment->basketItems);
+        if ($orderReturnDto->items->isEmpty()) {
+            return null;
+        }
         $orderReturnDto->is_delivery = false;
 
         return $orderReturnDto;
@@ -107,6 +110,31 @@ class OrderReturnDtoBuilder
     }
 
     /**
+     * Создание поштучного возврата
+     */
+    public function buildFromCancelBasketItem(
+        Order $order,
+        BasketItem $basketItem,
+        float $qtyToReturn,
+        float $priceToReturn
+    ): OrderReturnDto {
+        $orderReturnDto = new OrderReturnDto();
+        $orderReturnDto->order_id = $order->id;
+        $orderReturnDto->status = OrderReturn::STATUS_CREATED;
+        $orderReturnDto->is_delivery = false;
+
+        $orderReturnItemDto = new OrderReturnItemDto();
+        $orderReturnItemDto->basket_item_id = $basketItem->id;
+        $orderReturnItemDto->qty = $qtyToReturn;
+        $orderReturnItemDto->ticket_ids = $basketItem->getTicketIds();
+        $orderReturnItemDto->price = $priceToReturn;
+
+        $orderReturnDto->items->push($orderReturnItemDto);
+
+        return $orderReturnDto;
+    }
+
+    /**
      * Формирование базового объекта возврата заказа
      */
     protected function buildBase(int $orderId, Collection $basketItems): OrderReturnDto
@@ -115,15 +143,20 @@ class OrderReturnDtoBuilder
         $orderReturnDto->order_id = $orderId;
         $orderReturnDto->status = OrderReturn::STATUS_CREATED;
 
-        $orderReturnDto->items = $basketItems->map(static function (BasketItem $item) {
-            $orderReturnItemDto = new OrderReturnItemDto();
-            $orderReturnItemDto->basket_item_id = $item->id;
-            $orderReturnItemDto->qty = $item->qty;
-            $orderReturnItemDto->ticket_ids = $item->getTicketIds();
-            $orderReturnItemDto->price = $item->price;
-
-            return $orderReturnItemDto;
+        $basketItems = $basketItems->filter(function (BasketItem $item) {
+            return $item->price > 0;
         });
+        if ($basketItems->isNotEmpty()) {
+            $orderReturnDto->items = $basketItems->map(static function (BasketItem $item) {
+                $orderReturnItemDto = new OrderReturnItemDto();
+                $orderReturnItemDto->basket_item_id = $item->id;
+                $orderReturnItemDto->qty = $item->qty;
+                $orderReturnItemDto->ticket_ids = $item->getTicketIds();
+                $orderReturnItemDto->price = $item->price;
+
+                return $orderReturnItemDto;
+            });
+        }
 
         return $orderReturnDto;
     }

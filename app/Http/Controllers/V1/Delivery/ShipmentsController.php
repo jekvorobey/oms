@@ -672,6 +672,54 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Put (
+     *     path="api/v1/shipments/{id}/items/{basketItemId}",
+     *     tags={"Поставки"},
+     *     description="Отменить поштучно элемент (собранный товар с одного склада одного мерчанта) отправления",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="basketItemId", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *      required=true,
+     *      description="",
+     *      @OA\JsonContent(
+     *          @OA\Property(property="qty", type="number"),
+     *          @OA\Property(property="canceled_by", type="integer"),
+     *          @OA\Property(property="return_reason_id", type="integer"),
+     *      ),
+     *     ),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="500", description="bad request")
+     * )
+     * Отменить поштучно элемент (товар с одного склада одного мерчанта) отправления
+     */
+    public function cancelItem(
+        int $shipmentId,
+        int $basketItemId,
+        Request $request,
+        DeliveryService $deliveryService
+    ): Response {
+        $data = $this->validate($request, [
+            'qty' => ['required', 'numeric'],
+            'canceled_by' => ['required', 'integer'],
+            'return_reason_id' => ['required', 'integer'],
+        ]);
+
+        try {
+            $deliveryService->cancelShipmentItem(
+                $shipmentId,
+                $basketItemId,
+                $data['qty'],
+                $data['canceled_by'],
+                $data['return_reason_id'],
+            );
+
+            return response('', 204);
+        } catch (\Throwable $e) {
+            throw new HttpException(500, $e->getMessage());
+        }
+    }
+
+    /**
      * @OA\Get(
      *     path="api/v1/shipments/{id}/barcodes",
      *     tags={"Поставки"},
@@ -880,7 +928,12 @@ class ShipmentsController extends Controller
         $query = $modelClass::modifyQuery($modelClass::query(), $restQuery);
 
         $items = $query
-            ->with(['basketItems', 'delivery.order'])
+            ->with([
+                'basketItems' => function ($q) {
+                    $q->active();
+                },
+                'delivery.order',
+            ])
             ->where('status', '>=', ShipmentStatus::AWAITING_CONFIRMATION)
             ->where(
                 function (Builder $builder) {
