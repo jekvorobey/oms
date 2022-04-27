@@ -387,6 +387,8 @@ class DeliveryObserver
                 return;
             }
 
+            $order->load('deliveries');
+
             $allDeliveriesHasStatus = true;
             foreach ($order->deliveries as $orderDelivery) {
                 if ($orderDelivery->is_canceled) {
