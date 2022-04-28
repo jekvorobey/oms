@@ -7,7 +7,6 @@ use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentPackage;
 use App\Models\Delivery\ShipmentPackageItem;
 use Exception;
-use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Greensight\Store\Services\PackageService\PackageService;
 use Illuminate\Support\Facades\DB;
 
@@ -18,23 +17,13 @@ use Illuminate\Support\Facades\DB;
  */
 class ShipmentPackageService
 {
-    protected DeliveryService $deliveryService;
-    protected ShipmentService $shipmentService;
-    protected ServiceNotificationService $notificationService;
-
-    public function __construct()
-    {
-        $this->deliveryService = resolve(DeliveryService::class);
-        $this->shipmentService = resolve(ShipmentService::class);
-        $this->notificationService = resolve(ServiceNotificationService::class);
-    }
-
     /**
      * Создать коробку отправления
      */
     public function createShipmentPackage(int $shipmentId, int $packageId): ?ShipmentPackage
     {
-        $shipment = $this->shipmentService->getShipment($shipmentId);
+        $shipmentService = resolve(ShipmentService::class);
+        $shipment = $shipmentService->getShipment($shipmentId);
         if (is_null($shipment)) {
             return null;
         }

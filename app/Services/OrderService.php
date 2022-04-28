@@ -52,7 +52,7 @@ class OrderService
      */
     public function getOrder(int $orderId): Order
     {
-        return Order::query()->findOrFail($orderId);
+        return Order::findOrFail($orderId);
     }
 
     /**

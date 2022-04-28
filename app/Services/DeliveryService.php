@@ -52,21 +52,6 @@ use Throwable;
  */
 class DeliveryService
 {
-    protected ShipmentService $shipmentService;
-    protected CargoService $cargoService;
-    protected DeliveryOrderService $deliveryOrderService;
-    protected StoreService $storeService;
-    protected StoreService $courierCallService;
-
-    public function __construct()
-    {
-        $this->shipmentService = resolve(ShipmentService::class);
-        $this->cargoService = resolve(CargoService::class);
-        $this->deliveryOrderService = resolve(DeliveryOrderService::class);
-        $this->storeService = resolve(StoreService::class);
-        $this->courierCallService = resolve(CourierCallService::class);
-    }
-
     /**
      * Получить объект отправления по его id
      *
@@ -74,7 +59,7 @@ class DeliveryService
      */
     public function getDelivery(int $deliveryId): Delivery
     {
-        return Delivery::query()->findOrFail($deliveryId);
+        return Delivery::findOrFail($deliveryId);
     }
 
     /**
@@ -103,8 +88,9 @@ class DeliveryService
             throw new DeliveryServiceInvalidConditions('Груз не содержит отправлений');
         }
 
-        $storeQuery = $this->storeService->newQuery()->include('storeContact', 'storePickupTime');
-        $store = $this->storeService->store($cargo->store_id, $storeQuery);
+        $storeService = resolve(StoreService::class);
+        $storeQuery = $storeService->newQuery()->include('storeContact', 'storePickupTime');
+        $store = $storeService->store($cargo->store_id, $storeQuery);
         if (is_null($store)) {
             $cargo->error_xml_id = 'Не найден склад с id="' . $cargo->store_id . '" для груза';
             $cargo->save();
@@ -214,7 +200,8 @@ class DeliveryService
 
             $courierCallInputDto->cargo = $deliveryCargoDto;
             try {
-                $courierCallOutputDto = $this->courierCallService->createCourierCall(
+                $courierCallService = resolve(CourierCallService::class);
+                $courierCallOutputDto = $courierCallService->createCourierCall(
                     $cargo->delivery_service,
                     $courierCallInputDto
                 );
@@ -247,7 +234,8 @@ class DeliveryService
     public function cancelCourierCall(Cargo $cargo): void
     {
         if ($cargo->xml_id) {
-            $this->courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
+            $courierCallService = resolve(CourierCallService::class);
+            $courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
             $cargo->xml_id = '';
             $cargo->cdek_intake_number = null;
             $cargo->error_xml_id = '';
@@ -261,7 +249,8 @@ class DeliveryService
     public function checkExternalStatus(Cargo $cargo): void
     {
         if ($cargo->xml_id) {
-            $status = $this->courierCallService->checkExternalStatus($cargo->delivery_service, $cargo->xml_id);
+            $courierCallService = resolve(CourierCallService::class);
+            $status = $courierCallService->checkExternalStatus($cargo->delivery_service, $cargo->xml_id);
             $cargo->error_xml_id = $status->error;
             $cargo->cdek_intake_number = $status->intake_number;
             $cargo->updated_at = Carbon::now();
@@ -307,7 +296,8 @@ class DeliveryService
         $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
         try {
             if (!$delivery->xml_id) {
-                $deliveryOrderOutputDto = $this->deliveryOrderService->createOrder(
+                $deliveryOrderService = resolve(DeliveryOrderService::class);
+                $deliveryOrderOutputDto = $deliveryOrderService->createOrder(
                     $delivery->delivery_service,
                     $deliveryOrderInputDto
                 );
@@ -333,7 +323,8 @@ class DeliveryService
                     }
                 }
             } else {
-                $deliveryOrderOutputDto = $this->deliveryOrderService->updateOrder(
+                $deliveryOrderService = resolve(DeliveryOrderService::class);
+                $deliveryOrderOutputDto = $deliveryOrderService->updateOrder(
                     $delivery->delivery_service,
                     $delivery->xml_id,
                     $deliveryOrderInputDto
@@ -438,7 +429,8 @@ class DeliveryService
             /** @var MerchantService $merchantService */
             $merchantService = resolve(MerchantService::class);
             $shipment = $delivery->shipments[0];
-            $store = $this->storeService->store($shipment->store_id, $this->storeService->newQuery()->include('storeContact'));
+            $storeService = resolve(StoreService::class);
+            $store = $storeService->store($shipment->store_id, $storeService->newQuery()->include('storeContact'));
             $merchant = $merchantService->merchant($shipment->merchant_id);
 
             $storeAddress = $store->address;
@@ -622,7 +614,8 @@ class DeliveryService
             /** @var Collection|Delivery[] $items */
             foreach ($deliveriesByService as $deliveryServiceId => $items) {
                 try {
-                    $deliveryOrderStatusDtos = $this->deliveryOrderService->statusOrders(
+                    $deliveryOrderService = resolve(DeliveryOrderService::class);
+                    $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders(
                         $deliveryServiceId,
                         $items->pluck('xml_id')->all()
                     );
@@ -732,8 +725,8 @@ class DeliveryService
             if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
                 return;
             }
-
-            $this->deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
+            $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
         }
     }
 

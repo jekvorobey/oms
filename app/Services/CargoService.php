@@ -19,17 +19,6 @@ use Illuminate\Support\Facades\DB;
  */
 class CargoService
 {
-    protected DeliveryService $deliveryService;
-    protected ShipmentService $shipmentService;
-    protected ServiceNotificationService $notificationService;
-
-    public function __construct()
-    {
-        $this->deliveryService = resolve(DeliveryService::class);
-        $this->shipmentService = resolve(ShipmentService::class);
-        $this->notificationService = resolve(ServiceNotificationService::class);
-    }
-
     /**
      * Получить объект груза по его id
      *
@@ -37,7 +26,7 @@ class CargoService
      */
     public function getCargo(int $cargoId): Cargo
     {
-        return Cargo::query()->findOrFail($cargoId);
+        return Cargo::findOrFail($cargoId);
     }
 
     public function createCargo(Shipment $shipment, int $deliveryService): Cargo
@@ -83,7 +72,8 @@ class CargoService
         });
 
         if ($result) {
-            $this->deliveryService->cancelCourierCall($cargo);
+            $deliveryService = resolve(DeliveryService::class);
+            $deliveryService->cancelCourierCall($cargo);
 
             return true;
         }
@@ -116,7 +106,8 @@ class CargoService
 
             if ($shipment->status === ShipmentStatus::AWAITING_CONFIRMATION) {
                 //Отправка повторного уведомления мерчанту
-                $this->shipmentService->sendShipmentNotification($shipment);
+                $shipmentService = resolve(ShipmentService::class);
+                $shipmentService->sendShipmentNotification($shipment);
 
                 //Отправка повторного уведомления логистам
                 $attributes = [
@@ -124,12 +115,14 @@ class CargoService
                     'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order_id),
                     'LINK_CARGO' => sprintf('%s/orders/cargos/%d', config('app.admin_host'), $cargo->id),
                 ];
-                $this->notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logist_otpravlenie_need_processing', $attributes);
+                $serviceNotificationService = resolve(ServiceNotificationService::class);
+                $serviceNotificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logist_otpravlenie_need_processing', $attributes);
             }
         }
 
         if ($isNeedToCancelCourierCall) {
-            $this->deliveryService->cancelCourierCall($cargo);
+            $deliveryService = resolve(DeliveryService::class);
+            $deliveryService->cancelCourierCall($cargo);
         }
     }
 }

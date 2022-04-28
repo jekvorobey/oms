@@ -31,17 +31,6 @@ use Throwable;
  */
 class ShipmentService
 {
-    protected DeliveryService $deliveryService;
-    protected CargoService $cargoService;
-    protected ServiceNotificationService $notificationService;
-
-    public function __construct()
-    {
-        $this->deliveryService = resolve(DeliveryService::class);
-        $this->cargoService = resolve(CargoService::class);
-        $this->notificationService = resolve(ServiceNotificationService::class);
-    }
-
     /**
      * Получить объект отправления по его id
      *
@@ -49,7 +38,7 @@ class ShipmentService
      */
     public function getShipment(int $shipmentId): Shipment
     {
-        return Shipment::query()->findOrFail($shipmentId);
+        return Shipment::findOrFail($shipmentId);
     }
 
     /**
@@ -70,7 +59,8 @@ class ShipmentService
             throw new DeliveryServiceInvalidConditions('Отправление уже добавлено в груз');
         }
 
-        $deliveryServiceId = $this->deliveryService->getZeroMileShipmentDeliveryServiceId($shipment);
+        $deliveryService = resolve(DeliveryService::class);
+        $deliveryServiceId = $deliveryService->getZeroMileShipmentDeliveryServiceId($shipment);
 
         $cargoQuery = Cargo::query()
             ->select('id')
@@ -85,7 +75,8 @@ class ShipmentService
         }
         $cargo = $cargoQuery->first();
         if (is_null($cargo)) {
-            $cargo = $this->cargoService->createCargo($shipment, $deliveryServiceId);
+            $cargoService = resolve(CargoService::class);
+            $cargo = $cargoService->createCargo($shipment, $deliveryServiceId);
         }
 
         $shipment->cargo_id = $cargo->id;
@@ -266,7 +257,7 @@ class ShipmentService
             $users = $userService->users(
                 $userService->newQuery()->setFilter('id', $operators->pluck('user_id')->all())
             )->keyBy('id');
-
+            $notificationService = resolve(ServiceNotificationService::class);
             /** @var OperatorDto $operator */
             foreach ($operators as $i => $operator) {
                 $user = $users->get($operator->user_id);
@@ -274,7 +265,7 @@ class ShipmentService
 
                 if ($user) {
                     if ($i === 0) { // TODO: добавить проверку, что оператор является админом
-                        $this->notificationService->send(
+                        $notificationService->send(
                             $operator->user_id,
                             'klientoformlen_novyy_zakaz',
                             $this->generateNotificationAttributes($shipment, $user)
@@ -284,10 +275,10 @@ class ShipmentService
 
                     switch ($operator->communication_method) {
                         case OperatorCommunicationMethod::METHOD_PHONE:
-                            $this->notificationService->sendDirect('klientoformlen_novyy_zakaz', $user->phone, 'sms', $attributes);
+                            $notificationService->sendDirect('klientoformlen_novyy_zakaz', $user->phone, 'sms', $attributes);
                             break;
                         case OperatorCommunicationMethod::METHOD_EMAIL:
-                            $this->notificationService->sendDirect('klientoformlen_novyy_zakaz', $user->email, 'email', $attributes);
+                            $notificationService->sendDirect('klientoformlen_novyy_zakaz', $user->email, 'email', $attributes);
                             break;
                     }
                 }
