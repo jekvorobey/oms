@@ -17,7 +17,7 @@ class CustomerBasketService extends BasketService
      */
     public function getBasket(int $basketId): Basket
     {
-        return Basket::findOrFail($basketId);
+        return Basket::query()->findOrFail($basketId);
     }
 
     /**

@@ -74,7 +74,7 @@ class DeliveryService
      */
     public function getDelivery(int $deliveryId): Delivery
     {
-        return Delivery::findOrFail($deliveryId);
+        return Delivery::query()->findOrFail($deliveryId);
     }
 
     /**

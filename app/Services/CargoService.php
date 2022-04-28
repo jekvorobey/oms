@@ -37,7 +37,7 @@ class CargoService
      */
     public function getCargo(int $cargoId): Cargo
     {
-        return Cargo::findOrFail($cargoId);
+        return Cargo::query()->findOrFail($cargoId);
     }
 
     public function createCargo(Shipment $shipment, int $deliveryService): Cargo

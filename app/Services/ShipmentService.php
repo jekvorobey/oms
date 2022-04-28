@@ -49,7 +49,7 @@ class ShipmentService
      */
     public function getShipment(int $shipmentId): Shipment
     {
-        return Shipment::findOrFail($shipmentId);
+        return Shipment::query()->findOrFail($shipmentId);
     }
 
     /**
