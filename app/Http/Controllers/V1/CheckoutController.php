@@ -4,7 +4,7 @@ namespace App\Http\Controllers\V1;
 
 use App\Core\Checkout\CheckoutOrder;
 use App\Http\Controllers\Controller;
-use App\Services\BasketService\BasketService;
+use App\Services\BasketService\CustomerBasketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -113,7 +113,7 @@ class CheckoutController extends Controller
      *     @OA\Response(response="400", description="Bad request"),
      * )
      */
-    public function commit(Request $request, BasketService $basketService): JsonResponse
+    public function commit(Request $request, CustomerBasketService $basketService): JsonResponse
     {
         $basketId = $request->get('basketId');
         if (!$basketId) {
