@@ -27,7 +27,7 @@ class CargoService
     {
         $this->deliveryService = resolve(DeliveryService::class);
         $this->shipmentService = resolve(ShipmentService::class);
-        $this->notificationService = app(ServiceNotificationService::class);
+        $this->notificationService = resolve(ServiceNotificationService::class);
     }
 
     /**

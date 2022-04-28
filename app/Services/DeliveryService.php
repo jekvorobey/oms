@@ -62,7 +62,7 @@ class DeliveryService
     {
         $this->shipmentService = resolve(ShipmentService::class);
         $this->cargoService = resolve(CargoService::class);
-        $this->deliveryOrderService = app(DeliveryOrderService::class);
+        $this->deliveryOrderService = resolve(DeliveryOrderService::class);
         $this->storeService = resolve(StoreService::class);
         $this->courierCallService = resolve(CourierCallService::class);
     }
