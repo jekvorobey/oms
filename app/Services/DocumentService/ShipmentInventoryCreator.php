@@ -41,7 +41,7 @@ class ShipmentInventoryCreator extends TemplatedDocumentCreator
                 'table.product_article' => $product->vendor_code ?? '',
                 'table.product_name' => htmlspecialchars($basketItem->name, ENT_QUOTES | ENT_XML1),
                 'table.product_qty' => qty_format($basketItem->qty),
-                'table.product_price_per_unit' => price_format($basketItem->price / $basketItem->qty),
+                'table.product_price_per_unit' => price_format($basketItem->unit_price),
                 'table.product_price' => price_format($basketItem->price),
             ];
         }
