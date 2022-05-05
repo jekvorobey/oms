@@ -54,7 +54,7 @@ class ShipmentInventoryCreator extends TemplatedDocumentCreator
             'receiver_address' => $delivery->getDeliveryAddressString(),
             'table.total_product_qty' => qty_format($shipment->basketItems->sum('qty')),
             'table.total_product_price_per_unit' => $shipment->basketItems->sum(function (BasketItem $basketItem) {
-                return $basketItem->price / $basketItem->qty;
+                return $basketItem->unit_price;
             }),
             'table.total_product_price' => price_format($shipment->basketItems->sum('price')),
         ];
