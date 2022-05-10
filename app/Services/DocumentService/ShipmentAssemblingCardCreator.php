@@ -53,7 +53,7 @@ class ShipmentAssemblingCardCreator extends TemplatedDocumentCreator
                 'table.product_name' => htmlspecialchars($basketItem->name, ENT_QUOTES | ENT_XML1),
                 'table.product_code_ibt' => $product->id ?? '',
                 'table.product_qty' => qty_format($basketItem->qty),
-                'table.product_price_per_unit' => price_format($basketItem->price / $basketItem->qty),
+                'table.product_price_per_unit' => price_format($basketItem->unit_price),
                 'table.product_price' => price_format($basketItem->price),
             ];
         }
