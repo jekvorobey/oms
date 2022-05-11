@@ -695,7 +695,7 @@ class DeliveryService
     {
         if ($delivery->status === DeliveryStatus::DONE) {
             throw new DeliveryServiceInvalidConditions(
-                'Доставку со статусом "Доставлена получателю", нельзя отменить'
+                'Доставку со статусом "Доставлена получателю" нельзя отменить'
             );
         }
 

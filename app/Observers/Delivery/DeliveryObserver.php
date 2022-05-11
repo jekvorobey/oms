@@ -364,7 +364,11 @@ class DeliveryObserver
      */
     protected function setIsCancel(Delivery $delivery): void
     {
-        if ($delivery->wasChanged('status') && $delivery->status === DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER) {
+        if (
+            $delivery->wasChanged('status')
+            && $delivery->status === DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER
+            && !$delivery->is_canceled
+        ) {
             /** @var DeliveryService $deliveryService */
             $deliveryService = resolve(DeliveryService::class);
             $deliveryService->cancelDelivery($delivery);

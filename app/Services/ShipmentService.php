@@ -169,13 +169,13 @@ class ShipmentService
 
     /**
      * Отменить отправление
-     * @throws Exception
+     * @throws Exception|Throwable
      */
     public function cancelShipment(Shipment $shipment, ?int $orderReturnReasonId = null): bool
     {
-        if ($shipment->status >= ShipmentStatus::DONE) {
+        if ($shipment->status === ShipmentStatus::DONE) {
             throw new DeliveryServiceInvalidConditions(
-                'Отправление, начиная со статуса "Доставлено получателю", нельзя отменить'
+                'Отправление со статусом "Доставлено получателю" нельзя отменить'
             );
         }
 
