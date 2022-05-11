@@ -73,7 +73,7 @@ class OrderObserver
     {
         $this->setPaymentStatusToChildren($order);
         $this->setIsCanceledToChildren($order);
-        $this->setIsProblemToChildren($order);
+        // $this->setIsProblemToChildren($order);
         // $this->notifyIfOrderPaid($order);
         $this->commitPaymentIfOrderDelivered($order);
         $this->setStatusToChildren($order);
