@@ -144,6 +144,16 @@ class ShipmentService
         $shipment->is_problem = true;
         $shipment->assembly_problem_comment = $comment;
 
+        $attributes = [
+            'SHIPMENT_NUMBER' => $shipment->number,
+            'ASSEMBLY_PROBLEM_COMMENT' => $comment,
+            'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order_id),
+        ];
+
+        /** @var ServiceNotificationService $notificationService */
+        $notificationService = resolve(ServiceNotificationService::class);
+        $notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logist_otpravlenie_problemnoe', $attributes);
+
         return $shipment->save();
     }
 
