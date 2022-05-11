@@ -153,6 +153,7 @@ class ShipmentService
     public function markAsNonProblemShipment(Shipment $shipment): bool
     {
         $shipment->is_problem = false;
+        $shipment->assembly_problem_comment = $shipment->assembly_problem_comment ? $shipment->assembly_problem_comment . ' (решено)' : '';
 
         return $shipment->save();
     }
