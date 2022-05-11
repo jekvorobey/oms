@@ -109,6 +109,7 @@ class ShipmentObserver
     {
         $this->recalcCargoAndDeliveryOnSaved($shipment);
         $this->recalcCargosOnSaved($shipment);
+        $this->markOrderAsNonProblem($shipment);
         $this->markDeliveryAsProblem($shipment);
         $this->markOrderAsProblem($shipment);
         $this->markDeliveryAsNonProblem($shipment);
@@ -209,6 +210,18 @@ class ShipmentObserver
             /** @var OrderService $orderService */
             $orderService = resolve(OrderService::class);
             $orderService->markAsProblem($shipment->delivery->order);
+        }
+    }
+
+    /**
+     * Пометить заказ как непроблемный, если все отправления непроблемные
+     */
+    protected function markOrderAsNonProblem(Shipment $shipment): void
+    {
+        if ($shipment->is_problem != $shipment->getOriginal('is_problem') && !$shipment->is_problem) {
+            /** @var OrderService $orderService */
+            $orderService = resolve(OrderService::class);
+            $orderService->markAsNonProblem($shipment->delivery->order);
         }
     }
 
