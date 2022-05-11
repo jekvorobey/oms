@@ -693,9 +693,9 @@ class DeliveryService
      */
     public function cancelDelivery(Delivery $delivery, ?int $orderReturnReasonId = null): bool
     {
-        if ($delivery->status >= DeliveryStatus::DONE) {
+        if ($delivery->status === DeliveryStatus::DONE) {
             throw new DeliveryServiceInvalidConditions(
-                'Доставку, начиная со статуса "Доставлена получателю", нельзя отменить'
+                'Доставку со статусом "Доставлена получателю", нельзя отменить'
             );
         }
 
