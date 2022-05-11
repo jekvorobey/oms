@@ -632,13 +632,14 @@ class CheckoutOrder
     {
         static $basket = null;
         if (!$basket) {
+            /** @var Basket $basket */
             $basket = Basket::query()
                 ->where('id', $this->basketId)
                 ->with('items')
                 ->first();
         }
 
-        return $basket;
+        return $basket ?? null;
     }
 
     private function offerToBasketMap(): array

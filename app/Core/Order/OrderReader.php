@@ -17,13 +17,6 @@ class OrderReader
 {
     public const PAGE_SIZE = 10;
 
-    public function byId(int $id): ?Order
-    {
-        /** @var Order $order */
-        $order = Order::query()->where('id', $id)->first();
-        return $order;
-    }
-
     public function list(RestQuery $restQuery): Collection
     {
         $query = Order::query();
@@ -388,7 +381,6 @@ class OrderReader
         $modifiedRestQuery->removeFilter('max_price_for_current_discount');
 
         foreach ($modifiedRestQuery->filterIterator() as [$field, $op, $value]) {
-            logs('single')->info($field, [$op, $value]);
             if ($op == '=' && is_array($value)) {
                 $query->whereIn($field, $value);
             } else {

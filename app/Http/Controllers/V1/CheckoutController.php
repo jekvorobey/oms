@@ -4,7 +4,7 @@ namespace App\Http\Controllers\V1;
 
 use App\Core\Checkout\CheckoutOrder;
 use App\Http\Controllers\Controller;
-use App\Models\Basket\Basket;
+use App\Services\BasketService\CustomerBasketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -113,16 +113,13 @@ class CheckoutController extends Controller
      *     @OA\Response(response="400", description="Bad request"),
      * )
      */
-    public function commit(Request $request): JsonResponse
+    public function commit(Request $request, CustomerBasketService $basketService): JsonResponse
     {
         $basketId = $request->get('basketId');
         if (!$basketId) {
             throw new BadRequestHttpException('basketId is required');
         }
-        $basket = Basket::find($basketId);
-        if (!$basket) {
-            throw new BadRequestHttpException('Basket not found');
-        }
+        $basket = $basketService->getBasket($basketId);
 
         $data = $this->validate($request, [
             'customerId' => ['required', 'integer'],
