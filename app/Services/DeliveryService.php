@@ -2,32 +2,26 @@
 
 namespace App\Services;
 
-use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
-use App\Models\Delivery\ShipmentPackage;
-use App\Models\Delivery\ShipmentPackageItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Payment\PaymentStatus;
-use App\Services\Dto\In\OrderReturn\OrderReturnDtoBuilder;
 use Cms\Core\CmsException;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
+use DateTimeImmutable;
+use DateTimeZone;
 use Exception;
 use Greensight\CommonMsa\Dto\AbstractDto;
-use Greensight\CommonMsa\Dto\RoleDto;
 use Greensight\CommonMsa\Services\IbtService\IbtService;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\CourierCallInputDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\DeliveryCargoDto;
 use Greensight\Logistics\Dto\CourierCall\CourierCallInput\SenderDto;
-use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Dto\Lists\ShipmentMethod;
-use Greensight\Logistics\Dto\Order\CdekDeliveryOrderReceiptDto;
-use Greensight\Logistics\Dto\Order\DeliveryOrderBarcodesDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderCostDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderDto;
@@ -38,24 +32,21 @@ use Greensight\Logistics\Dto\Order\DeliveryOrderInput\RecipientDto;
 use Greensight\Logistics\Services\CourierCallService\CourierCallService;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Logistics\Services\ListsService\ListsService;
-use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Greensight\Store\Dto\StorePickupTimeDto;
-use Greensight\Store\Services\PackageService\PackageService;
 use Greensight\Store\Services\StoreService\StoreService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use MerchantManagement\Services\MerchantService\MerchantService;
+use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
+use Throwable;
 
 /**
  * Класс-бизнес логики по работе с сущностями доставки:
  * - доставками
- * - отправлениями
  * - товарами отправлений
- * - коробками отправлений
  * - товарами коробок отправлений
- * - грузами
  * Class DeliveryService
  * @package App\Services
  */
@@ -63,26 +54,12 @@ class DeliveryService
 {
     /**
      * Получить объект отправления по его id
+     *
+     * @throws ModelNotFoundException
      */
-    public function getDelivery(int $deliveryId): ?Delivery
+    public function getDelivery(int $deliveryId): Delivery
     {
-        return Delivery::find($deliveryId);
-    }
-
-    /**
-     * Получить объект отправления по его id
-     */
-    public function getShipment(int $shipmentId): ?Shipment
-    {
-        return Shipment::find($shipmentId);
-    }
-
-    /**
-     * Получить объект груза по его id
-     */
-    public function getCargo(int $cargoId): ?Cargo
-    {
-        return Cargo::find($cargoId);
+        return Delivery::findOrFail($deliveryId);
     }
 
     /**
@@ -91,200 +68,6 @@ class DeliveryService
     public function getDeliveryByXmlId(int $xmlId)
     {
         return Delivery::query()->where('xml_id', $xmlId)->first();
-    }
-
-    /**
-     * Создать коробку отправления
-     */
-    public function createShipmentPackage(int $shipmentId, int $packageId): ?ShipmentPackage
-    {
-        $shipment = $this->getShipment($shipmentId);
-        if (is_null($shipment)) {
-            return null;
-        }
-
-        /** @var PackageService $packageService */
-        $packageService = resolve(PackageService::class);
-        $package = $packageService->package($packageId);
-
-        $shipmentPackage = new ShipmentPackage();
-        $shipmentPackage->shipment_id = $shipment->id;
-        $shipmentPackage->package_id = $packageId;
-        $shipmentPackage->wrapper_weight = $package->weight;
-        $shipmentPackage->width = $package->width;
-        $shipmentPackage->height = $package->height;
-        $shipmentPackage->length = $package->length;
-
-        return $shipmentPackage->save() ? $shipmentPackage : null;
-    }
-
-    /**
-     * Удалить коробку отправления со всем её содержимым
-     */
-    public function deleteShipmentPackage(int $shipmentPackageId): bool
-    {
-        /** @var ShipmentPackage $shipmentPackage */
-        $shipmentPackage = ShipmentPackage::query()->where('id', $shipmentPackageId)->with('items')->first();
-
-        return DB::transaction(function () use ($shipmentPackage) {
-            foreach ($shipmentPackage->items as $item) {
-                $item->delete();
-            }
-
-            return $shipmentPackage->delete();
-        });
-    }
-
-    /**
-     * Добавить/обновить/удалить элемент (собранный товар с одного склада одного мерчанта) коробки отправления
-     * @throws Exception
-     */
-    public function setShipmentPackageItem(int $shipmentPackageId, int $basketItemId, float $qty, int $setBy): bool
-    {
-        $ok = true;
-        $shipmentPackageItem = ShipmentPackageItem::query()
-            ->where('shipment_package_id', $shipmentPackageId)
-            ->where('basket_item_id', $basketItemId)
-            ->first();
-        if (!$qty && !is_null($shipmentPackageItem)) {
-            //Удаляем элемент из коробки отправления
-            $ok = $shipmentPackageItem->delete();
-        } else {
-            /** @var BasketItem $basketItem */
-            $basketItem = BasketItem::find($basketItemId);
-
-            if ($basketItem->isCanceled()) {
-                throw new DeliveryServiceInvalidConditions('Shipment item is canceled');
-            }
-
-            if ($basketItem->qty < $qty) {
-                throw new DeliveryServiceInvalidConditions('Shipment package qty can\'t be more than basket item qty');
-            } else {
-                if (is_null($shipmentPackageItem)) {
-                    $shipmentPackageItem = new ShipmentPackageItem();
-                }
-                $shipmentPackageItem->updateOrCreate([
-                    'shipment_package_id' => $shipmentPackageId,
-                    'basket_item_id' => $basketItemId,
-                ], ['qty' => $qty, 'set_by' => $setBy]);
-            }
-        }
-
-        return $ok;
-    }
-
-    /**
-     * Отменить элемент (товар с одного склада одного мерчанта) отправления
-     * @throws Exception
-     */
-    public function cancelShipmentItem(
-        int $shipmentId,
-        int $basketItemId,
-        float $qtyToCancel,
-        int $cancelBy,
-        int $returnReasonId
-    ): void {
-        /** @var Shipment $shipment */
-        $shipment = Shipment::find($shipmentId);
-        if (!$qtyToCancel && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
-            throw new DeliveryServiceInvalidConditions('Shipment item not found');
-        }
-        if ($shipment->status > DeliveryStatus::ASSEMBLED) {
-            throw new DeliveryServiceInvalidConditions('Shipment status is exceeded');
-        }
-        /** @var BasketItem $basketItem */
-        $basketItem = BasketItem::find($basketItemId);
-        if ($basketItem->isCanceled()) {
-            throw new DeliveryServiceInvalidConditions('Basket item is already canceled');
-        }
-        if ($basketItem->qty < $qtyToCancel) {
-            throw new DeliveryServiceInvalidConditions('Cancel qty can\'t be more than basket item qty');
-        }
-        $newQty = $basketItem->qty - $qtyToCancel;
-        $basketItem->update(
-            [
-                'qty' => $newQty,
-                'qty_canceled' => $basketItem->qty_canceled + $qtyToCancel,
-                'is_canceled' => $newQty == 0,
-                'canceled_by' => $cancelBy,
-                'return_reason_id' => $returnReasonId,
-            ]
-        );
-    }
-
-    /**
-     * Проверить, что все товары отправления упакованы по коробкам
-     */
-    public function checkAllShipmentProductsPacked(Shipment $shipment): bool
-    {
-        $shipment->loadMissing('items.basketItem', 'packages.items');
-
-        $shipmentItems = [];
-        foreach ($shipment->items as $shipmentItem) {
-            $shipmentItems[$shipmentItem->basket_item_id] = null;
-            if ($shipmentItem->basketItem && !$shipmentItem->basketItem->isCanceled() && !$shipmentItem->basketItem->isReturned()) {
-                $shipmentItems[$shipmentItem->basket_item_id] = $shipmentItem->basketItem->qty;
-            }
-        }
-
-        foreach ($shipment->packages as $package) {
-            foreach ($package->items as $packageItem) {
-                $shipmentItems[$packageItem->basket_item_id] -= $packageItem->qty;
-            }
-        }
-
-        return empty(array_filter($shipmentItems));
-    }
-
-    /**
-     * Добавить отправление в груз
-     * @throws Exception
-     */
-    public function addShipment2Cargo(Shipment $shipment): void
-    {
-        if ($shipment->is_canceled) {
-            throw new DeliveryServiceInvalidConditions('Отправление отменено');
-        }
-        if ($shipment->status != ShipmentStatus::ASSEMBLED) {
-            throw new DeliveryServiceInvalidConditions('Отправление не собрано');
-        }
-        if ($shipment->cargo_id) {
-            throw new DeliveryServiceInvalidConditions('Отправление уже добавлено в груз');
-        }
-        if (!$shipment->delivery->xml_id) {
-            throw new DeliveryServiceInvalidConditions('Задание на доставку не создано');
-        }
-
-        $deliveryService = $this->getZeroMileShipmentDeliveryServiceId($shipment);
-
-        $cargoQuery = Cargo::query()
-            ->select('id')
-            ->where('merchant_id', $shipment->merchant_id)
-            ->where('store_id', $shipment->store_id)
-            ->where('delivery_service', $deliveryService)
-            ->where('status', CargoStatus::CREATED)
-            ->where('is_canceled', false)
-            ->orderBy('created_at', 'desc');
-        if ($shipment->getOriginal('cargo_id')) {
-            $cargoQuery->where('id', '!=', $shipment->getOriginal('cargo_id'));
-        }
-        $cargo = $cargoQuery->first();
-        if (is_null($cargo)) {
-            //todo Создание груза выделить в отдельный метод
-            $cargo = new Cargo();
-            $cargo->merchant_id = $shipment->merchant_id;
-            $cargo->store_id = $shipment->store_id;
-            $cargo->delivery_service = $deliveryService;
-            $cargo->status = CargoStatus::CREATED;
-            $cargo->width = 0;
-            $cargo->height = 0;
-            $cargo->length = 0;
-            $cargo->weight = 0;
-            $cargo->save();
-        }
-
-        $shipment->cargo_id = $cargo->id;
-        $shipment->save();
     }
 
     /**
@@ -305,14 +88,13 @@ class DeliveryService
             throw new DeliveryServiceInvalidConditions('Груз не содержит отправлений');
         }
 
-        /** @var StoreService $storeService */
         $storeService = resolve(StoreService::class);
-        $storeQuery = $storeService->newQuery()
-            ->include('storeContact', 'storePickupTime');
+        $storeQuery = $storeService->newQuery()->include('storeContact', 'storePickupTime');
         $store = $storeService->store($cargo->store_id, $storeQuery);
         if (is_null($store)) {
             $cargo->error_xml_id = 'Не найден склад с id="' . $cargo->store_id . '" для груза';
             $cargo->save();
+
             return;
         }
 
@@ -370,9 +152,6 @@ class DeliveryService
         }
         $deliveryCargoDto->order_ids = $orderIds;
 
-        /** @var CourierCallService $courierCallService */
-        $courierCallService = resolve(CourierCallService::class);
-
         //Получаем доступные дни недели для отгрузки грузов курьерам службы доставки текущего груза
         /** @var Collection|StorePickupTimeDto[] $storePickupTimes */
         $storePickupTimes = collect();
@@ -397,8 +176,8 @@ class DeliveryService
 
         $dayPlus = 0;
         // @todo: fix get timezone by store
-        $timezone = new \DateTimeZone('Europe/Moscow');
-        $dateNow = new \DateTimeImmutable('now', $timezone);
+        $timezone = new DateTimeZone('Europe/Moscow');
+        $dateNow = new DateTimeImmutable('now', $timezone);
         while ($dayPlus <= 6) {
             $date = $dateNow->modify('+' . $dayPlus . ' day' . ($dayPlus > 1 ? 's' : ''));
             //Получаем номер дня недели (1 - понедельник, ..., 7 - воскресенье)
@@ -409,7 +188,7 @@ class DeliveryService
                 continue;
             }
 
-            $deliveryDateTo = new \DateTimeImmutable($date->format('Y-m-d') . 'T' . $storePickupTimes[$dayOfWeek]->pickup_time_end, $timezone);
+            $deliveryDateTo = new DateTimeImmutable($date->format('Y-m-d') . 'T' . $storePickupTimes[$dayOfWeek]->pickup_time_end, $timezone);
             if ($dateNow > $deliveryDateTo) {
                 continue;
             }
@@ -421,6 +200,7 @@ class DeliveryService
 
             $courierCallInputDto->cargo = $deliveryCargoDto;
             try {
+                $courierCallService = resolve(CourierCallService::class);
                 $courierCallOutputDto = $courierCallService->createCourierCall(
                     $cargo->delivery_service,
                     $courierCallInputDto
@@ -432,10 +212,10 @@ class DeliveryService
                     $cargo->intake_time_from = $deliveryCargoDto->time_start;
                     $cargo->intake_time_to = $deliveryCargoDto->time_end;
                     break;
-                } else {
-                    $cargo->error_xml_id = $courierCallOutputDto->message;
                 }
-            } catch (\Throwable $e) {
+
+                $cargo->error_xml_id = $courierCallOutputDto->message;
+            } catch (Throwable $e) {
                 $cargo->error_xml_id = $e->getMessage();
                 report($e);
             }
@@ -449,51 +229,13 @@ class DeliveryService
     }
 
     /**
-     * Отменить груз (все отправления груза отвязываются от него!)
-     * @throws Exception
-     */
-    public function cancelCargo(Cargo $cargo): bool
-    {
-        if ($cargo->status >= CargoStatus::SHIPPED) {
-            throw new DeliveryServiceInvalidConditions(
-                'Груз, начиная со статуса "Передан Логистическому Оператору", нельзя отменить'
-            );
-        }
-
-        $result = DB::transaction(function () use ($cargo) {
-            $cargo->is_canceled = true;
-            $cargo->save();
-
-            if ($cargo->shipments->isNotEmpty()) {
-                foreach ($cargo->shipments as $shipment) {
-                    $shipment->cargo_id = null;
-                    $shipment->save();
-                }
-            }
-
-            return true;
-        });
-
-        if ($result) {
-            $this->cancelCourierCall($cargo);
-
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * Отменить заявку на вызов курьера для забора груза
      */
     public function cancelCourierCall(Cargo $cargo): void
     {
         if ($cargo->xml_id) {
-            /** @var CourierCallService $courierCallService */
             $courierCallService = resolve(CourierCallService::class);
-            $courierCallService
-                ->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
-
+            $courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
             $cargo->xml_id = '';
             $cargo->cdek_intake_number = null;
             $cargo->error_xml_id = '';
@@ -507,11 +249,8 @@ class DeliveryService
     public function checkExternalStatus(Cargo $cargo): void
     {
         if ($cargo->xml_id) {
-            /** @var CourierCallService $courierCallService */
             $courierCallService = resolve(CourierCallService::class);
-            $status = $courierCallService
-                ->checkExternalStatus($cargo->delivery_service, $cargo->xml_id);
-
+            $status = $courierCallService->checkExternalStatus($cargo->delivery_service, $cargo->xml_id);
             $cargo->error_xml_id = $status->error;
             $cargo->cdek_intake_number = $status->intake_number;
             $cargo->updated_at = Carbon::now();
@@ -555,10 +294,9 @@ class DeliveryService
         }
 
         $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
-        /** @var DeliveryOrderService $deliveryOrderService */
-        $deliveryOrderService = resolve(DeliveryOrderService::class);
         try {
             if (!$delivery->xml_id) {
+                $deliveryOrderService = resolve(DeliveryOrderService::class);
                 $deliveryOrderOutputDto = $deliveryOrderService->createOrder(
                     $delivery->delivery_service,
                     $deliveryOrderInputDto
@@ -585,6 +323,7 @@ class DeliveryService
                     }
                 }
             } else {
+                $deliveryOrderService = resolve(DeliveryOrderService::class);
                 $deliveryOrderOutputDto = $deliveryOrderService->updateOrder(
                     $delivery->delivery_service,
                     $delivery->xml_id,
@@ -614,7 +353,7 @@ class DeliveryService
                     }
                 }
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $delivery->error_xml_id = $e->getMessage();
             $delivery->save();
             report($e);
@@ -687,11 +426,10 @@ class DeliveryService
             /**
              * Если в доставке одно отправление, то в качестве данных отправителя указываем данные мерчанта
              */
-            /** @var StoreService $storeService */
-            $storeService = resolve(StoreService::class);
             /** @var MerchantService $merchantService */
             $merchantService = resolve(MerchantService::class);
             $shipment = $delivery->shipments[0];
+            $storeService = resolve(StoreService::class);
             $store = $storeService->store($shipment->store_id, $storeService->newQuery()->include('storeContact'));
             $merchant = $merchantService->merchant($shipment->merchant_id);
 
@@ -872,18 +610,16 @@ class DeliveryService
         $deliveries->load('order');
 
         if ($deliveries->isNotEmpty()) {
-            /** @var DeliveryOrderService $deliveryOrderService */
-            $deliveryOrderService = resolve(DeliveryOrderService::class);
-
             $deliveriesByService = $deliveries->groupBy('delivery_service');
             /** @var Collection|Delivery[] $items */
             foreach ($deliveriesByService as $deliveryServiceId => $items) {
                 try {
+                    $deliveryOrderService = resolve(DeliveryOrderService::class);
                     $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders(
                         $deliveryServiceId,
                         $items->pluck('xml_id')->all()
                     );
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     report($e);
                     continue;
                 }
@@ -915,7 +651,7 @@ class DeliveryService
                             );
 
                             $delivery->save();
-                        } catch (\Throwable $e) {
+                        } catch (Throwable $e) {
                             logger()->error("Error when updating status of Delivery #{$delivery->id} ({$delivery->xml_id})");
                             report($e);
                             continue;
@@ -952,123 +688,6 @@ class DeliveryService
     }
 
     /**
-     * Получить файл со штрихкодами коробок для заказа на доставку
-     */
-    public function getShipmentBarcodes(Shipment $shipment): ?DeliveryOrderBarcodesDto
-    {
-        $delivery = $shipment->delivery;
-
-        if (!$delivery->xml_id) {
-            return null;
-        }
-        if ($shipment->status < ShipmentStatus::ASSEMBLED) {
-            return null;
-        }
-
-        try {
-            /** @var DeliveryOrderService $deliveryOrderService */
-            $deliveryOrderService = resolve(DeliveryOrderService::class);
-            return $deliveryOrderService->barcodesOrder(
-                $delivery->delivery_service,
-                $delivery->xml_id,
-                array_filter($shipment->packages->pluck('xml_id')->toArray())
-            );
-        } catch (\Throwable $e) {
-            report($e);
-            return null;
-        }
-    }
-
-    /**
-     * Получить квитанцию cdek для заказа на доставку
-     * @return DeliveryOrderBarcodesDto|null
-     */
-    public function getShipmentCdekReceipt(Shipment $shipment): ?CdekDeliveryOrderReceiptDto
-    {
-        $delivery = $shipment->delivery;
-
-        if (!$delivery->xml_id) {
-            return null;
-        }
-        if ($shipment->status < ShipmentStatus::ASSEMBLED) {
-            return null;
-        }
-
-        try {
-            /** @var DeliveryOrderService $deliveryOrderService */
-            $deliveryOrderService = resolve(DeliveryOrderService::class);
-            return $deliveryOrderService->cdekReceiptOrder($delivery->delivery_service, $delivery->xml_id);
-        } catch (\Throwable $e) {
-            report($e);
-            return null;
-        }
-    }
-
-    /**
-     * Пометить отправление как проблемное
-     */
-    public function markAsProblemShipment(Shipment $shipment, string $comment = ''): bool
-    {
-        $shipment->is_problem = true;
-        $shipment->assembly_problem_comment = $comment;
-
-        return $shipment->save();
-    }
-
-    /**
-     * Пометить отправление как непроблемное
-     */
-    public function markAsNonProblemShipment(Shipment $shipment): bool
-    {
-        $shipment->is_problem = false;
-
-        return $shipment->save();
-    }
-
-    /**
-     * Отменить отправление
-     * @throws Exception
-     */
-    public function cancelShipment(Shipment $shipment, ?int $orderReturnReasonId = null): bool
-    {
-        if ($shipment->status >= ShipmentStatus::DONE) {
-            throw new DeliveryServiceInvalidConditions(
-                'Отправление, начиная со статуса "Доставлено получателю", нельзя отменить'
-            );
-        }
-
-        $shipment->return_reason_id ??= $orderReturnReasonId;
-
-        $shipment->is_canceled = true;
-        $shipment->cargo_id = null;
-
-        if (!$shipment->save()) {
-            return false;
-        }
-
-        $orderReturnDto = (new OrderReturnDtoBuilder())->buildFromShipment($shipment);
-
-        if ($orderReturnDto) {
-            /** @var OrderReturnService $orderReturnService */
-            $orderReturnService = resolve(OrderReturnService::class);
-            rescue(fn() => $orderReturnService->create($orderReturnDto));
-        }
-
-        if ($shipment->status > ShipmentStatus::CREATED) {
-            $attributes = [
-                'SHIPMENT_NUMBER' => $shipment->number,
-                'LINK_ORDER' => sprintf('%s/orders/%d', config('app.admin_host'), $shipment->delivery->order_id),
-            ];
-
-            /** @var ServiceNotificationService $notificationService */
-            $notificationService = resolve(ServiceNotificationService::class);
-            $notificationService->sendByRole(RoleDto::ROLE_LOGISTIC, 'logistotpravlenie_otmeneno', $attributes);
-        }
-
-        return true;
-    }
-
-    /**
      * Отменить доставку
      * @throws Exception
      */
@@ -1099,9 +718,6 @@ class DeliveryService
     public function cancelDeliveryOrder(Delivery $delivery): void
     {
         if ($delivery->xml_id) {
-            /** @var DeliveryOrderService $deliveryOrderService */
-            $deliveryOrderService = resolve(DeliveryOrderService::class);
-
             // IBT-621: не удалять xml_id при отмене доставки
             // $delivery->xml_id = '';
             // $delivery->save();
@@ -1109,7 +725,7 @@ class DeliveryService
             if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
                 return;
             }
-
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
             $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
         }
     }

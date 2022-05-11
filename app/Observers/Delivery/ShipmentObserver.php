@@ -10,13 +10,14 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\History\HistoryType;
 use App\Services\DeliveryService;
 use App\Services\DeliveryServiceInvalidConditions;
+use App\Services\ShipmentPackageService;
+use App\Services\ShipmentService;
 use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use MerchantManagement\Dto\OperatorCommunicationMethod;
-use MerchantManagement\Dto\OperatorDto;
 use MerchantManagement\Services\OperatorService\OperatorService;
 
 /**
@@ -124,10 +125,10 @@ class ShipmentObserver
             $shipment->status != $shipment->getOriginal('status') &&
             $shipment->status == ShipmentStatus::ASSEMBLED
         ) {
-            /** @var DeliveryService $deliveryService */
-            $deliveryService = resolve(DeliveryService::class);
+            /** @var ShipmentPackageService $shipmentPackageService */
+            $shipmentPackageService = resolve(ShipmentPackageService::class);
 
-            return $deliveryService->checkAllShipmentProductsPacked($shipment);
+            return $shipmentPackageService->checkAllShipmentProductsPacked($shipment);
         }
 
         return true;
@@ -240,9 +241,9 @@ class ShipmentObserver
     protected function add2Cargo(Shipment $shipment): void
     {
         try {
-            /** @var DeliveryService $deliveryService */
-            $deliveryService = resolve(DeliveryService::class);
-            $deliveryService->addShipment2Cargo($shipment);
+            /** @var ShipmentService $shipmentService */
+            $shipmentService = resolve(ShipmentService::class);
+            $shipmentService->addShipment2Cargo($shipment);
         } catch (DeliveryServiceInvalidConditions $e) {
             logger(['addShipment2Cargo error' => $e->getMessage()]);
         } catch (\Throwable $e) {
@@ -465,100 +466,32 @@ class ShipmentObserver
         }
     }
 
-    public function sendCreatedNotification(Shipment $shipment)
+    public function sendCreatedNotification(Shipment $shipment): void
     {
         if (!in_array($shipment->status, self::ELIGIBLE_STATUS)) {
-            return true;
+            return;
         }
 
         if ($shipment->status == $shipment->getOriginal('status')) {
-            return true;
+            return;
         }
 
         // if(in_array($shipment->getOriginal('status'), static::ELIGIBLE_STATUS)) {
         //     return true;
         // }
 
-        try {
-            /** @var ServiceNotificationService $serviceNotificationService */
-            $serviceNotificationService = app(ServiceNotificationService::class);
-            /** @var OperatorService $operatorService */
-            $operatorService = app(OperatorService::class);
-            /** @var UserService $userService */
-            $userService = app(UserService::class);
-
-            $operators = $operatorService->operators(
-                (new RestQuery())
-                    ->setFilter('merchant_id', '=', $shipment->merchant_id)
-            );
-
-            $users = $userService->users(
-                $userService->newQuery()
-                    ->setFilter('id', $operators->pluck('user_id')->all())
-            )->keyBy('id');
-
-            /** @var OperatorDto $operator */
-            foreach ($operators as $i => $operator) {
-                $user = $users->get($operator->user_id);
-                $attributes = $this->generateCreatedNotificationAttributes($shipment, $user);
-
-                if ($user) {
-                    if ($i === 0) { // TODO: добавить проверку, что оператор является админов
-                        $serviceNotificationService->send(
-                            $operator->user_id,
-                            'klientoformlen_novyy_zakaz',
-                            $this->generateCreatedNotificationAttributes($shipment, $user)
-                        );
-                        continue;
-                    }
-
-                    switch ($operator->communication_method) {
-                        case OperatorCommunicationMethod::METHOD_PHONE:
-                            $serviceNotificationService->sendDirect(
-                                'klientoformlen_novyy_zakaz',
-                                $user->phone,
-                                'sms',
-                                $attributes
-                            );
-                            break;
-                        case OperatorCommunicationMethod::METHOD_EMAIL:
-                            $serviceNotificationService->sendDirect(
-                                'klientoformlen_novyy_zakaz',
-                                $user->email,
-                                'email',
-                                $attributes
-                            );
-                            break;
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            report($e);
-        }
-    }
-
-    protected function generateCreatedNotificationAttributes(Shipment $shipment, ?UserDto $user): array
-    {
-        return [
-            'QUANTITY_ORDERS' => 1,
-            'LINK_ORDERS' => sprintf('%s/shipment/list/%d', config('mas.masHost'), $shipment->id),
-            'CUSTOMER_NAME' => $user ? $user->first_name : '',
-            'SUM_ORDERS' => (int) $shipment->cost,
-            'GOODS_NAME' => $shipment->items->first()->basketItem->name,
-            'QUANTITY_GOODS' => (int) $shipment->items->first()->basketItem->qty,
-            'PRISE_GOODS' => (int) $shipment->items->first()->basketItem->price,
-            'ALL_QUANTITY_GOODS' => (int) $shipment->items()->with('basketItem')->get()->sum('basketItem.qty'),
-            'ALL_PRISE_GOODS' => (int) $shipment->cost,
-        ];
+        /** @var ShipmentService $shipmentService */
+        $shipmentService = resolve(ShipmentService::class);
+        $shipmentService->sendShipmentNotification($shipment);
     }
 
     protected function sendStatusNotification(Shipment $shipment)
     {
         try {
-            $isNeedSendCancelledNotification = $this->isNeedSendCancelledNotification($shipment);
+            $isNeedSendCanceledNotification = $this->isNeedSendCanceledNotification($shipment);
             $isNeedSendProblemNotification = $shipment->wasChanged('is_problem') && $shipment->is_problem;
 
-            if (!$isNeedSendCancelledNotification && !$isNeedSendProblemNotification) {
+            if (!$isNeedSendCanceledNotification && !$isNeedSendProblemNotification) {
                 return;
             }
 
@@ -579,7 +512,7 @@ class ShipmentObserver
                         ->setFilter('id', $operator->user_id)
                 )->first();
 
-                if ($i === 0 && $isNeedSendCancelledNotification) {
+                if ($i === 0 && $isNeedSendCanceledNotification) {
                     $serviceNotificationService->send(
                         $user->id,
                         'klientstatus_zakaza_otmenen',
@@ -600,7 +533,7 @@ class ShipmentObserver
                         continue 2;
                 }
 
-                if ($isNeedSendCancelledNotification) {
+                if ($isNeedSendCanceledNotification) {
                     $serviceNotificationService->sendDirect(
                         'klientstatus_zakaza_otmenen',
                         $receiver,
@@ -626,7 +559,7 @@ class ShipmentObserver
         }
     }
 
-    private function isNeedSendCancelledNotification(Shipment $shipment): bool
+    private function isNeedSendCanceledNotification(Shipment $shipment): bool
     {
         return $shipment->wasChanged('is_canceled')
             && $shipment->is_canceled

@@ -66,7 +66,7 @@ class ShipmentPackageItem extends AbstractModel
         return $this->belongsTo(BasketItem::class);
     }
 
-    protected function historyMainModel()
+    protected function historyMainModel(): array
     {
         return [$this->shipmentPackage->shipment->delivery->order, $this->shipmentPackage->shipment];
     }

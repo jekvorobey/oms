@@ -271,9 +271,6 @@ class Cargo extends AbstractModel
         return $maxSideName;
     }
 
-    /**
-     * @throws \Pim\Core\PimException
-     */
     public static function modifyQuery(Builder $query, RestQuery $restQuery): Builder
     {
         $modifiedRestQuery = clone $restQuery;

@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\V1\Delivery;
 
-use App\Services\DeliveryService;
+use App\Services\CargoService;
 use App\Services\DocumentService\CargoAcceptanceActCreator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CargoDocumentsController extends DocumentController
 {
@@ -32,14 +31,10 @@ class CargoDocumentsController extends DocumentController
     public function acceptanceAct(
         int $cargoId,
         Request $request,
-        DeliveryService $deliveryService,
+        CargoService $cargoService,
         CargoAcceptanceActCreator $cargoAcceptanceActCreator
     ): JsonResponse {
-        $cargo = $deliveryService->getCargo($cargoId);
-        if (!$cargo) {
-            throw new NotFoundHttpException('cargo not found');
-        }
-
+        $cargo = $cargoService->getCargo($cargoId);
         $documentDto = $cargoAcceptanceActCreator->setCargo($cargo)->setAsPdf($request->as_pdf ?: false)->create();
 
         return $this->documentResponse($documentDto);
