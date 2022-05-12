@@ -7,7 +7,6 @@ use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentSystem;
 use App\Services\PaymentService\PaymentService;
 use Illuminate\Console\Command;
-use Illuminate\Database\Query\Builder;
 
 class CheckYooKassaPayments extends Command
 {
