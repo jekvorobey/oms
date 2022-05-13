@@ -50,10 +50,8 @@ class ShipmentService
         if ($shipment->isInvalid()) {
             throw new DeliveryServiceInvalidConditions('Отправление отменено или проблемное');
         }
-        if ($shipment->status != ShipmentStatus::AWAITING_CONFIRMATION) {
-            throw new DeliveryServiceInvalidConditions(
-                'Отправление не в статусе ожидания подтверждения мерчантом'
-            );
+        if ($shipment->status != ShipmentStatus::ASSEMBLING) {
+            throw new DeliveryServiceInvalidConditions('Отправление не в статусе На комплектации');
         }
         if ($shipment->cargo_id) {
             throw new DeliveryServiceInvalidConditions('Отправление уже добавлено в груз');

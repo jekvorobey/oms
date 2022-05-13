@@ -104,7 +104,7 @@ class CargoService
                 $isNeedToCancelCourierCall = false;
             }
 
-            if ($shipment->status === ShipmentStatus::AWAITING_CONFIRMATION) {
+            if ($shipment->status === ShipmentStatus::ASSEMBLING) {
                 //Отправка повторного уведомления мерчанту
                 $shipmentService = resolve(ShipmentService::class);
                 $shipmentService->sendShipmentNotification($shipment);
