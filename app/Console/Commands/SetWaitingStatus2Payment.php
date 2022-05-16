@@ -45,8 +45,10 @@ class SetWaitingStatus2Payment extends Command
         $dateTimeMinutesAgo = (new Carbon())->modify('-' . self::MINUTES_FOR_WAITING . ' minutes');
         /** @var Collection|Payment[] $payments */
         $payments = Payment::query()
-            ->where('status', PaymentStatus::NOT_PAID)
-            ->where('created_at', '<=', $dateTimeMinutesAgo->format('Y-m-d H:i:s'))
+            ->leftJoin('orders', 'orders.id', '=', 'payments.order_id')
+            ->where('payments.status', PaymentStatus::NOT_PAID)
+            ->where('orders.is_canceled', '!=', true)
+            ->where('payments.created_at', '<=', $dateTimeMinutesAgo->format('Y-m-d H:i:s'))
             ->get();
         if ($payments->isNotEmpty()) {
             foreach ($payments as $payment) {

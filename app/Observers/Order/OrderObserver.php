@@ -20,6 +20,7 @@ use App\Services\ShipmentService;
 use App\Services\TicketNotifierService;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
+use Cms\Services\RedirectService\RedirectService;
 use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Services\AuthService\UserService;
@@ -671,6 +672,8 @@ class OrderObserver
         $productService = app(ProductService::class);
         /** @var CategoryService $categoryService */
         $categoryService = app(CategoryService::class);
+        /** @var RedirectService $redirectService */
+        $redirectService = app(RedirectService::class);
 
         $shipments = $shipments
             ->map(function (Shipment $shipment) use ($order, $offerService, $productService, $categoryService) {
@@ -759,7 +762,7 @@ class OrderObserver
             &$deliveryDate,
             &$withoutParams,
             &$hideShipmentsDate
-        ) {
+) {
             if ($override_delivery) {
                 // $bonus = optional($order->bonuses->first());
 
@@ -1036,7 +1039,9 @@ class OrderObserver
             'ORDER_ID' => $order->number,
             'FULL_NAME' => sprintf('%s %s', $receiverFullNameByParts[0], $receiverFullNameByParts[1] ?? ''),
             'LINK_ACCOUNT' => (string) static::shortenLink(sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id)),
-            'LINK_PAY' => (string) static::shortenLink($link),
+//            'LINK_ACCOUNT' => (string) $redirectService->generateShortUrl(sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id)),
+//            'LINK_PAY' => (string) static::shortenLink($link),
+            'LINK_PAY' => (string) $redirectService->generateShortUrl($link),
             'ORDER_DATE' => $order->created_at->toDateString(),
             'ORDER_TIME' => $order->created_at->toTimeString(),
             // 'DELIVERY_TYPE' => optional(DeliveryMethod::methodById(optional($order->deliveries->first())->delivery_method ?? 0))->name ?? '',
