@@ -47,6 +47,9 @@ class SetWaitingStatus2Payment extends Command
         $payments = Payment::query()
             ->where('status', PaymentStatus::NOT_PAID)
             ->where('created_at', '<=', $dateTimeMinutesAgo->format('Y-m-d H:i:s'))
+            ->whereHas('order', function ($query) {
+                $query->where('is_canceled', '!=', 1);
+            })
             ->get();
         if ($payments->isNotEmpty()) {
             foreach ($payments as $payment) {

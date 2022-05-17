@@ -30,13 +30,11 @@ interface PaymentSystemInterface
 
     /**
      * Провести оплату холдированными средствами.
-     *
-     * @param $amount
      */
     public function commitHoldedPayment(Payment $localPayment, $amount);
 
     /**
-     * Обработать данные от платёжной ситсемы о совершении платежа.
+     * Обработать данные от платёжной системы о совершении платежа.
      *
      * @param array $data
      */
@@ -68,4 +66,14 @@ interface PaymentSystemInterface
      * Создание чека возврата (при отмене всего заказа/платежа)
      */
     public function createRefundAllReceipt(Payment $payment): void;
+
+    /**
+     * Получить информацию о платеже в платёжной системе
+     */
+    public function paymentInfo(string $paymentId);
+
+    /**
+     * Обработать данные от платёжной системы
+     */
+    public function updatePaymentStatus(Payment $localPayment, $payment): void;
 }
