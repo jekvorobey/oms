@@ -46,6 +46,7 @@ class DeliveryObserver
          * сейчас клиент может отказаться только от всей доставки целеком, а не от какой-то её части
          */
         DeliveryStatus::CANCELLATION_EXPECTED => ShipmentStatus::CANCELLATION_EXPECTED,
+        DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER => ShipmentStatus::RETURN_EXPECTED_FROM_CUSTOMER,
         DeliveryStatus::RETURNED => ShipmentStatus::RETURNED,
 
         DeliveryStatus::ASSEMBLING => ShipmentStatus::ASSEMBLING,
