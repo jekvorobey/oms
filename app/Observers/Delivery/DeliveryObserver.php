@@ -13,6 +13,7 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 use App\Observers\Order\OrderObserver;
+use App\Services\DeliveryService;
 use App\Services\OrderService;
 use App\Services\ShipmentService;
 use Carbon\Carbon;
@@ -45,6 +46,7 @@ class DeliveryObserver
          * сейчас клиент может отказаться только от всей доставки целеком, а не от какой-то её части
          */
         DeliveryStatus::CANCELLATION_EXPECTED => ShipmentStatus::CANCELLATION_EXPECTED,
+        DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER => ShipmentStatus::RETURN_EXPECTED_FROM_CUSTOMER,
         DeliveryStatus::RETURNED => ShipmentStatus::RETURNED,
 
         DeliveryStatus::ASSEMBLING => ShipmentStatus::ASSEMBLING,
@@ -74,6 +76,7 @@ class DeliveryObserver
     public function updated(Delivery $delivery)
     {
         $this->setStatusToShipments($delivery);
+        $this->setIsCancel($delivery);
         $this->setIsCanceledToShipments($delivery);
         $this->setStatusToOrder($delivery);
         $this->setPaymentStatusToOrder($delivery);
@@ -353,6 +356,23 @@ class DeliveryObserver
                 $shipment->status = self::STATUS_TO_SHIPMENTS[$delivery->status];
                 $shipment->save();
             }
+        }
+    }
+
+    /**
+     * Отменить доставку если статус "ожидается возврат товара от клиента"
+     * @throws Exception
+     */
+    protected function setIsCancel(Delivery $delivery): void
+    {
+        if (
+            $delivery->wasChanged('status')
+            && $delivery->status === DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER
+            && !$delivery->is_canceled
+        ) {
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+            $deliveryService->cancelDelivery($delivery);
         }
     }
 
