@@ -350,7 +350,12 @@ class DeliveryObserver
             $delivery->loadMissing('shipments');
             foreach ($delivery->shipments as $shipment) {
                 if ($shipment->status >= self::STATUS_TO_SHIPMENTS[$delivery->status]) {
-                    continue;
+                    if (
+                        $delivery->getOriginal('status') != DeliveryStatus::CANCELLATION_EXPECTED
+                        && $delivery->status != DeliveryStatus::READY_FOR_RECIPIENT
+                    ) {
+                        continue;
+                    }
                 }
 
                 $shipment->status = self::STATUS_TO_SHIPMENTS[$delivery->status];
