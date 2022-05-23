@@ -376,8 +376,6 @@ class OrderObserver
      * Списываем холдированные деньги у клиента,
      * когда мерчант подтвердил наличие товара и отдал курьеру (OrderStatus::TRANSFERRED_TO_DELIVERY)
      * или когда заказ доставлен (OrderStatus::DONE)
-     *
-     * @param Order $order
      */
     private function commitPaymentIfOrderTransferredOrDelivered(Order $order): void
     {
