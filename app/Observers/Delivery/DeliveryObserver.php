@@ -241,13 +241,12 @@ class DeliveryObserver
                 if (!$delivery->order->isConsolidatedDelivery() && !$delivery->order->is_canceled) {
                     $notificationService->send(
                         $customer,
-                        (function () use ($delivery) {
-                            if ($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
-                                return 'status_dostavkiotmenena_bez_konsolidatsii_pvzpostamat';
-                            }
-
-                            return 'status_dostavkiotmenena_bez_konsolidatsii_kurer';
-                        })(),
+                        $this->appendTypeModifiers(
+                            'status_dostavki_otmenena',
+                            false,
+                            $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
+                            $delivery->order->isPaid()
+                        ),
                         app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery, true)
                     );
                 }
@@ -256,6 +255,35 @@ class DeliveryObserver
             report($e);
             logger($e->getMessage(), $e->getTrace());
         }
+    }
+
+    protected function appendTypeModifiers(
+        string $slug,
+        bool $consolidation,
+        bool $postomat,
+        ?bool $isPaid = null
+    ): string {
+        if ($consolidation) {
+            $slug .= '_pri_konsolidatsii';
+        } else {
+            $slug .= '_bez_konsolidatsii';
+        }
+
+        if ($postomat) {
+            $slug .= '_pvzpostamat';
+        } else {
+            $slug .= '_kurer';
+        }
+
+        if ($isPaid !== null) {
+            if ($isPaid === true) {
+                $slug .= '_oplachena';
+            } else {
+                $slug .= '_ne_oplachena';
+            }
+        }
+
+        return $slug;
     }
 
     protected function cdekDeliverySumUpdate(Delivery $delivery)
