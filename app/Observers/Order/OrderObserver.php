@@ -76,7 +76,7 @@ class OrderObserver
         $this->setIsCanceledToChildren($order);
         // $this->setIsProblemToChildren($order);
         // $this->notifyIfOrderPaid($order);
-        $this->commitPaymentIfOrderDelivered($order);
+        $this->commitPaymentIfOrderTransferredOrDelivered($order);
         $this->setStatusToChildren($order);
         if ($order->type != Basket::TYPE_CERTIFICATE) {
             $this->sendNotification($order);
@@ -373,13 +373,18 @@ class OrderObserver
         }
     }
 
-    private function commitPaymentIfOrderDelivered(Order $order): void
+    /**
+     * Списываем холдированные деньги у клиента,
+     * когда мерчант подтвердил наличие товара и отдал курьеру (OrderStatus::TRANSFERRED_TO_DELIVERY)
+     * или когда заказ доставлен (OrderStatus::DONE)
+     */
+    private function commitPaymentIfOrderTransferredOrDelivered(Order $order): void
     {
         if ($order->is_postpaid) {
             return;
         }
 
-        if ($order->status == OrderStatus::DONE && $order->wasChanged('status')) {
+        if (in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DONE]) && $order->wasChanged('status')) {
             /** @var Payment $payment */
             $payment = $order->payments->last();
 
@@ -389,7 +394,7 @@ class OrderObserver
                 $paymentService->capture($payment);
             }
 
-            if ($order->isProductOrder()) {
+            if ($order->isProductOrder() && $order->status == OrderStatus::DONE) {
                 $paymentService->sendIncomeFullPaymentReceipt($payment);
             }
         }
