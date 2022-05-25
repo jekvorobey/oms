@@ -76,7 +76,7 @@ class OrderObserver
         $this->setIsCanceledToChildren($order);
         // $this->setIsProblemToChildren($order);
         // $this->notifyIfOrderPaid($order);
-        $this->commitPaymentIfOrderDelivered($order);
+        $this->commitPaymentIfOrderTransferredOrDelivered($order);
         $this->setStatusToChildren($order);
         if ($order->type != Basket::TYPE_CERTIFICATE) {
             $this->sendNotification($order);
@@ -197,6 +197,7 @@ class OrderObserver
                     $this->createCancelledNotificationType(
                         $order->isConsolidatedDelivery(),
                         $orderDelivery ? $orderDelivery->delivery_method === DeliveryMethod::METHOD_PICKUP : false,
+                        $order->isPaid()
                     ),
                     $this->generateNotificationVariables($order, self::OVERRIDE_CANCEL)
                 );
@@ -372,13 +373,18 @@ class OrderObserver
         }
     }
 
-    private function commitPaymentIfOrderDelivered(Order $order): void
+    /**
+     * Списываем холдированные деньги у клиента,
+     * когда мерчант подтвердил наличие товара и отдал курьеру (OrderStatus::TRANSFERRED_TO_DELIVERY)
+     * или когда заказ доставлен (OrderStatus::DONE)
+     */
+    private function commitPaymentIfOrderTransferredOrDelivered(Order $order): void
     {
         if ($order->is_postpaid) {
             return;
         }
 
-        if ($order->status == OrderStatus::DONE && $order->wasChanged('status')) {
+        if (in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DONE]) && $order->wasChanged('status')) {
             /** @var Payment $payment */
             $payment = $order->payments->last();
 
@@ -388,7 +394,7 @@ class OrderObserver
                 $paymentService->capture($payment);
             }
 
-            if ($order->isProductOrder()) {
+            if ($order->isProductOrder() && $order->status == OrderStatus::DONE) {
                 $paymentService->sendIncomeFullPaymentReceipt($payment);
             }
         }
@@ -530,8 +536,12 @@ class OrderObserver
         }
     }
 
-    protected function appendTypeModifiers(string $slug, bool $consolidation, bool $postomat): string
-    {
+    protected function appendTypeModifiers(
+        string $slug,
+        bool $consolidation,
+        bool $postomat,
+        ?bool $isPaid = null
+    ): string {
         if ($consolidation) {
             $slug .= '_pri_konsolidatsii';
         } else {
@@ -544,12 +554,20 @@ class OrderObserver
             $slug .= '_kurer';
         }
 
+        if ($isPaid !== null) {
+            if ($isPaid === true) {
+                $slug .= '_oplachen';
+            } else {
+                $slug .= '_ne_oplachen';
+            }
+        }
+
         return $slug;
     }
 
-    protected function createCancelledNotificationType(bool $consolidation, bool $postomat): string
+    protected function createCancelledNotificationType(bool $consolidation, bool $postomat, bool $isPaid): string
     {
-        return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
+        return $this->appendTypeModifiers('status_zakaza_otmenen', $consolidation, $postomat, $isPaid);
     }
 
     public function generateNotificationVariables(
@@ -628,15 +646,11 @@ class OrderObserver
 
         $deliveryDate = null;
         if ($override_delivery) {
-            $deliveryDate = $this->formatDeliveryDate($override_delivery);
+            $deliveryDate['normal_length'] = $this->formatDeliveryDate($override_delivery);
+            $deliveryDate['short'] = $this->formatDeliveryDate($override_delivery, true);
         } else {
-            $deliveryDate = $order
-                ->deliveries
-                ->map(function (Delivery $delivery) {
-                    return $this->formatDeliveryDate($delivery);
-                })
-                ->unique()
-                ->join('<br>');
+            $deliveryDate['normal_length'] = $this->getFormattedDeliveryDatesByOrder($order);
+            $deliveryDate['short'] = $this->getFormattedDeliveryDatesByOrder($order, true);
         }
 
         $deliveryMethod = null;
@@ -762,7 +776,7 @@ class OrderObserver
             &$deliveryDate,
             &$withoutParams,
             &$hideShipmentsDate
-) {
+        ) {
             if ($override_delivery) {
                 // $bonus = optional($order->bonuses->first());
 
@@ -1009,7 +1023,7 @@ class OrderObserver
             $params['Сумма заказа'] = sprintf('%s ₽', (int) $order->price);
             $params['Получение'] = $deliveryMethod;
             if ($deliveryDate !== null) {
-                $params['Дата доставки'] = $deliveryDate;
+                $params['Дата доставки'] = $deliveryDate['normal_length'];
             }
             $params['Адрес доставки'] = $deliveryAddress;
         }
@@ -1092,7 +1106,8 @@ class OrderObserver
 
                 return $delivery->delivery_at->toTimeString();
             })(),
-            'DELIVERY_DATE_TIME' => $deliveryDate,
+            'DELIVERY_DATE_TIME' => $deliveryDate['normal_length'],
+            'DELIVERY_DATE_TIME_SHORT' => $deliveryDate['short'],
             'OPER_MODE' => (function () use ($order, $points) {
                 $point_id = optional($order->deliveries->first())->point_id;
 
@@ -1150,13 +1165,24 @@ class OrderObserver
         }
     }
 
-    public function formatDeliveryDate(Delivery $delivery)
+    public function formatDeliveryDate(Delivery $delivery, bool $shortFormat = false)
     {
-        $date = $delivery->delivery_at->locale('ru')->isoFormat('D MMMM, dddd');
+        $date = $delivery->delivery_at->locale('ru')->isoFormat($shortFormat ? 'D.MM, dd.' : 'D MMMM, dddd');
         if ($delivery->delivery_time_start && $delivery->delivery_time_end) {
             $date .= sprintf(', с %s до %s', substr($delivery->delivery_time_start, 0, -3), substr($delivery->delivery_time_end, 0, -3));
         }
         return $date;
+    }
+
+    private function getFormattedDeliveryDatesByOrder(Order $order, bool $shortFormat = false): ?string
+    {
+        return $order
+            ->deliveries
+            ->map(function (Delivery $delivery) use ($shortFormat) {
+                return $this->formatDeliveryDate($delivery, $shortFormat);
+            })
+            ->unique()
+            ->join('<br>');
     }
 
     public function parseName(UserDto $user, Order $order)
