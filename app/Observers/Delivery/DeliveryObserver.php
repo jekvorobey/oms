@@ -243,7 +243,6 @@ class DeliveryObserver
                         $customer,
                         $this->appendTypeModifiers(
                             'status_dostavki_otmenena',
-                            false,
                             $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
                             $delivery->order->isPaid()
                         ),
@@ -259,15 +258,10 @@ class DeliveryObserver
 
     protected function appendTypeModifiers(
         string $slug,
-        bool $consolidation,
         bool $postomat,
         ?bool $isPaid = null
     ): string {
-        if ($consolidation) {
-            $slug .= '_pri_konsolidatsii';
-        } else {
-            $slug .= '_bez_konsolidatsii';
-        }
+        $slug .= '_bez_konsolidatsii';
 
         if ($postomat) {
             $slug .= '_pvzpostamat';
