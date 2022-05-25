@@ -256,11 +256,8 @@ class DeliveryObserver
         }
     }
 
-    protected function appendTypeModifiers(
-        string $slug,
-        bool $postomat,
-        ?bool $isPaid = null
-    ): string {
+    protected function appendTypeModifiers(string $slug, bool $postomat, ?bool $isPaid = null): string
+    {
         $slug .= '_bez_konsolidatsii';
 
         if ($postomat) {
