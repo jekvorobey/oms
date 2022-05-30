@@ -1104,8 +1104,8 @@ class OrderObserver
 
                 return $delivery->delivery_at->toTimeString();
             })(),
-            'DELIVERY_DATE_TIME' => $deliveryDate['normal_length'],
-            'DELIVERY_DATE_TIME_SHORT' => $deliveryDate['short'],
+            'DELIVERY_DATE_TIME' => $deliveryDate['normal_length'] ?? null,
+            'DELIVERY_DATE_TIME_SHORT' => $deliveryDate['short'] ?? null,
             'OPER_MODE' => (function () use ($order, $points) {
                 $point_id = optional($order->deliveries->first())->point_id;
 
