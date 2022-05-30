@@ -8,11 +8,22 @@ use App\Models;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\IncomeReceiptData;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\RefundReceiptData;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
+use YooKassa\Common\Exceptions\ApiException;
+use YooKassa\Common\Exceptions\BadApiRequestException;
+use YooKassa\Common\Exceptions\ExtensionNotFoundException;
+use YooKassa\Common\Exceptions\ForbiddenException;
+use YooKassa\Common\Exceptions\InternalServerError;
+use YooKassa\Common\Exceptions\NotFoundException;
+use YooKassa\Common\Exceptions\ResponseProcessingException;
+use YooKassa\Common\Exceptions\TooManyRequestsException;
+use YooKassa\Common\Exceptions\UnauthorizedException;
 use YooKassa\Model\Notification\AbstractNotification;
 use YooKassa\Model\Notification\NotificationFactory;
 use YooKassa\Model\NotificationEventType;
+use YooKassa\Model\PaymentStatus;
 use YooKassa\Model\Payment as YooKassaPayment;
 
 /**
@@ -36,7 +47,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function createExternalPayment(Payment $payment, string $returnLink): void
     {
@@ -66,9 +77,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
     }
 
     /**
-     * Обработать данные от платёжной ситсемы о совершении платежа.
+     * Обработать данные от платёжной системы о совершении платежа.
      * @param array $data
-     * @throws \Exception
+     * @throws Exception
      */
     public function handlePushPayment(array $data): void
     {
@@ -92,8 +103,10 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 'external_payment_id' => $paymentId,
                 'status' => $payment->getStatus(),
             ]);
+            /** @var Payment $localPayment */
+            $localPayment = Payment::byExternalPaymentId($paymentId)->firstOrFail();
 
-            $this->processExternalPayment($paymentId, $payment, $notification);
+            $this->processExternalPayment($localPayment, $payment);
         }
     }
 
@@ -115,39 +128,43 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
     }
 
-    private function processExternalPayment(
-        string $paymentId,
-        YooKassaPayment $payment,
-        AbstractNotification $notification
-    ): void {
-        /** @var Payment $localPayment */
-        $localPayment = Payment::byExternalPaymentId($paymentId)->firstOrFail();
-
-        switch ($notification->getEvent()) {
-            case NotificationEventType::PAYMENT_WAITING_FOR_CAPTURE:
-                $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
-                $localPayment->status = Models\Payment\PaymentStatus::HOLD;
-                $localPayment->yandex_expires_at = $notification->getObject()->getExpiresAt();
+    private function processExternalPayment(Payment $localPayment, YooKassaPayment $payment): void
+    {
+        switch ($payment->status) {
+            case PaymentStatus::PENDING:
+                $this->logger->info('Set waiting', ['local_payment_id' => $localPayment->id]);
+                $localPayment->status = Models\Payment\PaymentStatus::WAITING;
                 $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
                 $localPayment->save();
 
                 break;
-            case NotificationEventType::PAYMENT_SUCCEEDED:
+            case PaymentStatus::WAITING_FOR_CAPTURE:
+                $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
+                $localPayment->status = Models\Payment\PaymentStatus::HOLD;
+                $localPayment->yandex_expires_at = $payment->getExpiresAt();
+                $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
+                $localPayment->save();
+
+                break;
+            case PaymentStatus::SUCCEEDED:
                 $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
                 $localPayment->status = Models\Payment\PaymentStatus::PAID;
                 $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
                 $localPayment->save();
 
                 break;
-            case NotificationEventType::PAYMENT_CANCELED:
+            case PaymentStatus::CANCELED:
                 $order = $localPayment->order;
                 // Если была оплата ПС+доплата и частично отменили на всю сумму доплаты, то платеж в Юкассе отменился, а у нас отменять не надо
                 if ($order->remaining_price && $order->remaining_price <= $order->spent_certificate) {
                     break;
                 }
-
-                $this->logger->info('Set canceled', ['local_payment_id' => $localPayment->id]);
+                $this->logger->info('Set canceled', [
+                    'local_payment_id' => $localPayment->id,
+                    'cancel_reason' => $payment->getCancellationDetails()->reason,
+                ]);
                 $localPayment->status = Models\Payment\PaymentStatus::TIMEOUT;
+                $localPayment->cancel_reason = $payment->getCancellationDetails()->reason;
                 $localPayment->save();
 
                 break;
@@ -233,15 +250,15 @@ class YandexPaymentSystem implements PaymentSystemInterface
 
     /**
      * @inheritDoc
-     * @throws \YooKassa\Common\Exceptions\ApiException
-     * @throws \YooKassa\Common\Exceptions\BadApiRequestException
-     * @throws \YooKassa\Common\Exceptions\ExtensionNotFoundException
-     * @throws \YooKassa\Common\Exceptions\ForbiddenException
-     * @throws \YooKassa\Common\Exceptions\InternalServerError
-     * @throws \YooKassa\Common\Exceptions\NotFoundException
-     * @throws \YooKassa\Common\Exceptions\ResponseProcessingException
-     * @throws \YooKassa\Common\Exceptions\TooManyRequestsException
-     * @throws \YooKassa\Common\Exceptions\UnauthorizedException
+     * @throws ApiException
+     * @throws BadApiRequestException
+     * @throws ExtensionNotFoundException
+     * @throws ForbiddenException
+     * @throws InternalServerError
+     * @throws NotFoundException
+     * @throws ResponseProcessingException
+     * @throws TooManyRequestsException
+     * @throws UnauthorizedException
      */
     public function cancel(string $paymentId): array
     {
@@ -313,5 +330,29 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
 
         return $response->jsonSerialize();
+    }
+
+    /**
+     * @throws NotFoundException
+     * @throws ResponseProcessingException
+     * @throws ApiException
+     * @throws ExtensionNotFoundException
+     * @throws BadApiRequestException
+     * @throws InternalServerError
+     * @throws ForbiddenException
+     * @throws TooManyRequestsException
+     * @throws UnauthorizedException
+     */
+    public function paymentInfo(Payment $payment): ?YooKassaPayment
+    {
+        return $this->yandexService->getPaymentInfo($payment->external_payment_id);
+    }
+
+    /**
+     * @param YooKassaPayment $payment
+     */
+    public function updatePaymentStatus(Payment $localPayment, $payment): void
+    {
+        $this->processExternalPayment($localPayment, $payment);
     }
 }

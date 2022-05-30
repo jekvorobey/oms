@@ -7,6 +7,7 @@ use App\Http\Requests\GetCurrentBasketRequest;
 use App\Http\Requests\SetItemToBasketRequest;
 use App\Models\Basket\Basket;
 use App\Services\BasketService\BasketService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -52,7 +53,7 @@ abstract class BasketController extends Controller
      *     @OA\Response(response="200", description="", @OA\JsonContent(ref="#/components/schemas/Basket")),
      *     @OA\Response(response="404", description="basket not found"),
      * )
-     * @throws \Exception
+     * @throws Exception
      */
     public function setItemByBasket(int $basketId, int $offerId, SetItemToBasketRequest $request): JsonResponse
     {
@@ -60,7 +61,7 @@ abstract class BasketController extends Controller
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setItem(int $basketId, int $offerId, SetItemToBasketRequest $request): JsonResponse
     {

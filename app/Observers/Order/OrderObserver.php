@@ -16,9 +16,12 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
+use App\Services\ShipmentService;
 use App\Services\TicketNotifierService;
 use Cms\Dto\OptionDto;
 use Cms\Services\OptionService\OptionService;
+use Cms\Services\RedirectService\RedirectService;
+use Exception;
 use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
@@ -33,6 +36,7 @@ use Pim\Services\CertificateService\CertificateService;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\ProductService\ProductService;
 use Pim\Services\CategoryService\CategoryService;
+use Throwable;
 
 /**
  * Class OrderObserver
@@ -64,15 +68,15 @@ class OrderObserver
     /**
      * Handle the order "updated" event.
      * @return void
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function updated(Order $order)
     {
         $this->setPaymentStatusToChildren($order);
         $this->setIsCanceledToChildren($order);
-        $this->setIsProblemToChildren($order);
+        // $this->setIsProblemToChildren($order);
         // $this->notifyIfOrderPaid($order);
-        $this->commitPaymentIfOrderDelivered($order);
+        $this->commitPaymentIfOrderTransferredOrDelivered($order);
         $this->setStatusToChildren($order);
         if ($order->type != Basket::TYPE_CERTIFICATE) {
             $this->sendNotification($order);
@@ -98,7 +102,7 @@ class OrderObserver
 
             $this->sendStatusNotification($notificationService, $order, $user_id);
             $notificationService->sendToAdmin('aozzakazzakaz_oformlen');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logger($e->getMessage(), $e->getTrace());
         }
     }
@@ -144,9 +148,8 @@ class OrderObserver
                         || ($order->payment_status == PaymentStatus::WAITING && !$order->is_postpaid)
                     )
                 ) {
-                    $delivery_method = !empty($order->deliveries()->first()->delivery_method)
-                        ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
-                        : false;
+                    $delivery_method = !empty($order->deliveries()->first()->delivery_method) &&
+                        $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP;
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
@@ -194,6 +197,7 @@ class OrderObserver
                     $this->createCancelledNotificationType(
                         $order->isConsolidatedDelivery(),
                         $orderDelivery ? $orderDelivery->delivery_method === DeliveryMethod::METHOD_PICKUP : false,
+                        $order->isPaid()
                     ),
                     $this->generateNotificationVariables($order, self::OVERRIDE_CANCEL)
                 );
@@ -201,7 +205,7 @@ class OrderObserver
             } else {
                 $notificationService->sendToAdmin('aozzakazzakaz_izmenen');
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             report($e);
             logger($e->getMessage(), $e->getTrace());
         }
@@ -230,7 +234,7 @@ class OrderObserver
     /**
      * Handle the order "saving" event.
      * @return void
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function saving(Order $order)
     {
@@ -248,7 +252,7 @@ class OrderObserver
 
     /**
      * Handle the order "deleting" event.
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleting(Order $order)
     {
@@ -306,7 +310,7 @@ class OrderObserver
 
     /**
      * Установить флаг отмены всем доставкам и отправлениями заказа
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setIsCanceledToChildren(Order $order): void
     {
@@ -322,17 +326,17 @@ class OrderObserver
 
     /**
      * Установить флаг проблемы всем доставкам и отправлениями заказа
-     * @throws \Exception
+     * @throws Exception
      */
     protected function setIsProblemToChildren(Order $order): void
     {
         if ($order->is_problem && $order->is_problem != $order->getOriginal('is_problem')) {
             $order->loadMissing('deliveries.shipments');
-            /** @var DeliveryService $deliveryService */
-            $deliveryService = resolve(DeliveryService::class);
+            /** @var ShipmentService $shipmentService */
+            $shipmentService = resolve(ShipmentService::class);
             foreach ($order->deliveries as $delivery) {
                 foreach ($delivery->shipments as $shipment) {
-                    $deliveryService->markAsProblemShipment($shipment);
+                    $shipmentService->markAsProblemShipment($shipment);
                 }
             }
         }
@@ -369,13 +373,18 @@ class OrderObserver
         }
     }
 
-    private function commitPaymentIfOrderDelivered(Order $order): void
+    /**
+     * Списываем холдированные деньги у клиента,
+     * когда мерчант подтвердил наличие товара и отдал курьеру (OrderStatus::TRANSFERRED_TO_DELIVERY)
+     * или когда заказ доставлен (OrderStatus::DONE)
+     */
+    private function commitPaymentIfOrderTransferredOrDelivered(Order $order): void
     {
         if ($order->is_postpaid) {
             return;
         }
 
-        if ($order->status == OrderStatus::DONE && $order->wasChanged('status')) {
+        if (in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DONE]) && $order->wasChanged('status')) {
             /** @var Payment $payment */
             $payment = $order->payments->last();
 
@@ -385,7 +394,7 @@ class OrderObserver
                 $paymentService->capture($payment);
             }
 
-            if ($order->isProductOrder()) {
+            if ($order->isProductOrder() && $order->status == OrderStatus::DONE) {
                 $paymentService->sendIncomeFullPaymentReceipt($payment);
             }
         }
@@ -464,7 +473,7 @@ class OrderObserver
         }
     }
 
-    protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat)
+    protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat): string
     {
         switch ($payment_status) {
             // case PaymentStatus::TIMEOUT:
@@ -483,7 +492,7 @@ class OrderObserver
         bool $consolidation,
         bool $postomat,
         ?int $override = null
-    ) {
+    ): string {
         if ($override == self::OVERRIDE_SUCCESS) {
             $orderStatus = OrderStatus::CREATED;
         }
@@ -505,7 +514,7 @@ class OrderObserver
         return '';
     }
 
-    protected function intoStringStatus(int $orderStatus)
+    protected function intoStringStatus(int $orderStatus): string
     {
         switch ($orderStatus) {
             case OrderStatus::PRE_ORDER:
@@ -527,8 +536,12 @@ class OrderObserver
         }
     }
 
-    protected function appendTypeModifiers(string $slug, bool $consolidation, bool $postomat)
-    {
+    protected function appendTypeModifiers(
+        string $slug,
+        bool $consolidation,
+        bool $postomat,
+        ?bool $isPaid = null
+    ): string {
         if ($consolidation) {
             $slug .= '_pri_konsolidatsii';
         } else {
@@ -541,12 +554,20 @@ class OrderObserver
             $slug .= '_kurer';
         }
 
+        if ($isPaid !== null) {
+            if ($isPaid === true) {
+                $slug .= '_oplachen';
+            } else {
+                $slug .= '_ne_oplachen';
+            }
+        }
+
         return $slug;
     }
 
-    protected function createCancelledNotificationType(bool $consolidation, bool $postomat)
+    protected function createCancelledNotificationType(bool $consolidation, bool $postomat, bool $isPaid): string
     {
-        return $this->appendTypeModifiers('status_zakazaotmenen', $consolidation, $postomat);
+        return $this->appendTypeModifiers('status_zakaza_otmenen', $consolidation, $postomat, $isPaid);
     }
 
     public function generateNotificationVariables(
@@ -625,15 +646,11 @@ class OrderObserver
 
         $deliveryDate = null;
         if ($override_delivery) {
-            $deliveryDate = $this->formatDeliveryDate($override_delivery);
+            $deliveryDate['normal_length'] = $this->formatDeliveryDate($override_delivery);
+            $deliveryDate['short'] = $this->formatDeliveryDate($override_delivery, true);
         } else {
-            $deliveryDate = $order
-                ->deliveries
-                ->map(function (Delivery $delivery) {
-                    return $this->formatDeliveryDate($delivery);
-                })
-                ->unique()
-                ->join('<br>');
+            $deliveryDate['normal_length'] = $this->getFormattedDeliveryDatesByOrder($order);
+            $deliveryDate['short'] = $this->getFormattedDeliveryDatesByOrder($order, true);
         }
 
         $deliveryMethod = null;
@@ -669,6 +686,8 @@ class OrderObserver
         $productService = app(ProductService::class);
         /** @var CategoryService $categoryService */
         $categoryService = app(CategoryService::class);
+        /** @var RedirectService $redirectService */
+        $redirectService = app(RedirectService::class);
 
         $shipments = $shipments
             ->map(function (Shipment $shipment) use ($order, $offerService, $productService, $categoryService) {
@@ -1004,7 +1023,7 @@ class OrderObserver
             $params['Сумма заказа'] = sprintf('%s ₽', (int) $order->price);
             $params['Получение'] = $deliveryMethod;
             if ($deliveryDate !== null) {
-                $params['Дата доставки'] = $deliveryDate;
+                $params['Дата доставки'] = $deliveryDate['normal_length'];
             }
             $params['Адрес доставки'] = $deliveryAddress;
         }
@@ -1033,8 +1052,8 @@ class OrderObserver
             ),
             'ORDER_ID' => $order->number,
             'FULL_NAME' => sprintf('%s %s', $receiverFullNameByParts[0], $receiverFullNameByParts[1] ?? ''),
-            'LINK_ACCOUNT' => (string) static::shortenLink(sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id)),
-            'LINK_PAY' => (string) static::shortenLink($link),
+            'LINK_ACCOUNT' => $redirectService->generateShortUrl(sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id)),
+            'LINK_PAY' => $link ? $redirectService->generateShortUrl($link) : '',
             'ORDER_DATE' => $order->created_at->toDateString(),
             'ORDER_TIME' => $order->created_at->toTimeString(),
             // 'DELIVERY_TYPE' => optional(DeliveryMethod::methodById(optional($order->deliveries->first())->delivery_method ?? 0))->name ?? '',
@@ -1085,7 +1104,8 @@ class OrderObserver
 
                 return $delivery->delivery_at->toTimeString();
             })(),
-            'DELIVERY_DATE_TIME' => $deliveryDate,
+            'DELIVERY_DATE_TIME' => $deliveryDate['normal_length'] ?? null,
+            'DELIVERY_DATE_TIME_SHORT' => $deliveryDate['short'] ?? null,
             'OPER_MODE' => (function () use ($order, $points) {
                 $point_id = optional($order->deliveries->first())->point_id;
 
@@ -1131,7 +1151,7 @@ class OrderObserver
 
     /**
      * Отправить билеты на мастер-классы на почту покупателю заказа и всем участникам.
-     * @throws \Throwable
+     * @throws Throwable
      */
     protected function sendTicketsEmail(Order $order): void
     {
@@ -1143,13 +1163,24 @@ class OrderObserver
         }
     }
 
-    public function formatDeliveryDate(Delivery $delivery)
+    public function formatDeliveryDate(Delivery $delivery, bool $shortFormat = false)
     {
-        $date = $delivery->delivery_at->locale('ru')->isoFormat('D MMMM, dddd');
+        $date = $delivery->delivery_at->locale('ru')->isoFormat($shortFormat ? 'D.MM, dd.' : 'D MMMM, dddd');
         if ($delivery->delivery_time_start && $delivery->delivery_time_end) {
             $date .= sprintf(', с %s до %s', substr($delivery->delivery_time_start, 0, -3), substr($delivery->delivery_time_end, 0, -3));
         }
         return $date;
+    }
+
+    private function getFormattedDeliveryDatesByOrder(Order $order, bool $shortFormat = false): ?string
+    {
+        return $order
+            ->deliveries
+            ->map(function (Delivery $delivery) use ($shortFormat) {
+                return $this->formatDeliveryDate($delivery, $shortFormat);
+            })
+            ->unique()
+            ->join('<br>');
     }
 
     public function parseName(UserDto $user, Order $order)
@@ -1193,7 +1224,7 @@ class OrderObserver
         ])->getBody();
     }
 
-    protected function shouldSendPaidNotification(Order $order)
+    protected function shouldSendPaidNotification(Order $order): bool
     {
         $paid = ($order->payment_status == PaymentStatus::HOLD) || (
             $order->payment_status == PaymentStatus::PAID

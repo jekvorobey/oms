@@ -18,13 +18,6 @@ class OrderReader
 {
     public const PAGE_SIZE = 10;
 
-    public function byId(int $id): ?Order
-    {
-        /** @var Order $order */
-        $order = Order::query()->where('id', $id)->first();
-        return $order;
-    }
-
     /**
      * @throws PimException
      */

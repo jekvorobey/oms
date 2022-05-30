@@ -200,4 +200,23 @@ class PaymentService
         $payment->is_fullpayment_receipt_sent = true;
         $payment->save();
     }
+
+    public function updatePaymentInfo(Payment $payment): void
+    {
+        $paymentSystem = $payment->paymentSystem();
+        if (!$paymentSystem) {
+            return;
+        }
+
+        $paymentInfo = null;
+        if ($payment->external_payment_id) {
+            $paymentInfo = $paymentSystem->paymentInfo($payment);
+        }
+        if (!$paymentInfo) {
+            $this->timeout($payment);
+            return;
+        }
+
+        $paymentSystem->updatePaymentStatus($payment, $paymentInfo);
+    }
 }

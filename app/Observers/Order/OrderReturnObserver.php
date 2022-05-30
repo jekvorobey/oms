@@ -4,6 +4,7 @@ namespace App\Observers\Order;
 
 use App\Models\Order\OrderReturn;
 use App\Services\PaymentService\PaymentService;
+use Exception;
 
 /**
  * Class OrderReturnObserver
@@ -23,7 +24,7 @@ class OrderReturnObserver
     /**
      * Handle the order return "updated" event.
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function updated(OrderReturn $orderReturn)
     {
@@ -44,7 +45,7 @@ class OrderReturnObserver
 
     /**
      * Handle the order return "deleting" event.
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleting(OrderReturn $orderReturn)
     {
@@ -55,7 +56,6 @@ class OrderReturnObserver
 
     /**
      * Установить дату изменения статуса возврата
-     * @param OrderReturn $order
      */
     protected function setStatusAt(OrderReturn $orderReturn): void
     {

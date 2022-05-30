@@ -156,4 +156,22 @@ class LocalPaymentSystem implements PaymentSystemInterface
     {
         // TODO: Implement createIncomeReceipt() method.
     }
+
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function paymentInfo(Payment $payment)
+    {
+        // TODO: Implement paymentInfo() method.
+    }
+
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function updatePaymentStatus(Payment $localPayment, $payment): void
+    {
+        // TODO: Implement updatePaymentStatus() method.
+    }
 }

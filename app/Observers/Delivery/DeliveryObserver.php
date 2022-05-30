@@ -15,6 +15,7 @@ use App\Models\Payment\PaymentStatus;
 use App\Observers\Order\OrderObserver;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
+use App\Services\ShipmentService;
 use Carbon\Carbon;
 use Exception;
 use Greensight\Logistics\Dto\Lists\DeliveryService as DeliveryServiceDto;
@@ -45,6 +46,7 @@ class DeliveryObserver
          * сейчас клиент может отказаться только от всей доставки целеком, а не от какой-то её части
          */
         DeliveryStatus::CANCELLATION_EXPECTED => ShipmentStatus::CANCELLATION_EXPECTED,
+        DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER => ShipmentStatus::RETURN_EXPECTED_FROM_CUSTOMER,
         DeliveryStatus::RETURNED => ShipmentStatus::RETURNED,
 
         DeliveryStatus::ASSEMBLING => ShipmentStatus::ASSEMBLING,
@@ -74,6 +76,7 @@ class DeliveryObserver
     public function updated(Delivery $delivery)
     {
         $this->setStatusToShipments($delivery);
+        $this->setIsCancel($delivery);
         $this->setIsCanceledToShipments($delivery);
         $this->setStatusToOrder($delivery);
         $this->setPaymentStatusToOrder($delivery);
@@ -238,13 +241,12 @@ class DeliveryObserver
                 if (!$delivery->order->isConsolidatedDelivery() && !$delivery->order->is_canceled) {
                     $notificationService->send(
                         $customer,
-                        (function () use ($delivery) {
-                            if ($delivery->delivery_method == DeliveryMethod::METHOD_PICKUP) {
-                                return 'status_dostavkiotmenena_bez_konsolidatsii_pvzpostamat';
-                            }
-
-                            return 'status_dostavkiotmenena_bez_konsolidatsii_kurer';
-                        })(),
+                        $this->appendTypeModifiers(
+                            'status_dostavki_otmenena',
+                            $delivery->order->isConsolidatedDelivery(),
+                            $delivery->delivery_method == DeliveryMethod::METHOD_PICKUP,
+                            $delivery->order->isPaid()
+                        ),
                         app(OrderObserver::class)->generateNotificationVariables($delivery->order, null, $delivery, true)
                     );
                 }
@@ -253,6 +255,35 @@ class DeliveryObserver
             report($e);
             logger($e->getMessage(), $e->getTrace());
         }
+    }
+
+    protected function appendTypeModifiers(
+        string $slug,
+        bool $consolidation,
+        bool $postomat,
+        ?bool $isPaid = null
+    ): string {
+        if ($consolidation) {
+            $slug .= '_pri_konsolidatsii';
+        } else {
+            $slug .= '_bez_konsolidatsii';
+        }
+
+        if ($postomat) {
+            $slug .= '_pvzpostamat';
+        } else {
+            $slug .= '_kurer';
+        }
+
+        if ($isPaid !== null) {
+            if ($isPaid === true) {
+                $slug .= '_oplachena';
+            } else {
+                $slug .= '_ne_oplachena';
+            }
+        }
+
+        return $slug;
     }
 
     protected function cdekDeliverySumUpdate(Delivery $delivery)
@@ -347,12 +378,34 @@ class DeliveryObserver
             $delivery->loadMissing('shipments');
             foreach ($delivery->shipments as $shipment) {
                 if ($shipment->status >= self::STATUS_TO_SHIPMENTS[$delivery->status]) {
-                    continue;
+                    if (
+                        $delivery->getOriginal('status') != DeliveryStatus::CANCELLATION_EXPECTED
+                        && $delivery->status != DeliveryStatus::READY_FOR_RECIPIENT
+                    ) {
+                        continue;
+                    }
                 }
 
                 $shipment->status = self::STATUS_TO_SHIPMENTS[$delivery->status];
                 $shipment->save();
             }
+        }
+    }
+
+    /**
+     * Отменить доставку если статус "ожидается возврат товара от клиента"
+     * @throws Exception
+     */
+    protected function setIsCancel(Delivery $delivery): void
+    {
+        if (
+            $delivery->wasChanged('status')
+            && $delivery->status === DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER
+            && !$delivery->is_canceled
+        ) {
+            /** @var DeliveryService $deliveryService */
+            $deliveryService = resolve(DeliveryService::class);
+            $deliveryService->cancelDelivery($delivery);
         }
     }
 
@@ -364,14 +417,14 @@ class DeliveryObserver
     {
         if ($delivery->is_canceled && $delivery->is_canceled != $delivery->getOriginal('is_canceled')) {
             $delivery->loadMissing('shipments');
-            /** @var DeliveryService $deliveryService */
-            $deliveryService = resolve(DeliveryService::class);
+            /** @var ShipmentService $shipmentService */
+            $shipmentService = resolve(ShipmentService::class);
             foreach ($delivery->shipments as $shipment) {
                 if ($shipment->is_canceled) {
                     continue;
                 }
 
-                $deliveryService->cancelShipment($shipment, $delivery->return_reason_id);
+                $shipmentService->cancelShipment($shipment, $delivery->return_reason_id);
             }
         }
     }
@@ -685,6 +738,7 @@ class DeliveryObserver
 
     public function testSend()
     {
+        /** @var Delivery $delivery */
         $delivery = Delivery::query()
             ->where('delivery_method', DeliveryMethod::METHOD_DELIVERY)
             ->where('status', '!=', DeliveryStatus::DONE)

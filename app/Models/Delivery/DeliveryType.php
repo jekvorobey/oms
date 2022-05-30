@@ -32,7 +32,7 @@ class DeliveryType
     /**
      * @return array|self[]
      */
-    public static function all()
+    public static function all(): array
     {
         return [
             self::TYPE_SPLIT => new self(self::TYPE_SPLIT, 'Несколькими доставками'),
