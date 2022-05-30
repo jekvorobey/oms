@@ -343,9 +343,9 @@ class YandexPaymentSystem implements PaymentSystemInterface
      * @throws TooManyRequestsException
      * @throws UnauthorizedException
      */
-    public function paymentInfo(string $paymentId): ?YooKassaPayment
+    public function paymentInfo(Payment $payment): ?YooKassaPayment
     {
-        return $this->yandexService->getPaymentInfo($paymentId);
+        return $this->yandexService->getPaymentInfo($payment->external_payment_id);
     }
 
     /**

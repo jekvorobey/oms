@@ -70,7 +70,7 @@ interface PaymentSystemInterface
     /**
      * Получить информацию о платеже в платёжной системе
      */
-    public function paymentInfo(string $paymentId);
+    public function paymentInfo(Payment $payment);
 
     /**
      * Обработать данные от платёжной системы

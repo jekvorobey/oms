@@ -208,7 +208,10 @@ class PaymentService
             return;
         }
 
-        $paymentInfo = $paymentSystem->paymentInfo($payment->external_payment_id);
+        $paymentInfo = null;
+        if ($payment->external_payment_id) {
+            $paymentInfo = $paymentSystem->paymentInfo($payment);
+        }
         if (!$paymentInfo) {
             $this->timeout($payment);
             return;

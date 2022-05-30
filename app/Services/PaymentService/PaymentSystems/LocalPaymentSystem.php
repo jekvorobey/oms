@@ -161,7 +161,7 @@ class LocalPaymentSystem implements PaymentSystemInterface
      * @inheritDoc
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
-    public function paymentInfo(string $paymentId)
+    public function paymentInfo(Payment $payment)
     {
         // TODO: Implement paymentInfo() method.
     }
