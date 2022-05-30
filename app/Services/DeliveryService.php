@@ -88,6 +88,7 @@ class DeliveryService
             throw new DeliveryServiceInvalidConditions('Груз не содержит отправлений');
         }
 
+        /** @var StoreService $storeService */
         $storeService = resolve(StoreService::class);
         $storeQuery = $storeService->newQuery()->include('storeContact', 'storePickupTime');
         $store = $storeService->store($cargo->store_id, $storeQuery);
@@ -200,6 +201,7 @@ class DeliveryService
 
             $courierCallInputDto->cargo = $deliveryCargoDto;
             try {
+                /** @var CourierCallService $courierCallService */
                 $courierCallService = resolve(CourierCallService::class);
                 $courierCallOutputDto = $courierCallService->createCourierCall(
                     $cargo->delivery_service,
@@ -234,6 +236,7 @@ class DeliveryService
     public function cancelCourierCall(Cargo $cargo): void
     {
         if ($cargo->xml_id) {
+            /** @var CourierCallService $courierCallService */
             $courierCallService = resolve(CourierCallService::class);
             $courierCallService->cancelCourierCall($cargo->delivery_service, $cargo->xml_id);
             $cargo->xml_id = '';
@@ -249,6 +252,7 @@ class DeliveryService
     public function checkExternalStatus(Cargo $cargo): void
     {
         if ($cargo->xml_id) {
+            /** @var CourierCallService $courierCallService */
             $courierCallService = resolve(CourierCallService::class);
             $status = $courierCallService->checkExternalStatus($cargo->delivery_service, $cargo->xml_id);
             $cargo->error_xml_id = $status->error;
@@ -295,8 +299,10 @@ class DeliveryService
 
         $deliveryOrderInputDto = $this->formDeliveryOrder($delivery);
         try {
+            /** @var DeliveryOrderService $deliveryOrderService */
+            $deliveryOrderService = resolve(DeliveryOrderService::class);
+
             if (!$delivery->xml_id) {
-                $deliveryOrderService = resolve(DeliveryOrderService::class);
                 $deliveryOrderOutputDto = $deliveryOrderService->createOrder(
                     $delivery->delivery_service,
                     $deliveryOrderInputDto
@@ -323,7 +329,6 @@ class DeliveryService
                     }
                 }
             } else {
-                $deliveryOrderService = resolve(DeliveryOrderService::class);
                 $deliveryOrderOutputDto = $deliveryOrderService->updateOrder(
                     $delivery->delivery_service,
                     $delivery->xml_id,
@@ -429,6 +434,7 @@ class DeliveryService
             /** @var MerchantService $merchantService */
             $merchantService = resolve(MerchantService::class);
             $shipment = $delivery->shipments[0];
+            /** @var StoreService $storeService */
             $storeService = resolve(StoreService::class);
             $store = $storeService->store($shipment->store_id, $storeService->newQuery()->include('storeContact'));
             $merchant = $merchantService->merchant($shipment->merchant_id);
@@ -606,14 +612,16 @@ class DeliveryService
      */
     public function updateDeliveryStatusFromDeliveryService(): void
     {
-        $deliveries = Delivery::deliveriesInDelivery()->keyBy(fn(Delivery $delivery) => $delivery->getDeliveryServiceNumber());
-        $deliveries->load('order');
+        $deliveries = Delivery::deliveriesInDelivery()
+            ->keyBy(fn(Delivery $delivery) => $delivery->getDeliveryServiceNumber())
+            ->load('order');
 
         if ($deliveries->isNotEmpty()) {
             $deliveriesByService = $deliveries->groupBy('delivery_service');
             /** @var Collection|Delivery[] $items */
             foreach ($deliveriesByService as $deliveryServiceId => $items) {
                 try {
+                    /** @var DeliveryOrderService $deliveryOrderService */
                     $deliveryOrderService = resolve(DeliveryOrderService::class);
                     $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders(
                         $deliveryServiceId,
@@ -725,6 +733,7 @@ class DeliveryService
             if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
                 return;
             }
+            /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
             $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
         }

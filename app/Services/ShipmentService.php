@@ -57,6 +57,7 @@ class ShipmentService
             throw new DeliveryServiceInvalidConditions('Отправление уже добавлено в груз');
         }
 
+        /** @var DeliveryService $deliveryService */
         $deliveryService = resolve(DeliveryService::class);
         $deliveryServiceId = $deliveryService->getZeroMileShipmentDeliveryServiceId($shipment);
 
@@ -73,6 +74,7 @@ class ShipmentService
         }
         $cargo = $cargoQuery->first();
         if (is_null($cargo)) {
+            /** @var CargoService $cargoService */
             $cargoService = resolve(CargoService::class);
             $cargo = $cargoService->createCargo($shipment, $deliveryServiceId);
         }
