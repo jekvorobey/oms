@@ -3,6 +3,7 @@
 namespace App\Observers\Delivery;
 
 use App\Models\Delivery\ShipmentPackage;
+use Exception;
 
 /**
  * Class ShipmentPackageObserver
@@ -12,7 +13,7 @@ class ShipmentPackageObserver
 {
     /**
      * Handle the shipment package "deleted" event.
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleted(ShipmentPackage $shipmentPackage)
     {
@@ -21,7 +22,7 @@ class ShipmentPackageObserver
 
     /**
      * Handle the shipment package "saving" event.
-     * @throws \Exception
+     * @throws Exception
      */
     public function saving(ShipmentPackage $shipmentPackage)
     {
@@ -32,7 +33,7 @@ class ShipmentPackageObserver
 
     /**
      * Handle the shipment package "saved" event.
-     * @throws \Exception
+     * @throws Exception
      */
     public function saved(ShipmentPackage $shipmentPackage)
     {

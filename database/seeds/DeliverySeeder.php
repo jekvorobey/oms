@@ -9,6 +9,8 @@ use App\Models\Delivery\ShipmentItem;
 use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Services\DeliveryService;
+use App\Services\ShipmentPackageService;
+use App\Services\ShipmentService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\B2CplDeliveryOrderStatus;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
@@ -243,14 +245,16 @@ class DeliverySeeder extends Seeder
 
                     //Создаем коробки для отправлений в сборке или собранных
                     if ($shipment->status > ShipmentStatus::AWAITING_CONFIRMATION) {
-                        $shipmentPackage = $deliveryService->createShipmentPackage(
+                        /** @var ShipmentPackageService $shipmentPackageService */
+                        $shipmentPackageService = resolve(ShipmentPackageService::class);
+                        $shipmentPackage = $shipmentPackageService->createShipmentPackage(
                             $shipment->id,
                             $faker->randomElement($packages->pluck('id')->all())
                         );
 
                         if ($shipmentPackage) {
                             foreach ($shipment->basketItems as $basketItem) {
-                                $deliveryService->setShipmentPackageItem(
+                                $shipmentPackageService->setShipmentPackageItem(
                                     $shipmentPackage->id,
                                     $basketItem->id,
                                     $basketItem->qty,
@@ -265,7 +269,9 @@ class DeliverySeeder extends Seeder
 
                     //Добавляем собранные отправления в груз
                     try {
-                        $deliveryService->addShipment2Cargo($shipment);
+                        /** @var ShipmentService $shipmentService */
+                        $shipmentService = resolve(ShipmentService::class);
+                        $shipmentService->addShipment2Cargo($shipment);
                     } catch (Throwable $e) {
                         //
                     }

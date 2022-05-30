@@ -20,16 +20,18 @@ use App\Services\DocumentService\OrderTicketsCreator;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
 use Carbon\Carbon;
+use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
+use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Pim\Core\PimException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class OrdersController
@@ -73,14 +75,11 @@ class OrdersController extends Controller
      * )
      *
      * Получить детальную информацию о заказе в зависимости от его типа
-     * @throws \Pim\Core\PimException
+     * @throws PimException
      */
     public function readOne(int $id, Request $request, OrderService $orderService): JsonResponse
     {
-        $order = Order::find($id);
-        if (!$order) {
-            throw new \Exception("Order by id={$id} not found");
-        }
+        $order = $orderService->getOrder($id);
 
         if ($order->isProductOrder()) {
             $reader = new OrderReader();
@@ -131,12 +130,12 @@ class OrdersController extends Controller
         /** @var Order $order */
         $order = Order::query()->where('id', $id)->with('basket.items')->first();
         if (!$order) {
-            throw new \Exception("Order by id={$id} not found");
+            throw new Exception("Order by id={$id} not found");
         }
 
         $documentDto = $orderTicketsCreator->setOrder($order)->setBasketItemId($data['basket_item_id'] ?? null)->create();
         if (!$documentDto->success) {
-            throw new \Exception('Tickets not formed');
+            throw new Exception('Tickets not formed');
         }
 
         return response()->json([
@@ -252,17 +251,13 @@ class OrdersController extends Controller
      * )
      *
      * Задать список оплат заказа
-     * @throws \Exception
+     * @throws Exception
      */
-    public function setPayments(int $id, Request $request): Response
+    public function setPayments(int $id, Request $request, OrderService $orderService): Response
     {
-        $reader = new OrderReader();
         $writer = new OrderWriter();
 
-        $order = $reader->byId($id);
-        if (!$order) {
-            throw new NotFoundHttpException('order not found');
-        }
+        $order = $orderService->getOrder($id);
 
         $data = $request->all();
         /** @var \Illuminate\Validation\Validator $validator */
@@ -363,7 +358,7 @@ class OrdersController extends Controller
      *     @OA\Response(response="500", description="unable to save order"),
      * )
      * Удалить заказ
-     * @throws \Exception
+     * @throws Exception
      */
     public function delete(int $id, OrderService $orderService): Response
     {
@@ -393,7 +388,7 @@ class OrdersController extends Controller
      *
      * Вручную оплатить заказ
      * Примечание: оплата по заказам автоматически должна поступать от платежной системы!
-     * @throws \Exception
+     * @throws Exception
      */
     public function pay(int $id, OrderService $orderService): Response
     {
@@ -440,7 +435,7 @@ class OrdersController extends Controller
      * )
      *
      * Отменить заказ
-     * @throws \Exception
+     * @throws Exception
      */
     public function cancel(int $id, Request $request, OrderService $orderService): Response
     {
@@ -473,7 +468,7 @@ class OrdersController extends Controller
      *     @OA\Response(response="404", description="order not found"),
      * )
      * Вернуть заказ
-     * @throws \Exception
+     * @throws Exception
      */
     public function returnCompleted(int $id, Request $request, OrderService $orderService): Response
     {
@@ -501,7 +496,7 @@ class OrdersController extends Controller
      * )
      *
      * Вернуть деньги при деактивации сертификата
-     * @throws \Exception
+     * @throws Exception
      */
     public function refundByCertificate(int $id, Request $request, OrderService $orderService): Response
     {
@@ -534,7 +529,7 @@ class OrdersController extends Controller
      *     @OA\Response(response="404", description="cargo not found"),
      * )
      * Добавить комментарий к заказу
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @return ResponseFactory|Response
      */
     public function setComment(int $id, Request $request): Response
     {
