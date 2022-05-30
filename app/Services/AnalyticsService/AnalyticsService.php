@@ -236,6 +236,7 @@ class AnalyticsService
             ->orderBy('status_at');
 
         $groupedBasketItems = BasketItem::query()->select('id', 'offer_id', 'name', 'qty')
+            ->where('qty', '>', 0)
             ->whereHas('shipmentItem.shipment', $shipmentQueryCallback)
             ->get()
             ->groupBy('offer_id');
