@@ -17,7 +17,7 @@ class ShipmentPackageObserver
      */
     public function deleted(ShipmentPackage $shipmentPackage)
     {
-        $shipmentPackage->shipment->recalc();
+        $this->recalcRelations($shipmentPackage);
     }
 
     /**
@@ -46,7 +46,17 @@ class ShipmentPackageObserver
             }
         }
         if ($needRecalc) {
-            $shipmentPackage->shipment->recalc();
+            $this->recalcRelations($shipmentPackage);
+        }
+    }
+
+    private function recalcRelations(ShipmentPackage $shipmentPackage): void
+    {
+        $shipmentPackage->shipment->recalc();
+
+        $cargo = $shipmentPackage->shipment->cargo;
+        if ($cargo) {
+            $cargo->recalc();
         }
     }
 }
