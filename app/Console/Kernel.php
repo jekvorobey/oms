@@ -4,7 +4,6 @@ namespace App\Console;
 
 use App\Console\Commands\ApproveBonus;
 use App\Console\Commands\CargoExport;
-use App\Console\Commands\CheckCargoShipmentsStatus;
 use App\Console\Commands\CheckCourierCallsForCDEK;
 use App\Console\Commands\CheckYooKassaPayments;
 use App\Console\Commands\CommitPayments;
