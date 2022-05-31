@@ -84,6 +84,7 @@ class CargoService
     /**
      * Проверить статус отправлений груза в день его забора
      * @throws Exception
+     * @deprecated Откатываем задачу IBT-162 из-за некорректной логики
      */
     public function checkShipmentsStatusInCargo(Cargo $cargo): void
     {
