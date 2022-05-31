@@ -8,6 +8,7 @@ use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Pim\Core\PimException;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
@@ -17,6 +18,9 @@ class OrderReader
 {
     public const PAGE_SIZE = 10;
 
+    /**
+     * @throws PimException
+     */
     public function list(RestQuery $restQuery): Collection
     {
         $query = Order::query();
@@ -85,6 +89,9 @@ class OrderReader
         }
     }
 
+    /**
+     * @throws PimException
+     */
     public function count(RestQuery $restQuery): array
     {
         $pagination = $restQuery->getPage();
@@ -110,7 +117,7 @@ class OrderReader
     }
 
     /**
-     * @throws \Pim\Core\PimException
+     * @throws PimException
      */
     protected function addFilter(Builder $query, RestQuery $restQuery): void
     {
@@ -377,6 +384,33 @@ class OrderReader
             });
             $modifiedRestQuery->removeFilter('discount_id');
         }
+        $orderCostFrom = $restQuery->getFilter('orderCostFrom');
+        if ($orderCostFrom) {
+            [, $costFrom] = current($orderCostFrom);
+            $query->whereRaw('cost - delivery_cost >= ?', [$costFrom]);
+        }
+
+        $orderCostTo = $restQuery->getFilter('orderCostTo');
+        if ($orderCostTo) {
+            [, $costTo] = current($orderCostTo);
+            $query->whereRaw('cost - delivery_cost <= ?', [$costTo]);
+        }
+
+        $orderPriceFrom = $restQuery->getFilter('orderPriceFrom');
+        if ($orderPriceFrom) {
+            [, $priceFrom] = current($orderPriceFrom);
+            $query->whereRaw('price - delivery_price >= ?', [$priceFrom]);
+        }
+
+        $orderPriceTo = $restQuery->getFilter('orderPriceTo');
+        if ($orderPriceTo) {
+            [, $priceTo] = current($orderPriceTo);
+            $query->whereRaw('price - delivery_price <= ?', [$priceTo]);
+        }
+        $modifiedRestQuery->removeFilter('orderCostFrom');
+        $modifiedRestQuery->removeFilter('orderCostTo');
+        $modifiedRestQuery->removeFilter('orderPriceFrom');
+        $modifiedRestQuery->removeFilter('orderPriceTo');
         $modifiedRestQuery->removeFilter('min_price_for_current_discount');
         $modifiedRestQuery->removeFilter('max_price_for_current_discount');
 
