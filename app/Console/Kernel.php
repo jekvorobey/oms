@@ -46,7 +46,7 @@ class Kernel extends ConsoleKernel
         $schedule->command(CheckCourierCallsForCDEK::class)->everyFiveMinutes();
         $schedule->command(ReturnOrderPayment::class)->everyMinute();
         $schedule->command(CheckYooKassaPayments::class)->hourly();
-        $schedule->command(CheckCargoShipmentsStatus::class)->dailyAt('10:00');
+//        $schedule->command(CheckCargoShipmentsStatus::class)->dailyAt('10:00');
 
         try {
             $this->cargoExportByStores($schedule);
