@@ -15,7 +15,11 @@ class PaymentMethodsSeeder extends Seeder
             'name' => 'Постоплата (Наличными или картой при получении)',
             'code' => 'postpaid',
             'active' => true,
-            'is_postpaid' => true,
+        ],
+        [
+            'name' => 'В кредит от pp.credit',
+            'code' => 'creditpaid',
+            'active' => true,
         ],
     ];
 
