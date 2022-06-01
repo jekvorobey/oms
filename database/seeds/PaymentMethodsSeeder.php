@@ -15,18 +15,23 @@ class PaymentMethodsSeeder extends Seeder
             'name' => 'Постоплата (Наличными или картой при получении)',
             'code' => 'postpaid',
             'active' => true,
+            'is_postpaid' => true,
         ],
         [
             'name' => 'В кредит от pp.credit',
             'code' => 'creditpaid',
             'active' => true,
+            'settings' => [
+                'discount' => '14',
+                'signingKD' => 'KO',
+            ],
         ],
     ];
 
     public function run(): void
     {
         foreach ($this->data as $item) {
-            PaymentMethod::query()->updateOrCreate([
+            PaymentMethod::query()->firstOrCreate([
                 'code' => $item['code'],
             ], $item);
         }
