@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Artisan;
 
 class AddSettingsToPaymentMethodsTable extends Migration
 {
@@ -13,6 +14,11 @@ class AddSettingsToPaymentMethodsTable extends Migration
         Schema::table(self::TABLE_NAME, function (Blueprint $table) {
             $table->json('settings')->after('is_postpaid')->nullable();
         });
+
+        Artisan::call('db:seed', [
+            '--class' => 'PaymentMethodsSeeder',
+            '--force' => true,
+        ]);
     }
 
     public function down()
