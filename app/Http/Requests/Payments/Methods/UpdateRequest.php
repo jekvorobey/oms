@@ -12,6 +12,7 @@ class UpdateRequest extends FormRequest
             'name' => 'required|string',
             'is_postpaid' => 'required|boolean',
             'active' => 'required|boolean',
+            'settings' => 'nullable|array',
         ];
     }
 }
