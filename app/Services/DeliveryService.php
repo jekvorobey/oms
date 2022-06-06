@@ -141,8 +141,9 @@ class DeliveryService
             $courierCallInputDto->cdekSender = $cdekSenderDto;
         }
 
-        $deliveryCargoDto = new DeliveryCargoDto();
+        $cargo->recalc();
 
+        $deliveryCargoDto = new DeliveryCargoDto();
         $deliveryCargoDto->weight = $cargo->weight;
         $deliveryCargoDto->width = $cargo->width;
         $deliveryCargoDto->height = $cargo->height;
