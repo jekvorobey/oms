@@ -10,6 +10,7 @@ use Illuminate\Support\Collection;
 use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Dto\VatDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
+use Pim\Core\PimException;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\PublicEvent\PublicEventDto;
 use Pim\Services\OfferService\OfferService;
@@ -48,6 +49,9 @@ abstract class ReceiptData
         return $this;
     }
 
+    /**
+     * @throws PimException
+     */
     protected function loadOffersAndMerchants(array $offerIds, Order $order): array
     {
         $offers = collect();
@@ -73,6 +77,9 @@ abstract class ReceiptData
         return $this->merchantService->merchants($merchantQuery)->keyBy('id');
     }
 
+    /**
+     * @throws PimException
+     */
     protected function getOffers(array $offerIds, Order $order): Collection
     {
         if ($order->isPublicEventOrder()) {

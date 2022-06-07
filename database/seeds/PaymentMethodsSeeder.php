@@ -17,12 +17,18 @@ class PaymentMethodsSeeder extends Seeder
             'active' => true,
             'is_postpaid' => true,
         ],
+        [
+            'name' => 'СберБизнес (онлайн)',
+            'code' => 'b2b_sberbank',
+            'active' => true,
+            'is_postpaid' => false,
+        ],
     ];
 
     public function run(): void
     {
         foreach ($this->data as $item) {
-            PaymentMethod::query()->updateOrCreate([
+            PaymentMethod::query()->firstOrCreate([
                 'code' => $item['code'],
             ], $item);
         }

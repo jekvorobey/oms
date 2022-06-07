@@ -9,6 +9,7 @@ use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\PaymentService\PaymentSystems\Exceptions\Payment as PaymentException;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Collection;
 use Pim\Services\CertificateService\CertificateService;
 
@@ -31,6 +32,8 @@ class PaymentService
      * Начать оплату.
      * Задаёт время когда оплата станет просроченной, и создаёт оплату во внешней системе оплаты.
      * @return string адрес страницы оплаты во внешней системе
+     * @throws PaymentException
+     * @throws Exception
      */
     public function start(int $paymentId, string $returnUrl): ?string
     {
@@ -46,7 +49,7 @@ class PaymentService
             }
 
             if (!$this->pay($payment)) {
-                throw new \Exception('Ошибка при автоматической оплате');
+                throw new Exception('Ошибка при автоматической оплате');
             }
 
             return $returnUrl;
@@ -65,6 +68,7 @@ class PaymentService
 
     /**
      * Получение id платежа юкассы покупки подарочного сертификата
+     * @throws PaymentException
      */
     private function getCertificatePaymentId(Order $order): ?string
     {
