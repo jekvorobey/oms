@@ -105,7 +105,17 @@ abstract class OrderData
         if (!isset($offerInfo, $merchant)) {
             return VatCode::CODE_DEFAULT;
         }
+        $vatValue = $this->getMerchantVatValue($offerInfo, $merchant);
 
+        return [
+            0 => VatCode::CODE_0_PERCENT,
+            10 => VatCode::CODE_10_PERCENT,
+            20 => VatCode::CODE_20_PERCENT,
+        ][$vatValue] ?? VatCode::CODE_DEFAULT;
+    }
+
+    protected function getMerchantVatValue(object $offerInfo, object $merchant): ?int
+    {
         $vatValue = null;
         $itemMerchantVats = $merchant['vats'];
         usort($itemMerchantVats, static function ($a, $b) {
@@ -119,11 +129,7 @@ abstract class OrderData
             }
         }
 
-        return [
-            0 => VatCode::CODE_0_PERCENT,
-            10 => VatCode::CODE_10_PERCENT,
-            20 => VatCode::CODE_20_PERCENT,
-        ][$vatValue] ?? VatCode::CODE_DEFAULT;
+        return $vatValue;
     }
 
     protected function getVatValue(array $vat, object $offerInfo): ?int

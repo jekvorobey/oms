@@ -89,24 +89,12 @@ class PaymentData extends OrderData
             $offer = $offers[$item->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
-
-            $vatValue = null;
-            if (!isset($offerInfo, $merchant)) {
-                $vatValue = null;
+            if (!isset($offer, $merchant)) {
+                continue;
             }
 
-            $itemMerchantVats = $merchant['vats'];
-            usort($itemMerchantVats, static function ($a, $b) {
-                return $b['type'] - $a['type'];
-            });
-            foreach ($itemMerchantVats as $vat) {
-                $vatValue = $this->getVatValue($vat, $offer);
-                if ($vatValue) {
-                    break;
-                }
-            }
-
-            $amount += $vatValue ? $item->price * $vatValue : $item->price;
+            $vatValue = $this->getMerchantVatValue($offer, $merchant);
+            $amount += $vatValue ? $item->price * $vatValue : 0;
         }
 
         return $amount;
