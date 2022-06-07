@@ -5,7 +5,6 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex;
 use App\Models\Order\Order;
 use App\Models\Payment\PaymentMethod;
 use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\Tax;
-use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\ReceiptData;
 use Pim\Core\PimException;
 use YooKassa\Model\ConfirmationType;
 use YooKassa\Model\CurrencyCode;
@@ -18,7 +17,7 @@ use YooKassa\Request\Payments\CreatePaymentRequestBuilder;
 use YooKassa\Request\Payments\Payment\CreateCaptureRequest;
 use YooKassa\Request\Payments\Payment\CreateCaptureRequestBuilder;
 
-class PaymentData extends ReceiptData
+class PaymentData extends OrderData
 {
     /**
      * Формирование данных для создания платежа
