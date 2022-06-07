@@ -5,6 +5,7 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex;
 use App\Models\Order\Order;
 use App\Models\Payment\PaymentMethod;
 use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\Tax;
+use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
 use Pim\Core\PimException;
 use YooKassa\Model\ConfirmationType;
 use YooKassa\Model\CurrencyCode;
@@ -90,9 +91,23 @@ class PaymentData extends OrderData
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
 
-            $vatCode = $this->getItemVatCode($offer, $merchant);
+            $vatValue = null;
+            if (!isset($offerInfo, $merchant)) {
+                $vatValue = null;
+            }
 
-            $amount += $vatCode ? $item->price * $vatCode : $item->price;
+            $itemMerchantVats = $merchant['vats'];
+            usort($itemMerchantVats, static function ($a, $b) {
+                return $b['type'] - $a['type'];
+            });
+            foreach ($itemMerchantVats as $vat) {
+                $vatValue = $this->getVatValue($vat, $offer);
+                if ($vatValue) {
+                    break;
+                }
+            }
+
+            $amount += $vatValue ? $item->price * $vatValue : $item->price;
         }
 
         return $amount;
