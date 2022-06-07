@@ -5,7 +5,6 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex;
 use App\Models\Order\Order;
 use App\Models\Payment\PaymentMethod;
 use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\Tax;
-use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
 use Pim\Core\PimException;
 use YooKassa\Model\ConfirmationType;
 use YooKassa\Model\CurrencyCode;
