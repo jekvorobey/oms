@@ -13,7 +13,6 @@ use YooKassa\Model\MonetaryAmount;
 use App\Models\Payment\Payment;
 use YooKassa\Model\PaymentData\B2b\Sberbank\VatData;
 use YooKassa\Model\PaymentData\PaymentDataB2bSberbank;
-use YooKassa\Model\ReceiptItem;
 use YooKassa\Request\Payments\CreatePaymentRequest;
 use YooKassa\Request\Payments\CreatePaymentRequestBuilder;
 use YooKassa\Request\Payments\Payment\CreateCaptureRequest;
@@ -92,10 +91,9 @@ class PaymentData extends ReceiptData
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $item->qty);
-            $receiptItem = new ReceiptItem($receiptItemInfo);
+            $vatCode = $this->getItemVatCode($offer, $merchant);
 
-            $amount += $receiptItem->amount * $receiptItem->vatCode;
+            $amount += $vatCode ? $item->price * $vatCode : $item->price;
         }
 
         return $amount;
