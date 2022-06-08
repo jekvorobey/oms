@@ -40,6 +40,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::delete('', 'Basket\GuestBasketController@dropBasket');
             });
         });
+
+        Route::get('', 'Basket\ListBasketController@list');
+        Route::get('count', 'Basket\ListBasketController@count');
     });
 
     Route::prefix('orders')->group(function () {
