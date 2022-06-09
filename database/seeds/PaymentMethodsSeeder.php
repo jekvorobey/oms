@@ -22,6 +22,7 @@ class PaymentMethodsSeeder extends Seeder
             'code' => 'b2b_sberbank',
             'active' => true,
             'is_postpaid' => false,
+            'is_need_payment' => true,
         ],
     ];
 
