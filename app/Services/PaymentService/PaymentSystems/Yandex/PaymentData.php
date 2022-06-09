@@ -94,7 +94,7 @@ class PaymentData extends OrderData
             }
 
             $vatValue = $this->getMerchantVatValue($offer, $merchant);
-            $amount += $vatValue ? $item->price * $vatValue : 0;
+            $amount += $vatValue ? $item->price * $vatValue / 100 : 0;
         }
 
         return $amount;
