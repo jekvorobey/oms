@@ -168,4 +168,14 @@ class OrderStatus
     {
         return self::CREATED;
     }
+
+    /**
+     * Статусы, при которых происходит автоматическое списание холдирования
+     *
+     * @return array|int[]
+     */
+    public static function getValuesForPaymentAutoCommit(): array
+    {
+        return [self::TRANSFERRED_TO_DELIVERY, self::DELIVERING, self::DONE];
+    }
 }
