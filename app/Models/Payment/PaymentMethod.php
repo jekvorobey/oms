@@ -23,7 +23,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property bool $active - Статус метода оплаты
  * @property bool $is_postpaid - Признак постоплаты (оплата при получении)
  * @property array $settings - Дополнительные настройки оплаты
- * @property array $is_need_payment - Признак необходимости создания заказа в платежной системе
+ * @property bool $is_need_payment - Признак необходимости создания заказа в платежной системе
  */
 class PaymentMethod extends AbstractModel
 {
