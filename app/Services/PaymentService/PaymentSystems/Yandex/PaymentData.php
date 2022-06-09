@@ -39,7 +39,7 @@ class PaymentData extends OrderData
             ->setReceiptPhone($order->customerPhone())
             ->setTaxSystemCode(Tax::SIMPLE_MINUS_INCOME);
 
-        if ($order->paymentMethod == PaymentMethod::B2B_SBERBANK) {
+        if ($order->paymentMethod->code === PaymentMethod::B2B_SBERBANK) {
             $b2bSberbankData = new PaymentDataB2bSberbank();
             $b2bSberbankData->setPaymentPurpose("Оплата заказа №{$order->id}");
 
