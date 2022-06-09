@@ -11,6 +11,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *     @OA\Property(property="code", type="string", description="Символьный код способа оплаты"),
  *     @OA\Property(property="active", type="boolean", description="Статус метода оплаты"),
  *     @OA\Property(property="is_postpaid", type="boolean", description="Признак постоплаты (оплата при получении)"),
+ *     @OA\Property(property="is_need_payment", type="boolean", description="Признак необходимости создания заказа в платежной системе"),
  *     @OA\Property(property="settings", type="array", description="Дополнительные настройки оплаты"),
  * )
  *
@@ -22,6 +23,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property bool $active - Статус метода оплаты
  * @property bool $is_postpaid - Признак постоплаты (оплата при получении)
  * @property array $settings - Дополнительные настройки оплаты
+ * @property array $is_need_payment - Признак необходимости создания заказа в платежной системе
  */
 class PaymentMethod extends AbstractModel
 {
@@ -34,12 +36,14 @@ class PaymentMethod extends AbstractModel
         'code',
         'active',
         'is_postpaid',
+        'is_need_payment',
         'settings',
     ];
 
     protected $casts = [
         'active' => 'bool',
         'is_postpaid' => 'bool',
+        'is_need_payment' => 'bool',
         'settings' => 'json',
     ];
 }

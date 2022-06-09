@@ -165,7 +165,7 @@ class CheckoutOrder
             $this->createShipments($order);
             $this->createTickets($order);
 
-            if (!$order->is_postpaid && $order->paymentMethod->code !== PaymentMethod::CREDITPAID) {
+            if ($order->paymentMethod->is_need_payment) {
                 $this->createPayment($order);
             }
             $this->createOrderDiscounts($order);
