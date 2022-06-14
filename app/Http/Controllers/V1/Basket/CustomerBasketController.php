@@ -6,6 +6,7 @@ use App\Http\Requests\SetItemToBasketRequest;
 use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
+use App\Services\BasketService\BasketService;
 use App\Services\BasketService\CustomerBasketService;
 use App\Services\OrderService;
 use Exception;
@@ -15,6 +16,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class CustomerBasketController extends BasketController
 {
@@ -199,5 +203,32 @@ class CustomerBasketController extends BasketController
         $order = $orderService->getOrder($orderId);
 
         return $this->setItem($order->basket_id, $offerId, $request);
+    }
+
+    /**
+     * Обновить корзину (поле manager_comment)
+     *
+     * @param BasketService $basketService
+     */
+    public function update(int $id, Request $request, CustomerBasketService $customerBasketService): Response
+    {
+        $basket = $customerBasketService->getBasket($id);
+        $data = $request->all();
+
+        $validator = Validator::make($data, [
+            'manager_comment' => ['nullable', 'string'],
+        ]);
+        if ($validator->fails()) {
+            throw new BadRequestHttpException($validator->errors()->first());
+        }
+
+        $basket->fill($data);
+        $ok = $basket->save();
+
+        if (!$ok) {
+            throw new HttpException(500, 'unable to save basket');
+        }
+
+        return response('', 204);
     }
 }

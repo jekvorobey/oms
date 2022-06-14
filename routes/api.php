@@ -19,6 +19,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('baskets')->group(function () {
+        Route::get('', 'Basket\ListBasketController@list');
+        Route::get('count', 'Basket\ListBasketController@count');
+
         Route::post('notify-expired/{offer}', 'Basket\CustomerBasketController@notifyExpiredOffers');
         Route::get('by-customer/{customerId}', 'Basket\CustomerBasketController@getCurrentBasket');
         Route::get('qty-by-offer-ids', 'Basket\CustomerBasketController@qtyByOfferIds');
@@ -28,6 +31,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::put('commit', 'Basket\CustomerBasketController@commitItemsPrice');
             Route::get('', 'Basket\CustomerBasketController@getBasket');
             Route::delete('', 'Basket\CustomerBasketController@dropBasket');
+            Route::put('', 'Basket\CustomerBasketController@update');
         });
 
         Route::prefix('guest')->group(function () {
@@ -40,9 +44,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::delete('', 'Basket\GuestBasketController@dropBasket');
             });
         });
-
-        Route::get('', 'Basket\ListBasketController@list');
-        Route::get('count', 'Basket\ListBasketController@count');
     });
 
     Route::prefix('orders')->group(function () {

@@ -3,7 +3,7 @@
 namespace App\Core\Basket;
 
 use App\Models\Basket\Basket;
-use App\Models\Order\Order;
+use App\Models\Basket\BasketItem;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
@@ -23,7 +23,6 @@ class BasketReader
         $query = Basket::query();
 
         $this->addInclude($query, $restQuery);
-        $this->addSelect($query, $restQuery);
         $this->addFilter($query, $restQuery);
         $this->addPagination($query, $restQuery);
 
@@ -39,39 +38,6 @@ class BasketReader
         if ($restQuery->isIncluded('items')) {
             $query->with('items');
         }
-//        if ($restQuery->isIncluded('basketitem') || $restQuery->isIncluded('basket.items')) {
-//            $query->with('basket.items');
-//        }
-//        if ($restQuery->isIncluded('history')) {
-//            $query->with('history');
-//        }
-//        if ($restQuery->isIncluded('promoCodes')) {
-//            $query->with('promoCodes');
-//        }
-//        if ($restQuery->isIncluded('discounts')) {
-//            $query->with('discounts');
-//        }
-//        if ($restQuery->isIncluded('deliveries')) {
-//            $query->with('deliveries');
-//        }
-//        if ($restQuery->isIncluded('payments')) {
-//            $query->with('payments');
-//        }
-//        if ($restQuery->isIncluded('paymentMethod')) {
-//            $query->with('paymentMethod');
-//        }
-//        if ($restQuery->isIncluded('deliveries.shipments')) {
-//            $query->with('deliveries.shipments');
-//        }
-//        if ($restQuery->isIncluded('deliveries.shipments.basketItems')) {
-//            $query->with('deliveries.shipments.basketItems');
-//        }
-//        if ($restQuery->isIncluded('deliveries.shipments.packages')) {
-//            $query->with('deliveries.shipments.packages');
-//        }
-//        if ($restQuery->isIncluded('deliveries.shipments.exports')) {
-//            $query->with('deliveries.shipments.exports');
-//        }
         if ($restQuery->isIncluded('all')) {
             $query->with('items');
         }
@@ -92,13 +58,6 @@ class BasketReader
             'pages' => $pages,
             'pageSize' => $pageSize,
         ];
-    }
-
-    protected function addSelect(Builder $query, RestQuery $restQuery): void
-    {
-//        if ($fields = $restQuery->getFields('order')) {
-//            $query->select($fields);
-//        }
     }
 
     /**
@@ -211,30 +170,24 @@ class BasketReader
         //Фильтр по бренду товара
         $filterByProductField('brands', 'brand_id');
 
-//        // Фильтр по id скидки и суммы заказа с учетом данной скидки
-//        $discountIdFilter = $restQuery->getFilter('discount_id');
-//        if ($discountIdFilter) {
-//            [$op, $value] = current($discountIdFilter);
-//
-//            $query->whereHas('discounts', function (Builder $query) use ($value, $op, $restQuery) {
-//                $query->where('discount_id', $op, $value);
-//
-//                $minPriceFilter = $restQuery->getFilter('min_price_for_current_discount');
-//                if ($minPriceFilter) {
-//                    [, $minPrice] = current($minPriceFilter);
-//                    $query->whereRaw('`cost` - `change` >= ?', [$minPrice]);
-//                }
-//
-//                $maxPriceFilter = $restQuery->getFilter('max_price_for_current_discount');
-//                if ($maxPriceFilter) {
-//                    [, $maxPrice] = current($maxPriceFilter);
-//                    $query->whereRaw('`cost` - `change` <= ?', [$maxPrice]);
-//                }
-//            });
-//            $modifiedRestQuery->removeFilter('discount_id');
-//        }
-//        $modifiedRestQuery->removeFilter('min_price_for_current_discount');
-//        $modifiedRestQuery->removeFilter('max_price_for_current_discount');
+        //фильтр по сумме корзины
+        $totalPriceFilter = $restQuery->getFilter('price');
+        if (is_array($totalPriceFilter) && count($totalPriceFilter) > 0) {
+            $query->whereExists(function ($subquery) use ($totalPriceFilter) {
+                $subquery
+                    ->from(with(new BasketItem())->getTable())
+                    ->selectRaw('SUM(price) AS basket_total_price')
+                    ->whereRaw('basket_id = baskets.id')
+                    ->groupBy('basket_id');
+
+                foreach ($totalPriceFilter as $totalPriceFilterItem) {
+                    [$op, $value] = $totalPriceFilterItem;
+                    $subquery->having('basket_total_price', $op, $value);
+                }
+            });
+
+            $modifiedRestQuery->removeFilter('price');
+        }
 
         foreach ($modifiedRestQuery->filterIterator() as [$field, $op, $value]) {
             if ($op == '=' && is_array($value)) {
