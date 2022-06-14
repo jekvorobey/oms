@@ -19,12 +19,30 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use App\Core\Basket\BasketReader;
+use Greensight\CommonMsa\Rest\RestQuery;
 
 class CustomerBasketController extends BasketController
 {
     public function __construct()
     {
         $this->basketService = resolve(CustomerBasketService::class);
+    }
+
+    public function list(Request $request): JsonResponse
+    {
+        $reader = new BasketReader();
+
+        return response()->json([
+            'items' => $reader->list((new RestQuery($request))->include('all')),
+        ]);
+    }
+
+    public function count(Request $request): JsonResponse
+    {
+        $reader = new BasketReader();
+
+        return response()->json($reader->count((new RestQuery($request))->include('all')));
     }
 
     /**
