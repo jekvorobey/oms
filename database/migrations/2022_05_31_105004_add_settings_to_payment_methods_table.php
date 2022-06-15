@@ -14,11 +14,6 @@ class AddSettingsToPaymentMethodsTable extends Migration
         Schema::table(self::TABLE_NAME, function (Blueprint $table) {
             $table->json('settings')->after('is_postpaid')->nullable();
         });
-
-        Artisan::call('db:seed', [
-            '--class' => 'PaymentMethodsSeeder',
-            '--force' => true,
-        ]);
     }
 
     public function down()

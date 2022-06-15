@@ -165,7 +165,7 @@ class CheckoutOrder
             $this->createShipments($order);
             $this->createTickets($order);
 
-            if ($order->paymentMethod->is_need_payment) {
+            if ($order->paymentMethod->is_need_create_payment) {
                 $this->createPayment($order);
             }
             $this->createOrderDiscounts($order);

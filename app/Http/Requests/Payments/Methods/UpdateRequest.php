@@ -11,7 +11,7 @@ class UpdateRequest extends FormRequest
         return [
             'name' => 'required|string',
             'is_postpaid' => 'required|boolean',
-            'is_need_payment' => 'required|boolean',
+            'is_apply_discounts' => 'required|boolean',
             'active' => 'required|boolean',
             'settings' => 'nullable|array',
         ];

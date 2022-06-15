@@ -11,7 +11,8 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *     @OA\Property(property="code", type="string", description="Символьный код способа оплаты"),
  *     @OA\Property(property="active", type="boolean", description="Статус метода оплаты"),
  *     @OA\Property(property="is_postpaid", type="boolean", description="Признак постоплаты (оплата при получении)"),
- *     @OA\Property(property="is_need_payment", type="boolean", description="Признак необходимости создания заказа в платежной системе"),
+ *     @OA\Property(property="is_need_create_payment", type="boolean", description="Признак необходимости создания заказа в платежной системе"),
+ *     @OA\Property(property="is_apply_discounts", type="boolean", description="Признак возможности применения скидок"),
  *     @OA\Property(property="settings", type="array", description="Дополнительные настройки оплаты"),
  * )
  *
@@ -22,8 +23,9 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property string $code - Символьный код способа оплаты
  * @property bool $active - Статус метода оплаты
  * @property bool $is_postpaid - Признак постоплаты (оплата при получении)
+ * @property bool $is_need_create_payment - Признак необходимости создания заказа в платежной системе
+ * @property bool $is_apply_discounts - Признак возможности применения скидок
  * @property array $settings - Дополнительные настройки оплаты
- * @property bool $is_need_payment - Признак необходимости создания заказа в платежной системе
  */
 class PaymentMethod extends AbstractModel
 {
@@ -36,7 +38,8 @@ class PaymentMethod extends AbstractModel
         'code',
         'active',
         'is_postpaid',
-        'is_need_payment',
+        'is_need_create_payment',
+        'is_apply_discounts',
         'settings',
     ];
 
@@ -44,6 +47,7 @@ class PaymentMethod extends AbstractModel
         'active' => 'bool',
         'is_postpaid' => 'bool',
         'is_need_payment' => 'bool',
+        'is_apply_discounts' => 'bool',
         'settings' => 'json',
     ];
 }
