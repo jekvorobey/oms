@@ -496,10 +496,9 @@ class CheckoutOrder
             $delivery->dt = $checkoutDelivery->dt;
             $delivery->pdd = $checkoutDelivery->pdd;
             if ($order->isProductOrder()) {
-                $delivery->payment_status = PaymentStatus::NOT_PAID;
-                if ($order->is_postpaid || $order->paymentMethod->code === PaymentMethod::CREDITPAID) {
-                    $delivery->payment_status = PaymentStatus::WAITING;
-                }
+                $delivery->payment_status = $order->paymentMethod->is_need_create_payment
+                    ? PaymentStatus::NOT_PAID
+                    : PaymentStatus::WAITING;
             }
 
             $delivery->save();
@@ -513,10 +512,9 @@ class CheckoutOrder
                 $shipment->store_id = $checkoutShipment->storeId;
                 $shipment->number = Shipment::makeNumber($order->number, $i, $shipmentNumber++);
                 if ($order->isProductOrder()) {
-                    $shipment->payment_status = PaymentStatus::NOT_PAID;
-                    if ($order->is_postpaid || $order->paymentMethod->code === PaymentMethod::CREDITPAID) {
-                        $shipment->payment_status = PaymentStatus::WAITING;
-                    }
+                    $shipment->payment_status = $order->paymentMethod->is_need_create_payment
+                        ? PaymentStatus::NOT_PAID
+                        : PaymentStatus::WAITING;
                 }
                 $shipment->save();
 
@@ -537,7 +535,7 @@ class CheckoutOrder
             }
         }
 
-        if ($order->is_postpaid || $order->paymentMethod->code === PaymentMethod::CREDITPAID) {
+        if (!$order->paymentMethod->is_need_create_payment) {
             $order->payment_status = PaymentStatus::WAITING;
             $order->save();
         }
