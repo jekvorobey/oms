@@ -613,59 +613,63 @@ class DeliveryService
      */
     public function updateDeliveryStatusFromDeliveryService(): void
     {
-        $deliveries = Delivery::deliveriesInDelivery()
-            ->keyBy(fn(Delivery $delivery) => $delivery->getDeliveryServiceNumber())
-            ->load('order');
+        /** @var Collection $deliveries */
+        $deliveries = Delivery::deliveriesInDelivery()->load('order');
+        if ($deliveries->isEmpty()) {
+            return;
+        }
 
-        if ($deliveries->isNotEmpty()) {
-            $deliveriesByService = $deliveries->groupBy('delivery_service');
-            /** @var Collection|Delivery[] $items */
-            foreach ($deliveriesByService as $deliveryServiceId => $items) {
-                try {
-                    /** @var DeliveryOrderService $deliveryOrderService */
-                    $deliveryOrderService = resolve(DeliveryOrderService::class);
-                    $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders(
-                        $deliveryServiceId,
-                        $items->pluck('xml_id')->all()
-                    );
-                } catch (Throwable $e) {
-                    report($e);
+        $deliveriesByServices = $deliveries->groupBy('delivery_service');
+
+        /** @var Collection|Delivery[] $deliveriesByService */
+        foreach ($deliveriesByServices as $deliveryServiceId => $deliveriesByService) {
+            $deliveriesByService = $deliveriesByService->keyBy('xml_id');
+
+            try {
+                /** @var DeliveryOrderService $deliveryOrderService */
+                $deliveryOrderService = resolve(DeliveryOrderService::class);
+                $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders(
+                    $deliveryServiceId,
+                    $deliveriesByService->keys()->all()
+                );
+            } catch (Throwable $e) {
+                report($e);
+                continue;
+            }
+
+            foreach ($deliveryOrderStatusDtos as $deliveryOrderStatusDto) {
+                $delivery = $deliveriesByService[$deliveryOrderStatusDto->xml_id] ?? null;
+                if (!$delivery) {
                     continue;
                 }
 
-                foreach ($deliveryOrderStatusDtos as $deliveryOrderStatusDto) {
-                    if (!$deliveries->has($deliveryOrderStatusDto->number)) {
-                        continue;
-                    }
+                if (!$deliveryOrderStatusDto->success) {
+                    continue;
+                }
 
-                    $delivery = $deliveries[$deliveryOrderStatusDto->number];
+                try {
+                    if ($deliveryOrderStatusDto->status && $delivery->status != $deliveryOrderStatusDto->status) {
+                        $delivery->status = $deliveryOrderStatusDto->status;
 
-                    if ($deliveryOrderStatusDto->success) {
-                        try {
-                            if ($deliveryOrderStatusDto->status && $delivery->status != $deliveryOrderStatusDto->status) {
-                                $delivery->status = $deliveryOrderStatusDto->status;
-
-                                if ($delivery->isPostPaid()) {
-                                    if ($delivery->status === DeliveryStatus::DONE) {
-                                        $delivery->payment_status = PaymentStatus::PAID;
-                                    } elseif (in_array($delivery->status, [DeliveryStatus::CANCELLATION_EXPECTED, DeliveryStatus::RETURNED])) {
-                                        $delivery->payment_status = PaymentStatus::TIMEOUT;
-                                    }
-                                }
+                        if ($delivery->isPostPaid()) {
+                            if ($delivery->status === DeliveryStatus::DONE) {
+                                $delivery->payment_status = PaymentStatus::PAID;
+                            } elseif (in_array($delivery->status, [DeliveryStatus::CANCELLATION_EXPECTED, DeliveryStatus::RETURNED])) {
+                                $delivery->payment_status = PaymentStatus::TIMEOUT;
                             }
-
-                            $delivery->setStatusXmlId(
-                                $deliveryOrderStatusDto->status_xml_id,
-                                new Carbon($deliveryOrderStatusDto->status_date)
-                            );
-
-                            $delivery->save();
-                        } catch (Throwable $e) {
-                            logger()->error("Error when updating status of Delivery #{$delivery->id} ({$delivery->xml_id})");
-                            report($e);
-                            continue;
                         }
                     }
+
+                    $delivery->setStatusXmlId(
+                        $deliveryOrderStatusDto->status_xml_id,
+                        new Carbon($deliveryOrderStatusDto->status_date)
+                    );
+
+                    $delivery->save();
+                } catch (Throwable $e) {
+                    logger()->error("Error when updating status of Delivery #{$delivery->id} ({$delivery->xml_id})");
+                    report($e);
+                    continue;
                 }
             }
         }
