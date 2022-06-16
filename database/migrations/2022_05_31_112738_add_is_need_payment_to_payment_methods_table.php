@@ -16,7 +16,7 @@ class AddIsNeedPaymentToPaymentMethodsTable extends Migration
             $table->boolean('is_need_payment')->after('is_postpaid')->default(false);
         });
 
-        DB::table(self::TABLE_NAME)->where('code', PaymentMethod::PREPAID)->update(['is_need_payment' => true]);
+        DB::table(self::TABLE_NAME)->where('id', PaymentMethod::PREPAID)->update(['is_need_payment' => true]);
     }
 
     public function down()

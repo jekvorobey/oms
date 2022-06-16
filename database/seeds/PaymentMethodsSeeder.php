@@ -7,11 +7,13 @@ class PaymentMethodsSeeder extends Seeder
 {
     private array $data = [
         [
+            'id' => PaymentMethod::PREPAID,
             'name' => 'Предоплата (онлайн)',
             'code' => 'prepaid',
             'active' => true,
         ],
         [
+            'id' => PaymentMethod::POSTPAID,
             'name' => 'Постоплата (Наличными или картой при получении)',
             'code' => 'postpaid',
             'active' => true,
@@ -19,6 +21,7 @@ class PaymentMethodsSeeder extends Seeder
             'is_need_create_payment' => false,
         ],
         [
+            'id' => PaymentMethod::CREDITPAID,
             'name' => 'В кредит от pp.credit',
             'code' => 'creditpaid',
             'active' => true,
@@ -35,7 +38,7 @@ class PaymentMethodsSeeder extends Seeder
     {
         foreach ($this->data as $item) {
             PaymentMethod::query()->firstOrCreate([
-                'code' => $item['code'],
+                'id' => $item['id'],
             ], $item);
         }
     }

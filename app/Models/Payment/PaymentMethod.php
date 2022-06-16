@@ -29,9 +29,9 @@ use Greensight\CommonMsa\Models\AbstractModel;
  */
 class PaymentMethod extends AbstractModel
 {
-    public const PREPAID = 'prepaid';
-    public const POSTPAID = 'postpaid';
-    public const CREDITPAID = 'creditpaid';
+    public const PREPAID = 1;
+    public const POSTPAID = 2;
+    public const CREDITPAID = 3;
 
     protected $fillable = [
         'name',
