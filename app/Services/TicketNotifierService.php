@@ -6,6 +6,7 @@ use App\Models\Order\Order;
 use App\Observers\Order\OrderObserver;
 use App\Services\DocumentService\OrderTicketsCreator;
 use Carbon\Carbon;
+use Cms\Services\RedirectService\RedirectService;
 use Greensight\CommonMsa\Services\FileService\FileService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Greensight\Customer\Services\CustomerService\CustomerService;
@@ -68,6 +69,8 @@ class TicketNotifierService
     /** @var OrderTicketsCreator */
     protected $orderTicketsCreator;
 
+    protected RedirectService $redirectService;
+
     public function __construct(
         PublicEventService $publicEventService,
         PublicEventSprintService $publicEventSprintService,
@@ -82,7 +85,8 @@ class TicketNotifierService
         FileService $fileService,
         ServiceNotificationService $serviceNotificationService,
         OrderTicketsCreator $orderTicketsCreator,
-        CustomerService $customerService
+        CustomerService $customerService,
+        RedirectService $redirectService
     ) {
         $this->publicEventService = $publicEventService;
         $this->publicEventSprintService = $publicEventSprintService;
@@ -98,6 +102,7 @@ class TicketNotifierService
         $this->serviceNotificationService = $serviceNotificationService;
         $this->orderTicketsCreator = $orderTicketsCreator;
         $this->customerService = $customerService;
+        $this->redirectService = $redirectService;
     }
 
     public function notify(Order $order)
@@ -342,6 +347,22 @@ class TicketNotifierService
                 ['files' => $pdfIds]
             );
         }
+    }
+
+    public function waitingForPaymentNotify(Order $order)
+    {
+        $user = $order->getUser();
+
+        $payment = $order->payments->first();
+        $paymentLink = optional($payment)->payment_link;
+
+        $data = [
+            'ORDER_ID' => $order->number,
+            'LINK_PAY' => $paymentLink ? $this->redirectService->generateShortUrl($paymentLink) : '',
+            'LINK_ORDER' => sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id),
+        ];
+
+        $this->serviceNotificationService->send($user->id, 'bilety_ozhidayut_oplaty', $data);
     }
 
     private function generateMapImage(Collection $points): string
