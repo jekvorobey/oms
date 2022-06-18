@@ -196,6 +196,9 @@ class BasketReader
                 $query->where($field, $op, $value);
             }
         }
+
+        //исключаем пустые корзины
+        $query->whereHas('items');
     }
 
     protected function addPagination(Builder $query, RestQuery $restQuery): void
