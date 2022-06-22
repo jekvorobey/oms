@@ -32,6 +32,13 @@ class PaymentMethodsSeeder extends Seeder
                 'signingKD' => 'KO',
             ],
         ],
+        [
+            'id' => PaymentMethod::B2B_SBERBANK,
+            'name' => 'СберБизнес (онлайн)',
+            'code' => 'b2b_sberbank',
+            'active' => true,
+            'is_need_create_payment' => true,
+        ],
     ];
 
     public function run(): void
