@@ -111,9 +111,11 @@ class OrderService
         if ($order->payment_status === PaymentStatus::HOLD) {
             /** @var Payment $payment */
             $payment = $order->payments->last();
-            $paymentSystem = $payment->paymentSystem();
-            if ($paymentSystem) {
-                $paymentSystem->cancel($payment->external_payment_id);
+            if ($payment) {
+                $paymentSystem = $payment->paymentSystem();
+                if ($paymentSystem) {
+                    $paymentSystem->cancel($payment->external_payment_id);
+                }
             }
         }
 
