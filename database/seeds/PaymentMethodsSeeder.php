@@ -33,11 +33,10 @@ class PaymentMethodsSeeder extends Seeder
             ],
         ],
         [
+            'id' => PaymentMethod::B2B_SBERBANK,
             'name' => 'СберБизнес (онлайн)',
             'code' => 'b2b_sberbank',
             'active' => true,
-            'is_postpaid' => false,
-            'is_need_payment' => true,
         ],
     ];
 
