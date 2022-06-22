@@ -380,7 +380,9 @@ class OrderObserver
      */
     private function commitPaymentIfOrderTransferredOrDelivered(Order $order): void
     {
-        if ($order->is_postpaid) {
+        /** @var Payment $payment */
+        $payment = $order->payments->last();
+        if (!$payment) {
             return;
         }
 

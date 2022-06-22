@@ -328,14 +328,13 @@ class CheckoutOrder
         $order->delivery_price = $this->deliveryPrice;
 
         /** @var PaymentMethod $paymentMethod */
-        $paymentMethod = PaymentMethod::find($this->paymentMethodId);
+        $paymentMethod = PaymentMethod::findOrFail($this->paymentMethodId);
 
-        if ($paymentMethod && $order->isProductOrder()) {
-            $order->is_postpaid = $paymentMethod->is_postpaid;
-            $order->status = OrderStatus::defaultValue();
-            $order->payment_status = PaymentStatus::NOT_PAID;
-            $order->payment_method_id = $this->paymentMethodId;
-        }
+        $order->is_postpaid = $paymentMethod->is_postpaid;
+        $order->status = OrderStatus::defaultValue();
+        $order->payment_status = PaymentStatus::NOT_PAID;
+        $order->payment_method_id = $this->paymentMethodId;
+
         $order->save();
 
         return $order;
