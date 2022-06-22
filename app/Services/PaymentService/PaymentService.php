@@ -145,6 +145,10 @@ class PaymentService
     {
         /** @var Payment $payment */
         $payment = $order->payments->last();
+        if (!$payment) {
+            return;
+        }
+
         $refundSum = min($payment->sum, $payment->refund_sum + $sum);
 
         $payment->refund_sum = $refundSum;

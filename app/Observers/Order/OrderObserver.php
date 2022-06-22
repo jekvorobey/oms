@@ -140,6 +140,11 @@ class OrderObserver
                     $sent_notification = true;
                 }
 
+                //сообщение с ссылкой на оплату билетов МК
+                if ($order->type === Basket::TYPE_MASTER && $order->payment_status === PaymentStatus::WAITING) {
+                    app(TicketNotifierService::class)->waitingForPaymentNotify($order);
+                }
+
                 if (
                     $order->type !== Basket::TYPE_MASTER
                     && (
@@ -381,7 +386,9 @@ class OrderObserver
      */
     private function commitPaymentIfOrderTransferredOrDelivered(Order $order): void
     {
-        if ($order->is_postpaid) {
+        /** @var Payment $payment */
+        $payment = $order->payments->last();
+        if (!$payment) {
             return;
         }
 

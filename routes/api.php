@@ -19,6 +19,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('baskets')->group(function () {
+        Route::get('', 'Basket\CustomerBasketController@list');
+        Route::get('count', 'Basket\CustomerBasketController@count');
+
         Route::post('notify-expired/{offer}', 'Basket\CustomerBasketController@notifyExpiredOffers');
         Route::get('by-customer/{customerId}', 'Basket\CustomerBasketController@getCurrentBasket');
         Route::get('qty-by-offer-ids', 'Basket\CustomerBasketController@qtyByOfferIds');
@@ -28,6 +31,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::put('commit', 'Basket\CustomerBasketController@commitItemsPrice');
             Route::get('', 'Basket\CustomerBasketController@getBasket');
             Route::delete('', 'Basket\CustomerBasketController@dropBasket');
+            Route::put('', 'Basket\CustomerBasketController@update');
         });
 
         Route::prefix('guest')->group(function () {
@@ -119,7 +123,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::prefix('methods')->group(function () {
             Route::get('', 'PaymentMethodsController@read');
             Route::prefix('{paymentMethod}')->group(function () {
-                Route::get('', 'PaymentMethodsController@read');
+                Route::get('', 'PaymentMethodsController@readOne');
                 Route::put('', 'PaymentMethodsController@update');
             });
         });
