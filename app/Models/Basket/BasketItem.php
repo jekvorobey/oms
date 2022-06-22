@@ -83,6 +83,8 @@ class BasketItem extends AbstractModel
     /** @var bool */
     protected static $unguarded = true;
 
+    protected $touches = ['basket'];
+
     /** @var array */
     protected $casts = [
         'product' => 'array',
