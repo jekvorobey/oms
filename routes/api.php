@@ -119,7 +119,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
         Route::prefix('methods')->group(function () {
             Route::get('', 'PaymentMethodsController@read');
             Route::prefix('{paymentMethod}')->group(function () {
-                Route::get('', 'PaymentMethodsController@read');
+                Route::get('', 'PaymentMethodsController@readOne');
                 Route::put('', 'PaymentMethodsController@update');
             });
         });
