@@ -735,24 +735,24 @@ class ShipmentsController extends Controller
     public function barcodes(int $id, ShipmentService $shipmentService, FileService $fileService): JsonResponse
     {
         $shipment = $shipmentService->getShipment($id);
-        $deliveryOrderBarcodesDto = $shipmentService->getShipmentBarcodes($shipment);
 
-        if ($deliveryOrderBarcodesDto) {
-            if ($deliveryOrderBarcodesDto->success && $deliveryOrderBarcodesDto->file_id) {
-                /** @var FileDto $fileDto */
-                $fileDto = $fileService->getFiles([$deliveryOrderBarcodesDto->file_id])->first();
-
-                return response()->json([
-                    'absolute_url' => $fileDto->absoluteUrl(),
-                    'original_name' => "barcode-{$shipment->number}.pdf", //$fileDto->original_name,
-                    'size' => $fileDto->size,
-                ]);
-            } else {
-                throw new HttpException(500, $deliveryOrderBarcodesDto->message);
-            }
+        $result = $shipmentService->getShipmentBarcodes($shipment);
+        if (!$result) {
+            throw new HttpException(500);
         }
 
-        throw new HttpException(500);
+        if (!$result->success || !$result->file_id) {
+            throw new HttpException(500, $result->message);
+        }
+
+        /** @var FileDto $fileDto */
+        $fileDto = $fileService->getFiles([$result->file_id])->first();
+
+        return response()->json([
+            'absolute_url' => $fileDto->absoluteUrl(),
+            'original_name' => "barcode-{$shipment->number}.pdf",
+            'size' => $fileDto->size,
+        ]);
     }
 
     /**
@@ -776,24 +776,24 @@ class ShipmentsController extends Controller
     public function cdekReceipt(int $id, ShipmentService $shipmentService, FileService $fileService): JsonResponse
     {
         $shipment = $shipmentService->getShipment($id);
-        $cdekDeliveryOrderReceiptDto = $shipmentService->getShipmentCdekReceipt($shipment);
 
-        if ($cdekDeliveryOrderReceiptDto) {
-            if ($cdekDeliveryOrderReceiptDto->success && $cdekDeliveryOrderReceiptDto->file_id) {
-                /** @var FileDto $fileDto */
-                $fileDto = $fileService->getFiles([$cdekDeliveryOrderReceiptDto->file_id])->first();
-
-                return response()->json([
-                    'absolute_url' => $fileDto->absoluteUrl(),
-                    'original_name' => $fileDto->original_name,
-                    'size' => $fileDto->size,
-                ]);
-            } else {
-                throw new HttpException(500, $cdekDeliveryOrderReceiptDto->message);
-            }
+        $result = $shipmentService->getShipmentCdekReceipt($shipment);
+        if (!$result) {
+            throw new HttpException(500);
         }
 
-        throw new HttpException(500);
+        if (!$result->success || !$result->file_id) {
+            throw new HttpException(500, $result->message);
+        }
+
+        /** @var FileDto $fileDto */
+        $fileDto = $fileService->getFiles([$result->file_id])->first();
+
+        return response()->json([
+            'absolute_url' => $fileDto->absoluteUrl(),
+            'original_name' => $fileDto->original_name,
+            'size' => $fileDto->size,
+        ]);
     }
 
     /**
