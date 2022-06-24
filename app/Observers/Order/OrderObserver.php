@@ -1216,22 +1216,6 @@ class OrderObserver
         );
     }
 
-    public static function shortenLink(?string $link)
-    {
-        if ($link === null) {
-            return '';
-        }
-
-        /** @var Client $client */
-        $client = app(Client::class);
-
-        return $client->request('GET', 'https://clck.ru/--', [
-            'query' => [
-                'url' => $link,
-            ],
-        ])->getBody();
-    }
-
     protected function shouldSendPaidNotification(Order $order): bool
     {
         $paid = ($order->payment_status == PaymentStatus::HOLD) || (
