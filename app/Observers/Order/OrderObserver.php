@@ -12,6 +12,7 @@ use App\Models\Delivery\ShipmentItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentMethod;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DeliveryService;
 use App\Services\OrderService;
@@ -144,6 +145,7 @@ class OrderObserver
                     app(TicketNotifierService::class)->waitingForPaymentNotify($order);
                 }
 
+                // Отправка уведомления "Ожидает оплаты" или "Оплачен"
                 if (
                     $order->type !== Basket::TYPE_MASTER
                     && (
@@ -151,6 +153,7 @@ class OrderObserver
                         // || $order->payment_status == PaymentStatus::TIMEOUT
                         || ($order->payment_status == PaymentStatus::WAITING && !$order->is_postpaid)
                     )
+                    && $order->payment_method_id !== PaymentMethod::CREDITPAID
                 ) {
                     $delivery_method = !empty($order->deliveries()->first()->delivery_method) &&
                         $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP;
