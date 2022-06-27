@@ -13,7 +13,6 @@ use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Support\Collection;
 use Pim\Dto\PublicEvent\MediaDto;
 use Pim\Dto\PublicEvent\OrganizerDto;
-use Pim\Dto\PublicEvent\PlaceDto;
 use Pim\Dto\PublicEvent\PublicEventDto;
 use Pim\Dto\PublicEvent\StageDto;
 use Pim\Services\PublicEventMediaService\PublicEventMediaService;

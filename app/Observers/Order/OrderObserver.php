@@ -28,7 +28,6 @@ use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
-use GuzzleHttp\Client;
 use Illuminate\Support\Arr;
 use Pim\Dto\Certificate\CertificateRequestDto;
 use Pim\Dto\Certificate\CertificateRequestStatusDto;
