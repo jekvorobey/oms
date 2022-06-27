@@ -322,7 +322,7 @@ class TicketNotifierService
             'CALL_ORG' => $firstOrganizer->phone,
             'MAIL_ORG' => $firstOrganizer->email,
             'LINK_ORDER' => sprintf('%s/profile/orders/%d', config('app.showcase_host'), $order->id),
-            'LINK_TICKET' => (string) OrderObserver::shortenLink(
+            'LINK_TICKET' => $this->redirectService->generateShortUrl(
                 $this->fileService
                     ->getFiles([$document->file_id])
                     ->first()
@@ -363,17 +363,6 @@ class TicketNotifierService
         ];
 
         $this->serviceNotificationService->send($user->id, 'bilety_ozhidayut_oplaty', $data);
-    }
-
-    private function generateMapImage(Collection $points): string
-    {
-        $query = $points
-            ->map(function (PlaceDto $point, $key) {
-                return sprintf('%s,%s,pm2ntm%s', $point->longitude, $point->latitude, $key + 1);
-            })
-            ->join('~');
-
-        return sprintf('https://enterprise.static-maps.yandex.ru/1.x/?key=%s&l=map&pt=%s', config('services.y_maps.key'), $query);
     }
 
     private function generateTicketWord(int $count): string

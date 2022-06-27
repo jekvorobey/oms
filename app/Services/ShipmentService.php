@@ -100,14 +100,28 @@ class ShipmentService
             return null;
         }
 
+        if ($shipment->barcode_file_id) {
+            return new DeliveryOrderBarcodesDto([
+                'success' => true,
+                'file_id' => $shipment->barcode_file_id,
+            ]);
+        }
+
         try {
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            return $deliveryOrderService->barcodesOrder(
+
+            $result = $deliveryOrderService->barcodesOrder(
                 $delivery->delivery_service,
                 $delivery->xml_id,
                 array_filter($shipment->packages->pluck('xml_id')->toArray())
             );
+
+            if ($result->success && $result->file_id) {
+                $shipment->update(['barcode_file_id' => $result->file_id]);
+            }
+
+            return $result;
         } catch (Throwable $e) {
             report($e);
             return null;
@@ -129,10 +143,24 @@ class ShipmentService
             return null;
         }
 
+        if ($shipment->cdek_receipt_file_id) {
+            return new DeliveryOrderBarcodesDto([
+                'success' => true,
+                'file_id' => $shipment->cdek_receipt_file_id,
+            ]);
+        }
+
         try {
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            return $deliveryOrderService->cdekReceiptOrder($delivery->delivery_service, $delivery->xml_id);
+
+            $result = $deliveryOrderService->cdekReceiptOrder($delivery->delivery_service, $delivery->xml_id);
+
+            if ($result->success && $result->file_id) {
+                $shipment->update(['cdek_receipt_file_id' => $result->file_id]);
+            }
+
+            return $result;
         } catch (\Throwable $e) {
             report($e);
             return null;

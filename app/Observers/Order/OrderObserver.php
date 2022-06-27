@@ -386,7 +386,9 @@ class OrderObserver
      */
     private function commitPaymentIfOrderTransferredOrDelivered(Order $order): void
     {
-        if ($order->is_postpaid) {
+        /** @var Payment $payment */
+        $payment = $order->payments->last();
+        if (!$payment) {
             return;
         }
 
@@ -1212,22 +1214,6 @@ class OrderObserver
             9,
             2
         );
-    }
-
-    public static function shortenLink(?string $link)
-    {
-        if ($link === null) {
-            return '';
-        }
-
-        /** @var Client $client */
-        $client = app(Client::class);
-
-        return $client->request('GET', 'https://clck.ru/--', [
-            'query' => [
-                'url' => $link,
-            ],
-        ])->getBody();
     }
 
     protected function shouldSendPaidNotification(Order $order): bool

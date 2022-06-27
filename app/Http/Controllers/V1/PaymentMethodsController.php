@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Payments\Methods\UpdateRequest;
 use App\Models\Payment\PaymentMethod;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
+use Greensight\CommonMsa\Rest\RestQuery;
+use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class PaymentMethodsController extends Controller
@@ -30,6 +34,18 @@ class PaymentMethodsController extends Controller
     public function modelClass(): string
     {
         return PaymentMethod::class;
+    }
+
+    /**
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function readOne(PaymentMethod $paymentMethod, Request $request, RequestInitiator $client): JsonResponse
+    {
+        $restQuery = new RestQuery($request);
+
+        return response()->json([
+            'items' => $paymentMethod->toRest($restQuery),
+        ]);
     }
 
     /**
