@@ -144,7 +144,7 @@ class ShipmentService
         }
 
         if ($shipment->cdek_receipt_file_id) {
-            return new DeliveryOrderBarcodesDto([
+            return new CdekDeliveryOrderReceiptDto([
                 'success' => true,
                 'file_id' => $shipment->cdek_receipt_file_id,
             ]);
