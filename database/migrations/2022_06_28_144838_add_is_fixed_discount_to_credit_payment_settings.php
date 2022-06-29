@@ -12,8 +12,7 @@ class AddIsFixedDiscountToCreditPaymentSettings extends Migration
     {
         DB::table(self::TABLE_NAME)
             ->where('id', PaymentMethod::CREDITPAID)
-            ->update(['settings->is_fixed_discount' => false,
-            ]);
+            ->update(['settings->is_fixed_discount' => false]);
     }
 
     public function down()
