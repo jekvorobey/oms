@@ -16,7 +16,11 @@ class AddButtonTextToCreditPaymentSettings extends Migration
 
         DB::table(self::TABLE_NAME)
             ->where('id', PaymentMethod::B2B_SBERBANK)
-            ->update(['settings->button_text' => 'Оплатить через Сбербанк Бизнес Онлайн']);
+            ->update([
+                'settings' => json_encode([
+                    'button_text' => 'Оплатить через Сбербанк Бизнес Онлайн',
+                ]),
+            ]);
     }
 
     public function down()
