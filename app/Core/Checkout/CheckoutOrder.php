@@ -164,10 +164,7 @@ class CheckoutOrder
             $this->debitingBonus($order);
             $this->createShipments($order);
             $this->createTickets($order);
-
-            if ($order->paymentMethod->is_need_create_payment) {
-                $this->createPayment($order);
-            }
+            $this->createPayment($order);
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
             $this->createOrderBonuses($order);
@@ -533,11 +530,6 @@ class CheckoutOrder
                 }
             }
         }
-
-        if (!$order->paymentMethod->is_need_create_payment) {
-            $order->payment_status = PaymentStatus::WAITING;
-            $order->save();
-        }
     }
 
     /**
@@ -618,6 +610,9 @@ class CheckoutOrder
      */
     private function createPayment(Order $order): void
     {
+        if (!$order->paymentMethod->is_need_create_payment) {
+            return;
+        }
         $payment = new Payment();
         $payment->payment_method = $this->paymentMethodId;
         $payment->payment_system = PaymentSystem::YANDEX;
@@ -626,6 +621,19 @@ class CheckoutOrder
 
         $writer = new OrderWriter();
         $writer->setPayments($order, collect([$payment]));
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function setOrderWaitingStatus(Order $order): void
+    {
+        if ($order->paymentMethod->is_need_create_payment) {
+            return;
+        }
+
+        $order->payment_status = PaymentStatus::WAITING;
+        $order->save();
     }
 
     private function basket(): ?Basket
