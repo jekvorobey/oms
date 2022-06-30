@@ -165,6 +165,7 @@ class CheckoutOrder
             $this->createShipments($order);
             $this->createTickets($order);
             $this->createPayment($order);
+            $this->setOrderWaitingStatus($order);
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
             $this->createOrderBonuses($order);
