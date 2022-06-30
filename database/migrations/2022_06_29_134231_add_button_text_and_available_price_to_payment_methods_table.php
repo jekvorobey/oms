@@ -12,11 +12,7 @@ class AddButtonTextAndAvailablePriceToPaymentMethodsTable extends Migration
     {
         Schema::table('payment_methods', function (Blueprint $table) {
             $table->text('button_text')->after('is_apply_discounts')->nullable();
-        });
-        Schema::table('payment_methods', function (Blueprint $table) {
             $table->float('max_available_price')->after('is_apply_discounts')->nullable();
-        });
-        Schema::table('payment_methods', function (Blueprint $table) {
             $table->float('min_available_price')->after('is_apply_discounts')->nullable();
         });
     }
