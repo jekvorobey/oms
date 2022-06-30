@@ -28,9 +28,9 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property bool $is_postpaid - Признак постоплаты (оплата при получении)
  * @property bool $is_need_create_payment - Признак необходимости создания заказа в платежной системе
  * @property bool $is_apply_discounts - Признак возможности применения скидок
- * @property bool $button_text - Текст на кнопке (с тэгами)
- * @property bool $min_available_price - Доступность варианта оплаты при сумме от
- * @property bool $max_available_price - Доступность варианта оплаты при сумме до
+ * @property string $button_text - Текст на кнопке (с тэгами)
+ * @property float $min_available_price - Доступность варианта оплаты при сумме от
+ * @property float $max_available_price - Доступность варианта оплаты при сумме до
  * @property array $settings - Дополнительные настройки оплаты
  */
 class PaymentMethod extends AbstractModel
@@ -56,7 +56,7 @@ class PaymentMethod extends AbstractModel
     protected $casts = [
         'active' => 'bool',
         'is_postpaid' => 'bool',
-        'is_need_payment' => 'bool',
+        'is_need_create_payment' => 'bool',
         'is_apply_discounts' => 'bool',
         'settings' => 'json',
     ];
