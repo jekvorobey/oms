@@ -807,7 +807,7 @@ class OrdersController extends Controller
                         'merchant_id' => $shipment->merchant_id,
                         'is_canceled' => $shipment->is_canceled,
                         'is_canceled_at' => $shipment->is_canceled_at,
-                        'status_at' => $shipment->status_at,
+                        'status_at' => $shipment->status_at > $shipment->payment_status_at ? $shipment->status_at : $shipment->payment_status_at,
                     ];
                 }
 
@@ -821,7 +821,7 @@ class OrdersController extends Controller
                     'is_canceled' => $shipment->is_canceled,
                     'is_canceled_at' => $shipment->is_canceled_at,
                     'status_at' => $shipment->status_at,
-
+                    'payment_status_at' => $shipment->payment_status_at,
                 ];
             }),
         ]);
