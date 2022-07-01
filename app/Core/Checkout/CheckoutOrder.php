@@ -165,7 +165,7 @@ class CheckoutOrder
             $this->createShipments($order);
             $this->createTickets($order);
             $this->createPayment($order);
-            $this->setOrderWaitingStatus($order);
+            $this->setWaitingStatusToOrderPayment($order);
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
             $this->createOrderBonuses($order);
@@ -627,7 +627,7 @@ class CheckoutOrder
     /**
      * @throws Exception
      */
-    private function setOrderWaitingStatus(Order $order): void
+    private function setWaitingStatusToOrderPayment(Order $order): void
     {
         if ($order->paymentMethod->is_need_create_payment) {
             return;
