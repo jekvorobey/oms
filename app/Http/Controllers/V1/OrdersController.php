@@ -24,6 +24,7 @@ use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -701,10 +702,16 @@ class OrdersController extends Controller
             ->where('status', ShipmentStatus::DONE)
             ->where('payment_status', PaymentStatus::PAID);
         if (isset($data['date_from'])) {
-            $builderDone->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+            $builderDone->where(function (Builder $query) use ($data) {
+                $query->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']))
+                    ->orWhere('payment_status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+            });
         }
         if (isset($data['date_to'])) {
-            $builderDone->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
+            $builderDone->where(function (Builder $query) use ($data) {
+                $query->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']))
+                    ->orWhere('payment_status_at', '<', Carbon::createFromTimestamp($data['date_to']));
+            });
         }
         $doneShipments = $builderDone->get();
 
@@ -712,10 +719,16 @@ class OrdersController extends Controller
             ->where('status', ShipmentStatus::RETURNED)
             ->where('payment_status', PaymentStatus::PAID);
         if (isset($data['date_from'])) {
-            $builderReturn->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+            $builderReturn->where(function (Builder $query) use ($data) {
+                $query->where('status_at', '>=', Carbon::createFromTimestamp($data['date_from']))
+                    ->orWhere('payment_status_at', '>=', Carbon::createFromTimestamp($data['date_from']));
+            });
         }
         if (isset($data['date_to'])) {
-            $builderReturn->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']));
+            $builderReturn->where(function (Builder $query) use ($data) {
+                $query->where('status_at', '<', Carbon::createFromTimestamp($data['date_to']))
+                    ->orWhere('payment_status_at', '<', Carbon::createFromTimestamp($data['date_to']));
+            });
         }
         $returnShipments = $builderReturn->get();
 
