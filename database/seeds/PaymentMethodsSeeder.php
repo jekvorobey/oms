@@ -11,21 +11,21 @@ class PaymentMethodsSeeder extends Seeder
             'name' => 'Предоплата (онлайн)',
             'code' => 'prepaid',
             'active' => true,
-            'button_text' => '<div class="text-bold checkout-master-class-panel__item-payment-title">
+            'button_text' => '<div class="text-bold checkout-product-panel__item-payment-title">
                                 Предоплата (онлайн)
                             </div>
 
-                            <div class="checkout-master-class-panel__item-payment-list checkout-product-panel__item-payment-list--w-full">
-                                <div class="checkout-master-class-panel__item-payment-list-item">
+                            <div class="checkout-product-panel__item-payment-list checkout-product-panel__item-payment-list--w-full">
+                                <div class="checkout-product-panel__item-payment-list-item">
                                     <v-svg name="visa" width="40" height="24" />
                                 </div>
-                                <div class="checkout-master-class-panel__item-payment-list-item">
+                                <div class="checkout-product-panel__item-payment-list-item">
                                     <v-svg name="mastercard" width="40" height="24" />
                                 </div>
-                                <div class="checkout-master-class-panel__item-payment-list-item">
+                                <div class="checkout-product-panel__item-payment-list-item">
                                     <v-svg name="mir" width="40" height="24" />
                                 </div>
-                                <div class="checkout-master-class-panel__item-payment-list-item">
+                                <div class="checkout-product-panel__item-payment-list-item">
                                     <v-svg name="yandex" width="56" height="24" />
                                 </div>
                             </div>',
@@ -51,12 +51,13 @@ class PaymentMethodsSeeder extends Seeder
                 'signingKD' => 'KO',
             ],
             'button_text' => '
-                            <div class="text-bold checkout-master-class-panel__item-payment-title">
+                            <div class="text-bold checkout-product-panel__item-payment-title">
                                 В кредит от pp.credit
                                 <span class="text-sm" v-if="!method.is_available">(от 10 000 ₽)</span>
                             </div>
-                            <div class="checkout-checkout-master-class-panel__item-payment">
-                                Для оформления заявки на кредит потребуется паспорт',
+                            <div class="checkout-product-panel__item-payment">
+                                Для оформления заявки на кредит потребуется паспорт
+                            </div>',
         ],
         [
             'id' => PaymentMethod::B2B_SBERBANK,
