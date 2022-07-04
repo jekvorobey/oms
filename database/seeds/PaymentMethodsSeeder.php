@@ -12,21 +12,21 @@ class PaymentMethodsSeeder extends Seeder
             'code' => 'prepaid',
             'active' => true,
             'button_text' => '<div class="text-bold checkout-product-panel__item-payment-title">
-                                Предоплата (онлайн)
+                                Онлайн оплата
                             </div>
 
                             <div class="checkout-product-panel__item-payment-list checkout-product-panel__item-payment-list--w-full">
                                 <div class="checkout-product-panel__item-payment-list-item">
-                                    <v-svg name="visa" width="40" height="24" />
+                                    <svg class="icon" width="40" height="24"><use xlink:href="#icon-visa"></use></svg>
                                 </div>
                                 <div class="checkout-product-panel__item-payment-list-item">
-                                    <v-svg name="mastercard" width="40" height="24" />
+                                    <svg class="icon" width="40" height="24"><use xlink:href="#icon-mastercard"></use></svg>
                                 </div>
                                 <div class="checkout-product-panel__item-payment-list-item">
-                                    <v-svg name="mir" width="40" height="24" />
+                                    <svg class="icon" width="40" height="24"><use xlink:href="#icon-mir"></use></svg>
                                 </div>
                                 <div class="checkout-product-panel__item-payment-list-item">
-                                    <v-svg name="yandex" width="56" height="24" />
+                                    <svg class="icon" width="56" height="24"><use xlink:href="#icon-yandex"></use></svg>
                                 </div>
                             </div>',
         ],
@@ -37,7 +37,7 @@ class PaymentMethodsSeeder extends Seeder
             'active' => true,
             'is_postpaid' => true,
             'is_need_create_payment' => false,
-            'button_text' => 'Постоплата (Наличными или картой при получении)',
+            'button_text' => 'Наличными или картой при получении',
         ],
         [
             'id' => PaymentMethod::CREDITPAID,
@@ -53,8 +53,7 @@ class PaymentMethodsSeeder extends Seeder
             'min_available_price' => 10000,
             'button_text' => '
                             <div class="text-bold checkout-product-panel__item-payment-title">
-                                В кредит от pp.credit
-                                <span class="text-sm" v-if="!method.is_available">(от 10 000 ₽)</span>
+                                В рассрочку
                             </div>
                             <div class="checkout-product-panel__item-payment">
                                 Для оформления заявки на кредит потребуется паспорт
@@ -66,7 +65,7 @@ class PaymentMethodsSeeder extends Seeder
             'code' => 'b2b_sberbank',
             'active' => true,
             'is_need_create_payment' => true,
-            'button_text' => 'СберБизнес (онлайн)',
+            'button_text' => '<svg class="icon" width="251" height="60"><use xlink:href="#icon-b2b-sberbank"></use></svg>',
             'min_available_price' => 10000,
         ],
     ];
