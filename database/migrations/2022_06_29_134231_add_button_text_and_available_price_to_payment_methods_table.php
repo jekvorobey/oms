@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Artisan;
 
 class AddButtonTextAndAvailablePriceToPaymentMethodsTable extends Migration
 {
@@ -15,6 +16,11 @@ class AddButtonTextAndAvailablePriceToPaymentMethodsTable extends Migration
             $table->float('max_available_price')->after('is_apply_discounts')->nullable();
             $table->float('min_available_price')->after('is_apply_discounts')->nullable();
         });
+
+        Artisan::call('db:seed', [
+            '--class' => 'PaymentMethodsSeeder',
+            '--force' => true,
+        ]);
     }
 
     public function down()
