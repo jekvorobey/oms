@@ -50,6 +50,7 @@ class PaymentMethodsSeeder extends Seeder
                 'discount' => '14',
                 'signingKD' => 'KO',
             ],
+            'min_available_price' => 10000,
             'button_text' => '
                             <div class="text-bold checkout-product-panel__item-payment-title">
                                 В кредит от pp.credit
@@ -66,6 +67,7 @@ class PaymentMethodsSeeder extends Seeder
             'active' => true,
             'is_need_create_payment' => true,
             'button_text' => 'СберБизнес (онлайн)',
+            'min_available_price' => 10000,
         ],
     ];
 
