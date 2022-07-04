@@ -36,8 +36,7 @@ class BasketItemObserver
         /*if ($basketItem->basket->order) {
             $basketItem->basket->order->costRecalc();
         }*/
-        $this->recalcWeightAndSizes($basketItem);
-        $this->costRecalc($basketItem);
+        $this->recalcShipment($basketItem);
         $this->returnBonuses($basketItem);
     }
 
@@ -176,17 +175,14 @@ class BasketItemObserver
         }
     }
 
-    private function recalcWeightAndSizes(BasketItem $basketItem): void
+    private function recalcShipment(BasketItem $basketItem): void
     {
-        if ($basketItem->wasChanged('qty') && $basketItem->shipmentItem) {
-            $basketItem->shipmentItem->shipment->recalc();
-        }
-    }
+        if ($basketItem->shipmentItem && $basketItem->wasChanged('qty')) {
+            $shipment = $basketItem->shipmentItem->shipment;
+            $shipment->load('basketItems');
 
-    private function costRecalc(BasketItem $basketItem): void
-    {
-        if ($basketItem->wasChanged('qty', 'price') && $basketItem->shipmentItem) {
-            $basketItem->shipmentItem->shipment->costRecalc();
+            $shipment->recalc();
+            $shipment->costRecalc();
         }
     }
 }

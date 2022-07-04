@@ -11,6 +11,7 @@ use YooKassa\Model\CurrencyCode;
 use YooKassa\Model\MonetaryAmount;
 use App\Models\Payment\Payment;
 use YooKassa\Model\PaymentData\B2b\Sberbank\VatData;
+use YooKassa\Model\PaymentData\B2b\Sberbank\VatDataType;
 use YooKassa\Model\PaymentData\PaymentDataB2bSberbank;
 use YooKassa\Request\Payments\CreatePaymentRequest;
 use YooKassa\Request\Payments\CreatePaymentRequestBuilder;
@@ -40,20 +41,30 @@ class PaymentData extends OrderData
             ->setTaxSystemCode(Tax::SIMPLE_MINUS_INCOME);
 
         if ($order->payment_method_id === PaymentMethod::B2B_SBERBANK) {
-            $b2bSberbankData = new PaymentDataB2bSberbank();
-            $b2bSberbankData->setPaymentPurpose("Оплата заказа №{$order->id}");
-
-            $b2bSberbankVatData = new VatData();
-            $b2bSberbankVatData->setType('mixed');
-            $b2bSberbankVatData->setAmount(new MonetaryAmount($this->getVatAmount($order)));
-
-            $b2bSberbankData->setVatData($b2bSberbankVatData);
-
-            $builder->setPaymentMethodData($b2bSberbankData);
-            $builder->setCapture(true);
+            $this->buildForB2BSberbank($builder, $order);
         }
 
         return $builder;
+    }
+
+    private function buildForB2BSberbank(CreatePaymentRequestBuilder $builder, Order $order): void
+    {
+        $b2bSberbankData = new PaymentDataB2bSberbank();
+        $b2bSberbankData->setPaymentPurpose("Оплата заказа №{$order->id}");
+
+        $b2bSberbankVatData = new VatData();
+        $vatAmount = $this->getVatAmount($order);
+        if ($vatAmount) {
+            $b2bSberbankVatData->setType(VatDataType::MIXED);
+            $b2bSberbankVatData->setAmount(new MonetaryAmount($vatAmount));
+        } else {
+            $b2bSberbankVatData->setType(VatDataType::UNTAXED);
+        }
+
+        $b2bSberbankData->setVatData($b2bSberbankVatData);
+
+        $builder->setPaymentMethodData($b2bSberbankData);
+        $builder->setCapture(true);
     }
 
     /**
@@ -62,10 +73,7 @@ class PaymentData extends OrderData
     public function getCommitData(Payment $localPayment, $amount): CreateCaptureRequestBuilder
     {
         $builder = CreateCaptureRequest::builder();
-//        $email = $localPayment->order->customerEmail();
-//        if ($email) {
-//            $builder->setReceiptEmail($email);
-//        }
+
         return $builder
             ->setAmount(new MonetaryAmount($amount))
             ->setCurrency(CurrencyCode::RUB)
@@ -94,7 +102,10 @@ class PaymentData extends OrderData
             }
 
             $vatValue = $this->getMerchantVatValue($offer, $merchant);
-            $amount += $vatValue ? $item->price * $vatValue / 100 : 0;
+
+            if ($vatValue > 0) {
+                $amount += $item->price * $vatValue / 100;
+            }
         }
 
         return $amount;

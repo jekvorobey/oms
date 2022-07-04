@@ -32,12 +32,14 @@ use Greensight\Logistics\Dto\Order\DeliveryOrderInput\RecipientDto;
 use Greensight\Logistics\Services\CourierCallService\CourierCallService;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Logistics\Services\ListsService\ListsService;
+use Greensight\Store\Dto\StoreContactDto;
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\StoreService\StoreService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
 use Throwable;
@@ -105,6 +107,9 @@ class DeliveryService
 
         $courierCallInputDto = new CourierCallInputDto();
 
+        /** @var StoreContactDto $storeContact */
+        $storeContact = $store->storeContact()[0] ?? null;
+
         $senderDto = new SenderDto();
         $senderDto->address_string = $store->address['address_string'] ?? '';
         $senderDto->post_index = $store->address['post_index'] ?? '';
@@ -119,9 +124,9 @@ class DeliveryService
         $senderDto->block = $store->address['block'] ?? '';
         $senderDto->flat = $store->address['flat'] ?? '';
         $senderDto->company_name = $merchant->legal_name;
-        $senderDto->contact_name = !is_null($store->storeContact()) ? $store->storeContact()[0]->name : '';
-        $senderDto->email = !is_null($store->storeContact()) ? $store->storeContact()[0]->email : '';
-        $senderDto->phone = !is_null($store->storeContact()) ? phoneNumberFormat($store->storeContact()[0]->phone) : '';
+        $senderDto->contact_name = $storeContact->name ?? '';
+        $senderDto->email = $storeContact->email ?? '';
+        $senderDto->phone = phoneNumberFormat(Str::before($storeContact->phone ?? '', ','));
         $courierCallInputDto->sender = $senderDto;
 
         if ($store->cdek_address && (!empty($store->cdek_address['address_string']) || !empty($store->cdek_address['code']))) {
