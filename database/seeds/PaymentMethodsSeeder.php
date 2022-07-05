@@ -4,6 +4,7 @@ use App\Models\Payment\PaymentMethod;
 use Illuminate\Database\Seeder;
 
 class PaymentMethodsSeeder extends Seeder
+// phpcs:ignoreFile
 {
     private array $data = [
         [
