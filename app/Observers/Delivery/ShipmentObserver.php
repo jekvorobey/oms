@@ -462,7 +462,10 @@ class ShipmentObserver
      */
     protected function setTakenStatusToCargo(Shipment $shipment): void
     {
-        if ($shipment->status == ShipmentStatus::ON_POINT_IN && $shipment->status != $shipment->getOriginal('status')) {
+        if (
+            $shipment->status >= ShipmentStatus::ON_POINT_IN && $shipment->status <= ShipmentStatus::DONE
+            && $shipment->wasChanged('status')
+        ) {
             $cargo = $shipment->cargo;
             if (empty($cargo) || $cargo->status == CargoStatus::TAKEN) {
                 return;
@@ -470,7 +473,7 @@ class ShipmentObserver
 
             $allShipmentsHasStatus = true;
             foreach ($cargo->shipments as $cargoShipment) {
-                if ($cargoShipment->status < $shipment->status) {
+                if ($cargoShipment->status < ShipmentStatus::ON_POINT_IN) {
                     $allShipmentsHasStatus = false;
                     break;
                 }
