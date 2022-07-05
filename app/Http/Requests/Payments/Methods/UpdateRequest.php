@@ -13,6 +13,9 @@ class UpdateRequest extends FormRequest
             'is_apply_discounts' => 'required|boolean',
             'active' => 'required|boolean',
             'settings' => 'nullable|array',
+            'button_text' => 'nullable|string',
+            'min_available_price' => 'nullable|numeric',
+            'max_available_price' => 'nullable|numeric',
         ];
     }
 }
