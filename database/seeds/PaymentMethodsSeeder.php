@@ -53,7 +53,7 @@ class PaymentMethodsSeeder extends Seeder
             'active' => true,
             'is_postpaid' => true,
             'is_need_create_payment' => false,
-            'button_text' => 'Наличными или картой при получении',
+            'button_text' => '<p class="text-bold">Наличными или картой при получении</p>',
         ],
         [
             'id' => PaymentMethod::CREDITPAID,
