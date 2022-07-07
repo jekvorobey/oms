@@ -12,24 +12,25 @@ class PaymentMethodsSeeder extends Seeder
             'code' => 'prepaid',
             'active' => true,
             'button_text' => '
-                            <div class="text-bold checkout-product-panel__item-payment-title">
-                                Онлайн оплата
-                            </div>
+<div class="text-bold checkout-product-panel__item-payment-title">
+    Онлайн оплата
+</div>
 
-                            <div class="checkout-product-panel__item-payment-list checkout-product-panel__item-payment-list--w-full">
-                                <div class="checkout-product-panel__item-payment-list-item">
-                                    <svg class="icon" width="40" height="24"><use xlink:href="#icon-visa"></use></svg>
-                                </div>
-                                <div class="checkout-product-panel__item-payment-list-item">
-                                    <svg class="icon" width="40" height="24"><use xlink:href="#icon-mastercard"></use></svg>
-                                </div>
-                                <div class="checkout-product-panel__item-payment-list-item">
-                                    <svg class="icon" width="40" height="24"><use xlink:href="#icon-mir"></use></svg>
-                                </div>
-                                <div class="checkout-product-panel__item-payment-list-item">
-                                    <svg class="icon" width="56" height="24"><use xlink:href="#icon-yandex"></use></svg>
-                                </div>
-                            </div>',
+<div class="checkout-product-panel__item-payment-list checkout-product-panel__item-payment-list--w-full">
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="40" height="24"><use xlink:href="#icon-visa"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="40" height="24"><use xlink:href="#icon-mastercard"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="40" height="24"><use xlink:href="#icon-mir"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="56" height="24"><use xlink:href="#icon-yandex"></use></svg>
+    </div>
+</div>
+            ',
         ],
         [
             'id' => PaymentMethod::POSTPAID,
@@ -53,12 +54,13 @@ class PaymentMethodsSeeder extends Seeder
             ],
             'min_available_price' => 10000,
             'button_text' => '
-                            <p class="text-bold">
-                                В рассрочку
-                            </p>
-                            <p style="margin-top: 1rem;">
-                                Для оформления заявки на кредит потребуется паспорт
-                            </p>',
+<p class="text-bold">
+    В рассрочку
+</p>
+<p style="margin-top: 1rem;">
+    Для оформления заявки на кредит потребуется паспорт
+</p>
+            ',
         ],
         [
             'id' => PaymentMethod::B2B_SBERBANK,
@@ -73,7 +75,7 @@ class PaymentMethodsSeeder extends Seeder
     public function run(): void
     {
         foreach ($this->data as $item) {
-            PaymentMethod::query()->firstOrCreate([
+            PaymentMethod::query()->updateOrCreate([
                 'id' => $item['id'],
             ], $item);
         }
