@@ -49,6 +49,7 @@ class PaymentMethodsSeeder extends Seeder
             'is_apply_discounts' => true,
             'is_need_create_payment' => false,
             'settings' => [
+                'is_fixed_discount' => false,
                 'discount' => '14',
                 'signingKD' => 'KO',
             ],
