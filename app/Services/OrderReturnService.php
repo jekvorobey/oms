@@ -71,7 +71,7 @@ class OrderReturnService
 
     private function needCreateOrderReturn(Order $order, OrderReturnDto $orderReturnDto): bool
     {
-        if (!in_array((int) $order->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD])) {
+        if (!in_array((int) $order->payment_status, [PaymentStatus::PAID, PaymentStatus::HOLD]) && $order->spent_certificate <= 0) {
             return false;
         }
 

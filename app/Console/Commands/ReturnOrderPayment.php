@@ -11,19 +11,9 @@ use Illuminate\Console\Command;
 
 class ReturnOrderPayment extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'order:return';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Команда для возврата средств через ЮКасса';
+    protected $description = 'Команда для возврата средств';
 
     public function handle()
     {
@@ -31,32 +21,8 @@ class ReturnOrderPayment extends Command
 
         /** @var OrderReturn $orderReturn */
         foreach ($orderReturns as $orderReturn) {
-            /** @var Payment $payment */
-            $payment = $orderReturn->order->payments->last();
-            if (!$payment) {
-                continue;
-            }
-
-            $paymentSystem = $payment->paymentSystem();
-            if (!$paymentSystem) {
-                continue;
-            }
-
-            if ($payment->status === PaymentStatus::PAID && $orderReturn->price > 0) {
-                $refundResponse = $paymentSystem->refund($payment, $orderReturn);
-
-                $orderReturn->status =
-                    $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS
-                        ? OrderReturn::STATUS_DONE
-                        : OrderReturn::STATUS_FAILED;
-            } else {
-                $orderReturn->status = OrderReturn::STATUS_DONE;
-            }
-
-            if ($orderReturn->price > 0 && $orderReturn->order->spent_certificate > 0) {
-                $certificateRefundService = new RefundCertificateService();
-                $certificateRefundService->refundSumToCertificate($orderReturn);
-            }
+            $this->refundPayment($orderReturn);
+            $this->refundToCertificate($orderReturn);
 
             if ($orderReturn->status !== OrderReturn::STATUS_FAILED) {
                 $order = $orderReturn->order;
@@ -65,6 +31,38 @@ class ReturnOrderPayment extends Command
             }
 
             $orderReturn->save();
+        }
+    }
+
+    private function refundPayment(OrderReturn $orderReturn): void
+    {
+        /** @var Payment $payment */
+        $payment = $orderReturn->order->payments->last();
+        if (!$payment) {
+            return;
+        }
+        $paymentSystem = $payment->paymentSystem();
+        if (!$paymentSystem) {
+            return;
+        }
+
+        if ($payment->status === PaymentStatus::PAID && $orderReturn->price > 0) {
+            $refundResponse = $paymentSystem->refund($payment, $orderReturn);
+
+            $orderReturn->status =
+                $refundResponse && $refundResponse['status'] === PaymentSystemInterface::STATUS_REFUND_SUCCESS
+                    ? OrderReturn::STATUS_DONE
+                    : OrderReturn::STATUS_FAILED;
+        } else {
+            $orderReturn->status = OrderReturn::STATUS_DONE;
+        }
+    }
+
+    private function refundToCertificate(OrderReturn $orderReturn): void
+    {
+        if ($orderReturn->price > 0 && $orderReturn->order->spent_certificate > 0) {
+            $certificateRefundService = new RefundCertificateService();
+            $certificateRefundService->refundSumToCertificate($orderReturn);
         }
     }
 }
