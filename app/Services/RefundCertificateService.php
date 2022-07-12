@@ -39,7 +39,7 @@ class RefundCertificateService
     /**
      * В случае частичного возврата сначала возвращается сумма доплаты, потом сумма ПС
      */
-    public function getPrepaymentSum(OrderReturn $orderReturn): float
+    private function getPrepaymentSum(OrderReturn $orderReturn): float
     {
         $order = $orderReturn->order;
         $priceToReturn = $orderReturn->price;
@@ -55,6 +55,6 @@ class RefundCertificateService
         $returnedPrepayment = max(0, $order->done_return_sum - $order->cashless_price);
         $remainingPrepaymentPrice = max(0, $order->spent_certificate - $returnedPrepayment);
 
-        return $remainingPrepaymentPrice >= $returnPrepayment ? $returnPrepayment : $remainingPrepaymentPrice;
+        return min($remainingPrepaymentPrice, $returnPrepayment);
     }
 }
