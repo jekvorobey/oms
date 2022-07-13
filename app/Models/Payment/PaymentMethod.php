@@ -39,6 +39,7 @@ class PaymentMethod extends AbstractModel
     public const POSTPAID = 2;
     public const CREDITPAID = 3;
     public const B2B_SBERBANK = 4;
+    public const BANK_TRANSFER_FOR_LEGAL = 5;
 
     protected $fillable = [
         'name',

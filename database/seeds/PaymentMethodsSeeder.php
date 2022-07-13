@@ -71,6 +71,14 @@ class PaymentMethodsSeeder extends Seeder
             'is_need_create_payment' => true,
             'button_text' => '<svg class="icon" width="251" height="60"><use xlink:href="#icon-b2b-sberbank"></use></svg>',
         ],
+        [
+            'id' => PaymentMethod::BANK_TRANSFER_FOR_LEGAL,
+            'name' => 'Оплата со счёта юридического лица',
+            'code' => 'bank_transfer_for_legal',
+            'active' => true,
+            'is_need_create_payment' => false,
+            'button_text' => '<p class="text-bold">Оплата со счёта юридического лица</p>',
+        ],
     ];
 
     public function run(): void
