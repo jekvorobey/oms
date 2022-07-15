@@ -70,6 +70,8 @@ class OrderService
         /** @var PaymentService $paymentService */
         $paymentService = resolve(PaymentService::class);
 
+        $payment->setExternalPaymentIdAttribute(null);
+
         return $paymentService->pay($payment);
     }
 
