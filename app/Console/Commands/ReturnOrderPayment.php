@@ -64,5 +64,7 @@ class ReturnOrderPayment extends Command
             $certificateRefundService = new RefundCertificateService();
             $certificateRefundService->refundSumToCertificate($orderReturn);
         }
+
+        $orderReturn->status = OrderReturn::STATUS_DONE;
     }
 }
