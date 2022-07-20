@@ -11,6 +11,7 @@ class UpdateRequest extends FormRequest
         return [
             'name' => 'required|string',
             'is_apply_discounts' => 'required|boolean',
+            'is_available_for_mc' => 'required|boolean',
             'active' => 'required|boolean',
             'settings' => 'nullable|array',
             'button_text' => 'nullable|string',

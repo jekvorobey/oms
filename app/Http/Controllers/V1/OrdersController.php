@@ -13,10 +13,13 @@ use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
 use App\Models\Order\OrderConfirmationType;
+use App\Models\Order\OrderDocument;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
+use App\Services\DocumentService\OrderInvoiceOfferCreator;
 use App\Services\DocumentService\OrderTicketsCreator;
+use App\Services\DocumentService\OrderUPDCreator;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
 use Carbon\Carbon;
@@ -33,6 +36,7 @@ use Illuminate\Validation\Rule;
 use Pim\Core\PimException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Throwable;
 
 /**
  * Class OrdersController
@@ -120,7 +124,7 @@ class OrdersController extends Controller
      *     ),
      *     @OA\Response(response="404", description=""),
      * )
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function tickets(int $id, Request $request, OrderTicketsCreator $orderTicketsCreator): JsonResponse
     {
@@ -142,6 +146,114 @@ class OrdersController extends Controller
         return response()->json([
             'file_id' => $documentDto->file_id,
         ]);
+    }
+
+    /**
+     * @OA\GET(
+     *     path="api/v1/orders/{id}/invoice-offer",
+     *     tags={"Заказы"},
+     *     description="Сформировать и сохранить счет-оферту",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response="204",
+     *         description="",
+     *     ),
+     *     @OA\Response(response="404", description=""),
+     * )
+     * @throws Throwable
+     */
+    public function generateInvoiceOffer(int $id, OrderInvoiceOfferCreator $invoiceOfferCreator): Response
+    {
+        /** @var Order $order */
+        $order = Order::query()->where('id', $id)->with('basket.items')->first();
+        if (!$order) {
+            throw new Exception("Order by id={$id} not found");
+        }
+
+        $documentDto = $invoiceOfferCreator->setOrder($order)->setCustomer($order->customer_id)->create();
+        if (!$documentDto->success) {
+            throw new Exception('Invoice offer not formed');
+        }
+        $invoiceOfferCreator->saveOrderDocument(
+            $order->id,
+            $order->customer_id,
+            $documentDto->file_id,
+            OrderDocument::INVOICE_OFFER_TYPE,
+            $invoiceOfferCreator->title()
+        );
+
+        return response('', 204);
+    }
+
+    /**
+     * @OA\GET(
+     *     path="api/v1/orders/{id}/upd",
+     *     tags={"Заказы"},
+     *     description="Сформировать и сохранить УПД",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(
+     *         response="204",
+     *         description="",
+     *     ),
+     *     @OA\Response(response="404", description=""),
+     * )
+     * @throws Throwable
+     */
+    public function generateUPD(int $id, OrderUPDCreator $orderUPDCreator): Response
+    {
+        /** @var Order $order */
+        $order = Order::query()->where('id', $id)->with('basket.items')->first();
+        if (!$order) {
+            throw new Exception("Order by id={$id} not found");
+        }
+
+        $documentDto = $orderUPDCreator->setOrder($order)->setCustomer($order->customer_id)->create();
+        if (!$documentDto->success) {
+            throw new Exception('UPD not formed');
+        }
+        $orderUPDCreator->saveOrderDocument(
+            $order->id,
+            $order->customer_id,
+            $documentDto->file_id,
+            OrderDocument::UPD_TYPE,
+            $orderUPDCreator->title()
+        );
+
+        return response('', 204);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="api/v1/orders/{id}/documents",
+     *     tags={"Заказы"},
+     *     description="Получить документы",
+     *     @OA\RequestBody(
+     *      @OA\JsonContent(
+     *          @OA\Property(property="type", type="string"),
+     *      ),
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/OrderDocument"))
+     *         )
+     *     ),
+     *     @OA\Response(response="404", description="documents not found"),
+     * )
+     */
+    public function documents(int $id, Request $request): JsonResponse
+    {
+        $data = $this->validate($request, [
+            'type' => 'sometimes|string',
+        ]);
+        $documents = OrderDocument::query()->whereId($id);
+        if (isset($data['type'])) {
+            $documents->where('type', $data['type']);
+        }
+        $documents->get();
+
+        return response()->json(['items' => $documents]);
     }
 
     /**

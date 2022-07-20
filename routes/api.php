@@ -103,6 +103,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::put('capture-payment', 'OrdersController@capturePayment');
             Route::delete('', 'OrdersController@delete');
             Route::get('tickets', 'OrdersController@tickets');
+            Route::get('invoice-offer', 'OrdersController@generateInvoiceOffer');
+            Route::get('upd', 'OrdersController@generateUPD');
+            Route::get('documents', 'OrdersController@documents');
         });
 
         Route::prefix('return-reasons')->group(function () {

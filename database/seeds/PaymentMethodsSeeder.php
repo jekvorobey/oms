@@ -11,6 +11,7 @@ class PaymentMethodsSeeder extends Seeder
             'name' => 'Онлайн оплата',
             'code' => 'prepaid',
             'active' => true,
+            'is_available_for_mc' => true,
             'button_text' => '
 <div class="text-bold checkout-product-panel__item-payment-title">
     Онлайн оплата
@@ -48,6 +49,7 @@ class PaymentMethodsSeeder extends Seeder
             'active' => true,
             'is_apply_discounts' => true,
             'is_need_create_payment' => false,
+            'is_available_for_mc' => true,
             'settings' => [
                 'is_fixed_discount' => false,
                 'discount' => '14',
@@ -77,6 +79,7 @@ class PaymentMethodsSeeder extends Seeder
             'code' => 'bank_transfer_for_legal',
             'active' => true,
             'is_need_create_payment' => false,
+            'is_available_for_mc' => true,
             'button_text' => '<p class="text-bold">Оплата со счёта юридического лица</p>',
         ],
     ];
