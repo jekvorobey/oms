@@ -11,6 +11,7 @@ use Cms\Services\OptionService\OptionService;
 use Greensight\Customer\Dto\CustomerDocumentDto;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
+use Throwable;
 
 abstract class OrderDocumentsCreator extends DocumentCreator
 {
@@ -80,20 +81,21 @@ abstract class OrderDocumentsCreator extends DocumentCreator
         return $this;
     }
 
-    public function saveOrderDocument(
-        int $orderId,
-        int $customerId,
-        int $fileId,
-        string $type,
-        ?string $title = null
-    ): void {
+    /**
+     * @throws Throwable
+     */
+    public function createOrderDocumentRecord(int $orderId, int $fileId, string $type): void
+    {
         $orderDocument = new OrderDocument([
             'order_id' => $orderId,
             'file_id' => $fileId,
             'type' => $type,
         ]);
-        $orderDocument->save();
+        $orderDocument->saveOrFail();
+    }
 
+    public function createRecordInCustomerDocuments(int $customerId, int $fileId, ?string $title = null): void
+    {
         /** @var CustomerService $customerService */
         $customerService = resolve(CustomerService::class);
         $customerDocument = new CustomerDocumentDto();

@@ -174,13 +174,8 @@ class OrdersController extends Controller
         if (!$documentDto->success) {
             throw new Exception('Invoice offer not formed');
         }
-        $invoiceOfferCreator->saveOrderDocument(
-            $order->id,
-            $order->customer_id,
-            $documentDto->file_id,
-            OrderDocument::INVOICE_OFFER_TYPE,
-            $invoiceOfferCreator->title()
-        );
+        $invoiceOfferCreator->createOrderDocumentRecord($order->id, $documentDto->file_id, OrderDocument::INVOICE_OFFER_TYPE);
+        $invoiceOfferCreator->createRecordInCustomerDocuments($order->customer_id, $documentDto->file_id, $invoiceOfferCreator->title());
 
         return response('', 204);
     }
@@ -211,13 +206,8 @@ class OrdersController extends Controller
         if (!$documentDto->success) {
             throw new Exception('UPD not formed');
         }
-        $orderUPDCreator->saveOrderDocument(
-            $order->id,
-            $order->customer_id,
-            $documentDto->file_id,
-            OrderDocument::UPD_TYPE,
-            $orderUPDCreator->title()
-        );
+        $orderUPDCreator->createOrderDocumentRecord($order->id, $documentDto->file_id, OrderDocument::UPD_TYPE);
+        $orderUPDCreator->createRecordInCustomerDocuments($order->customer_id, $documentDto->file_id, $orderUPDCreator->title());
 
         return response('', 204);
     }
