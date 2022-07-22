@@ -16,6 +16,11 @@ class OrderUPDCreator extends OrderDocumentsCreator
     /** Номер стартовой строки для заполнения таблицы товаров */
     private const START_BODY_TABLE_ROW = 15;
 
+    /** Строка информации о продавце */
+    protected $sellerInfo;
+    /** Строка информации о покупателе */
+    protected $customerInfo;
+
     public function __construct(OrderService $orderService, OptionService $optionService)
     {
         parent::__construct($orderService, $optionService);
@@ -23,10 +28,15 @@ class OrderUPDCreator extends OrderDocumentsCreator
 
     public function documentName(): string
     {
-        return 'upd.xls';
+        return 'upd.xlsx';
     }
 
     public function title(): string
+    {
+        return "УПД № {$this->order->number}";
+    }
+
+    public function fullTitle(): string
     {
         $today = OrderDocumentCreatorHelper::formatDate(Carbon::today());
 
@@ -69,9 +79,9 @@ class OrderUPDCreator extends OrderDocumentsCreator
         $sheet->setCellValue('R4', $organizationInfo['full_name']);
         $sheet->setCellValue('R5', $organizationInfo['legal_address']);
         $sheet->setCellValue('R4', $organizationInfo['inn'] . '/' . $organizationInfo['kpp']);
-        $sheet->setCellValue('R10', '№ п/п 1-5 №' . $this->order->number . 'от ' . Carbon::today()->format('d.m.Y'));
+        $sheet->setCellValue('R10', '№ п/п 1-5 №' . $this->order->number . ' от ' . Carbon::today()->format('d.m.Y'));
 
-        $sheet->setCellValue('C49', $organizationInfo['inn'] . '/' . $organizationInfo['kpp']);
+        $this->sellerInfo = $organizationInfo['full_name'] . ', ИНН/КПП ' . $organizationInfo['inn'] . '/' . $organizationInfo['kpp'];
     }
 
     protected function fillCustomerInfo(Worksheet $sheet): void
@@ -80,7 +90,7 @@ class OrderUPDCreator extends OrderDocumentsCreator
         $sheet->setCellValue('BF4', $this->customer->legal_info_company_address);
         $sheet->setCellValue('BF6', $this->customer->legal_info_inn);
 
-        $sheet->setCellValue('AT49', $this->customer->legal_info_company_name . ', ИНН ' . $this->customer->legal_info_inn);
+        $this->customerInfo = $this->customer->legal_info_company_name . ', ИНН ' . $this->customer->legal_info_inn;
     }
 
     /**
@@ -128,6 +138,7 @@ class OrderUPDCreator extends OrderDocumentsCreator
                 ];
             },
             ['AN', 'BG'],
+            ['C' => $this->sellerInfo, 'AT' => $this->customerInfo]
         );
     }
 }

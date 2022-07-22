@@ -38,7 +38,8 @@ class OrderDocumentCreatorHelper
         Collection $items,
         int $startRowIndex,
         callable $getRowValues,
-        array $sumColumns = []
+        array $sumColumns = [],
+        array $footerColumns = []
     ): int {
         $rowIndex = $startRowIndex;
 
@@ -54,6 +55,7 @@ class OrderDocumentCreatorHelper
 
         $lastRowIndex = static::getLastRowIndex($items, $sheet, $rowIndex);
         static::setTotalSumCells($sheet, $sumColumns, $startRowIndex, $lastRowIndex);
+        static::setFooterCells($sheet, $footerColumns, $lastRowIndex);
 
         return $lastRowIndex;
     }
@@ -98,6 +100,18 @@ class OrderDocumentCreatorHelper
                 $columnLetter . $rowIndex,
                 "=SUM($columnLetter$fromRowIndex:$columnLetter$toRowIndex)"
             );
+        }
+    }
+
+    /**
+     * Простановка информации о покупателе и продавце после таблицы с товарами
+     */
+    public static function setFooterCells(Worksheet $sheet, array $columnLetters, int $toRowIndex): void
+    {
+        $rowIndex = $toRowIndex + 25;
+
+        foreach ($columnLetters as $column => $value) {
+            $sheet->setCellValue($column . $rowIndex, $value);
         }
     }
 }

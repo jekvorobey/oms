@@ -207,7 +207,7 @@ class OrdersController extends Controller
             throw new Exception('UPD not formed');
         }
         $orderUPDCreator->createOrderDocumentRecord($order->id, $documentDto->file_id, OrderDocument::UPD_TYPE);
-        $orderUPDCreator->createRecordInCustomerDocuments($order->customer_id, $documentDto->file_id, $orderUPDCreator->title());
+        $orderUPDCreator->createRecordInCustomerDocuments($order->customer_id, $documentDto->file_id, $orderUPDCreator->fullTitle());
 
         return response('', 204);
     }
