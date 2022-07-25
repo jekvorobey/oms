@@ -18,12 +18,11 @@ class CreditLineSystem implements CreditSystemInterface
     private $logger;
 
     /**
-     * YandexPaymentSystem constructor.
+     * CreditLineSystem constructor.
      */
     public function __construct()
     {
         $this->creditLineService = resolve(SDK\CreditLine::class);
         $this->logger = Log::channel('payments');
     }
-
 }

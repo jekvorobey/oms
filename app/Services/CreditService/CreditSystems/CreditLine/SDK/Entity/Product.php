@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Entity;
 
 /**

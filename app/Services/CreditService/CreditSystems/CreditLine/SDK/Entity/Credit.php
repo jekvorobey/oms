@@ -31,8 +31,12 @@ class Credit
      * @param Product[]|null $products Список товаров
      * @param CreditPreferences|null $creditPreference Предпочтения клиента по кредиту
      */
-    public function __construct(?float $discount, ?float $creditSum, ?array $products = null, ?CreditPreferences $creditPreference = null)
-    {
+    public function __construct(
+        ?float $discount,
+        ?float $creditSum,
+        ?array $products = null,
+        ?CreditPreferences $creditPreference = null
+    ) {
         $this->discount = (float) $discount;
         $this->creditSum = (float) $creditSum;
         $this->preference = $creditPreference;

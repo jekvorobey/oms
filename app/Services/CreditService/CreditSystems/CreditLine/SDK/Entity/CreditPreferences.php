@@ -29,8 +29,12 @@ class CreditPreferences
      * @param string|null $bank Банк
      * @param string|null $action Предполагаемая акция (кредитный продукт)
      */
-    public function __construct(?float $initialPayment = .0, ?int $creditPeriod = 0, ?string $bank = BanksEnum::NONE, ?string $action = "")
-    {
+    public function __construct(
+        ?float $initialPayment = .0,
+        ?int $creditPeriod = 0,
+        ?string $bank = BanksEnum::NONE,
+        ?string $action = ''
+    ) {
         $this->initialPayment = (float) $initialPayment;
         $this->creditPeriod = (int) $creditPeriod;
         $this->bank = (string) $bank;

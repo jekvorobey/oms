@@ -11,9 +11,6 @@ use App\Services\CreditService\CreditSystems\CreditLine\SDK\Entity\Dates;
  */
 class CLGetOrderReportRequestMessage
 {
-    /**
-     * @var Dates Диапазон дат для отчета
-     */
     public Dates $getOrderDates;
 
     public function __construct()

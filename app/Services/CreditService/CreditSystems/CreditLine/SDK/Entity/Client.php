@@ -40,8 +40,15 @@ class Client
      * @param string|null $birthDate Дата рождения
      * @param string|null $extendedPhone Дополнительный контактный телефон клиента
      */
-    public function __construct(?string $phone = "", ?string $lastName = "", ?string $firstName = "", ?string $middleName = "", ?string $email = "", ?string $birthDate = "", ?string $extendedPhone = "")
-    {
+    public function __construct(
+        ?string $phone = '',
+        ?string $lastName = '',
+        ?string $firstName = '',
+        ?string $middleName = '',
+        ?string $email = '',
+        ?string $birthDate = '',
+        ?string $extendedPhone = ''
+    ) {
         $this->clientContactPhone = $phone;
         $this->clientLastName = $lastName;
         $this->clientFirstName = $firstName;

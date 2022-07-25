@@ -12,6 +12,6 @@ class CreditService
 {
     public function checkStatus(Order $order)
     {
-        $number = $order->number;
+        return $order->number;
     }
 }

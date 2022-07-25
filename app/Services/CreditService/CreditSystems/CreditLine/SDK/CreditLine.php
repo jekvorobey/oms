@@ -39,14 +39,14 @@ class CreditLine implements CreditLineInterface
      */
     public function __construct(string $host, string $login, string $password)
     {
-        if (!$this->ExtensionIncluded("soap")) {
-            throw new RuntimeException("Критическая ошибка, модуль SOAP не подключен");
+        if (!$this->ExtensionIncluded('soap')) {
+            throw new RuntimeException('Критическая ошибка, модуль SOAP не подключен');
         }
-        if (!$this->ExtensionIncluded("openssl")) {
-            throw new RuntimeException("Критическая ошибка, модуль OpenSSL не подключен");
+        if (!$this->ExtensionIncluded('openssl')) {
+            throw new RuntimeException('Критическая ошибка, модуль OpenSSL не подключен');
         }
         if (!$host || !$login || !$password) {
-            throw new RuntimeException("Не корректные параметры для подключения к сервису");
+            throw new RuntimeException('Не корректные параметры для подключения к сервису');
         }
 
         $this->clClient = new CreditLineServicesClient($host, $login, $password);
@@ -66,8 +66,6 @@ class CreditLine implements CreditLineInterface
 
     /**
      * Отправляет заявку на кредит
-     * @param CLRequest $request Заявка на кредит
-     * @return CLResponse
      */
     public function processCreditLineApplication(CLRequest $request): CLResponse
     {
@@ -83,7 +81,6 @@ class CreditLine implements CreditLineInterface
     /**
      * Возвращает статус заказа
      * @param string $orderId Номер заказа
-     * @return CLOrderStatus
      */
     public function getOrderStatus($orderId): CLOrderStatus
     {
@@ -121,10 +118,16 @@ class CreditLine implements CreditLineInterface
      * @param string|null $shopName Наименование магазина
      * @param string|null $productsInStore Наличие товара на складе
      * @param string|null $signingKD Чьими силами производится подписание КД
-     * @return CLRequest
      */
-    public static function createCLRequest($orderId, $client, $credit, ?string $callTime = "", ?string $shopName = "", ?string $productsInStore = "", ?string $signingKD = ""): CLRequest
-    {
+    public static function createCLRequest(
+        $orderId,
+        $client,
+        $credit,
+        ?string $callTime = '',
+        ?string $shopName = '',
+        ?string $productsInStore = '',
+        ?string $signingKD = ''
+    ): CLRequest {
         $clRequest = new CLRequest();
         $clRequest->client = $client;
         $clRequest->credit = $credit;
@@ -147,9 +150,9 @@ class CreditLine implements CreditLineInterface
     public static function createProduct($name, $price, $qty): array
     {
         $product = [];
-        $product["Name"] = $name;
-        $product["Price"] = $price;
-        $product["Count"] = $qty;
+        $product['Name'] = $name;
+        $product['Price'] = $price;
+        $product['Count'] = $qty;
 
         return $product;
     }
@@ -160,11 +163,10 @@ class CreditLine implements CreditLineInterface
      * @param string $name Имя
      * @param string $email Адрес электронной почты
      * @param string $extendedPhone Дополнительный контактный телефон
-     * @return Client
      */
-    public static function createClient($phone, $name, $email, $extendedPhone = ""): Client
+    public static function createClient($phone, $name, $email, $extendedPhone = ''): Client
     {
-        return new Client($phone, $name, "", "", $email, "", $extendedPhone);
+        return new Client($phone, $name, '', '', $email, '', $extendedPhone);
     }
 
     /**
@@ -175,23 +177,30 @@ class CreditLine implements CreditLineInterface
      * @param float|null $discount Размер скидки. Если скидка не указывается, то можно указывать 0.
      * @param string|null $bank Предполагаемый банк кредитования
      * @param string|null $action Предполагаемая акция (кредитный продукт)
-     * @return Credit
      */
-    public static function createCredit($productsArray, ?float $initialPayment = .0, ?int $creditPeriod = 0, ?float $discount = .0, ?string $bank = BanksEnum::NONE, ?string $action = ""): Credit
-    {
-        if (!$discount || $discount === "") {
+    public static function createCredit(
+        $productsArray,
+        ?float $initialPayment = .0,
+        ?int $creditPeriod = 0,
+        ?float $discount = .0,
+        ?string $bank = BanksEnum::NONE,
+        ?string $action = ''
+    ): Credit {
+        if (!$discount || $discount === '') {
             $discount = .0;
         }
         $creditSum = .0;
         $products = [];
 
         foreach ($productsArray as $productValue) {
-            $product = new Product($productValue["Name"], $productValue["Price"], $productValue["Count"]);
+            $product = new Product($productValue['Name'], $productValue['Price'], $productValue['Count']);
             $products[] = $product;
             $creditSum += $product->getTotalPrice();
         }
 
-        return new Credit($discount, $creditSum, $products, new CreditPreferences($initialPayment, $creditPeriod, $bank, $action));
+        $creditPreferences = new CreditPreferences($initialPayment, $creditPeriod, $bank, $action);
+
+        return new Credit($discount, $creditSum, $products, $creditPreferences);
     }
 
     private function structToArray($values, &$i): array
@@ -210,7 +219,7 @@ class CreditLine implements CreditLineInterface
                 case 'complete':
                     $name = $this->strToLowerFirst($values[$i]['tag']);
                     if (!empty($name)) {
-                        $child[$name] = ($values[$i]['value']) ?: '';
+                        $child[$name] = $values[$i]['value'] ?: '';
                         if (isset($values[$i]['attributes'])) {
                             $child[$name] = $values[$i]['attributes'];
                         }
@@ -233,7 +242,7 @@ class CreditLine implements CreditLineInterface
 
     private function convertXMLReport(string $xml): array
     {
-        $secondPartPos = strpos($xml, "<diffgr");
+        $secondPartPos = strpos($xml, '<diffgr');
         $xml = substr($xml, $secondPartPos);
 
         $values = [];
@@ -248,7 +257,7 @@ class CreditLine implements CreditLineInterface
 
         $skipFirst = true;
         foreach ($tags as $key => $value) {
-            if ($key !== "Result") {
+            if ($key !== 'Result') {
                 continue;
             }
             // каждая пара вхождений массива это нижняя и верхняя
@@ -271,8 +280,8 @@ class CreditLine implements CreditLineInterface
     {
         $report = [];
         foreach ($values as $item) {
-            $value = $item["value"] ?? null;
-            $report[$item["tag"]] = $value;
+            $value = $item['value'] ?? null;
+            $report[$item['tag']] = $value;
         }
 
         return new OrderReport($report);
@@ -288,7 +297,7 @@ class CreditLine implements CreditLineInterface
         return in_array($extensionName, get_loaded_extensions(), true);
     }
 
-    function strToLowerFirst(?string $str = "", $encoding = 'UTF8'): string
+    private function strToLowerFirst(?string $str = '', $encoding = 'UTF8'): string
     {
         if (!$str) {
             return $str;

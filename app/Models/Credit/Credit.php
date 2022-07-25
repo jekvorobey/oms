@@ -47,5 +47,4 @@ class Credit extends AbstractModel
 
         //return null;
     }
-
 }

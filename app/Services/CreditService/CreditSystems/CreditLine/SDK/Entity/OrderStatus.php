@@ -8,5 +8,4 @@ namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Entity;
  */
 class OrderStatus
 {
-
 }

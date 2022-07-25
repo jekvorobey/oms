@@ -21,27 +21,24 @@ class CreditLineServicesClient
 
     /**
      * Client constructor.
-     * @param string $host
-     * @param string $login
-     * @param string $password
      */
     public function __construct(string $host, string $login, string $password)
     {
-        ini_set("soap.wsdl_cache_enabled", "0");
+        ini_set('soap.wsdl_cache_enabled', '0');
 
         try {
             $this->soapClient = new SoapClient($host);
-            //$this->soapClient = new SoapClient($host, ["trace" => 1]);
+            //$this->soapClient = new SoapClient($host, ['trace' => 1]);
         } catch (SoapFault $e) {
             throw new RuntimeException($e->getMessage());
         }
 
         $auth = [
-            "PartnerLogin" => md5($login),
-            "PartnerPassword" => md5($password),
+            'PartnerLogin' => md5($login),
+            'PartnerPassword' => md5($password),
         ];
 
-        $header = new SoapHeader("http://tempuri.org/", 'CreditLineHeader', $auth);
+        $header = new SoapHeader('http://tempuri.org/', 'CreditLineHeader', $auth);
         $this->soapClient->__setSoapHeaders($header);
     }
 
