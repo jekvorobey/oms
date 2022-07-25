@@ -52,4 +52,10 @@ return [
     'y_maps' => [
         'key' => env('Y_MAPS_KEY'),
     ],
+
+    'credit_line_payment' => [
+        'host' => env('CREDIT_LINE_PAYMENT_HOST'),
+        'login' => env('CREDIT_LINE_PAYMENT_LOGIN'),
+        'password' => env('CREDIT_LINE_PAYMENT_PASSWORD'),
+    ],
 ];

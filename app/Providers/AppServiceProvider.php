@@ -33,6 +33,7 @@ use Illuminate\Support\ServiceProvider;
 use L5Swagger\L5SwaggerServiceProvider;
 use YooKassa\Client;
 use App\Services\PaymentService\PaymentSystems\Yandex\SDK\Client as LocalYandexClient;
+use App\Services\CreditService\CreditSystems\CreditLine\SDK\CreditLine;
 
 /**
  * Class AppServiceProvider
@@ -67,6 +68,14 @@ class AppServiceProvider extends ServiceProvider
             $client = new LocalYandexClient();
             $client->setAuth(config('services.y_checkout.shop_id'), config('services.y_checkout.key'));
             return $client;
+        });
+
+        $this->app->singleton(CreditLine::class, function () {
+            $host = config('services.credit_line_payment.host');
+            $login = config('services.credit_line_payment.login');
+            $password = config('services.credit_line_payment.password');
+
+            return new CreditLine($host, $login, $password);
         });
 
         $this->addObservers();
