@@ -12,6 +12,8 @@ use Monolog\Logger;
  */
 class CreditLineSystem implements CreditSystemInterface
 {
+    public const CREDIT_ORDER_ERROR_NOT_FIND = -5;
+
     /** @var SDK\CreditLine */
     private $creditLineService;
     /** @var Logger */
@@ -23,25 +25,32 @@ class CreditLineSystem implements CreditSystemInterface
     public function __construct()
     {
         $this->creditLineService = resolve(SDK\CreditLine::class);
-        $this->logger = Log::channel('payments');
+        $this->logger = Log::channel('credits');
 
-        $this->creditLineService->auth('https://s1.l-kredit.ru/internetshopcreditlinework/iscl.svc?singleWsdl', 'ibt.ru', 'EbR9ga6PwB');
+        $this->creditLineService->auth(env('CREDIT_LINE_PAYMENT_HOST'), env('CREDIT_LINE_PAYMENT_LOGIN'), env('CREDIT_LINE_PAYMENT_PASSWORD'));
     }
 
     /**
      * Обратиться к внешней системе по внешнему Id платежа
      */
-    public function checkCreditOrder(string $id): array
+    public function checkCreditOrder(string $id): ?array
     {
         $creditOrder = $this->creditLineService->getOrderStatus($id);
 
+        if ($creditOrder->getErrorCode() === self::CREDIT_ORDER_ERROR_NOT_FIND) {
+            return null;
+        }
+
         return [
             'status' => $creditOrder->getStatus(),
+            'statusId' => $creditOrder->getStatusId(),
+            'statusDescription' => $creditOrder->getStatusDescription(),
             'discount' => $creditOrder->getDiscount(),
             'numOrder' => $creditOrder->getNumOrder(),
             'confirm' => $creditOrder->getConfirm(),
             'initPay' => $creditOrder->getInitPay(),
             'bankCode' => $creditOrder->getBankCode(),
+            'bankName' => $creditOrder->getBankName(),
         ];
     }
 }

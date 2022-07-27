@@ -17,4 +17,5 @@ abstract class BanksEnum
     public const RENESSANS_CREDIT_BANK = 'RenessansCreditBank';
     public const ALFA_BANK = 'AlfaBank';
     public const SETELEM_BANK = 'SetelemBank';
+    public const MFK_AIR_LOANS = 'MFKAirLoans';
 }
