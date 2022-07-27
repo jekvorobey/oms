@@ -57,7 +57,8 @@ class OrderUPDCreator extends OrderDocumentsCreator
         $sheet->setTitle($this->title());
         $this->fillSellerInfo($sheet);
         $this->fillCustomerInfo($sheet);
-        $this->fillBody($sheet);
+        $lastRowIndex = $this->fillBody($sheet);
+        $this->fillFooter($sheet, $lastRowIndex);
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xls');
         $path = $this->generateDocumentPath();
@@ -87,7 +88,7 @@ class OrderUPDCreator extends OrderDocumentsCreator
     protected function fillCustomerInfo(Worksheet $sheet): void
     {
         $sheet->setCellValue('BF4', $this->customer->legal_info_company_name);
-        $sheet->setCellValue('BF4', $this->customer->legal_info_company_address);
+        $sheet->setCellValue('BF5', $this->customer->legal_info_company_address);
         $sheet->setCellValue('BF6', $this->customer->legal_info_inn);
 
         $this->customerInfo = $this->customer->legal_info_company_name . ', ИНН ' . $this->customer->legal_info_inn;
@@ -96,10 +97,11 @@ class OrderUPDCreator extends OrderDocumentsCreator
     /**
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
-    protected function fillBody(Worksheet $sheet): void
+    protected function fillBody(Worksheet $sheet): int
     {
         $operations = $this->order->basket->items;
-        OrderDocumentCreatorHelper::fillTableRows(
+
+        return OrderDocumentCreatorHelper::fillTableRows(
             $sheet,
             $operations,
             self::START_BODY_TABLE_ROW,
@@ -138,7 +140,24 @@ class OrderUPDCreator extends OrderDocumentsCreator
                 ];
             },
             ['AN', 'BG'],
-            ['C' => $this->sellerInfo, 'AT' => $this->customerInfo]
+            $this->fullTitle()
         );
+    }
+
+    /**
+     * Простановка информации о покупателе и продавце после таблицы с товарами
+     */
+    protected function fillFooter(Worksheet $sheet, int $toRowIndex): void
+    {
+        $pageNumberRowIndex = $toRowIndex + 3;
+        $pageNumbers = $this->order->basket->items->count() < 4 ? 1 : 2;
+        $listWord = $pageNumbers === 1 ? ' листе' : ' листах';
+        $sheet->setCellValue('B' . $pageNumberRowIndex, 'Документ составлен на ' . $pageNumbers . $listWord);
+
+        $initialsRowIndex = $toRowIndex + 25;
+        $columnLetters = ['C' => $this->sellerInfo, 'AT' => $this->customerInfo];
+        foreach ($columnLetters as $column => $value) {
+            $sheet->setCellValue($column . $initialsRowIndex, $value);
+        }
     }
 }
