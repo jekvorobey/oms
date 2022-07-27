@@ -65,8 +65,9 @@ class CheckCreditLineStatus extends Command
         }
 
         // Отмена заказа, у которого не принята заявка на кредит
-        if (!$order->is_canceled &&
-            in_array($checkStatus['statusId'], [CreditSystemInterface::CREDIT_ORDER_STATUS_REFUSED, CreditSystemInterface::CREDIT_ORDER_STATUS_ANNULED], true)
+        if (
+            !$order->is_canceled
+            && in_array($checkStatus['statusId'], [CreditSystemInterface::CREDIT_ORDER_STATUS_REFUSED, CreditSystemInterface::CREDIT_ORDER_STATUS_ANNULED], true)
         ) {
             try {
                 $orderService->cancel($order, CreditSystemInterface::ORDER_RETURN_REASON_ID);
