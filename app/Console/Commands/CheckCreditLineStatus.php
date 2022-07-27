@@ -8,8 +8,6 @@ use App\Services\CreditService\CreditService;
 use App\Services\CreditService\CreditSystems\CreditSystemInterface;
 use App\Services\OrderService;
 use Illuminate\Console\Command;
-use Exception;
-use Throwable;
 
 /**
  * Class CheckCreditLineStatus
@@ -40,7 +38,7 @@ class CheckCreditLineStatus extends Command
         try {
             $creditService = new CreditService();
             $checkStatus = $creditService->checkStatus($order);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             report($e);
             return;
         }
@@ -67,11 +65,12 @@ class CheckCreditLineStatus extends Command
         }
 
         // Отмена заказа, у которого не принята заявка на кредит
-        if (!$order->is_canceled && in_array($checkStatus['statusId'], [CreditSystemInterface::CREDIT_ORDER_STATUS_REFUSED, CreditSystemInterface::CREDIT_ORDER_STATUS_ANNULED], true)
+        if (!$order->is_canceled &&
+            in_array($checkStatus['statusId'], [CreditSystemInterface::CREDIT_ORDER_STATUS_REFUSED, CreditSystemInterface::CREDIT_ORDER_STATUS_ANNULED], true)
         ) {
             try {
                 $orderService->cancel($order, CreditSystemInterface::ORDER_RETURN_REASON_ID);
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
                 report($e);
                 return;
             }
