@@ -4,6 +4,9 @@ namespace App\Console\Commands;
 
 use App\Models\Basket\Basket;
 use App\Models\Order\Order;
+use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentMethod;
+use App\Models\Payment\PaymentStatus;
 use App\Services\CreditService\CreditService;
 use Illuminate\Console\Command;
 
@@ -15,7 +18,8 @@ class CheckCreditLineStatus extends Command
     public function handle()
     {
         Order::query()
-            ->where('type', Basket::TYPE_MASTER)
+            ->where('payment_method_id', PaymentMethod::CREDITPAID)
+            //->where('payment_status', PaymentStatus::NOT_PAID)
             ->each(function (Order $order) {
                 $this->checkStatus($order);
             });
@@ -25,9 +29,12 @@ class CheckCreditLineStatus extends Command
     {
         try {
             $creditService = new CreditService();
-            $creditService->checkStatus($order);
+            $checkStatus = $creditService->checkStatus($order);
         } catch (\Throwable $e) {
             report($e);
         }
+
+
+        dump([$order->number, $checkStatus]);
     }
 }

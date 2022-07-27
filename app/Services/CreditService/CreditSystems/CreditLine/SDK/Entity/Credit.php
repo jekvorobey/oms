@@ -10,19 +10,19 @@ namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Entity;
 class Credit
 {
     /** Размер скидки. Если скидка не указывается, то можно указывать 0 */
-    public ?float $discount;
+    public ?float $Discount;
 
     /** Сумма покупки */
-    public ?float $creditSum;
+    public ?float $CreditSum;
 
     /** Предпочтения клиента по кредиту */
-    public ?CreditPreferences $preference;
+    public ?CreditPreferences $Preference;
 
     /**
      * Список товаров
      * @var Product[]
      */
-    public ?array $products;
+    public ?array $Products;
 
     /**
      * Создает объект класса
@@ -37,9 +37,9 @@ class Credit
         ?array $products = null,
         ?CreditPreferences $creditPreference = null
     ) {
-        $this->discount = (float) $discount;
-        $this->creditSum = (float) $creditSum;
-        $this->preference = $creditPreference;
-        $this->products = $products;
+        $this->Discount = (float) $discount;
+        $this->CreditSum = (float) $creditSum;
+        $this->Preference = $creditPreference;
+        $this->Products = $products;
     }
 }

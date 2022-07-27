@@ -27,8 +27,8 @@ class CreditLineServicesClient
         ini_set('soap.wsdl_cache_enabled', '0');
 
         try {
-            $this->soapClient = new SoapClient($host);
-            //$this->soapClient = new SoapClient($host, ['trace' => 1]);
+            //$this->soapClient = new SoapClient($host);
+            $this->soapClient = new SoapClient($host, ['trace' => 1]);
         } catch (SoapFault $e) {
             throw new RuntimeException($e->getMessage());
         }

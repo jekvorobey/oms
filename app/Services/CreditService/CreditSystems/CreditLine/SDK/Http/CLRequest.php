@@ -13,23 +13,23 @@ use App\Services\CreditService\CreditSystems\CreditLine\SDK\Entity\Credit;
 class CLRequest
 {
     /** Номер заказа в системе Партнёра */
-    public string $numOrder;
+    public string $NumOrder;
 
     /** Информация о клиенте */
-    public Client $client;
+    public Client $Client;
 
     /** Информация о кредите*/
-    public Credit $credit;
+    public Credit $Credit;
 
     /** Наименование магазина */
-    public string $shopName;
+    public string $ShopName;
 
     /** Наличие товара на складе */
-    public string $productsInStore;
+    public string $ProductsInStore;
 
     /** Чьими силами производится подписание КД*/
-    public string $signingKD;
+    public string $SigningKD;
 
     /** Удобное время для звонка */
-    public string $callTime;
+    public string $CallTime;
 }

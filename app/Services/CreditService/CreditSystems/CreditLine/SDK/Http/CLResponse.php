@@ -10,11 +10,11 @@ namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Http;
 class CLResponse
 {
     /** Статус выполнения операции */
-    public ?bool $confirm;
+    public ?bool $Confirm = null;
 
     /** Код ошибки (если ошибки нет, то возвращается 0) */
-    public ?int $errorCode;
+    public ?int $ErrorCode = null;
 
     /** Текст ошибки*/
-    public ?string $errorText;
+    public ?string $ErrorText = null;
 }

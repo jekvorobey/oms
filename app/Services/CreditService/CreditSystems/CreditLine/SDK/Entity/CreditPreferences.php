@@ -11,16 +11,16 @@ use App\Services\CreditService\CreditSystems\CreditLine\SDK\Enum\BanksEnum;
 class CreditPreferences
 {
     /** Предполагаемый первоначальный платеж */
-    public float $initialPayment;
+    public float $InitialPayment;
 
     /** Предполагаемый срок кредита */
-    public int $creditPeriod;
+    public int $CreditPeriod;
 
     /** Предполагаемый банк кредитования */
-    public string $bank;
+    public string $Bank;
 
     /** Предполагаемая акция (кредитный продукт) */
-    public string $action;
+    public string $Action;
 
     /**
      * Создает объект класса
@@ -35,9 +35,9 @@ class CreditPreferences
         ?string $bank = BanksEnum::NONE,
         ?string $action = ''
     ) {
-        $this->initialPayment = (float) $initialPayment;
-        $this->creditPeriod = (int) $creditPeriod;
-        $this->bank = (string) $bank;
-        $this->action = (string) $action;
+        $this->InitialPayment = (float) $initialPayment;
+        $this->CreditPeriod = (int) $creditPeriod;
+        $this->Bank = (string) $bank;
+        $this->Action = (string) $action;
     }
 }

@@ -12,5 +12,5 @@ use App\Services\CreditService\CreditSystems\CreditLine\SDK\Http\CLResponse;
 class OrderReport extends CLResponse
 {
     /** Отчет в XML */
-    public string $report;
+    public string $Report;
 }

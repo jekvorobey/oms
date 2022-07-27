@@ -31,13 +31,7 @@ class CreditLine implements CreditLineInterface
     /** Клиент для сервисов CreditLine */
     private CreditLineServicesClient $clClient;
 
-    /**
-     * Создает объект для доступа к методам службы CreditLine
-     * @param string $host Адрес службы
-     * @param string $login Логин
-     * @param string $password Пароль
-     */
-    public function __construct(string $host, string $login, string $password)
+    public function __construct()
     {
         if (!$this->ExtensionIncluded('soap')) {
             throw new RuntimeException('Критическая ошибка, модуль SOAP не подключен');
@@ -45,6 +39,16 @@ class CreditLine implements CreditLineInterface
         if (!$this->ExtensionIncluded('openssl')) {
             throw new RuntimeException('Критическая ошибка, модуль OpenSSL не подключен');
         }
+    }
+
+    /**
+     * Создает объект для доступа к методам службы CreditLine
+     * @param string $host Адрес службы
+     * @param string $login Логин
+     * @param string $password Пароль
+     */
+    public function auth(string $host, string $login, string $password): void
+    {
         if (!$host || !$login || !$password) {
             throw new RuntimeException('Не корректные параметры для подключения к сервису');
         }
@@ -55,13 +59,13 @@ class CreditLine implements CreditLineInterface
     /**
      * Проверяет данные аутентификации
      */
-    public function confirmOrganization(): bool
+    public function confirmOrganization(): ?bool
     {
         $request = new CLConfirmOrganizationRequestMessage();
         $response = new CLConfirmOrganizationResponseMessage();
         $this->clClient->call(__FUNCTION__, $request, $response);
 
-        return $response->isActive;
+        return $response->IsActive;
     }
 
     /**
@@ -73,7 +77,7 @@ class CreditLine implements CreditLineInterface
         $requestMessage->creditLineRequest = $request;
 
         $responseMessage = new CLResponseMessage();
-        $this->clClient->Call(__FUNCTION__, $requestMessage, $responseMessage);
+        $this->clClient->call(__FUNCTION__, $requestMessage, $responseMessage);
 
         return $responseMessage->CreditLineResponse;
     }
@@ -88,7 +92,7 @@ class CreditLine implements CreditLineInterface
         $response = new CLOrderStatusResponseMessage();
         $this->clClient->call(__FUNCTION__, $request, $response);
 
-        return $response->creditLineResponse;
+        return $response->CreditLineResponse;
     }
 
     /**
@@ -100,13 +104,15 @@ class CreditLine implements CreditLineInterface
     public function getOrderReport(string $startDate, string $endDate)
     {
         $request = new CLGetOrderReportRequestMessage();
-        $request->getOrderDates->startDate = $startDate;
-        $request->getOrderDates->endDate = $endDate;
+        $request->getOrderDates->StartDate = $startDate;
+        $request->getOrderDates->EndDate = $endDate;
 
         $response = new CLGetOrderReportResponseMessage();
-        $this->clClient->Call(__FUNCTION__, $request, $response);
 
-        return $this->convertXMLReport($response->result->report->any);
+        $this->clClient->call(__FUNCTION__, $request, $response);
+
+        //return $this->convertXMLReport($response->result->report->any);
+        return $response;
     }
 
     /**
@@ -129,13 +135,13 @@ class CreditLine implements CreditLineInterface
         ?string $signingKD = ''
     ): CLRequest {
         $clRequest = new CLRequest();
-        $clRequest->client = $client;
-        $clRequest->credit = $credit;
-        $clRequest->productsInStore = $productsInStore;
-        $clRequest->numOrder = $orderId;
-        $clRequest->shopName = $shopName;
-        $clRequest->signingKD = $signingKD;
-        $clRequest->callTime = $callTime;
+        $clRequest->Client = $client;
+        $clRequest->Credit = $credit;
+        $clRequest->ProductsInStore = $productsInStore;
+        $clRequest->NumOrder = $orderId;
+        $clRequest->ShopName = $shopName;
+        $clRequest->SigningKD = $signingKD;
+        $clRequest->CallTime = $callTime;
 
         return $clRequest;
     }
@@ -217,7 +223,7 @@ class CreditLine implements CreditLineInterface
                     break;
 
                 case 'complete':
-                    $name = $this->strToLowerFirst($values[$i]['tag']);
+                    $name = $values[$i]['tag'];
                     if (!empty($name)) {
                         $child[$name] = $values[$i]['value'] ?: '';
                         if (isset($values[$i]['attributes'])) {
@@ -227,7 +233,7 @@ class CreditLine implements CreditLineInterface
                     break;
 
                 case 'open':
-                    $name = $this->strToLowerFirst($values[$i]['tag']);
+                    $name = $values[$i]['tag'];
                     $size = isset($child[$name]) ? count($child[$name]) : 0;
                     $child[$name][$size] = $this->structToArray($values, $i);
                     break;
@@ -295,16 +301,5 @@ class CreditLine implements CreditLineInterface
     private function extensionIncluded($extensionName): bool
     {
         return in_array($extensionName, get_loaded_extensions(), true);
-    }
-
-    private function strToLowerFirst(?string $str = '', $encoding = 'UTF8'): string
-    {
-        if (!$str) {
-            return $str;
-        }
-
-        return
-            mb_strtolower(mb_substr($str, 0, 1, $encoding), $encoding) .
-            mb_substr($str, 1, mb_strlen($str, $encoding), $encoding);
     }
 }

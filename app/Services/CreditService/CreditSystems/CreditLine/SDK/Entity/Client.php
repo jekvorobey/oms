@@ -10,25 +10,25 @@ namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Entity;
 class Client
 {
     /** Имя клиента */
-    public string $clientFirstName;
+    public string $ClientFirstName;
 
     /** Фамилия клиента */
-    public string $clientLastName;
+    public string $ClientLastName;
 
     /** Отчество клиента */
-    public string $clientMiddleName;
+    public string $ClientMiddleName;
 
     /** Контактный телефон клиента */
-    public string $clientContactPhone;
+    public string $ClientContactPhone;
 
     /** Дополнительный контактный телефон клиента */
-    public string $clientExtendedContactPhone;
+    public string $ClientExtendedContactPhone;
 
     /** Адрес электронной почты клиента */
-    public string $clientEmail;
+    public string $ClientEmail;
 
     /** Дата рождения клиента */
-    public string $clientBirthDate;
+    public string $ClientBirthDate;
 
     /**
      * Создает объект класса
@@ -49,14 +49,14 @@ class Client
         ?string $birthDate = '',
         ?string $extendedPhone = ''
     ) {
-        $this->clientContactPhone = $phone;
-        $this->clientLastName = $lastName;
-        $this->clientFirstName = $firstName;
-        $this->clientMiddleName = $middleName;
-        $this->clientEmail = $email;
-        $this->clientExtendedContactPhone = $extendedPhone;
+        $this->ClientContactPhone = $phone;
+        $this->ClientLastName = $lastName;
+        $this->ClientFirstName = $firstName;
+        $this->ClientMiddleName = $middleName;
+        $this->ClientEmail = $email;
+        $this->ClientExtendedContactPhone = $extendedPhone;
         if (!empty($birthDate)) {
-            $this->clientBirthDate = $birthDate;
+            $this->ClientBirthDate = $birthDate;
         }
     }
 }

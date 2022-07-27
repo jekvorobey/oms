@@ -10,5 +10,5 @@ namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Http;
 class CLConfirmOrganizationResponseMessage
 {
     /** Активна ли точка (в случае ошибки возвращает false) */
-    public bool $isActive;
+    public ?bool $IsActive = null;
 }

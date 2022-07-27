@@ -73,6 +73,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::get('', 'HistoryController@readByOrder');
             });
             Route::put('payments', 'OrdersController@setPayments');
+            Route::get('payments/check-credit-status', 'OrdersController@paymentCheckCreditStatus');
             Route::put('comment', 'OrdersController@setComment');
 
             Route::put('items/{offerId}', 'Basket\CustomerBasketController@setItemByOrder');

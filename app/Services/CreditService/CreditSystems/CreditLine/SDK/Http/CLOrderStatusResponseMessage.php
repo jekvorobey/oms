@@ -10,10 +10,10 @@ namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Http;
 class CLOrderStatusResponseMessage
 {
     /** Тело ответа */
-    public CLOrderStatus $creditLineResponse;
+    public CLOrderStatus $CreditLineResponse;
 
     public function __construct()
     {
-        $this->creditLineResponse = new CLOrderStatus();
+        $this->CreditLineResponse = new CLOrderStatus();
     }
 }

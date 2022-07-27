@@ -10,10 +10,10 @@ namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Http;
 class CLRequestMessage
 {
     /** Тело заявки (параметры заявки на кредит) */
-    public CLRequest $creditLineRequest;
+    public CLRequest $CreditLineRequest;
 
     public function __construct()
     {
-        $this->creditLineRequest = new CLRequest();
+        $this->CreditLineRequest = new CLRequest();
     }
 }

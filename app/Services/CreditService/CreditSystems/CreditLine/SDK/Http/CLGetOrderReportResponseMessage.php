@@ -11,10 +11,10 @@ use App\Services\CreditService\CreditSystems\CreditLine\SDK\Entity\OrderReport;
  */
 class CLGetOrderReportResponseMessage
 {
-    public OrderReport $result;
+    public OrderReport $Result;
 
     public function __construct()
     {
-        $this->result = new OrderReport();
+        $this->Result = new OrderReport();
     }
 }

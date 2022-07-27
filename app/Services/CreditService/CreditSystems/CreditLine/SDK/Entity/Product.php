@@ -10,13 +10,13 @@ namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Entity;
 class Product
 {
     /** Наименование товара */
-    public string $name;
+    public string $Name;
 
     /** Цена за единицу товара */
-    public float $price;
+    public float $Price;
 
     /** Количество единиц товара */
-    public int $count;
+    public int $Count;
 
     /**
      * Создает объект класса
@@ -26,9 +26,9 @@ class Product
      */
     public function __construct($name, $price, $count)
     {
-        $this->name = $name;
-        $this->price = $price;
-        $this->count = $count;
+        $this->Name = $name;
+        $this->Price = $price;
+        $this->Count = $count;
     }
 
     /**
@@ -37,6 +37,6 @@ class Product
      */
     public function getTotalPrice(): float
     {
-        return $this->price * $this->count;
+        return $this->Price * $this->Count;
     }
 }

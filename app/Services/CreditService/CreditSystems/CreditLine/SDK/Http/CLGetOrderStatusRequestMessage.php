@@ -10,10 +10,10 @@ namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Http;
 class CLGetOrderStatusRequestMessage
 {
     /** Номер заказа в системе Партнера */
-    public string $numOrder;
+    public string $NumOrder;
 
     public function __construct(string $numOrder)
     {
-        $this->numOrder = $numOrder;
+        $this->NumOrder = $numOrder;
     }
 }

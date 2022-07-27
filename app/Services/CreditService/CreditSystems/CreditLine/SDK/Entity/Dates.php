@@ -10,8 +10,8 @@ namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Entity;
 class Dates
 {
     /** Начальная дата */
-    public string $startDate;
+    public string $StartDate;
 
     /** Конечная дата */
-    public string $endDate;
+    public string $EndDate;
 }

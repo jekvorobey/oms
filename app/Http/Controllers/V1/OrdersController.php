@@ -19,6 +19,7 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\DocumentService\OrderTicketsCreator;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
+use App\Services\CreditService\CreditService;
 use Carbon\Carbon;
 use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -282,6 +283,28 @@ class OrdersController extends Controller
         $writer->setPayments($order, $payments);
 
         return response('', 204);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="api/v1/orders/{id}/payments/check-credit-status",
+     *     tags={"Заказы"},
+     *     description="Проверить статус оформленного кредита/рассрочки",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="product not found"),
+     *     @OA\Response(response="500", description="unable to save order"),
+     * )
+     *
+     * Задать список оплат заказа
+     * @throws Exception
+     */
+    public function paymentCheckCreditStatus(int $id, OrderService $orderService, CreditService $creditService): Response
+    {
+        $order = $orderService->getOrder($id);
+        $result = $creditService->checkStatus($order);
+
+        return response($result, 200);
     }
 
     /**

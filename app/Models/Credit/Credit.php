@@ -38,7 +38,7 @@ class Credit extends AbstractModel
         parent::__construct($attributes);
     }
 
-    public function creditSystem(): ?CreditSystemInterface
+    public function creditSystem(): CreditSystemInterface
     {
         //switch ($this->credit_system) {
         //    case CreditSystem::CREDIT_LINE:
