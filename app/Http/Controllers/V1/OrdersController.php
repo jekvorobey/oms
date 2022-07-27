@@ -299,8 +299,11 @@ class OrdersController extends Controller
      * Задать список оплат заказа
      * @throws Exception
      */
-    public function paymentCheckCreditStatus(int $id, OrderService $orderService, CreditService $creditService): Response
-    {
+    public function paymentCheckCreditStatus(
+        int $id,
+        OrderService $orderService,
+        CreditService $creditService
+    ): Response {
         $order = $orderService->getOrder($id);
         $result = $creditService->checkStatus($order);
 

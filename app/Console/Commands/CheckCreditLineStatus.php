@@ -2,11 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Basket\Basket;
 use App\Models\Order\Order;
-use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentMethod;
-use App\Models\Payment\PaymentStatus;
 use App\Services\CreditService\CreditService;
 use Illuminate\Console\Command;
 
