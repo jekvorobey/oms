@@ -85,7 +85,7 @@ class CreditReceiptData extends ReceiptData
 
             $quantity = $item->qty;
             if ((float) $order->credit_discount > 0 && (float) $order->credit_discount < 100) {
-                $price = round($item->unit_price * (100 - (float)$order->credit_discount), 2);
+                $price = round($item->unit_price * (100 - (float) $order->credit_discount), 2);
             } else {
                 $price = $item->unit_price;
             }
@@ -100,7 +100,7 @@ class CreditReceiptData extends ReceiptData
 
         if ((float) $order->delivery_price > 0 && !$deliveryForReturn) {
             if ((float) $order->credit_discount > 0 && (float) $order->credit_discount < 100) {
-                $deliveryPrice = round($order->delivery_price * (100 - (float)$order->credit_discount), 2);
+                $deliveryPrice = round($order->delivery_price * (100 - (float) $order->credit_discount), 2);
             } else {
                 $deliveryPrice = $order->delivery_price;
             }

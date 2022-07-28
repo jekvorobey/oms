@@ -36,8 +36,14 @@ abstract class ReceiptData extends OrderData
         return $this;
     }
 
-    protected function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant, float $quantity, float $price, ?string $paymentMode = null): array
-    {
+    protected function getReceiptItemInfo(
+        BasketItem $item,
+        ?object $offerInfo,
+        ?object $merchant,
+        float $quantity,
+        float $price,
+        ?string $paymentMode = null
+    ): array {
         $paymentMode = $paymentMode ?: $this->getItemPaymentMode($item);
         $paymentSubject = $this->getItemPaymentSubject($item);
         $agentType = $this->getItemAgentType($item);
