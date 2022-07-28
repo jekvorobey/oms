@@ -209,6 +209,40 @@ class PaymentService
         $payment->save();
     }
 
+    public function sendCreditReceipt(Payment $payment): void
+    {
+        if ($payment->is_credit_receipt_sent) {
+            return;
+        }
+
+        $paymentSystem = $payment->paymentSystem();
+        if (!$paymentSystem) {
+            return;
+        }
+
+        $paymentSystem->createCreditReceipt($payment);
+
+        $payment->is_credit_receipt_sent = true;
+        $payment->save();
+    }
+
+    public function sendCreditPaymentReceipt(Payment $payment): void
+    {
+        if ($payment->is_credit_payment_receipt_sent || !$payment->is_credit_receipt_sent) {
+            return;
+        }
+
+        $paymentSystem = $payment->paymentSystem();
+        if (!$paymentSystem) {
+            return;
+        }
+
+        $paymentSystem->createCreditPaymentReceipt($payment);
+
+        $payment->is_credit_payment_receipt_sent = true;
+        $payment->save();
+    }
+
     public function updatePaymentInfo(Payment $payment): void
     {
         $paymentSystem = $payment->paymentSystem();

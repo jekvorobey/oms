@@ -63,6 +63,16 @@ interface PaymentSystemInterface
     public function createIncomeReceipt(Payment $payment, bool $isFullPayment): void;
 
     /**
+     * Создание чека "В кредит"
+     */
+    public function createCreditReceipt(Payment $payment): void;
+
+    /**
+     * Создание чека "Погашение кредита"
+     */
+    public function createCreditPaymentReceipt(Payment $payment): void;
+
+    /**
      * Создание чека возврата (при отмене всего заказа/платежа)
      */
     public function createRefundAllReceipt(Payment $payment): void;

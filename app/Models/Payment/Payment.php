@@ -78,6 +78,8 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property string $payment_type
  * @property bool $is_prepayment_receipt_sent
  * @property bool $is_fullpayment_receipt_sent
+ * @property bool $is_credit_receipt_sent
+ * @property bool $is_credit_payment_receipt_sent
  * @property array $data
  *
  * @property-read Order $order

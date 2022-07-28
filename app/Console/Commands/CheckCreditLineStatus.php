@@ -2,11 +2,15 @@
 
 namespace App\Console\Commands;
 
+use App\Core\Order\OrderWriter;
 use App\Models\Order\Order;
+use App\Models\Order\OrderStatus;
+use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentMethod;
+use App\Models\Payment\PaymentSystem;
 use App\Services\CreditService\CreditService;
-use App\Services\CreditService\CreditSystems\CreditSystemInterface;
 use App\Services\OrderService;
+use App\Services\PaymentService\PaymentService;
 use Illuminate\Console\Command;
 
 /**
@@ -30,16 +34,17 @@ class CheckCreditLineStatus extends Command
 
     private function checkCreditOrder(Order $order): void
     {
-        dump($order->id);
-
         /** @var OrderService $orderService */
         $orderService = resolve(OrderService::class);
+
+        /** @var PaymentService $paymentService */
+        $paymentService = resolve(PaymentService::class);
 
         try {
             $creditService = new CreditService();
             $checkStatus = $creditService->checkStatus($order);
-        } catch (\Throwable $e) {
-            report($e);
+        } catch (\Throwable $exception) {
+            report($exception);
             return;
         }
 
@@ -47,16 +52,21 @@ class CheckCreditLineStatus extends Command
             return;
         }
 
+        $creditStatusId = $order->credit_status_id;
+        $creditDiscount = (float) $order->credit_discount;
+        $creditStatusIdNew = $checkStatus['statusId'];
+        $creditDiscountNew = $checkStatus['discount'];
         $isUpdateOrder = false;
-        // Обновить процент скидки
-        if ((float) $order->credit_discount !== (float) $checkStatus['discount']) {
-            $order->credit_discount = (float) $checkStatus['discount'];
+
+        // Обновить статус кредитного договора, если он отличается от текущего
+        if ($creditStatusId !== $creditStatusIdNew) {
+            $order->credit_status_id = $creditStatusIdNew;
             $isUpdateOrder = true;
         }
 
-        // Обновить статус кредитного договора
-        if ((int) $order->credit_status_id !== (int) $checkStatus['statusId']) {
-            $order->credit_status_id = (int) $checkStatus['statusId'];
+        // Обновить процент скидки
+        if ($creditDiscount !== (float) $creditDiscountNew) {
+            $order->credit_discount = (float) $creditDiscountNew;
             $isUpdateOrder = true;
         }
 
@@ -64,17 +74,101 @@ class CheckCreditLineStatus extends Command
             $order->save();
         }
 
-        // Отмена заказа, у которого не принята заявка на кредит
+        // Отмена заказа, у которого не принята заявка на кредит и который не отменен ранее
         if (
             !$order->is_canceled
-            && in_array($checkStatus['statusId'], [CreditSystemInterface::CREDIT_ORDER_STATUS_REFUSED, CreditSystemInterface::CREDIT_ORDER_STATUS_ANNULED], true)
+            && in_array(
+                $creditStatusIdNew,
+                [CreditService::CREDIT_ORDER_STATUS_REFUSED, CreditService::CREDIT_ORDER_STATUS_ANNULED],
+                true
+            )
         ) {
             try {
-                $orderService->cancel($order, CreditSystemInterface::ORDER_RETURN_REASON_ID);
-            } catch (\Throwable $e) {
-                report($e);
-                return;
+                $orderService->cancel($order, CreditService::ORDER_RETURN_REASON_ID);
+            } catch (\Throwable $exception) {
+                report($exception);
             }
+
+            return;
         }
+
+        //Формирование кассового чека с расчетом "Предоплата"
+        //если заказ в статусе "Передан в доставку"
+        //и статус кредитной заявки сменился на "Cached"
+        //и нет ранее сформированных чеков
+        if (
+            $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
+            && $order->payments->isEmpty()
+            && $creditStatusId !== $creditStatusIdNew
+            && $creditStatusIdNew === CreditService::CREDIT_ORDER_STATUS_CASHED
+        ) {
+            $payment = $this->createPayment($order);
+            if ($payment instanceof Payment) {
+                $paymentService->sendIncomeFullPaymentReceipt($payment);
+            }
+
+            return;
+        }
+
+        //Формирование кассового чека с расчетом "В кредит"
+        //если заказ в статусе "Передан в доставку"
+        //и статусы кредитной заявки сменились на ???
+        //и нет ранее сформированных чеков
+        if (
+            $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
+            && $order->payments->isEmpty()
+            && $creditStatusId !== $creditStatusIdNew
+            && in_array(
+                $creditStatusIdNew,
+                [CreditService::CREDIT_ORDER_STATUS_ACCEPTED, CreditService::CREDIT_ORDER_STATUS_SIGNED],
+                true
+            )
+        ) {
+            $payment = $this->createPayment($order);
+            if ($payment instanceof Payment) {
+                $paymentService->sendCreditReceipt($payment);
+            }
+
+            return;
+        }
+
+        //Формирование кассового чека с расчетом "Погашение кредита"
+        //если статус кредитной заявки сменился на "Cached"
+        //и заказ еще в пути
+        //и ранее был выбит чек с расчетом "В кредит"
+        if (
+            in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DELIVERING, OrderStatus::READY_FOR_RECIPIENT], true)
+            && $order->payments->isNotEmpty()
+            && $creditStatusId !== $creditStatusIdNew
+            && $creditStatusIdNew === CreditService::CREDIT_ORDER_STATUS_CASHED
+        ) {
+            $payment = $order->payments()->first();
+            if ($payment instanceof Payment) {
+                $paymentService->sendCreditPaymentReceipt($payment);
+            }
+
+            return;
+        }
+    }
+
+    public function createPayment(Order $order): ?Payment
+    {
+        $paymentSum = round($order->price * (100 - (float) $order->credit_discount), 2);
+
+        $payment = new Payment();
+        $payment->payment_method = PaymentMethod::CREDITPAID;
+        $payment->payment_system = PaymentSystem::CREDIT;
+        $payment->order_id = $order->id;
+        $payment->sum = $paymentSum;
+
+        $writer = new OrderWriter();
+        try {
+            $writer->setPayments($order, collect([$payment]));
+        } catch (\Throwable $exception) {
+            report($exception);
+            return null;
+        }
+
+        return $payment;
     }
 }

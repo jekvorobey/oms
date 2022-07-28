@@ -36,18 +36,18 @@ abstract class ReceiptData extends OrderData
         return $this;
     }
 
-    protected function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant, float $qty): array
+    protected function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant, float $quantity, float $price, ?string $paymentMode = null): array
     {
-        $paymentMode = $this->getItemPaymentMode($item);
+        $paymentMode = $paymentMode ?: $this->getItemPaymentMode($item);
         $paymentSubject = $this->getItemPaymentSubject($item);
         $agentType = $this->getItemAgentType($item);
         $vatCode = $this->getItemVatCode($offerInfo, $merchant);
 
         $result = [
             'description' => $item->name,
-            'quantity' => $qty,
+            'quantity' => $quantity,
             'amount' => [
-                'value' => $item->unit_price,
+                'value' => $price,
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => $vatCode,
@@ -97,8 +97,10 @@ abstract class ReceiptData extends OrderData
         ][$item->type] ?? null;
     }
 
-    protected function getDeliveryReceiptItem(float $deliveryPrice): ReceiptItem
+    protected function getDeliveryReceiptItem(float $deliveryPrice, ?string $paymentMode = null): ReceiptItem
     {
+        $paymentMode = $paymentMode ?: ($this->isFullPayment ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT);
+
         return new ReceiptItem([
             'description' => 'Доставка',
             'quantity' => 1,
@@ -107,7 +109,7 @@ abstract class ReceiptData extends OrderData
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => VatCode::CODE_DEFAULT,
-            'payment_mode' => $this->isFullPayment ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT,
+            'payment_mode' => $paymentMode,
             'payment_subject' => $this->isFullPayment ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
         ]);
     }

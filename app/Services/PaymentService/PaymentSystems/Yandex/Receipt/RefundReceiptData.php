@@ -73,9 +73,10 @@ class RefundReceiptData extends ReceiptData
             $offer = $offers[$item->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
-            $qtyToRefund = (float) $item->qty + $item->qty_canceled;
+            $quantityToRefund = (float) $item->qty + $item->qty_canceled;
+            $price = $item->unit_price;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $qtyToRefund);
+            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $quantityToRefund, $price);
             $receiptItems[] = new ReceiptItem($receiptItemInfo);
         }
         if ((float) $order->delivery_price > 0) {
@@ -105,8 +106,10 @@ class RefundReceiptData extends ReceiptData
             $offer = $offers[$basketItem->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
+            $quantity = $basketItem->qty;
+            $price = $basketItem->unit_price;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($basketItem, $offer, $merchant, $basketItem->qty);
+            $receiptItemInfo = $this->getReceiptItemInfo($basketItem, $offer, $merchant, $quantity, $price);
             $receiptItems[] = new ReceiptItem($receiptItemInfo);
         }
 

@@ -2,7 +2,7 @@
 
 namespace App\Services\CreditService\CreditSystems\CreditLine\SDK\Http;
 
-use App\Services\CreditService\CreditSystems\CreditLine\CreditLineSystem;
+use App\Services\CreditService\CreditService;
 use App\Services\CreditService\CreditSystems\CreditLine\SDK\Enum\BanksEnum;
 use App\Services\CreditService\CreditSystems\CreditLine\SDK\Enum\OrderStatusEnum;
 
@@ -44,23 +44,23 @@ class CLOrderStatus extends CLResponse
     {
         switch (mb_strtolower($this->Status, 'UTF-8')) {
             case OrderStatusEnum::ORDER_STATUS_REFUSED:
-                return CreditLineSystem::CREDIT_ORDER_STATUS_REFUSED;
+                return CreditService::CREDIT_ORDER_STATUS_REFUSED;
             case OrderStatusEnum::ORDER_STATUS_ACCEPTED:
-                return CreditLineSystem::CREDIT_ORDER_STATUS_ACCEPTED;
+                return CreditService::CREDIT_ORDER_STATUS_ACCEPTED;
             case OrderStatusEnum::ORDER_STATUS_ANNULED:
-                return CreditLineSystem::CREDIT_ORDER_STATUS_ANNULED;
+                return CreditService::CREDIT_ORDER_STATUS_ANNULED;
             case OrderStatusEnum::ORDER_STATUS_IN_COMPLETED:
-                return CreditLineSystem::CREDIT_ORDER_STATUS_IN_COMPLETED;
+                return CreditService::CREDIT_ORDER_STATUS_IN_COMPLETED;
             case OrderStatusEnum::ORDER_STATUS_IN_WORK:
-                return CreditLineSystem::CREDIT_ORDER_STATUS_IN_WORK;
+                return CreditService::CREDIT_ORDER_STATUS_IN_WORK;
             case OrderStatusEnum::ORDER_STATUS_IN_STACK:
-                return CreditLineSystem::CREDIT_ORDER_STATUS_IN_STACK;
+                return CreditService::CREDIT_ORDER_STATUS_IN_STACK;
             case OrderStatusEnum::ORDER_STATUS_CASHED:
-                return CreditLineSystem::CREDIT_ORDER_STATUS_CASHED;
+                return CreditService::CREDIT_ORDER_STATUS_CASHED;
             case OrderStatusEnum::ORDER_STATUS_IN_CASH:
-                return CreditLineSystem::CREDIT_ORDER_STATUS_IN_CASH;
+                return CreditService::CREDIT_ORDER_STATUS_IN_CASH;
             case OrderStatusEnum::ORDER_STATUS_SIGNED:
-                return CreditLineSystem::CREDIT_ORDER_STATUS_SIGNED;
+                return CreditService::CREDIT_ORDER_STATUS_SIGNED;
             default:
                 return null;
         }
