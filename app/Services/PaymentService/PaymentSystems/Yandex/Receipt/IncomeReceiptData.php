@@ -5,8 +5,8 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex\Receipt;
 use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
-use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequest;
-use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequestBuilder;
+use YooKassa\Request\Receipts\CreatePostReceiptRequest;
+use YooKassa\Request\Receipts\CreatePostReceiptRequestBuilder;
 use YooKassa\Model\CurrencyCode;
 use YooKassa\Model\Receipt\SettlementType;
 use YooKassa\Model\ReceiptCustomer;
@@ -20,7 +20,7 @@ class IncomeReceiptData extends ReceiptData
         $builder = CreatePostReceiptRequest::builder();
         $builder
             ->setType(ReceiptType::PAYMENT)
-            ->setPaymentId($paymentId)
+            ->setObjectId($paymentId)
             ->setCustomer(new ReceiptCustomer([
                 'phone' => $order->customerPhone(),
             ]))
