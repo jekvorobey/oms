@@ -75,6 +75,8 @@ class OrderUPDCreator extends OrderDocumentsCreator
         $sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
         $sheet->getPageSetup()->setFitToWidth(1);
         $sheet->getPageSetup()->setFitToHeight(0);
+        $sheet->getPageMargins()->setTop(0.39);
+        $sheet->getPageMargins()->setBottom(0.39);
     }
 
     /**

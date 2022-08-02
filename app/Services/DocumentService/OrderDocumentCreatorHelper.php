@@ -14,7 +14,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class OrderDocumentCreatorHelper
 {
     /** Максимальный размер страницы в см */
-    public const BREAK_TABLE_HEIGHT = 21;
+    public const BREAK_TABLE_HEIGHT = 19;
 
     /** Размер (в см) блока информации покупателе и продавце */
     public const FILE_HEADER_HEIGHT = 4.1275;
@@ -22,7 +22,7 @@ class OrderDocumentCreatorHelper
     /** Размер (в см) шапки таблицы */
     public const TABLE_HEADER_HEIGHT = 2.936875;
 
-    /** Размер (в см) блока информации о передаче груза */
+    /** Размер (в см) блока информации после таблицы */
     public const FILE_FOOTER_HEIGHT = 9.286875;
 
     /** Количество строк разрыва страницы */
