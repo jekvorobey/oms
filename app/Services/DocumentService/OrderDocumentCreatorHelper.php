@@ -7,18 +7,29 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Exception;
+use PhpOffice\PhpSpreadsheet\Helper\Dimension;
+use PhpOffice\PhpSpreadsheet\Style\Style;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class OrderDocumentCreatorHelper
 {
-    /** Номер строки разрыва страницы */
-    private const BREAK_TABLE_ROW = 19;
+    /** Максимальный размер страницы в см */
+    public const BREAK_TABLE_HEIGHT = 21;
+
+    /** Размер (в см) блока информации покупателе и продавце */
+    public const FILE_HEADER_HEIGHT = 4.1275;
+
+    /** Размер (в см) шапки таблицы */
+    public const TABLE_HEADER_HEIGHT = 2.936875;
+
+    /** Размер (в см) блока информации о передаче груза */
+    public const FILE_FOOTER_HEIGHT = 9.286875;
 
     /** Количество строк разрыва страницы */
-    private const BREAK_ROWS = 4;
+    public const BREAK_ROWS = 4;
 
     /** Координаты шапки для переноса на новую страницу */
-    private const BREAK_HEADER_COORDINATES = 'A12:BV14';
+    public const BREAK_HEADER_COORDINATES = 'A12:BV14';
 
     /**
      * Отображение даты в формате "10 января 2021 г."
@@ -57,13 +68,21 @@ class OrderDocumentCreatorHelper
             $sheet->insertNewRowBefore($rowIndex + 1, $itemsCount);
         }
 
+        $itemNumber = 1;
+        /** Задаем размер уже заполненной информации в см */
+        $pageHeight = self::FILE_HEADER_HEIGHT + self::TABLE_HEADER_HEIGHT + self::FILE_FOOTER_HEIGHT;
+        $itemsHeight = 0;
         foreach ($items as $item) {
-            if ($rowIndex === self::BREAK_TABLE_ROW) {
-                $rowIndex = static::fillBreakRow($sheet, $rowIndex, $breakRowTitle);
-            }
-            $rowValues = $getRowValues($item, $rowIndex);
+            $rowValues = $getRowValues($item, $rowIndex, $itemNumber);
             static::fillRow($sheet, $rowValues, $rowIndex);
+            $itemsHeight += $sheet->getRowDimension($rowIndex)->getRowHeight(Dimension::UOM_CENTIMETERS);
+            if ($itemsHeight + $pageHeight > self::BREAK_TABLE_HEIGHT) {
+                $rowIndex = static::fillBreakRow($sheet, $rowIndex, $breakRowTitle);
+                $pageHeight = self::TABLE_HEADER_HEIGHT + self::FILE_FOOTER_HEIGHT;
+                $itemsHeight = 0;
+            }
             $rowIndex++;
+            $itemNumber++;
         }
 
         $lastRowIndex = static::getLastRowIndex($items, $sheet, $rowIndex);
@@ -77,6 +96,8 @@ class OrderDocumentCreatorHelper
     {
         foreach ($values as $columnLetter => $value) {
             $sheet->setCellValue($columnLetter . $rowIndex, $value);
+            $sheet->getRowDimension($rowIndex)->setRowHeight(0.9, Dimension::UOM_CENTIMETERS);
+            $sheet->getStyle($columnLetter . $rowIndex)->getAlignment()->setWrapText(true);
         }
     }
 
@@ -123,10 +144,10 @@ class OrderDocumentCreatorHelper
     {
         $sheet->insertNewRowBefore($breakRow, self::BREAK_ROWS);
         $sheet->setBreak('A' . ($breakRow - 1), Worksheet::BREAK_ROW);
-        $sheet->mergeCells("B$breakRow:BQ$breakRow");
-        $sheet->mergeCells("BR$breakRow:BT$breakRow");
         $sheet->setCellValue("B$breakRow", $breakRowTitle);
         $sheet->setCellValue("BR$breakRow", 'Лист 2');
+        $sheet->duplicateStyle(new Style(), "B$breakRow:BV$breakRow");
+        $sheet->getStyle("B$breakRow:BV$breakRow")->getAlignment()->setWrapText(false);
         static::copyRange($sheet, self::BREAK_HEADER_COORDINATES, 'A' . ($breakRow + 1));
 
         return $breakRow + self::BREAK_ROWS;
@@ -158,8 +179,8 @@ class OrderDocumentCreatorHelper
 
         foreach ($sheet->getMergeCells() as $mergeCell) {
             $mc = explode(':', $mergeCell);
-            $mergeColSrcStart = Coordinate::columnIndexFromString(preg_replace('/[0-9]*/', '', $mc[0])) - 1;
-            $mergeColSrcEnd = Coordinate::columnIndexFromString(preg_replace('/[0-9]*/', '', $mc[1])) - 1;
+            $mergeColSrcStart = Coordinate::columnIndexFromString(preg_replace('/[0-9]*/', '', $mc[0]));
+            $mergeColSrcEnd = Coordinate::columnIndexFromString(preg_replace('/[0-9]*/', '', $mc[1]));
             $mergeRowSrcStart = (int) preg_replace('/[A-Z]*/', '', $mc[0]);
             $mergeRowSrcEnd = (int) preg_replace('/[A-Z]*/', '', $mc[1]);
 
@@ -204,5 +225,16 @@ class OrderDocumentCreatorHelper
 
             $rowCount++;
         }
+    }
+
+    /** Получить количество страниц исходя из размера строк и формата А4 */
+    public static function getPageNumbers(Worksheet $sheet): float
+    {
+        $height = 0;
+        for ($row = 1; $row <= $sheet->getHighestDataRow(); $row++) {
+            $height += $sheet->getRowDimension($row)->getRowHeight(Dimension::UOM_CENTIMETERS);
+        }
+
+        return (int) ceil($height / self::BREAK_TABLE_HEIGHT);
     }
 }

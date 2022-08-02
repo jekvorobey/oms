@@ -8,6 +8,7 @@ use Cms\Services\OptionService\OptionService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Exception;
 
@@ -59,12 +60,21 @@ class OrderUPDCreator extends OrderDocumentsCreator
         $this->fillCustomerInfo($sheet);
         $lastRowIndex = $this->fillBody($sheet);
         $this->fillFooter($sheet, $lastRowIndex);
+        $this->setPageOptions($sheet);
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xls');
         $path = $this->generateDocumentPath();
         $writer->save($path);
 
         return $path;
+    }
+
+    protected function setPageOptions(Worksheet $sheet): void
+    {
+        $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
+        $sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_A4);
+        $sheet->getPageSetup()->setFitToWidth(1);
+        $sheet->getPageSetup()->setFitToHeight(0);
     }
 
     /**
@@ -105,7 +115,7 @@ class OrderUPDCreator extends OrderDocumentsCreator
             $sheet,
             $operations,
             self::START_BODY_TABLE_ROW,
-            function ($operation, int $rowIndex) use ($sheet) {
+            function ($operation, int $rowIndex, $operationNumber) use ($sheet) {
                 $sheet->mergeCells("F$rowIndex:I$rowIndex");
                 $sheet->mergeCells("J$rowIndex:R$rowIndex");
                 $sheet->mergeCells("S$rowIndex:V$rowIndex");
@@ -123,6 +133,7 @@ class OrderUPDCreator extends OrderDocumentsCreator
                 $sheet->mergeCells("BR$rowIndex:BV$rowIndex");
 
                 return [
+                    'F' => $operationNumber,
                     'J' => $operation->name,
                     'S' => '--',
                     'W' => '--',
@@ -150,9 +161,9 @@ class OrderUPDCreator extends OrderDocumentsCreator
     protected function fillFooter(Worksheet $sheet, int $toRowIndex): void
     {
         $pageNumberRowIndex = $toRowIndex + 3;
-        $pageNumbers = $this->order->basket->items->count() < 4 ? 1 : 2;
-        $listWord = $pageNumbers === 1 ? ' листе' : ' листах';
-        $sheet->setCellValue('B' . $pageNumberRowIndex, 'Документ составлен на ' . $pageNumbers . $listWord);
+        $pageNumbers = OrderDocumentCreatorHelper::getPageNumbers($sheet);
+        $listWord = trans_choice('листе|листах', $pageNumbers);
+        $sheet->setCellValue('B' . $pageNumberRowIndex, 'Документ составлен на ' . $pageNumbers . ' ' . $listWord);
 
         $initialsRowIndex = $toRowIndex + 25;
         $columnLetters = ['C' => $this->sellerInfo, 'AT' => $this->customerInfo];
