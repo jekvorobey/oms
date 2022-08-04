@@ -2,7 +2,9 @@
 
 namespace App\Services\DocumentService;
 
+use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
+use App\Models\Delivery\Shipment;
 use App\Services\OrderService;
 use Cms\Core\CmsException;
 use Cms\Services\OptionService\OptionService;
@@ -28,6 +30,8 @@ class OrderUPDCreator extends OrderDocumentsCreator
     /** Базовая ставка НДС */
     private const NDS_VALUE = 0;
 
+    protected Shipment $shipment;
+
     /** Строка информации о продавце */
     protected $sellerInfo;
     /** Строка информации о покупателе */
@@ -43,6 +47,14 @@ class OrderUPDCreator extends OrderDocumentsCreator
         parent::__construct($orderService, $optionService);
     }
 
+    public function setShipment(Shipment $shipment): self
+    {
+        $this->shipment = $shipment;
+        $this->isProductType = $shipment->delivery->order->type === Basket::TYPE_PRODUCT;
+
+        return $this;
+    }
+
     public function documentName(): string
     {
         return 'upd.xlsx';
@@ -50,14 +62,34 @@ class OrderUPDCreator extends OrderDocumentsCreator
 
     public function title(): string
     {
-        return "УПД № {$this->order->number}";
+        return "УПД № {$this->getUpdNumber()}";
     }
 
     public function fullTitle(): string
     {
         $today = OrderDocumentCreatorHelper::formatDate(Carbon::today());
 
-        return "Универсальный передаточный документ № {$this->order->number} от {$today}";
+        return "Универсальный передаточный документ № {$this->getUpdNumber()} от {$today}";
+    }
+
+    protected function getUpdNumber(): string
+    {
+        return $this->order ? $this->order->number : $this->shipment->number;
+    }
+
+    protected function getOfferNumber(): string
+    {
+        return $this->order ? $this->order->number : $this->shipment->delivery->order->number;
+    }
+
+    protected function getOfferDate(): string
+    {
+        return $this->order ? $this->order->created_at : $this->shipment->delivery->order->created_at;
+    }
+
+    protected function getItems()
+    {
+        return $this->order ? $this->order->basket->items : $this->shipment->basketItems;
     }
 
     /**
@@ -102,10 +134,10 @@ class OrderUPDCreator extends OrderDocumentsCreator
 
     protected function fillSellerInfo(Worksheet $sheet): void
     {
-        $contractDate = OrderDocumentCreatorHelper::formatDate($this->order->created_at);
+        $contractDate = OrderDocumentCreatorHelper::formatDate($this->getOfferDate());
 
         $sheet->setCellValue('D5', $this->isProductType ? 1 : 2);
-        $sheet->setCellValue('P1', $this->order->number);
+        $sheet->setCellValue('P1', $this->getOfferNumber());
         $sheet->setCellValue('Y1', $contractDate);
         $sheet->setCellValue('R4', $this->organizationInfo['full_name']);
         $sheet->setCellValue('R5', $this->organizationInfo['legal_address']);
@@ -117,9 +149,8 @@ class OrderUPDCreator extends OrderDocumentsCreator
         $sheet->setCellValue('R8', $this->customer->legal_info_company_name . ', ' . $this->customer->legal_info_company_address);
         $sheet->setCellValue(
             'R10',
-            '№ п/п 1-' . $this->order->basket->items->count() . ' № ' . $this->order->number . ' от ' . OrderDocumentCreatorHelper::formatDate(
-                $this->order->created_at
-            )
+            '№ п/п 1-' . $this->getItems()->count() . ' № ' .
+            $this->getOfferNumber() . ' от ' . OrderDocumentCreatorHelper::formatDate($this->getOfferDate())
         );
 
         $this->sellerInfo = $this->organizationInfo['full_name'] . ', ИНН/КПП ' . $this->organizationInfo['inn'] . '/' . $this->organizationInfo['kpp'];
@@ -141,7 +172,7 @@ class OrderUPDCreator extends OrderDocumentsCreator
      */
     protected function fillBody(Worksheet $sheet): int
     {
-        $operations = $this->order->basket->items;
+        $operations = $this->getItems();
 
         return OrderDocumentCreatorHelper::fillTableRows(
             $sheet,
@@ -175,12 +206,18 @@ class OrderUPDCreator extends OrderDocumentsCreator
     {
         $totalSums = ['priceWithoutNds' => 0, 'ndsSum' => 0, 'price' => 0];
         /** @var BasketItem $item */
-        foreach ($this->order->basket->items as $item) {
-            $nds = $this->getMerchantVatValue($item->offer_id, $this->offers, $this->merchants);
-            $ndsSum = -1 * ($item->price / (1 + $nds / 100) - $item->price);
-            $totalSums['priceWithoutNds'] += $item->price - $ndsSum;
-            $totalSums['ndsSum'] += $ndsSum;
-            $totalSums['price'] += $item->price;
+        foreach ($this->getItems() as $item) {
+            if ($this->isProductType) {
+                $nds = $this->getMerchantVatValue($item->offer_id, $this->offers, $this->merchants);
+                $ndsSum = -1 * ($item->price / (1 + $nds / 100) - $item->price);
+                $totalSums['priceWithoutNds'] += $item->price - $ndsSum;
+                $totalSums['ndsSum'] += $ndsSum;
+                $totalSums['price'] += $item->price;
+            } else {
+                $totalSums['priceWithoutNds'] += $item->price;
+                $totalSums['ndsSum'] = '--';
+                $totalSums['price'] = $totalSums['priceWithoutNds'];
+            }
         }
 
         $sumColumns = ['AN' => $totalSums['priceWithoutNds'], 'BC' => $totalSums['ndsSum'], 'BG' => $totalSums['price']];
@@ -201,7 +238,7 @@ class OrderUPDCreator extends OrderDocumentsCreator
         /** Основание передачи (сдачи) / получения (приемки) */
         $sheet->setCellValue(
             'T' . ($toRowIndex + 7),
-            'Счёт-оферта ' . $this->order->number . ' от ' . OrderDocumentCreatorHelper::formatDate($this->order->created_at)
+            'Счёт-оферта ' . $this->getOfferNumber() . ' от ' . OrderDocumentCreatorHelper::formatDate($this->getOfferDate())
         );
 
         /** Инициалы гендиректора */
@@ -274,7 +311,7 @@ class OrderUPDCreator extends OrderDocumentsCreator
      */
     protected function getOffers(): void
     {
-        $offerIds = $this->order->basket->items->pluck('offer_id')->all();
+        $offerIds = $this->getItems()->pluck('offer_id')->all();
         /** @var OfferService $offerService */
         $offerService = resolve(OfferService::class);
         $offersQuery = $offerService->newQuery()
@@ -361,5 +398,10 @@ class OrderUPDCreator extends OrderDocumentsCreator
             0,
             2
         ) . '.' . substr($this->organizationInfo['general_accountant_middle_name'], 0, 2) . '.';
+    }
+
+    protected function resultDocSuffix(): string
+    {
+        return $this->order ? $this->order->number : $this->shipment->delivery->order->number;
     }
 }

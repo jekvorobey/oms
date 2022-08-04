@@ -19,7 +19,7 @@ abstract class OrderDocumentsCreator extends DocumentCreator
     protected OrderService $orderService;
     protected OptionService $optionService;
 
-    protected Order $order;
+    protected ?Order $order = null;
     protected bool $isProductType;
     protected CustomerDto $customer;
 

@@ -103,9 +103,12 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::put('capture-payment', 'OrdersController@capturePayment');
             Route::delete('', 'OrdersController@delete');
             Route::get('tickets', 'OrdersController@tickets');
-            Route::get('invoice-offer', 'OrdersController@generateInvoiceOffer');
-            Route::get('upd', 'OrdersController@generateUPD');
-            Route::get('documents', 'OrdersController@documents');
+            Route::prefix('documents')->group(function () {
+                Route::get('generate-invoice-offer', 'OrderDocumentsController@generateInvoiceOffer');
+                Route::get('generate-upd', 'OrderDocumentsController@generateUPD');
+                Route::get('', 'OrderDocumentsController@documents');
+                Route::get('invoice-offer', 'OrderDocumentsController@invoiceOffer');
+            });
         });
 
         Route::prefix('return-reasons')->group(function () {
@@ -241,6 +244,8 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                     Route::get('acceptance-act', 'ShipmentDocumentsController@acceptanceAct');
                     Route::get('inventory', 'ShipmentDocumentsController@inventory');
                     Route::get('assembling-card', 'ShipmentDocumentsController@assemblingCard');
+                    Route::get('generate-upd', 'ShipmentDocumentsController@generateUPD');
+                    Route::get('upd', 'ShipmentDocumentsController@upd');
                 });
 
                 Route::put('', 'ShipmentsController@update');

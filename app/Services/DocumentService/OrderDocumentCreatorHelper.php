@@ -71,7 +71,7 @@ class OrderDocumentCreatorHelper
         /** Задаем размер уже заполненной информации в см */
         $pageHeight = self::FILE_HEADER_HEIGHT + self::TABLE_HEADER_HEIGHT + self::FILE_FOOTER_HEIGHT;
         $itemsHeight = 0;
-        $breakRowsCount = 0;
+        $breakRowsCount = 1;
         foreach ($items as $item) {
             $rowValues = $getRowValues($item, $rowIndex, $itemNumber);
             static::fillRow($sheet, $rowValues, $rowIndex);
