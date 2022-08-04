@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ff965d10660eba1e317f806e74c1ed65",
+    "content-hash": "143662ea5fccf58744c3683004abae27",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1553,11 +1553,11 @@
         },
         {
             "name": "ibt/cms-lib",
-            "version": "dev-master",
+            "version": "dev-feature/BX-6366-update-organization-card-info",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cms-lib",
-                "reference": "d8d8756541ce30a26d4ab41fa913a820a55e43fc"
+                "reference": "a61c761d40280470b6c902e1404d392c00062e9c"
             },
             "require": {
                 "ext-json": "*",
@@ -1567,7 +1567,6 @@
             "require-dev": {
                 "laravel/framework": "^5.8"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1581,7 +1580,7 @@
                 }
             ],
             "description": "iBT CMS service client",
-            "time": "2022-07-08T10:33:17+00:00"
+            "time": "2022-08-03T08:25:38+00:00"
         },
         {
             "name": "ibt/common-lib",

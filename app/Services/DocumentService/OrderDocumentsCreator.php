@@ -2,6 +2,7 @@
 
 namespace App\Services\DocumentService;
 
+use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Order\OrderDocument;
 use App\Services\OrderService;
@@ -19,6 +20,7 @@ abstract class OrderDocumentsCreator extends DocumentCreator
     protected OptionService $optionService;
 
     protected Order $order;
+    protected bool $isProductType;
     protected CustomerDto $customer;
 
     public const MAPPING_KEYS = [
@@ -49,6 +51,12 @@ abstract class OrderDocumentsCreator extends DocumentCreator
         'logistics_manager_phone' => OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_PHONE,
         'logistics_manager_email' => OptionDto::KEY_ORGANIZATION_CARD_LOGISTICS_MANAGER_EMAIL,
 
+        'general_accountant_last_name' => OptionDto::KEY_ORGANIZATION_CARD_GENERAL_ACCOUNTANT_LAST_NAME,
+        'general_accountant_first_name' => OptionDto::KEY_ORGANIZATION_CARD_GENERAL_ACCOUNTANT_FIRST_NAME,
+        'general_accountant_middle_name' => OptionDto::KEY_ORGANIZATION_CARD_GENERAL_ACCOUNTANT_MIDDLE_NAME,
+        'general_accountant_phone' => OptionDto::KEY_ORGANIZATION_CARD_GENERAL_ACCOUNTANT_PHONE,
+        'general_accountant_email' => OptionDto::KEY_ORGANIZATION_CARD_GENERAL_ACCOUNTANT_EMAIL,
+
         'contact_centre_phone' => OptionDto::KEY_ORGANIZATION_CARD_CONTACT_CENTRE_PHONE,
         'social_phone' => OptionDto::KEY_ORGANIZATION_CARD_SOCIAL_PHONE,
         'email_for_merchant' => OptionDto::KEY_ORGANIZATION_CARD_EMAIL_FOR_MERCHANT,
@@ -65,6 +73,7 @@ abstract class OrderDocumentsCreator extends DocumentCreator
     public function setOrder(Order $order): self
     {
         $this->order = $order;
+        $this->isProductType = $order->type === Basket::TYPE_PRODUCT;
 
         return $this;
     }

@@ -59,8 +59,7 @@ class OrderDocumentCreatorHelper
         Collection $items,
         int $startRowIndex,
         callable $getRowValues,
-        array $sumColumns = [],
-        string $breakRowTitle = null
+        ?string $breakRowTitle = null
     ): int {
         $rowIndex = $startRowIndex;
 
@@ -72,12 +71,14 @@ class OrderDocumentCreatorHelper
         /** Задаем размер уже заполненной информации в см */
         $pageHeight = self::FILE_HEADER_HEIGHT + self::TABLE_HEADER_HEIGHT + self::FILE_FOOTER_HEIGHT;
         $itemsHeight = 0;
+        $breakRowsCount = 0;
         foreach ($items as $item) {
             $rowValues = $getRowValues($item, $rowIndex, $itemNumber);
             static::fillRow($sheet, $rowValues, $rowIndex);
             $itemsHeight += $sheet->getRowDimension($rowIndex)->getRowHeight(Dimension::UOM_CENTIMETERS);
             if ($itemsHeight + $pageHeight > self::BREAK_TABLE_HEIGHT) {
-                $rowIndex = static::fillBreakRow($sheet, $rowIndex, $breakRowTitle);
+                $breakRowsCount++;
+                $rowIndex = static::fillBreakRow($sheet, $rowIndex, $breakRowTitle, $breakRowsCount);
                 $pageHeight = self::TABLE_HEADER_HEIGHT + self::FILE_FOOTER_HEIGHT;
                 $itemsHeight = 0;
             }
@@ -85,10 +86,7 @@ class OrderDocumentCreatorHelper
             $itemNumber++;
         }
 
-        $lastRowIndex = static::getLastRowIndex($items, $sheet, $rowIndex);
-        static::setTotalSumCells($sheet, $sumColumns, $startRowIndex, $lastRowIndex);
-
-        return $lastRowIndex;
+        return static::getLastRowIndex($items, $sheet, $rowIndex);
     }
 
     /** Заполнить данные в строке таблицы */
@@ -96,7 +94,7 @@ class OrderDocumentCreatorHelper
     {
         foreach ($values as $columnLetter => $value) {
             $sheet->setCellValue($columnLetter . $rowIndex, $value);
-            $sheet->getRowDimension($rowIndex)->setRowHeight(0.9, Dimension::UOM_CENTIMETERS);
+            $sheet->getRowDimension($rowIndex)->setRowHeight(0.8, Dimension::UOM_CENTIMETERS);
             $sheet->getStyle($columnLetter . $rowIndex)->getAlignment()->setWrapText(true);
         }
     }
@@ -120,19 +118,12 @@ class OrderDocumentCreatorHelper
     /**
      * Простановка формул суммирования данных в столбцах
      */
-    public static function setTotalSumCells(
-        Worksheet $sheet,
-        array $columnLetters,
-        int $fromRowIndex,
-        int $toRowIndex
-    ): void {
+    public static function setTotalSumCells(Worksheet $sheet, array $columnLetters, int $toRowIndex): void
+    {
         $rowIndex = $toRowIndex + 1;
 
-        foreach ($columnLetters as $columnLetter) {
-            $sheet->setCellValue(
-                $columnLetter . $rowIndex,
-                "=SUM($columnLetter$fromRowIndex:$columnLetter$toRowIndex)"
-            );
+        foreach ($columnLetters as $columnLetter => $value) {
+            $sheet->setCellValue($columnLetter . $rowIndex, $value);
         }
     }
 
@@ -140,12 +131,12 @@ class OrderDocumentCreatorHelper
      * Заполнить разрыв страницы
      * @throws Exception
      */
-    public static function fillBreakRow(Worksheet $sheet, int $breakRow, string $breakRowTitle): int
+    public static function fillBreakRow(Worksheet $sheet, int $breakRow, string $breakRowTitle, int $breakRowsCount): int
     {
         $sheet->insertNewRowBefore($breakRow, self::BREAK_ROWS);
         $sheet->setBreak('A' . ($breakRow - 1), Worksheet::BREAK_ROW);
         $sheet->setCellValue("B$breakRow", $breakRowTitle);
-        $sheet->setCellValue("BR$breakRow", 'Лист 2');
+        $sheet->setCellValue("BR$breakRow", 'Лист ' . $breakRowsCount);
         $sheet->duplicateStyle(new Style(), "B$breakRow:BV$breakRow");
         $sheet->getStyle("B$breakRow:BV$breakRow")->getAlignment()->setWrapText(false);
         static::copyRange($sheet, self::BREAK_HEADER_COORDINATES, 'A' . ($breakRow + 1));
