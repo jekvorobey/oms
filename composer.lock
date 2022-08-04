@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7ce4571b62aee18a95a5ef02e355bfce",
+    "content-hash": "7f3b360bab34f0173698e467b02e2f6f",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1534,11 +1534,11 @@
         },
         {
             "name": "ibt/common-lib",
-            "version": "dev-feature/BX-6482-utm-marks",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-common-ms-code.git",
-                "reference": "8901d04833560f42373e37645c3e52d164a55972"
+                "reference": "d7de5c1d4a42a1a12c95bb9246efde1ff892da26"
             },
             "require": {
                 "ext-json": "*",
@@ -1555,6 +1555,7 @@
                 "phpunit/php-code-coverage": "6.1.4",
                 "phpunit/phpunit": "^7.5"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "laravel": {
@@ -1588,7 +1589,7 @@
                 }
             ],
             "description": "iBT common code for all microservices",
-            "time": "2022-07-29T06:35:41+00:00"
+            "time": "2022-08-04T14:17:57+00:00"
         },
         {
             "name": "ibt/logistics-lib",
@@ -10288,14 +10289,7 @@
             "time": "2021-03-09T10:59:23+00:00"
         }
     ],
-    "aliases": [
-        {
-            "package": "ibt/common-lib",
-            "version": "dev-feature/BX-6482-utm-marks",
-            "alias": "dev-master",
-            "alias_normalized": "dev-master"
-        }
-    ],
+    "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
         "ibt/cm-lib": 20,
@@ -10317,5 +10311,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.2.0"
 }

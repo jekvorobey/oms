@@ -62,7 +62,7 @@
         "fideloper/proxy": "^4.0",
         "ibt/cm-lib": "dev-master",
         "ibt/cms-lib": "dev-master",
-        "ibt/common-lib": "dev-feature/BX-6482-utm-marks as dev-master",
+        "ibt/common-lib": "dev-master",
         "ibt/logistics-lib": "dev-master",
         "ibt/marketing-lib": "dev-master",
         "ibt/merchant-management-lib": "dev-master",
