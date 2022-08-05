@@ -1,29 +1,36 @@
 <?php
 
-/** @var \Illuminate\Database\Eloquent\Factory $factory */
+namespace Database\Factories;
 
-use Faker\Generator as Faker;
-use App\Models\Payment\Payment;
 use App\Models\Order\Order;
+use App\Models\Payment\PaymentMethod;
 use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentSystem;
-use App\Models\Payment\PaymentMethod;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(Payment::class, function (Faker $faker) {
-    $order = factory(Order::class)->create();
+class PaymentFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     */
+    public function definition(): array
+    {
+        /** @var Order $order */
+        $order = Order::factory()->create();
 
-    return [
-        'order_id' => $order->id,
-        'sum' => $order->basket->items->sum('cost'),
-        'refund_sum' => 0,
-        'payed_at' => $faker->dateTimeInInterval('-1 days', '+5 days'),
-        'expires_at' => $faker->dateTimeInInterval('+1 days', '+5 days'),
-        'yandex_expires_at' => $faker->dateTimeInInterval('+1 days', '+5 days'),
-        'status' => $faker->randomElement(PaymentStatus::validValues()),
-        'payment_method' => $faker->randomElement(PaymentMethod::validValues()),
-        'payment_system' => PaymentSystem::TEST,
-        'data' => [
-            'externalPaymentId' => $faker->uuid,
-        ],
-    ];
-});
+        return [
+            'order_id' => $order->id,
+            'sum' => $order->basket->items->sum('cost'),
+            'refund_sum' => 0,
+            'payed_at' => $this->faker->dateTimeInInterval('-1 days', '+5 days'),
+            'expires_at' => $this->faker->dateTimeInInterval('+1 days', '+5 days'),
+            'yandex_expires_at' => $this->faker->dateTimeInInterval('+1 days', '+5 days'),
+            'status' => $this->faker->randomElement(PaymentStatus::validValues()),
+            'payment_method' => $this->faker->randomElement(PaymentMethod::validValues()),
+            'payment_system' => PaymentSystem::TEST,
+            'data' => [
+                'externalPaymentId' => $this->faker->uuid,
+            ],
+        ];
+    }
+}

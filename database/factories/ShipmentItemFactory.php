@@ -1,20 +1,26 @@
 <?php
 
-/** @var \Illuminate\Database\Eloquent\Factory $factory */
+namespace Database\Factories;
 
-use Faker\Generator as Faker;
-use App\Models\Delivery\ShipmentItem;
-use App\Models\Delivery\Shipment;
 use App\Models\Basket\BasketItem;
+use App\Models\Delivery\Shipment;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(ShipmentItem::class, function (Faker $faker) {
-    return [
-        'shipment_id' => function () {
-            return factory(Shipment::class)->create()->id;
-        },
-        'basket_item_id' => function () {
-            return factory(BasketItem::class)->create()->id;
-        },
-        'created_at' => $faker->dateTime,
-    ];
-});
+class ShipmentItemFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     */
+    public function definition(): array
+    {
+        return [
+            'shipment_id' => function () {
+                return Shipment::factory()->create()->id;
+            },
+            'basket_item_id' => function () {
+                return BasketItem::factory()->create()->id;
+            },
+            'created_at' => $this->faker->dateTime,
+        ];
+    }
+}

@@ -8,6 +8,7 @@ use App\Models\WithHistory;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Services\ListsService\ListsService;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
@@ -258,8 +259,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  */
 class Delivery extends AbstractModel
 {
-    use WithHistory;
-    use WithWeightAndSizes;
+    use WithHistory, WithWeightAndSizes, HasFactory;
 
     private const SIDES = ['width', 'height', 'length'];
 

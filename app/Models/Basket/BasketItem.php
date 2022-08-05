@@ -12,6 +12,7 @@ use App\Services\PublicEventService\Cart\PublicEventCartStruct;
 use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -78,7 +79,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  */
 class BasketItem extends AbstractModel
 {
-    use WithHistory;
+    use WithHistory, HasFactory;
 
     /** @var bool */
     protected static $unguarded = true;

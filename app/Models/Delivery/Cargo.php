@@ -6,6 +6,7 @@ use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Greensight\CommonMsa\Models\AbstractModel;
@@ -139,8 +140,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  */
 class Cargo extends AbstractModel
 {
-    use WithMainHistory;
-    use WithWeightAndSizes;
+    use WithMainHistory, WithWeightAndSizes, HasFactory;
 
     private const SIDES = ['width', 'height', 'length'];
 

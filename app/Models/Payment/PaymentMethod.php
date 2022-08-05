@@ -60,4 +60,14 @@ class PaymentMethod extends AbstractModel
         'is_apply_discounts' => 'bool',
         'settings' => 'json',
     ];
+
+    public static function validValues(): array
+    {
+        return [
+            self::PREPAID,
+            self::POSTPAID,
+            self::CREDITPAID,
+            self::B2B_SBERBANK,
+        ];
+    }
 }

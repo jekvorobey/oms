@@ -1,34 +1,40 @@
 <?php
 
-/** @var \Illuminate\Database\Eloquent\Factory $factory */
+namespace Database\Factories;
 
-use Faker\Generator as Faker;
-use App\Models\Basket\BasketItem;
 use App\Models\Basket\Basket;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(BasketItem::class, function (Faker $faker) {
-    $price = $faker->numberBetween(100, 5000);
-    $qty = $faker->numberBetween(1, 6);
-    $cost = $price * $qty;
+class BasketItemFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     */
+    public function definition(): array
+    {
+        $price = $this->faker->numberBetween(100, 5000);
+        $qty = $this->faker->numberBetween(1, 6);
+        $cost = $price * $qty;
 
-    return [
-        'basket_id' => function () {
-            return factory(Basket::class)->create()->id;
-        },
-        'offer_id' => $faker->randomNumber(),
-        'type' => Basket::TYPE_PRODUCT,
-        'name' => $faker->title,
-        'qty' => $qty,
-        'price' => $price,
-        'cost' => $cost,
-        'product' => [
-            'store_id' => $faker->numberBetween(1, 6),
-            'weight' => $faker->numberBetween(1, 100),
-            'width' => $faker->numberBetween(1, 100),
-            'height' => $faker->numberBetween(1, 100),
-            'length' => $faker->numberBetween(1, 100),
-            'merchant_id' => $faker->numberBetween(1, 100),
-            'is_danger' => $faker->boolean,
-        ],
-    ];
-});
+        return [
+            'basket_id' => function () {
+                return Basket::factory()->create()->id;
+            },
+            'offer_id' => $this->faker->randomNumber(),
+            'type' => Basket::TYPE_PRODUCT,
+            'name' => $this->faker->title,
+            'qty' => $qty,
+            'price' => $price,
+            'cost' => $cost,
+            'product' => [
+                'store_id' => $this->faker->numberBetween(1, 6),
+                'weight' => $this->faker->numberBetween(1, 100),
+                'width' => $this->faker->numberBetween(1, 100),
+                'height' => $this->faker->numberBetween(1, 100),
+                'length' => $this->faker->numberBetween(1, 100),
+                'merchant_id' => $this->faker->numberBetween(1, 100),
+                'is_danger' => $this->faker->boolean,
+            ],
+        ];
+    }
+}

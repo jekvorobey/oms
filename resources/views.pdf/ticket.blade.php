@@ -364,7 +364,7 @@
                                             Дата и время покупки
                                         </div>
                                         <div class="text">
-                                            {{\Jenssegers\Date\Date::parse($order->createdAt)->format('j F')}}
+                                            {{\Illuminate\Support\Facades\Date::parse($order->createdAt)->format('j F')}}
                                             , {{$order->createdAt->format('H:i')}}
                                         </div>
                                         </p>

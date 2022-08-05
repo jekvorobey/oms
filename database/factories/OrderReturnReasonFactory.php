@@ -1,12 +1,18 @@
 <?php
 
-/** @var \Illuminate\Database\Eloquent\Factory $factory */
+namespace Database\Factories;
 
-use App\Models\Order\OrderReturnReason;
-use Faker\Generator as Faker;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(OrderReturnReason::class, function (Faker $faker) {
-    return [
-        'text' => $faker->text,
-    ];
-});
+class OrderReturnReasonFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     */
+    public function definition(): array
+    {
+        return [
+            'text' => $this->faker->text,
+        ];
+    }
+}
