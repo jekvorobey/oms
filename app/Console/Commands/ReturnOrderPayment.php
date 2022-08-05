@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentMethod;
 use App\Models\Payment\PaymentStatus;
 use App\Services\RefundCertificateService;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
@@ -21,21 +22,38 @@ class ReturnOrderPayment extends Command
 
         /** @var OrderReturn $orderReturn */
         foreach ($orderReturns as $orderReturn) {
-            $this->refundPayment($orderReturn);
-            $this->refundToCertificate($orderReturn);
+            try {
+                $this->refundPayment($orderReturn);
+                $this->refundToCertificate($orderReturn);
 
-            if ($orderReturn->status !== OrderReturn::STATUS_FAILED) {
-                $order = $orderReturn->order;
-                $order->done_return_sum += $orderReturn->price;
-                $order->save();
+                if ($orderReturn->status === OrderReturn::STATUS_CREATED) {
+                    throw new \Exception(
+                        "Не удалось обработать возврат #{$orderReturn->id} по заказу #{$orderReturn->order->id}"
+                    );
+                }
+
+                if ($orderReturn->status !== OrderReturn::STATUS_FAILED) {
+                    $order = $orderReturn->order;
+                    $order->done_return_sum += $orderReturn->price;
+                    $order->save();
+                }
+
+                $orderReturn->save();
+            } catch (\Throwable $e) {
+                report($e);
+                $orderReturn->status = OrderReturn::STATUS_FAILED;
+                $orderReturn->save();
             }
-
-            $orderReturn->save();
         }
     }
 
     private function refundPayment(OrderReturn $orderReturn): void
     {
+        if ($orderReturn->order->payment_method_id === PaymentMethod::CREDITPAID) {
+            $orderReturn->status = OrderReturn::STATUS_DONE;
+            return;
+        }
+
         /** @var Payment $payment */
         $payment = $orderReturn->order->payments->last();
         if (!$payment) {
@@ -63,6 +81,8 @@ class ReturnOrderPayment extends Command
         if ($orderReturn->price > 0 && $orderReturn->order->spent_certificate > 0) {
             $certificateRefundService = new RefundCertificateService();
             $certificateRefundService->refundSumToCertificate($orderReturn);
+
+            $orderReturn->status = OrderReturn::STATUS_DONE;
         }
     }
 }

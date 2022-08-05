@@ -210,6 +210,12 @@ class CheckoutController extends Controller
             'deliveries.*.shipments.*.date' => ['sometimes', 'string', 'nullable'],
             'deliveries.*.shipments.*.psd' => ['required', 'string'],
             'deliveries.*.shipments.*.items' => ['required', 'array'],
+
+            'utm_marks.utm_source' => 'nullable',
+            'utm_marks.utm_campaign' => 'nullable',
+            'utm_marks.utm_medium' => 'nullable',
+            'utm_marks.utm_content' => 'nullable',
+            'utm_marks.utm_term' => 'nullable',
         ]);
 
         $checkoutOrder = CheckoutOrder::fromArray($data);

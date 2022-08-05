@@ -47,10 +47,6 @@
         {
             "type": "vcs",
             "url": "git@git.yiilab.com:ibt.studio/ibt-cms-lib"
-        },
-        {
-            "type": "vcs",
-            "url": "git@git.yiilab.com:ibt.studio/yookassa-sdk-php"
         }
     ],
     "require": {
@@ -79,7 +75,7 @@
         "predis/predis": "^1.1",
         "sentry/sentry-laravel": "^2.7",
         "spatie/calendar-links": "^1.4",
-        "yoomoney/yookassa-sdk-php": "dev-master"
+        "yoomoney/yookassa-sdk-php": "^2.4"
     },
     "require-dev": {
         "beyondcode/laravel-dump-server": "^1.0",

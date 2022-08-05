@@ -11,6 +11,7 @@ use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\RefundReceiptData;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
+use YooKassa\Client;
 use YooKassa\Common\Exceptions\ApiException;
 use YooKassa\Common\Exceptions\BadApiRequestException;
 use YooKassa\Common\Exceptions\ExtensionNotFoundException;
@@ -32,7 +33,7 @@ use YooKassa\Model\Payment as YooKassaPayment;
  */
 class YandexPaymentSystem implements PaymentSystemInterface
 {
-    /** @var SDK\Client */
+    /** @var Client */
     private $yandexService;
     /** @var Logger */
     private $logger;
@@ -42,7 +43,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
      */
     public function __construct()
     {
-        $this->yandexService = resolve(SDK\Client::class);
+        $this->yandexService = resolve(Client::class);
         $this->logger = Log::channel('payments');
     }
 
