@@ -131,8 +131,12 @@ class OrderDocumentCreatorHelper
      * Заполнить разрыв страницы
      * @throws Exception
      */
-    public static function fillBreakRow(Worksheet $sheet, int $breakRow, string $breakRowTitle, int $breakRowsCount): int
-    {
+    public static function fillBreakRow(
+        Worksheet $sheet,
+        int $breakRow,
+        string $breakRowTitle,
+        int $breakRowsCount
+    ): int {
         $sheet->insertNewRowBefore($breakRow, self::BREAK_ROWS);
         $sheet->setBreak('A' . ($breakRow - 1), Worksheet::BREAK_ROW);
         $sheet->setCellValue("B$breakRow", $breakRowTitle);
