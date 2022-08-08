@@ -21,7 +21,7 @@ abstract class DocumentController extends Controller
         $fileService = resolve(FileService::class);
 
         /** @var FileDto $fileDto */
-        $fileDto = $fileService->getFiles([$documentDto->file_id])->first();
+        $fileDto = $fileService->getFiles([$documentDto->file_id])->firstOrFail();
 
         return response()->json([
             'absolute_url' => $fileDto->absoluteUrl(),

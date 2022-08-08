@@ -57,9 +57,6 @@ class PaymentsController extends Controller
         }
 
         $payment = $paymentService->getPayment($id);
-        if (!$payment) {
-            throw new NotFoundHttpException();
-        }
 
         if ($payment->status != PaymentStatus::NOT_PAID) {
             throw new AccessDeniedHttpException();
@@ -108,10 +105,7 @@ class PaymentsController extends Controller
         $payment = Payment::query()
             ->where('order_id', $data['orderId'])
             ->where('payment_method', $data['payment_method'])
-            ->first();
-        if (!$payment) {
-            throw new NotFoundHttpException('payment not found');
-        }
+            ->firstOrFail();
 
         return response()->json($payment);
     }

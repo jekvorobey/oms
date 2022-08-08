@@ -1,5 +1,24 @@
 <?php
 
+use App\Http\Controllers\V1\AnalyticsController;
+use App\Http\Controllers\V1\Basket\CustomerBasketController;
+use App\Http\Controllers\V1\Basket\GuestBasketController;
+use App\Http\Controllers\V1\CheckoutController;
+use App\Http\Controllers\V1\Delivery\CargoController;
+use App\Http\Controllers\V1\Delivery\CargoDocumentsController;
+use App\Http\Controllers\V1\Delivery\DeliveryController;
+use App\Http\Controllers\V1\Delivery\ShipmentDocumentsController;
+use App\Http\Controllers\V1\Delivery\ShipmentPackagesController;
+use App\Http\Controllers\V1\Delivery\ShipmentsController;
+use App\Http\Controllers\V1\DocumentTemplatesController;
+use App\Http\Controllers\V1\HistoryController;
+use App\Http\Controllers\V1\OrderDiscountController;
+use App\Http\Controllers\V1\OrderReturnReasonController;
+use App\Http\Controllers\V1\OrdersController;
+use App\Http\Controllers\V1\OrdersExportController;
+use App\Http\Controllers\V1\OrdersPromoCodesController;
+use App\Http\Controllers\V1\PaymentMethodsController;
+use App\Http\Controllers\V1\PaymentsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,135 +34,135 @@ use Illuminate\Support\Facades\Route;
 
 Route::namespace('V1')->prefix('v1')->group(function () {
     Route::prefix('checkout')->group(function () {
-        Route::post('commit', 'CheckoutController@commit');
+        Route::post('commit', [CheckoutController::class, 'commit']);
     });
 
     Route::prefix('baskets')->group(function () {
-        Route::get('', 'Basket\CustomerBasketController@list');
-        Route::get('count', 'Basket\CustomerBasketController@count');
+        Route::get('', [CustomerBasketController::class, 'list']);
+        Route::get('count', [CustomerBasketController::class, 'count']);
 
-        Route::post('notify-expired/{offer}', 'Basket\CustomerBasketController@notifyExpiredOffers');
-        Route::get('by-customer/{customerId}', 'Basket\CustomerBasketController@getCurrentBasket');
-        Route::get('qty-by-offer-ids', 'Basket\CustomerBasketController@qtyByOfferIds');
+        Route::post('notify-expired/{offer}', [CustomerBasketController::class, 'notifyExpiredOffers']);
+        Route::get('by-customer/{customerId}', [CustomerBasketController::class, 'getCurrentBasket']);
+        Route::get('qty-by-offer-ids', [CustomerBasketController::class, 'qtyByOfferIds']);
 
         Route::prefix('{basketId}')->group(function () {
-            Route::put('items/{offerId}', 'Basket\CustomerBasketController@setItemByBasket');
-            Route::put('commit', 'Basket\CustomerBasketController@commitItemsPrice');
-            Route::get('', 'Basket\CustomerBasketController@getBasket');
-            Route::delete('', 'Basket\CustomerBasketController@dropBasket');
-            Route::put('', 'Basket\CustomerBasketController@update');
+            Route::put('items/{offerId}', [CustomerBasketController::class, 'setItemByBasket']);
+            Route::put('commit', [CustomerBasketController::class, 'commitItemsPrice']);
+            Route::get('', [CustomerBasketController::class, 'getBasket']);
+            Route::delete('', [CustomerBasketController::class, 'dropBasket']);
+            Route::put('', [CustomerBasketController::class, 'update']);
         });
 
         Route::prefix('guest')->group(function () {
-            Route::get('by-customer/{customerId}', 'Basket\GuestBasketController@getCurrentBasket');
-            Route::post('replace-to-customer/{guestId}', 'Basket\GuestBasketController@moveGuestBasketToCustomer');
+            Route::get('by-customer/{customerId}', [GuestBasketController::class, 'getCurrentBasket']);
+            Route::post('replace-to-customer/{guestId}', [GuestBasketController::class, 'moveGuestBasketToCustomer']);
 
             Route::prefix('{basketId}')->group(function () {
-                Route::put('items/{offerId}', 'Basket\GuestBasketController@setItemByBasket');
-                Route::get('', 'Basket\GuestBasketController@getBasket');
-                Route::delete('', 'Basket\GuestBasketController@dropBasket');
+                Route::put('items/{offerId}', [GuestBasketController::class, 'setItemByBasket']);
+                Route::get('', [GuestBasketController::class, 'getBasket']);
+                Route::delete('', [GuestBasketController::class, 'dropBasket']);
             });
         });
     });
 
     Route::prefix('orders')->group(function () {
-        Route::post('by-offers', 'OrdersController@getByOffers');
+        Route::post('by-offers', [OrdersController::class, 'getByOffers']);
 
         Route::prefix('promo-codes')->group(function () {
-            Route::get('{promoCodeId}/count', 'OrdersPromoCodesController@count');
+            Route::get('{promoCodeId}/count', [OrdersPromoCodesController::class, 'count']);
         });
 
         Route::prefix('discounts')->group((function () {
-            Route::get('{discountId}/kpi', 'OrderDiscountController@KPIForDiscount');
+            Route::get('{discountId}/kpi', [OrderDiscountController::class, 'KPIForDiscount']);
         }));
 
         Route::prefix('exports')->group(function () {
-            Route::get('count', 'OrdersExportController@count');
-            Route::get('', 'OrdersExportController@read');
+            Route::get('count', [OrdersExportController::class, 'count']);
+            Route::get('', [OrdersExportController::class, 'read']);
         });
         Route::prefix('done')->group(function () {
-            Route::get('referral', 'OrdersController@doneReferral');
-            Route::get('merchant', 'OrdersController@doneMerchant');
+            Route::get('referral', [OrdersController::class, 'doneReferral']);
+            Route::get('merchant', [OrdersController::class, 'doneMerchant']);
         });
 
-        Route::get('count', 'OrdersController@count');
+        Route::get('count', [OrdersController::class, 'count']);
         Route::prefix('{id}')->group(function () {
             Route::prefix('history')->group(function () {
-                Route::get('count', 'HistoryController@countByOrder');
-                Route::get('', 'HistoryController@readByOrder');
+                Route::get('count', [HistoryController::class, 'countByOrder']);
+                Route::get('', [HistoryController::class, 'readByOrder']);
             });
-            Route::put('payments', 'OrdersController@setPayments');
-            Route::put('comment', 'OrdersController@setComment');
+            Route::put('payments', [OrdersController::class, 'setPayments']);
+            Route::put('comment', [OrdersController::class, 'setComment']);
 
-            Route::put('items/{offerId}', 'Basket\CustomerBasketController@setItemByOrder');
+            Route::put('items/{offerId}', [CustomerBasketController::class, 'setItemByOrder']);
 
             Route::prefix('exports')->group(function () {
-                Route::get('count', 'OrdersExportController@count');
-                Route::get('', 'OrdersExportController@read');
-                Route::post('', 'OrdersExportController@create');
+                Route::get('count', [OrdersExportController::class, 'count']);
+                Route::get('', [OrdersExportController::class, 'read']);
+                Route::post('', [OrdersExportController::class, 'create']);
                 Route::prefix('{exportId}')->group(function () {
-                    Route::get('', 'OrdersExportController@read');
-                    Route::put('', 'OrdersExportController@update');
-                    Route::delete('', 'OrdersExportController@delete');
+                    Route::get('', [OrdersExportController::class, 'read']);
+                    Route::put('', [OrdersExportController::class, 'update']);
+                    Route::delete('', [OrdersExportController::class, 'delete']);
                 });
             });
 
             Route::prefix('deliveries')->namespace('Delivery')->group(function () {
-                Route::get('count', 'DeliveryController@countByOrder');
-                Route::get('', 'DeliveryController@readByOrder');
-                Route::post('', 'DeliveryController@create');
+                Route::get('count', [DeliveryController::class, 'countByOrder']);
+                Route::get('', [DeliveryController::class, 'readByOrder']);
+                Route::post('', [DeliveryController::class, 'create']);
             });
 
-            Route::get('', 'OrdersController@readOne');
-            Route::put('', 'OrdersController@update');
-            Route::put('cancel', 'OrdersController@cancel');
-            Route::put('return', 'OrdersController@returnCompleted');
-            Route::put('refund-by-certificate', 'OrdersController@refundByCertificate');
-            Route::put('pay', 'OrdersController@pay');
-            Route::put('capture-payment', 'OrdersController@capturePayment');
-            Route::delete('', 'OrdersController@delete');
-            Route::get('tickets', 'OrdersController@tickets');
+            Route::get('', [OrdersController::class, 'readOne']);
+            Route::put('', [OrdersController::class, 'update']);
+            Route::put('cancel', [OrdersController::class, 'cancel']);
+            Route::put('return', [OrdersController::class, 'returnCompleted']);
+            Route::put('refund-by-certificate', [OrdersController::class, 'refundByCertificate']);
+            Route::put('pay', [OrdersController::class, 'pay']);
+            Route::put('capture-payment', [OrdersController::class, 'capturePayment']);
+            Route::delete('', [OrdersController::class, 'delete']);
+            Route::get('tickets', [OrdersController::class, 'tickets']);
         });
 
         Route::prefix('return-reasons')->group(function () {
-            Route::get('count', 'OrderReturnReasonController@count');
+            Route::get('count', [OrderReturnReasonController::class, 'count']);
             Route::prefix('{id}')->group(function () {
-                Route::get('', 'OrderReturnReasonController@read');
-                Route::put('', 'OrderReturnReasonController@update');
-                Route::delete('', 'OrderReturnReasonController@delete');
+                Route::get('', [OrderReturnReasonController::class, 'read']);
+                Route::put('', [OrderReturnReasonController::class, 'update']);
+                Route::delete('', [OrderReturnReasonController::class, 'delete']);
             });
-            Route::get('', 'OrderReturnReasonController@read');
-            Route::post('', 'OrderReturnReasonController@create');
+            Route::get('', [OrderReturnReasonController::class, 'read']);
+            Route::post('', [OrderReturnReasonController::class, 'create']);
         });
 
-        Route::get('', 'OrdersController@read');
+        Route::get('', [OrdersController::class, 'read']);
     });
 
     Route::prefix('payments')->group(function () {
         Route::prefix('methods')->group(function () {
-            Route::get('', 'PaymentMethodsController@read');
+            Route::get('', [PaymentMethodsController::class, 'read']);
             Route::prefix('{paymentMethod}')->group(function () {
-                Route::get('', 'PaymentMethodsController@readOne');
-                Route::put('', 'PaymentMethodsController@update');
+                Route::get('', [PaymentMethodsController::class, 'readOne']);
+                Route::put('', [PaymentMethodsController::class, 'update']);
             });
         });
         Route::prefix('handler')->group(function () {
-            Route::post('local', 'PaymentsController@handlerLocal')->name('handler.localPayment');
-            Route::post('yandex', 'PaymentsController@handlerYandex')->name('handler.yandexPayment');
+            Route::post('local', [PaymentsController::class, 'handlerLocal'])->name('handler.localPayment');
+            Route::post('yandex', [PaymentsController::class, 'handlerYandex'])->name('handler.yandexPayment');
         });
 
         Route::prefix('{id}')->group(function () {
-            Route::post('start', 'PaymentsController@start');
+            Route::post('start', [PaymentsController::class, 'start']);
         });
-        Route::get('byOrder', 'PaymentsController@getByOrder');
-        Route::get('', 'PaymentsController@payments');
+        Route::get('byOrder', [PaymentsController::class, 'getByOrder']);
+        Route::get('', [PaymentsController::class, 'payments']);
     });
 
     Route::prefix('shipments')->group(function () {
         Route::prefix('{id}')->group(function () {
             Route::prefix('history')->group(function () {
-                Route::get('count', 'HistoryController@countByShipment');
-                Route::get('', 'HistoryController@readByShipment');
+                Route::get('count', [HistoryController::class, 'countByShipment']);
+                Route::get('', [HistoryController::class, 'readByShipment']);
             });
         });
     });
@@ -151,145 +170,145 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     Route::prefix('cargos')->group(function () {
         Route::prefix('{id}')->group(function () {
             Route::prefix('history')->group(function () {
-                Route::get('count', 'HistoryController@countByCargo');
-                Route::get('', 'HistoryController@readByCargo');
+                Route::get('count', [HistoryController::class, 'countByCargo']);
+                Route::get('', [HistoryController::class, 'readByCargo']);
             });
         });
     });
 
     Route::prefix('document-templates')->group(function () {
-        Route::get('claim-act', 'DocumentTemplatesController@claimAct');
-        Route::get('acceptance-act', 'DocumentTemplatesController@acceptanceAct');
-        Route::get('inventory', 'DocumentTemplatesController@inventory');
-        Route::get('assembling-card', 'DocumentTemplatesController@assemblingCard');
+        Route::get('claim-act', [DocumentTemplatesController::class, 'claimAct']);
+        Route::get('acceptance-act', [DocumentTemplatesController::class, 'acceptanceAct']);
+        Route::get('inventory', [DocumentTemplatesController::class, 'inventory']);
+        Route::get('assembling-card', [DocumentTemplatesController::class, 'assemblingCard']);
     });
 
     Route::prefix('merchant-analytics')->group(function () {
-        Route::get('products-shipments', 'AnalyticsController@productsShipments')->name('analytics.productsShipments');
-        Route::get('sales', 'AnalyticsController@sales')->name('analytics.sales');
+        Route::get('products-shipments', [AnalyticsController::class, 'productsShipments'])->name('analytics.productsShipments');
+        Route::get('sales', [AnalyticsController::class, 'sales'])->name('analytics.sales');
         Route::prefix('top')->group(function () {
-            Route::get('bestsellers', 'AnalyticsController@bestsellers')->name('analytics.bestsellers');
-            Route::get('fastest', 'AnalyticsController@fastest')->name('analytics.fastest');
-            Route::get('outsiders', 'AnalyticsController@outsiders')->name('analytics.outsiders');
+            Route::get('bestsellers', [AnalyticsController::class, 'bestsellers'])->name('analytics.bestsellers');
+            Route::get('fastest', [AnalyticsController::class, 'fastest'])->name('analytics.fastest');
+            Route::get('outsiders', [AnalyticsController::class, 'outsiders'])->name('analytics.outsiders');
         });
     });
 
     Route::namespace('Delivery')->group(function () {
         Route::prefix('deliveries')->group(function () {
-            Route::get('count', 'DeliveryController@count');
-            Route::get('count-today-by-delivery-services', 'DeliveryController@countTodayByDeliveryServices');
-            Route::get('', 'DeliveryController@read');
-            Route::put('update-delivery-status', 'DeliveryController@updateDeliveryStatusByXmlId');
+            Route::get('count', [DeliveryController::class, 'count']);
+            Route::get('count-today-by-delivery-services', [DeliveryController::class, 'countTodayByDeliveryServices']);
+            Route::get('', [DeliveryController::class, 'read']);
+            Route::put('update-delivery-status', [DeliveryController::class, 'updateDeliveryStatusByXmlId']);
 
             Route::prefix('{id}')->group(function () {
-                Route::get('', 'DeliveryController@read');
+                Route::get('', [DeliveryController::class, 'read']);
 
                 Route::prefix('shipments')->group(function () {
-                    Route::get('count', 'ShipmentsController@countByDelivery');
-                    Route::get('', 'ShipmentsController@readByDelivery');
-                    Route::post('', 'ShipmentsController@create');
+                    Route::get('count', [ShipmentsController::class, 'countByDelivery']);
+                    Route::get('', [ShipmentsController::class, 'readByDelivery']);
+                    Route::post('', [ShipmentsController::class, 'create']);
                 });
 
                 Route::prefix('delivery-order')->group(function () {
-                    Route::put('', 'DeliveryController@saveDeliveryOrder');
-                    Route::put('cancel', 'DeliveryController@cancelDeliveryOrder');
+                    Route::put('', [DeliveryController::class, 'saveDeliveryOrder']);
+                    Route::put('cancel', [DeliveryController::class, 'cancelDeliveryOrder']);
                 });
 
-                Route::put('', 'DeliveryController@update');
-                Route::put('cancel', 'DeliveryController@cancel');
-                Route::delete('', 'DeliveryController@delete');
+                Route::put('', [DeliveryController::class, 'update']);
+                Route::put('cancel', [DeliveryController::class, 'cancel']);
+                Route::delete('', [DeliveryController::class, 'delete']);
             });
         });
 
         Route::prefix('shipments')->group(function () {
-            Route::get('count', 'ShipmentsController@count');
-            Route::get('active', 'ShipmentsController@getActiveIds');
-            Route::get('delivered', 'ShipmentsController@getDeliveredIds');
-            Route::get('', 'ShipmentsController@read');
-            Route::get('similar-unshipped-shipments', 'ShipmentsController@similarUnshippedShipments');
+            Route::get('count', [ShipmentsController::class, 'count']);
+            Route::get('active', [ShipmentsController::class, 'getActiveIds']);
+            Route::get('delivered', [ShipmentsController::class, 'getDeliveredIds']);
+            Route::get('', [ShipmentsController::class, 'read']);
+            Route::get('similar-unshipped-shipments', [ShipmentsController::class, 'similarUnshippedShipments']);
 
             Route::prefix('exports')->group(function () {
-                Route::get('new', 'ShipmentsController@readNew');
-                Route::post('', 'ShipmentsController@createShipmentExport');
+                Route::get('new', [ShipmentsController::class, 'readNew']);
+                Route::post('', [ShipmentsController::class, 'createShipmentExport']);
             });
 
             Route::prefix('{id}')->group(function () {
-                Route::get('', 'ShipmentsController@read');
+                Route::get('', [ShipmentsController::class, 'read']);
 
                 Route::prefix('items')->group(function () {
-                    Route::get('count', 'ShipmentsController@countItems');
-                    Route::get('', 'ShipmentsController@readItems');
+                    Route::get('count', [ShipmentsController::class, 'countItems']);
+                    Route::get('', [ShipmentsController::class, 'readItems']);
 
                     Route::prefix('{basketItemId}')->group(function () {
-                        Route::get('', 'ShipmentsController@readItem');
-                        Route::post('', 'ShipmentsController@createItem');
-                        Route::delete('', 'ShipmentsController@deleteItem');
-                        Route::put('', 'ShipmentsController@cancelItem');
+                        Route::get('', [ShipmentsController::class, 'readItem']);
+                        Route::post('', [ShipmentsController::class, 'createItem']);
+                        Route::delete('', [ShipmentsController::class, 'deleteItem']);
+                        Route::put('', [ShipmentsController::class, 'cancelItem']);
                     });
                 });
 
                 Route::prefix('shipment-packages')->group(function () {
-                    Route::get('count', 'ShipmentPackagesController@countByShipment');
-                    Route::get('', 'ShipmentPackagesController@readByShipment');
-                    Route::post('', 'ShipmentPackagesController@create');
+                    Route::get('count', [ShipmentPackagesController::class, 'countByShipment']);
+                    Route::get('', [ShipmentPackagesController::class, 'readByShipment']);
+                    Route::post('', [ShipmentPackagesController::class, 'create']);
                 });
 
                 Route::prefix('documents')->group(function () {
-                    Route::get('acceptance-act', 'ShipmentDocumentsController@acceptanceAct');
-                    Route::get('inventory', 'ShipmentDocumentsController@inventory');
-                    Route::get('assembling-card', 'ShipmentDocumentsController@assemblingCard');
+                    Route::get('acceptance-act', [ShipmentDocumentsController::class, 'acceptanceAct']);
+                    Route::get('inventory', [ShipmentDocumentsController::class, 'inventory']);
+                    Route::get('assembling-card', [ShipmentDocumentsController::class, 'assemblingCard']);
                 });
 
-                Route::put('', 'ShipmentsController@update');
-                Route::put('mark-as-problem', 'ShipmentsController@markAsProblem');
-                Route::put('mark-as-non-problem', 'ShipmentsController@markAsNonProblem');
-                Route::put('cancel', 'ShipmentsController@cancel');
-                Route::delete('', 'ShipmentsController@delete');
-                Route::get('barcodes', 'ShipmentsController@barcodes');
-                Route::get('cdek-receipt', 'ShipmentsController@cdekReceipt');
+                Route::put('', [ShipmentsController::class, 'update']);
+                Route::put('mark-as-problem', [ShipmentsController::class, 'markAsProblem']);
+                Route::put('mark-as-non-problem', [ShipmentsController::class, 'markAsNonProblem']);
+                Route::put('cancel', [ShipmentsController::class, 'cancel']);
+                Route::delete('', [ShipmentsController::class, 'delete']);
+                Route::get('barcodes', [ShipmentsController::class, 'barcodes']);
+                Route::get('cdek-receipt', [ShipmentsController::class, 'cdekReceipt']);
             });
         });
 
         Route::prefix('shipment-packages')->group(function () {
-            Route::get('', 'ShipmentPackagesController@read');
+            Route::get('', [ShipmentPackagesController::class, 'read']);
 
             Route::prefix('{id}')->group(function () {
-                Route::get('', 'ShipmentPackagesController@read');
+                Route::get('', [ShipmentPackagesController::class, 'read']);
 
                 Route::prefix('items')->group(function () {
-                    Route::get('count', 'ShipmentPackagesController@countItems');
-                    Route::get('', 'ShipmentPackagesController@readItems');
+                    Route::get('count', [ShipmentPackagesController::class, 'countItems']);
+                    Route::get('', [ShipmentPackagesController::class, 'readItems']);
 
                     Route::prefix('{basketItemId}')->group(function () {
-                        Route::get('', 'ShipmentPackagesController@readItem');
-                        Route::put('', 'ShipmentPackagesController@setItem');
+                        Route::get('', [ShipmentPackagesController::class, 'readItem']);
+                        Route::put('', [ShipmentPackagesController::class, 'setItem']);
                     });
                 });
 
-                Route::put('', 'ShipmentPackagesController@update');
-                Route::delete('', 'ShipmentPackagesController@delete');
+                Route::put('', [ShipmentPackagesController::class, 'update']);
+                Route::delete('', [ShipmentPackagesController::class, 'delete']);
             });
         });
 
         Route::prefix('cargos')->group(function () {
-            Route::get('count', 'CargoController@count');
-            Route::get('', 'CargoController@read');
-            Route::post('', 'CargoController@create');
+            Route::get('count', [CargoController::class, 'count']);
+            Route::get('', [CargoController::class, 'read']);
+            Route::post('', [CargoController::class, 'create']);
 
             Route::prefix('{id}')->group(function () {
-                Route::get('', 'CargoController@read');
-                Route::put('', 'CargoController@update');
-                Route::put('cancel', 'CargoController@cancel');
-                Route::delete('', 'CargoController@delete');
+                Route::get('', [CargoController::class, 'read']);
+                Route::put('', [CargoController::class, 'update']);
+                Route::put('cancel', [CargoController::class, 'cancel']);
+                Route::delete('', [CargoController::class, 'delete']);
 
                 Route::prefix('courier-call')->group(function () {
-                    Route::get('check', 'CargoController@checkExternalStatus');
-                    Route::post('', 'CargoController@createCourierCall');
-                    Route::put('cancel', 'CargoController@cancelCourierCall');
+                    Route::get('check', [CargoController::class, 'checkExternalStatus']);
+                    Route::post('', [CargoController::class, 'createCourierCall']);
+                    Route::put('cancel', [CargoController::class, 'cancelCourierCall']);
                 });
 
                 Route::prefix('documents')->group(function () {
-                    Route::get('acceptance-act', 'CargoDocumentsController@acceptanceAct');
+                    Route::get('acceptance-act', [CargoDocumentsController::class, 'acceptanceAct']);
                 });
             });
         });

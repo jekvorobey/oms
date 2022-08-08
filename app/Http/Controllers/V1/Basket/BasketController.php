@@ -17,10 +17,7 @@ abstract class BasketController extends Controller
 {
     protected BasketService $basketService;
 
-    /**
-     * @param int|string $customerId
-     */
-    public function getCurrentBasket($customerId, GetCurrentBasketRequest $request): JsonResponse
+    public function getCurrentBasket(int|string $customerId, GetCurrentBasketRequest $request): JsonResponse
     {
         $data = $request->all();
 

@@ -2,47 +2,26 @@
 
 namespace App\Exceptions;
 
-use Exception;
+use Throwable;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Sentry\Laravel\Integration;
 use Sentry\State\Scope;
+use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Illuminate\Http\JsonResponse;
 
 class Handler extends ExceptionHandler
 {
-    /**
-     * A list of the exception types that are not reported.
-     *
-     * @var array
-     */
-    protected $dontReport = [
-        //
-    ];
-
-    /**
-     * A list of the inputs that are never flashed for validation exceptions.
-     *
-     * @var array
-     */
-    protected $dontFlash = [
-        'password',
-        'password_confirmation',
-    ];
-
-    /**
-     * Report or log an exception.
-     *
-     * @return void
-     */
-    public function report(Exception $exception)
+    public function register()
     {
-        if (app()->bound('sentry') && $this->shouldReport($exception)) {
-            $this->setUserToSentry();
+        $this->reportable(function (Throwable $e) {
+            if (app()->bound('sentry') && $this->shouldReport($e)) {
+                $this->setUserToSentry();
 
-            app('sentry')->captureException($exception);
-        }
-
-        parent::report($exception);
+                app('sentry')->captureException($e);
+            }
+        });
     }
 
     protected function setUserToSentry(): void
@@ -53,20 +32,42 @@ class Handler extends ExceptionHandler
                 $scope->setUser([
                     'id' => $request->userId(),
                 ]);
-            } catch (\Throwable $exception) {
+            } catch (\Throwable) {
                 //
             }
         });
     }
 
-    /**
-     * Render an exception into an HTTP response.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-    public function render($request, Exception $exception)
+    public function render($request, Throwable $e): Response|JsonResponse|SymfonyResponse
     {
-        return parent::render($request, $exception);
+        if ($request->wantsJson()) {
+            // Define the response
+            $response = [
+                'message' => 'Произошла ошибка',
+            ];
+
+            // If the app is in debug mode
+            if (config('app.debug')) {
+                // Add the exception class name, message and stack trace to response
+                $response['exception'] = (new \ReflectionClass($e))->getShortName();
+                $response['message'] = $e->getMessage();
+                $response['trace'] = $e->getTrace();
+            }
+
+            // Default response of 400
+            $status = 400;
+
+            // If this exception is an instance of HttpException
+            if ($this->isHttpException($e)) {
+                // Grab the HTTP status code from the Exception
+                $status = $e->getStatusCode();
+                $response['message'] = $e->getMessage();
+            }
+
+            // Return a JSON response with the response array and status code
+            return response()->json($response, $status);
+        }
+
+        return parent::render($request, $e);
     }
 }

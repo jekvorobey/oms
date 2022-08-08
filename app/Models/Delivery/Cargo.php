@@ -312,9 +312,6 @@ class Cargo extends AbstractModel
         return parent::modifyQuery($query, $modifiedRestQuery);
     }
 
-    /**
-     * @return array
-     */
     public function toRest(RestQuery $restQuery): array
     {
         $result = $this->toArray();

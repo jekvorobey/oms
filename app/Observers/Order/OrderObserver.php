@@ -155,8 +155,8 @@ class OrderObserver
                     )
                     && $order->payment_method_id !== PaymentMethod::CREDITPAID
                 ) {
-                    $delivery_method = !empty($order->deliveries()->first()->delivery_method) &&
-                        $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP;
+                    $delivery_method = !empty($order->deliveries()->firstOrFail()->delivery_method) &&
+                        $order->deliveries()->firstOrFail()->delivery_method === DeliveryMethod::METHOD_PICKUP;
                     $notificationService->send(
                         $user_id,
                         $this->createPaymentNotificationType(
@@ -178,9 +178,8 @@ class OrderObserver
                         })())
                     );
                 } elseif ($order->payment_status === PaymentStatus::WAITING && $order->is_postpaid) {
-                    $delivery_method = !empty($order->deliveries()->first()->delivery_method)
-                        ? $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP
-                        : false;
+                    $delivery_method = !empty($order->deliveries()->firstOrFail()->delivery_method) &&
+                        $order->deliveries()->firstOrFail()->delivery_method === DeliveryMethod::METHOD_PICKUP;
                     $notificationService->send(
                         $user_id,
                         $this->appendTypeModifiers('status_zakazaoformlen', $order->isConsolidatedDelivery(), $delivery_method),
@@ -198,12 +197,13 @@ class OrderObserver
             }
 
             if ($order->is_canceled != $order->getOriginal('is_canceled') && $order->is_canceled) {
+                /** @var Delivery $orderDelivery */
                 $orderDelivery = $order->deliveries()->first();
                 $notificationService->send(
                     $user_id,
                     $this->createCancelledNotificationType(
                         $order->isConsolidatedDelivery(),
-                        $orderDelivery ? $orderDelivery->delivery_method === DeliveryMethod::METHOD_PICKUP : false,
+                        $orderDelivery && $orderDelivery->delivery_method === DeliveryMethod::METHOD_PICKUP,
                         $order->isPaid()
                     ),
                     $this->generateNotificationVariables($order, self::OVERRIDE_CANCEL)
@@ -230,7 +230,7 @@ class OrderObserver
                 $this->createNotificationType(
                     $order->status,
                     $order->isConsolidatedDelivery(),
-                    $order->deliveries()->first()->delivery_method === DeliveryMethod::METHOD_PICKUP,
+                    $order->deliveries()->firstOrFail()->delivery_method === DeliveryMethod::METHOD_PICKUP,
                     $override
                 ),
                 $this->generateNotificationVariables($order, $override)
@@ -485,16 +485,11 @@ class OrderObserver
 
     protected function createPaymentNotificationType(int $payment_status, bool $consolidation, bool $postomat): string
     {
-        switch ($payment_status) {
-            // case PaymentStatus::TIMEOUT:
-            case PaymentStatus::WAITING:
-                return $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat);
-            case PaymentStatus::PAID:
-            case PaymentStatus::HOLD:
-                return $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat);
-            default:
-                return '';
-        }
+        return match ($payment_status) {
+            PaymentStatus::WAITING => $this->appendTypeModifiers('status_zakazaozhidaet_oplaty', $consolidation, $postomat),
+            PaymentStatus::PAID, PaymentStatus::HOLD => $this->appendTypeModifiers('status_zakazaoplachen', $consolidation, $postomat),
+            default => '',
+        };
     }
 
     protected function createNotificationType(
@@ -526,24 +521,14 @@ class OrderObserver
 
     protected function intoStringStatus(int $orderStatus): string
     {
-        switch ($orderStatus) {
-            case OrderStatus::PRE_ORDER:
-                return 'status_zakazapredzakaz_ozhidaem_postupleniya_tovara';
-            // case OrderStatus::CREATED:
-            //     return 'status_zakazaoformlen';
-            // case OrderStatus::AWAITING_CONFIRMATION:
-            //     return 'status_zakazaoformlen';
-            case OrderStatus::DELIVERING:
-                return 'status_zakazav_protsesse_dostavki';
-            case OrderStatus::READY_FOR_RECIPIENT:
-                return 'status_zakazanakhoditsya_v_punkte_vydachi';
-            case OrderStatus::DONE:
-                return 'status_zakazadostavlen';
-            case OrderStatus::RETURNED:
-                return 'status_zakazavozvrashchen';
-            default:
-                return '';
-        }
+        return match ($orderStatus) {
+            OrderStatus::PRE_ORDER => 'status_zakazapredzakaz_ozhidaem_postupleniya_tovara',
+            OrderStatus::DELIVERING => 'status_zakazav_protsesse_dostavki',
+            OrderStatus::READY_FOR_RECIPIENT => 'status_zakazanakhoditsya_v_punkte_vydachi',
+            OrderStatus::DONE => 'status_zakazadostavlen',
+            OrderStatus::RETURNED => 'status_zakazavozvrashchen',
+            default => '',
+        };
     }
 
     protected function appendTypeModifiers(
@@ -585,7 +570,7 @@ class OrderObserver
         ?int $override = null,
         ?Delivery $override_delivery = null,
         bool $delivery_canceled = false
-    ) {
+    ): array {
         /** @var CustomerService $customerService */
         $customerService = app(CustomerService::class);
 
@@ -979,13 +964,13 @@ class OrderObserver
                         ),
                     ];
                 case OrderStatus::READY_FOR_RECIPIENT:
-                    $delivery = $order->deliveries->first();
+                    $delivery = $order->deliveries->firstOrFail();
 
                     if (!empty($delivery) && !empty($delivery->point_id)) {
                         $point = $points->points(
                             $points->newQuery()
                                 ->setFilter('id', $delivery->point_id)
-                        )->first();
+                        )->firstOrFail();
 
                         $params['Режим работы'] = $point->timetable;
                         $params['Телефон пункта выдачи'] = $point->phone;
@@ -1173,12 +1158,13 @@ class OrderObserver
         }
     }
 
-    public function formatDeliveryDate(Delivery $delivery, bool $shortFormat = false)
+    public function formatDeliveryDate(Delivery $delivery, bool $shortFormat = false): string
     {
         $date = $delivery->delivery_at->locale('ru')->isoFormat($shortFormat ? 'D.MM, dd.' : 'D MMMM, dddd');
         if ($delivery->delivery_time_start && $delivery->delivery_time_end) {
             $date .= sprintf(', с %s до %s', substr($delivery->delivery_time_start, 0, -3), substr($delivery->delivery_time_end, 0, -3));
         }
+
         return $date;
     }
 
@@ -1193,7 +1179,7 @@ class OrderObserver
             ->join('<br>');
     }
 
-    public function parseName(UserDto $user, Order $order)
+    public function parseName(UserDto $user, Order $order): string
     {
         if ($order->receiver_name) {
             $words = explode(' ', $order->receiver_name);
@@ -1208,9 +1194,10 @@ class OrderObserver
         return $words[0];
     }
 
-    public static function formatNumber(string $number)
+    public static function formatNumber(string $number): string
     {
         $number = substr($number, 1);
+
         return '+' . substr($number, 0, 1) . ' ' . substr($number, 1, 3) . ' ' . substr($number, 4, 3) . '-' . substr($number, 7, 2) . '-' . substr(
             $number,
             9,

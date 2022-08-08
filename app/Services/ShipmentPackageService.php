@@ -49,14 +49,14 @@ class ShipmentPackageService
     public function deleteShipmentPackage(int $shipmentPackageId): bool
     {
         /** @var ShipmentPackage $shipmentPackage */
-        $shipmentPackage = ShipmentPackage::query()->where('id', $shipmentPackageId)->with('items')->first();
+        $shipmentPackage = ShipmentPackage::query()->where('id', $shipmentPackageId)->with('items')->firstOrFail();
 
         return DB::transaction(function () use ($shipmentPackage) {
             foreach ($shipmentPackage->items as $item) {
-                $item->delete();
+                $item->deleteOrFail();
             }
 
-            return $shipmentPackage->delete();
+            return $shipmentPackage->deleteOrFail();
         });
     }
 
@@ -76,7 +76,7 @@ class ShipmentPackageService
             $ok = $shipmentPackageItem->delete();
         } else {
             /** @var BasketItem $basketItem */
-            $basketItem = BasketItem::find($basketItemId);
+            $basketItem = BasketItem::query()->firstOrFail($basketItemId);
 
             if ($basketItem->qty < $qty) {
                 throw new DeliveryServiceInvalidConditions('Shipment package qty can\'t be more than basket item qty');

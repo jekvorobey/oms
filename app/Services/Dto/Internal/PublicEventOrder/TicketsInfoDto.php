@@ -50,9 +50,6 @@ class TicketsInfoDto implements Arrayable
         $this->tickets->push($ticketDto);
     }
 
-    /**
-     * @return array
-     */
     public function toArray(): array
     {
         return [

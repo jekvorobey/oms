@@ -24,6 +24,7 @@ use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use Throwable;
 
 /**
  * Class DeliveryObserver
@@ -251,7 +252,7 @@ class DeliveryObserver
                     );
                 }
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             report($e);
             logger($e->getMessage(), $e->getTrace());
         }
@@ -286,6 +287,9 @@ class DeliveryObserver
         return $slug;
     }
 
+    /**
+     * @throws Exception
+     */
     protected function cdekDeliverySumUpdate(Delivery $delivery)
     {
         if (
@@ -414,6 +418,7 @@ class DeliveryObserver
     /**
      * Установить флаг отмены всем отправлениям
      * @throws Exception
+     * @throws Throwable
      */
     protected function setIsCanceledToShipments(Delivery $delivery): void
     {
@@ -623,24 +628,16 @@ class DeliveryObserver
 
     protected function statusToType(int $status): ?string
     {
-        switch ($status) {
-            case DeliveryStatus::ON_POINT_IN:
-                return 'status_dostavkiv_protsesse_dostavki';
-            case DeliveryStatus::READY_FOR_RECIPIENT:
-                return 'status_dostavkinakhoditsya_v_punkte_vydachi';
-            case DeliveryStatus::DONE:
-                return 'status_dostavkipoluchena';
-            case DeliveryStatus::CANCELLATION_EXPECTED:
-                return 'status_dostavkiotmenena';
-            case DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER:
-                return 'status_dostavkiv_protsesse_vozvrata';
-            case DeliveryStatus::RETURNED:
-                return 'status_dostavkivozvrashchena';
-            case DeliveryStatus::PRE_ORDER:
-                return 'status_dostavkipredzakaz_ozhidaem_postupleniya_tovara';
-            default:
-                return null;
-        }
+        return match ($status) {
+            DeliveryStatus::ON_POINT_IN => 'status_dostavkiv_protsesse_dostavki',
+            DeliveryStatus::READY_FOR_RECIPIENT => 'status_dostavkinakhoditsya_v_punkte_vydachi',
+            DeliveryStatus::DONE => 'status_dostavkipoluchena',
+            DeliveryStatus::CANCELLATION_EXPECTED => 'status_dostavkiotmenena',
+            DeliveryStatus::RETURN_EXPECTED_FROM_CUSTOMER => 'status_dostavkiv_protsesse_vozvrata',
+            DeliveryStatus::RETURNED => 'status_dostavkivozvrashchena',
+            DeliveryStatus::PRE_ORDER => 'status_dostavkipredzakaz_ozhidaem_postupleniya_tovara',
+            default => null,
+        };
     }
 
     protected function makeArray(Delivery $delivery, string $text): array

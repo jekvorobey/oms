@@ -53,7 +53,6 @@ class OrderStatus
 
     /**
      * OrderStatus constructor.
-     * @param array $types
      */
     public function __construct(int $id, string $name, array $types)
     {
@@ -62,10 +61,7 @@ class OrderStatus
         $this->types = $types;
     }
 
-    /**
-     * @return array
-     */
-    public static function all()
+    public static function all(): array
     {
         return [
             self::CREATED => new self(
@@ -154,9 +150,6 @@ class OrderStatus
         ];
     }
 
-    /**
-     * @return array
-     */
     public static function validValues(int $type = Basket::TYPE_PRODUCT): array
     {
         return array_keys(array_filter(static::all(), function (self $orderStatus) use ($type) {

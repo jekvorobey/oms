@@ -223,7 +223,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property string $error_xml_id - текст последней ошибки при создании/обновлении заказа на доставку в службе доставки
  * @property string $status_xml_id - статус заказа на доставку в службе доставки
  * @property int $payment_status - статус оплаты
- * @property \Illuminate\Support\Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property Carbon|null $payment_status_at - дата установки статуса оплаты
  * @property int $is_problem - флаг, что доставка проблемная
  * @property Carbon|null $is_problem_at - дата установки флага проблемной доставки
  * @property int $is_canceled - флаг, что доставка отменена
@@ -387,9 +387,6 @@ class Delivery extends AbstractModel
         }
     }
 
-    /**
-     * @param array $address
-     */
     public function formDeliveryAddressString(array $address): string
     {
         return (string) join(', ', array_filter([

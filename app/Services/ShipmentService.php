@@ -254,7 +254,7 @@ class ShipmentService
         int $returnReasonId
     ): void {
         /** @var Shipment $shipment */
-        $shipment = Shipment::find($shipmentId);
+        $shipment = Shipment::query()->firstOrFail($shipmentId);
         if (!$qtyToCancel && $shipment->basketItems->where('id', $basketItemId)->isNotEmpty()) {
             throw new DeliveryServiceInvalidConditions('Shipment item not found');
         }
@@ -262,7 +262,7 @@ class ShipmentService
             throw new DeliveryServiceInvalidConditions('Shipment status is exceeded');
         }
         /** @var BasketItem $basketItem */
-        $basketItem = BasketItem::find($basketItemId);
+        $basketItem = BasketItem::query()->firstOrFail($basketItemId);
         if ($basketItem->isCanceled()) {
             throw new DeliveryServiceInvalidConditions('Basket item is already canceled');
         }

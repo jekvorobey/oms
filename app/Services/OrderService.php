@@ -20,8 +20,10 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Pim\Core\PimException;
 use Pim\Services\PublicEventTicketService\PublicEventTicketService;
 use App\Observers\Order\OrderObserver;
+use Throwable;
 
 /**
  * Класс-бизнес логики по работе с заказами (без чекаута и доставки)
@@ -212,7 +214,7 @@ class OrderService
             /** @var OrderReturnService $orderReturnService */
             $orderReturnService = resolve(OrderReturnService::class);
             $orderReturn = $orderReturnService->create($orderReturnDto);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             report($e);
             return false;
         }
@@ -230,7 +232,7 @@ class OrderService
             $order->is_canceled = true;
         }
 
-        return $save ? $order->save() : true;
+        return !$save || $order->save();
     }
 
     /**
@@ -302,7 +304,7 @@ class OrderService
     }
 
     /**
-     * @throws \Pim\Core\PimException
+     * @throws PimException
      */
     public function getPublicEventsOrderInfo(
         Order $order,
@@ -427,12 +429,12 @@ class OrderService
                 $organizerInfoDto->email = $cardStruct->organizer['email'];
                 $organizerInfoDto->site = $cardStruct->organizer['site'];
                 $organizerInfoDto->messengerPhone = $cardStruct->organizer['messenger_phone'] ?: $cardStruct->organizer['phone'];
+                /** @var BasketItem $item */
                 foreach ($basketItems as $item) {
                     if ($cardStruct->sprintId == $item->getSprintId()) {
                         $ticketsInfoDto = new PublicEventOrder\TicketsInfoDto();
                         $publicEventInfoDto->addTicketInfo($ticketsInfoDto);
                         $ticketsInfoDto->id = $item->id;
-                        $ticketsInfoDto->code = $item->code;
                         $ticketsInfoDto->name = $item->name;
                         $ticketsInfoDto->stageIds = $item->getTicketStageIds();
                         $ticketsInfoDto->ticketTypeName = $item->getTicketTypeName();
@@ -470,7 +472,7 @@ class OrderService
 
     /**
      * Отправить билеты на мастер-классы на почту покупателю заказа
-     * @throws \Throwable
+     * @throws Throwable
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
     public function sendTicketsEmail(Order $order): void

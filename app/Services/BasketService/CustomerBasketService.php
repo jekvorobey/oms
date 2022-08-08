@@ -17,13 +17,13 @@ class CustomerBasketService extends BasketService
      */
     public function getBasket(int $basketId): Basket
     {
-        return Basket::query()->findOrFail($basketId);
+        return Basket::findOrFail($basketId);
     }
 
     /**
      * Получить текущую корзину пользователя
      */
-    public function findFreeUserBasket(int $type, $customerId): Basket
+    public function findFreeUserBasket(int $type, int|string $customerId): Basket
     {
         $basket = Basket::query()
             ->select('id')
@@ -38,7 +38,7 @@ class CustomerBasketService extends BasketService
         return $basket;
     }
 
-    protected function createBasket(int $type, $customerId): Basket
+    protected function createBasket(int $type, int|string $customerId): Basket
     {
         $basket = new Basket();
         $basket->customer_id = $customerId;
@@ -51,11 +51,9 @@ class CustomerBasketService extends BasketService
 
     /**
      * Создать/изменить/удалить товар корзины
-     * @param array $data
-     * @return bool|null
      * @throws Exception
      */
-    public function setItem(Basket $basket, int $offerId, array $data): bool
+    public function setItem(Basket $basket, int $offerId, array $data): ?bool
     {
         $item = $this->itemByOffer($basket, $offerId, $data['bundle_id'] ?? null, $data['bundle_item_id'] ?? null);
         if ($item->id && isset($data['qty']) && !$data['qty']) {

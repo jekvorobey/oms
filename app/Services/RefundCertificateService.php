@@ -12,8 +12,7 @@ use Pim\Services\CertificateService\CertificateService;
  */
 class RefundCertificateService
 {
-    /** @var CertificateService */
-    private $certificateService;
+    private CertificateService $certificateService;
 
     public function __construct()
     {

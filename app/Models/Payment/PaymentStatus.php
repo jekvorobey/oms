@@ -40,10 +40,7 @@ class PaymentStatus
         $this->name = $name;
     }
 
-    /**
-     * @return array
-     */
-    public static function all()
+    public static function all(): array
     {
         return [
             new self(self::NOT_PAID, 'Не оплачено'),
@@ -55,9 +52,6 @@ class PaymentStatus
         ];
     }
 
-    /**
-     * @return array
-     */
     public static function validValues(): array
     {
         return [

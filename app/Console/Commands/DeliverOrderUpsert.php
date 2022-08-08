@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Delivery\Delivery;
 use App\Services\DeliveryService;
+use Exception;
 use Illuminate\Console\Command;
 
 /**
@@ -29,6 +30,7 @@ class DeliverOrderUpsert extends Command
 
     /**
      * Execute the console command.
+     * @throws Exception
      */
     public function handle()
     {

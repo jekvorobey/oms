@@ -54,6 +54,7 @@ class OrdersController extends Controller
      *     )
      * )
      * Получить список заказов
+     * @throws PimException
      */
     public function read(Request $request): JsonResponse
     {

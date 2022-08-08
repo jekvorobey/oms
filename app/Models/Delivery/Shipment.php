@@ -691,9 +691,6 @@ class Shipment extends AbstractModel
         }
     }
 
-    /**
-     * @return array
-     */
     public function toRest(RestQuery $restQuery): array
     {
         $result = $this->toArray();
