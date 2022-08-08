@@ -92,6 +92,17 @@ class OrderUPDCreator extends OrderDocumentsCreator
         return $this->order ? $this->order->basket->items : $this->shipment->basketItems;
     }
 
+    protected function getPdd()
+    {
+        return $this->order ? $this->order->deliveries->max('pdd') : $this->shipment->delivery->pdd;
+    }
+
+    protected function getShipmentPrdInfo(): string
+    {
+        return $this->order ? '-- от --' : $this->shipment->payment_document_number . ' от ' .
+            Carbon::parse($this->shipment->payment_document_date)->isoFormat('L') . ' г.';
+    }
+
     /**
      * @throws Exception
      * @throws CmsException
@@ -134,23 +145,33 @@ class OrderUPDCreator extends OrderDocumentsCreator
 
     protected function fillSellerInfo(Worksheet $sheet): void
     {
-        $contractDate = OrderDocumentCreatorHelper::formatDate($this->getOfferDate());
+        $updDate = OrderDocumentCreatorHelper::formatDate(Carbon::now());
 
+        /** Статус */
         $sheet->setCellValue('D5', $this->isProductType ? 1 : 2);
+        /** Счет-фактура № */
         $sheet->setCellValue('P1', $this->getOfferNumber());
-        $sheet->setCellValue('Y1', $contractDate);
+        /** Счет-фактура дата от */
+        $sheet->setCellValue('Y1', $updDate);
+        /** Продавец */
         $sheet->setCellValue('R4', $this->organizationInfo['full_name']);
+        /** Адрес продавца */
         $sheet->setCellValue('R5', $this->organizationInfo['legal_address']);
+        /** ИНН/КПП продавца */
         $sheet->setCellValue(
             'R6',
             $this->customer->legal_info_kpp ? $this->organizationInfo['inn'] . '/' . $this->organizationInfo['kpp'] : $this->organizationInfo['inn']
         );
+        /** Грузоотправитель и его адрес */
         $sheet->setCellValue('R7', $this->organizationInfo['legal_address']);
+        /** Грузополучатель и его адрес */
         $sheet->setCellValue('R8', $this->customer->legal_info_company_name . ', ' . $this->customer->legal_info_company_address);
+        /** К платежно-расчетному документу № */
+        $sheet->setCellValue('R9', $this->getShipmentPrdInfo());
+        /** Документ об отгрузке */
         $sheet->setCellValue(
             'R10',
-            '№ п/п 1-' . $this->getItems()->count() . ' № ' .
-            $this->getOfferNumber() . ' от ' . OrderDocumentCreatorHelper::formatDate($this->getOfferDate())
+            '№ п/п 1-' . $this->getItems()->count() . ' № ' . $this->getOfferNumber() . ' от ' . $updDate
         );
 
         $this->sellerInfo = $this->organizationInfo['full_name'] . ', ИНН/КПП ' . $this->organizationInfo['inn'] . '/' . $this->organizationInfo['kpp'];
@@ -158,8 +179,11 @@ class OrderUPDCreator extends OrderDocumentsCreator
 
     protected function fillCustomerInfo(Worksheet $sheet): void
     {
+        /** Покупатель */
         $sheet->setCellValue('BF4', $this->customer->legal_info_company_name);
+        /** Адрес покупателя */
         $sheet->setCellValue('BF5', $this->customer->legal_info_company_address);
+        /** ИНН/КПП покупателя */
         $sheet->setCellValue('BF6', $this->customer->legal_info_inn);
 
         $this->customerInfo = $this->customer->legal_info_company_name;
@@ -232,8 +256,11 @@ class OrderUPDCreator extends OrderDocumentsCreator
         $pageNumberRowIndex = $toRowIndex + 3;
         $pageNumbers = OrderDocumentCreatorHelper::getPageNumbers($sheet);
         $listWord = trans_choice('листе|листах', $pageNumbers);
+        /** Количество листов */
         $sheet->setCellValue('B' . $pageNumberRowIndex, 'Документ составлен на ' . $pageNumbers . ' ' . $listWord);
+        /** Руководитель организации или иное уполномоченное лицо */
         $sheet->setCellValue('AC' . $pageNumberRowIndex, $this->getCEOInitials());
+        /** Главный бухгалтер или иное уполномоченное лицо */
         $sheet->setCellValue('BO' . $pageNumberRowIndex, $this->getGeneralAccountantInitials());
         /** Основание передачи (сдачи) / получения (приемки) */
         $sheet->setCellValue(
@@ -245,10 +272,7 @@ class OrderUPDCreator extends OrderDocumentsCreator
         $sheet->setCellValue('Z' . ($toRowIndex + 14), $this->getCEOInitials());
 
         /** Дата отгрузки, передачи (сдачи) */
-        $sheet->setCellValue(
-            'O' . ($toRowIndex + 16),
-            OrderDocumentCreatorHelper::formatDate(Carbon::today())
-        );
+        $sheet->setCellValue('O' . ($toRowIndex + 16), OrderDocumentCreatorHelper::formatDate($this->getPdd()));
 
         /** Инициалы гендиректора */
         $sheet->setCellValue('Z' . ($toRowIndex + 22), $this->getCEOInitials());

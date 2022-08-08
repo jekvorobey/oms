@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "86ae2347d40092cc146d00040eb6e5f5",
+    "content-hash": "d49c2c20ab176eeddc2b312fe5118b24",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1510,11 +1510,11 @@
         },
         {
             "name": "ibt/cm-lib",
-            "version": "dev-master",
+            "version": "dev-feature/BX-6366-bank-transfer-payment-method",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
-                "reference": "d901c4a33a77a70ef06f5d66838d645fc5d240b0"
+                "reference": "b6417cd6d44132a7e0fa48c7a6fe440d7b498a67"
             },
             "require": {
                 "ext-json": "*",
@@ -1525,7 +1525,6 @@
                 "laravel/framework": "^5.8",
                 "phpunit/phpunit": "^7.5"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1549,7 +1548,7 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2022-07-11T09:31:58+00:00"
+            "time": "2022-08-05T08:23:14+00:00"
         },
         {
             "name": "ibt/cms-lib",

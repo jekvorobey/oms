@@ -83,7 +83,7 @@ abstract class OrderDocumentsCreator extends DocumentCreator
         /** @var CustomerService $customerService */
         $customerService = resolve(CustomerService::class);
         $customerQuery = $customerService->newQuery()
-            ->addFields(CustomerDto::entity(), 'id', 'legal_info_company_name', 'legal_info_inn')
+            ->addFields(CustomerDto::entity(), 'id', 'legal_info_company_name', 'legal_info_company_address', 'legal_info_inn', 'legal_info_kpp')
             ->setFilter('id', $id);
         $this->customer = $customerService->customers($customerQuery)->first();
 

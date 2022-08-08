@@ -179,6 +179,8 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property Carbon|null $status_at - дата установки статуса
  * @property int $payment_status - статус оплаты
  * @property Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property string|null $payment_document_number - номер платежно-расчетного документа
+ * @property Carbon|null $payment_document_date - дата платежно-расчетного документа
  * @property int $is_problem - флаг, что отправление проблемное
  * @property Carbon|null $is_problem_at - дата установки флага проблемного отправления
  * @property int $is_canceled - флаг, что отправление отменено
@@ -233,6 +235,8 @@ class Shipment extends AbstractModel
         'upd_file_id',
         'barcode_file_id',
         'cdek_receipt_file_id',
+        'payment_document_number',
+        'payment_document_date',
     ];
 
     /** @var array */
