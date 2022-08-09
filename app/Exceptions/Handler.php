@@ -37,37 +37,4 @@ class Handler extends ExceptionHandler
             }
         });
     }
-
-    public function render($request, Throwable $e): Response|JsonResponse|SymfonyResponse
-    {
-        if ($request->wantsJson()) {
-            // Define the response
-            $response = [
-                'message' => 'Произошла ошибка',
-            ];
-
-            // If the app is in debug mode
-            if (config('app.debug')) {
-                // Add the exception class name, message and stack trace to response
-                $response['exception'] = (new \ReflectionClass($e))->getShortName();
-                $response['message'] = $e->getMessage();
-                $response['trace'] = $e->getTrace();
-            }
-
-            // Default response of 400
-            $status = 400;
-
-            // If this exception is an instance of HttpException
-            if ($this->isHttpException($e)) {
-                // Grab the HTTP status code from the Exception
-                $status = $e->getStatusCode();
-                $response['message'] = $e->getMessage();
-            }
-
-            // Return a JSON response with the response array and status code
-            return response()->json($response, $status);
-        }
-
-        return parent::render($request, $e);
-    }
 }
