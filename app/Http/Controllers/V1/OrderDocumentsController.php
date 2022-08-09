@@ -113,7 +113,7 @@ class OrderDocumentsController extends DocumentController
         $data = $this->validate($request, [
             'type' => 'sometimes|string',
         ]);
-        $documents = OrderDocument::query()->whereId($id);
+        $documents = OrderDocument::query()->where('order_id', $id);
         if (isset($data['type'])) {
             $documents->where('type', $data['type']);
         }
