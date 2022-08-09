@@ -129,8 +129,11 @@ class ShipmentDocumentsController extends DocumentController
      * )
      * @throws Throwable
      */
-    public function generateUPD(int $shipmentId, OrderUPDCreator $orderUPDCreator): Response
-    {
+    public function generateUPD(
+        int $shipmentId,
+        OrderUPDCreator $orderUPDCreator,
+        ShipmentService $shipmentService
+    ): Response {
         /** @var Shipment $shipment */
         $shipment = $this->shipmentService->getShipment($shipmentId);
 
@@ -140,6 +143,7 @@ class ShipmentDocumentsController extends DocumentController
         }
         $orderUPDCreator->createOrderDocumentRecord($shipment->delivery->order_id, $documentDto->file_id, OrderDocument::UPD_TYPE);
         $orderUPDCreator->createRecordInCustomerDocuments($shipment->delivery->order->customer_id, $documentDto->file_id, $orderUPDCreator->fullTitle());
+        $shipmentService->saveShipmentUpdFile($shipment, $documentDto->file_id);
 
         return response('', 204);
     }
