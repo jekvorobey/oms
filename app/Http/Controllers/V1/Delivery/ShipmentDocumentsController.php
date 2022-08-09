@@ -169,7 +169,7 @@ class ShipmentDocumentsController extends DocumentController
     {
         /** @var Shipment $shipment */
         $shipment = $this->shipmentService->getShipment($shipmentId);
-        $documentDto = new DocumentDto(['file_id' => $shipment->upd_file_id]);
+        $documentDto = new DocumentDto(['file_id' => $shipment->upd_file_id, 'success' => true]);
 
         return $this->documentResponse($documentDto);
     }

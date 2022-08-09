@@ -146,7 +146,7 @@ class OrderDocumentsController extends DocumentController
             ->where('order_id', $id)
             ->where('type', OrderDocument::INVOICE_OFFER_TYPE)
             ->firstOrFail();
-        $documentDto = new DocumentDto(['file_id' => $document->file_id]);
+        $documentDto = new DocumentDto(['file_id' => $document->file_id, 'success' => true]);
 
         return $this->documentResponse($documentDto);
     }
