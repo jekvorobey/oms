@@ -6,7 +6,6 @@ use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
 use App\Services\OrderService;
-use Cms\Core\CmsException;
 use Cms\Services\OptionService\OptionService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -36,8 +35,6 @@ class OrderUPDCreator extends OrderDocumentsCreator
     protected $sellerInfo;
     /** Строка информации о покупателе */
     protected $customerInfo;
-    /** Информации об организации */
-    protected array $organizationInfo;
 
     protected Collection $offers;
     protected Collection $merchants;
@@ -105,15 +102,12 @@ class OrderUPDCreator extends OrderDocumentsCreator
 
     /**
      * @throws Exception
-     * @throws CmsException
      * @throws \PhpOffice\PhpSpreadsheet\Exception|PimException
      */
     protected function createDocument(): string
     {
         $pathToTemplate = Storage::disk(self::DISK)->path($this->documentName());
         $spreadsheet = IOFactory::load($pathToTemplate);
-
-        $this->organizationInfo = $this->getOrganizationInfo();
 
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle($this->title());
@@ -404,24 +398,6 @@ class OrderUPDCreator extends OrderDocumentsCreator
         }
 
         return null;
-    }
-
-    protected function getCEOInitials(): string
-    {
-        return $this->organizationInfo['ceo_last_name'] . ' ' . substr($this->organizationInfo['ceo_first_name'], 0, 2) . '.' . substr(
-            $this->organizationInfo['ceo_middle_name'],
-            0,
-            2
-        ) . '.';
-    }
-
-    protected function getGeneralAccountantInitials(): string
-    {
-        return $this->organizationInfo['general_accountant_last_name'] . ' ' . substr(
-            $this->organizationInfo['general_accountant_first_name'],
-            0,
-            2
-        ) . '.' . substr($this->organizationInfo['general_accountant_middle_name'], 0, 2) . '.';
     }
 
     protected function resultDocSuffix(): string

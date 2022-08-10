@@ -4,7 +4,6 @@ namespace App\Services\DocumentService;
 
 use App\Models\Basket\BasketItem;
 use App\Services\OrderService;
-use Cms\Core\CmsException;
 use Cms\Services\OptionService\OptionService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -33,7 +32,6 @@ class OrderInvoiceOfferCreator extends OrderDocumentsCreator
     }
 
     /**
-     * @throws CmsException
      * @throws CopyFileException
      * @throws CreateTemporaryFileException
      * @throws Exception
@@ -43,20 +41,20 @@ class OrderInvoiceOfferCreator extends OrderDocumentsCreator
         $pathToTemplate = Storage::disk(self::DISK)->path($this->documentName());
         $templateProcessor = new TemplateProcessor($pathToTemplate);
 
-        $organizationInfo = $this->getOrganizationInfo();
-
-        $templateProcessor->setValue('full_name', $organizationInfo['full_name']);
-        $templateProcessor->setValue('legal_address', $organizationInfo['legal_address']);
-        $templateProcessor->setValue('inn', $organizationInfo['inn']);
-        $templateProcessor->setValue('kpp', $organizationInfo['kpp']);
-        $templateProcessor->setValue('payment_account', $organizationInfo['payment_account']);
-        $templateProcessor->setValue('bank_bik', $organizationInfo['bank_bik']);
-        $templateProcessor->setValue('correspondent_account', $organizationInfo['correspondent_account']);
-        $templateProcessor->setValue('bank_name', $organizationInfo['bank_name']);
+        $templateProcessor->setValue('full_name', $this->organizationInfo['full_name']);
+        $templateProcessor->setValue('legal_address', $this->organizationInfo['legal_address']);
+        $templateProcessor->setValue('inn', $this->organizationInfo['inn']);
+        $templateProcessor->setValue('kpp', $this->organizationInfo['kpp']);
+        $templateProcessor->setValue('payment_account', $this->organizationInfo['payment_account']);
+        $templateProcessor->setValue('bank_bik', $this->organizationInfo['bank_bik']);
+        $templateProcessor->setValue('correspondent_account', $this->organizationInfo['correspondent_account']);
+        $templateProcessor->setValue('bank_name', $this->organizationInfo['bank_name']);
         $templateProcessor->setValue('offer_number', $this->order->number);
         $templateProcessor->setValue('offer_date', OrderDocumentCreatorHelper::formatDate($this->order->created_at));
         $templateProcessor->setValue('customer_legal_info_company_name', $this->customer->legal_info_company_name);
         $templateProcessor->setValue('customer_legal_info_inn', $this->customer->legal_info_inn);
+        $templateProcessor->setValue('seo', $this->getCEOInitials());
+        $templateProcessor->setValue('general_accountant', $this->getGeneralAccountantInitials());
         $values = $this->order->basket->items->map(function (BasketItem $basketItem, $number) {
             return [
                 'number' => $number + 1,

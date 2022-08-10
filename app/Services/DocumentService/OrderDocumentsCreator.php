@@ -23,6 +23,9 @@ abstract class OrderDocumentsCreator extends DocumentCreator
     protected bool $isProductType;
     protected CustomerDto $customer;
 
+    /** Информации об организации */
+    protected array $organizationInfo;
+
     public const MAPPING_KEYS = [
         'short_name' => OptionDto::KEY_ORGANIZATION_CARD_SHORT_NAME,
         'full_name' => OptionDto::KEY_ORGANIZATION_CARD_FULL_NAME,
@@ -64,10 +67,15 @@ abstract class OrderDocumentsCreator extends DocumentCreator
         'email_for_claim' => OptionDto::KEY_ORGANIZATION_CARD_EMAIL_FOR_CLAIM,
     ];
 
+    /**
+     * @throws CmsException
+     */
     public function __construct(OrderService $orderService, OptionService $optionService)
     {
         $this->orderService = $orderService;
         $this->optionService = $optionService;
+
+        $this->organizationInfo = $this->getOrganizationInfo();
     }
 
     public function setOrder(Order $order): self
@@ -132,5 +140,23 @@ abstract class OrderDocumentsCreator extends DocumentCreator
                 return $options[$item];
             })
             ->all();
+    }
+
+    protected function getCEOInitials(): string
+    {
+        return $this->organizationInfo['ceo_last_name'] . ' ' . substr($this->organizationInfo['ceo_first_name'], 0, 2) . '.' . substr(
+            $this->organizationInfo['ceo_middle_name'],
+            0,
+            2
+        ) . '.';
+    }
+
+    protected function getGeneralAccountantInitials(): string
+    {
+        return $this->organizationInfo['general_accountant_last_name'] . ' ' . substr(
+            $this->organizationInfo['general_accountant_first_name'],
+            0,
+            2
+        ) . '.' . substr($this->organizationInfo['general_accountant_middle_name'], 0, 2) . '.';
     }
 }
