@@ -58,7 +58,7 @@ class OrderDocumentsController extends DocumentController
 
     /**
      * @OA\GET(
-     *     path="api/v1/orders/{id}/upd",
+     *     path="api/v1/orders/{id}/documents/generate-upd",
      *     tags={"Заказы"},
      *     description="Сформировать и сохранить УПД",
      *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
@@ -90,36 +90,30 @@ class OrderDocumentsController extends DocumentController
 
     /**
      * @OA\Get(
-     *     path="api/v1/orders/{id}/documents",
+     *     path="api/v1/orders/{id}/documents/upd",
      *     tags={"Заказы"},
-     *     description="Получить документы",
-     *     @OA\RequestBody(
-     *      @OA\JsonContent(
-     *          @OA\Property(property="type", type="string"),
-     *      ),
-     *     ),
-     *     @OA\Response(
-     *         response="200",
-     *         description="",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/OrderDocument"))
+     *     description="Получить УПД по договору",
+     *     @OA\Response(response="200", description="",
+     *          @OA\JsonContent(
+     *             @OA\Property(property="absolute_url", type="string"),
+     *             @OA\Property(property="original_name", type="string"),
+     *             @OA\Property(property="size", type="string"),
      *         )
      *     ),
-     *     @OA\Response(response="404", description="documents not found"),
+     *     @OA\Response(response="404", description="document not found"),
+     *     @OA\Response(response="500", description="bad request")
      * )
      */
-    public function documents(int $id, Request $request): JsonResponse
+    public function upd(int $id): JsonResponse
     {
-        $data = $this->validate($request, [
-            'type' => 'sometimes|string',
-        ]);
-        $documents = OrderDocument::query()->where('order_id', $id);
-        if (isset($data['type'])) {
-            $documents->where('type', $data['type']);
-        }
-        $documents->get();
+        /** @var OrderDocument $document */
+        $document = OrderDocument::query()
+            ->where('order_id', $id)
+            ->where('type', OrderDocument::UPD_TYPE)
+            ->firstOrFail();
+        $documentDto = new DocumentDto(['file_id' => $document->file_id, 'success' => true]);
 
-        return response()->json(['items' => $documents]);
+        return $this->documentResponse($documentDto);
     }
 
     /**

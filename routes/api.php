@@ -106,7 +106,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::prefix('documents')->group(function () {
                 Route::get('generate-invoice-offer', 'OrderDocumentsController@generateInvoiceOffer');
                 Route::get('generate-upd', 'OrderDocumentsController@generateUPD');
-                Route::get('', 'OrderDocumentsController@documents');
+                Route::get('upd', 'OrderDocumentsController@upd');
                 Route::get('invoice-offer', 'OrderDocumentsController@invoiceOffer');
             });
         });
