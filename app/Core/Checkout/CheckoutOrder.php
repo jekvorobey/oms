@@ -20,6 +20,7 @@ use App\Models\Payment\PaymentSystem;
 use Carbon\Carbon;
 use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
+use Greensight\CommonMsa\Services\UtmMarksService\UtmMarksService;
 use Greensight\Customer\Dto\CustomerBonusDto;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
@@ -90,6 +91,8 @@ class CheckoutOrder
     /** @var Collection|CheckoutPublicEvent[] */
     public $publicEvents;
 
+    public array $utmMarks = [];
+
     public static function fromArray(array $data): self
     {
         $order = new self();
@@ -117,6 +120,8 @@ class CheckoutOrder
             'deliveries' => $deliveries,
 
             'publicEvents' => $publicEvents,
+
+            'utmMarks' => $order->utmMarks,
         ] = $data);
 
         foreach ($prices as $priceData) {
@@ -169,6 +174,7 @@ class CheckoutOrder
             $this->createOrderDiscounts($order);
             $this->createOrderPromoCodes($order);
             $this->createOrderBonuses($order);
+            $this->saveUtmMarks($order);
 
             return [$order->id, $order->number];
         });
@@ -662,5 +668,20 @@ class CheckoutOrder
             $result[$key] = $basketItem->id;
         }
         return $result;
+    }
+
+    private function saveUtmMarks(Order $order): void
+    {
+        if (!is_array($this->utmMarks) || empty($this->utmMarks)) {
+            return;
+        }
+
+        foreach ($this->utmMarks as $utmName => $utmValue) {
+            if (in_array($utmName, UtmMarksService::UTM_MARK_LIST)) {
+                $order->$utmName = $utmValue;
+            }
+        }
+
+        $order->save();
     }
 }
