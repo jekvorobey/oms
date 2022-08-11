@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d49c2c20ab176eeddc2b312fe5118b24",
+    "content-hash": "716f25b4f618660407c470e5a122e607",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1510,11 +1510,11 @@
         },
         {
             "name": "ibt/cm-lib",
-            "version": "dev-feature/BX-6366-bank-transfer-payment-method",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
-                "reference": "b6417cd6d44132a7e0fa48c7a6fe440d7b498a67"
+                "reference": "3946857379b0c156647c95ed3585e5d6ef13619c"
             },
             "require": {
                 "ext-json": "*",
@@ -1525,6 +1525,7 @@
                 "laravel/framework": "^5.8",
                 "phpunit/phpunit": "^7.5"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1548,15 +1549,15 @@
                 }
             ],
             "description": "iBT Customer management client",
-            "time": "2022-08-05T08:23:14+00:00"
+            "time": "2022-08-11T07:11:30+00:00"
         },
         {
             "name": "ibt/cms-lib",
-            "version": "dev-feature/BX-6366-update-organization-card-info",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/ibt-cms-lib",
-                "reference": "a61c761d40280470b6c902e1404d392c00062e9c"
+                "reference": "570ef28de966dc5b1c7d7f0cc3a5e6f2cb084cf9"
             },
             "require": {
                 "ext-json": "*",
@@ -1566,6 +1567,7 @@
             "require-dev": {
                 "laravel/framework": "^5.8"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1579,7 +1581,7 @@
                 }
             ],
             "description": "iBT CMS service client",
-            "time": "2022-08-03T08:25:38+00:00"
+            "time": "2022-08-11T07:11:27+00:00"
         },
         {
             "name": "ibt/common-lib",
@@ -10705,5 +10707,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.2.0"
 }
