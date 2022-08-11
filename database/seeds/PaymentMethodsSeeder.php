@@ -30,6 +30,21 @@ class PaymentMethodsSeeder extends Seeder
     <div class="checkout-product-panel__item-payment-list-item">
         <svg class="icon" width="56" height="24"><use xlink:href="#icon-yandex"></use></svg>
     </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="30" height="24"><use xlink:href="#icon-sbp"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="25" height="24"><use xlink:href="#icon-alfa"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="30" height="24"><use xlink:href="#icon-sber-pay"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="40" height="24"><use xlink:href="#icon-tinkoff"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="40" height="24"><use xlink:href="#icon-ukassa"></use></svg>
+    </div>
 </div>
             ',
         ],
