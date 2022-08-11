@@ -120,7 +120,7 @@ class OrderUPDCreator extends OrderDocumentsCreator
         $this->fillFooter($sheet, $lastRowIndex);
         $this->setPageOptions($sheet);
 
-        $writer = IOFactory::createWriter($spreadsheet, 'Xls');
+        $writer = IOFactory::createWriter($spreadsheet, IOFactory::WRITER_XLSX);
         $path = $this->generateDocumentPath();
         $writer->save($path);
 
