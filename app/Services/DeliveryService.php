@@ -553,6 +553,7 @@ class DeliveryService
                     $deliveryOrderPlaceDto->height = (int) ceil($package->height);
                     $deliveryOrderPlaceDto->length = (int) ceil($package->length);
                     $deliveryOrderPlaceDto->weight = (int) ceil($package->weight);
+                    $deliveryOrderPlaceDto->package_id = $package->xml_id;
 
                     $items = collect();
                     $deliveryOrderPlaceDto->items = $items;
