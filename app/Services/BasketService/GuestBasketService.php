@@ -6,6 +6,7 @@ use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use Http\Discovery\Exception\NotFoundException;
 use Illuminate\Support\Facades\Cache;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class GuestBasketService extends BasketService
 {
@@ -16,7 +17,7 @@ class GuestBasketService extends BasketService
         $basket = Cache::get($basketId);
 
         if (!$basket) {
-            throw new \RuntimeException('Guest basket not found');
+            throw new NotFoundHttpException('Guest basket not found');
         }
 
         return $basket;
@@ -25,12 +26,15 @@ class GuestBasketService extends BasketService
     public function findFreeUserBasket(int $type, $customerId): Basket
     {
         $basketMappings = Cache::get($customerId);
-        $key = $this->getBasketKey($type);
+        $typeKey = $this->getBasketKey($type);
 
-        if (isset($basketMappings[$key])) {
-            $basketUuid = $basketMappings[$key];
+        $basket = null;
+        if (isset($basketMappings[$typeKey])) {
+            $basketUuid = $basketMappings[$typeKey];
             $basket = Cache::get($basketUuid);
-        } else {
+        }
+
+        if (!$basket) {
             $basket = $this->createBasket($type, $customerId);
         }
 
@@ -50,11 +54,11 @@ class GuestBasketService extends BasketService
         Cache::put($basket->id, $basket, self::CACHE_LIFETIME);
         $basketMapping = Cache::get($basket->customer_id);
 
-        $key = $this->getBasketKey($type);
+        $typeKey = $this->getBasketKey($type);
 
-        if ($key) {
+        if ($typeKey) {
             Cache::forget($basket->customer_id);
-            $basketMapping[$key] = $basket->id;
+            $basketMapping[$typeKey] = $basket->id;
             Cache::put($basket->customer_id, $basketMapping, self::CACHE_LIFETIME);
         }
 
@@ -64,12 +68,12 @@ class GuestBasketService extends BasketService
     public function deleteBasket(Basket $basket): bool
     {
         Cache::forget($basket->id);
-        $key = $this->getBasketKey($basket->type);
+        $typeKey = $this->getBasketKey($basket->type);
 
-        if ($key) {
+        if ($typeKey) {
             $basketMapping = Cache::get($basket->customer_id);
             Cache::forget($basket->customer_id);
-            unset($basketMapping[$key]);
+            unset($basketMapping[$typeKey]);
 
             if (!empty($basketMapping)) {
                 Cache::put($basket->customer_id, $basketMapping, self::CACHE_LIFETIME);
@@ -168,7 +172,7 @@ class GuestBasketService extends BasketService
             return;
         }
 
-        foreach ($basketMappings as $cacheType => $basketId) {
+        foreach ($basketMappings as $typeKey => $basketId) {
             /** @var Basket $guestBasket */
             $guestBasket = Cache::get($basketId);
 
@@ -176,7 +180,7 @@ class GuestBasketService extends BasketService
                 continue;
             }
 
-            $basketType = $this->getBasketTypeByKey($cacheType);
+            $basketType = $this->getBasketTypeByKey($typeKey);
             $customerBasket = $customerBasketService->findFreeUserBasket($basketType, $customerId);
 
             $guestBasket->items->each(function (BasketItem $basketItem) use ($customerBasket) {
