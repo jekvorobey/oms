@@ -66,6 +66,8 @@ class OrderInvoiceOfferCreator extends OrderDocumentsCreator
             ];
         })->all();
         $templateProcessor->cloneRowAndSetValues('number', $values);
+        $templateProcessor->setValue('items_price', price_format($this->order->price - $this->order->delivery_price));
+        $templateProcessor->setValue('delivery_price', price_format($this->order->delivery_price));
         $templateProcessor->setValue('order_price', price_format($this->order->price));
         $path = $this->generateDocumentPath();
         $templateProcessor->saveAs($path);
