@@ -815,6 +815,7 @@ class OrdersController extends Controller
                     'created_at' => $shipment->delivery->order->created_at->format('Y-m-d H:i:s'),
                     'items' => $items,
                     'order_id' => $shipment->delivery->order->id,
+                    'customer_id' => $shipment->delivery->order->customer_id,
                     'shipment_id' => $shipment->id,
                     'merchant_id' => $shipment->merchant_id,
                     'status' => $shipment->status,
