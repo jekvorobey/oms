@@ -33,6 +33,7 @@ use Illuminate\Validation\Rule;
 use Pim\Core\PimException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Throwable;
 
 /**
  * Class OrdersController
@@ -120,7 +121,7 @@ class OrdersController extends Controller
      *     ),
      *     @OA\Response(response="404", description=""),
      * )
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function tickets(int $id, Request $request, OrderTicketsCreator $orderTicketsCreator): JsonResponse
     {
