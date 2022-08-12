@@ -96,8 +96,18 @@ class OrderUPDCreator extends OrderDocumentsCreator
 
     protected function getShipmentPrdInfo(): string
     {
-        return $this->order ? '-- от --' : $this->shipment->payment_document_number . ' от ' .
-            Carbon::parse($this->shipment->payment_document_date)->isoFormat('L') . ' г.';
+        if ($this->order) {
+            return '-- от --';
+        }
+
+        if (!$this->shipment->payment_document_number || !$this->shipment->payment_document_date) {
+            return '-- от --';
+        }
+
+        return $this->shipment->payment_document_number
+            . ' от '
+            . Carbon::parse($this->shipment->payment_document_date)->isoFormat('L')
+            . ' г.';
     }
 
     /**
