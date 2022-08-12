@@ -6,11 +6,12 @@ use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Models;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
-use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\CreditReceiptData;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\IncomeReceiptData;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\RefundReceiptData;
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
+use YooKassa\Client;
 use YooKassa\Common\Exceptions\ApiException;
 use YooKassa\Common\Exceptions\BadApiRequestException;
 use YooKassa\Common\Exceptions\ExtensionNotFoundException;
@@ -25,9 +26,6 @@ use YooKassa\Model\Notification\NotificationFactory;
 use YooKassa\Model\NotificationEventType;
 use YooKassa\Model\PaymentStatus;
 use YooKassa\Model\Payment as YooKassaPayment;
-use Exception;
-use YooKassa\Model\Receipt\PaymentMode;
-use YooKassa\Model\Receipt\SettlementType;
 
 /**
  * Class YandexPaymentSystem
@@ -35,7 +33,7 @@ use YooKassa\Model\Receipt\SettlementType;
  */
 class YandexPaymentSystem implements PaymentSystemInterface
 {
-    /** @var SDK\Client */
+    /** @var Client */
     private $yandexService;
     /** @var Logger */
     private $logger;
@@ -45,7 +43,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
      */
     public function __construct()
     {
-        $this->yandexService = resolve(SDK\Client::class);
+        $this->yandexService = resolve(Client::class);
         $this->logger = Log::channel('payments');
     }
 
@@ -282,59 +280,13 @@ class YandexPaymentSystem implements PaymentSystemInterface
         try {
             $receiptData = new IncomeReceiptData();
             $receiptData->setIsFullPayment($isFullPayment);
-            $builder = $receiptData->getReceiptData($payment);
+            $builder = $receiptData->getReceiptData($payment->order, $payment->external_payment_id);
             $request = $builder->build();
             $this->logger->info('Start create receipt', $request->toArray());
 
             $this->yandexService->createReceipt($request)->jsonSerialize();
         } catch (\Throwable $exception) {
             $this->logger->error('Error creating receipt', ['local_payment_id' => $payment->id, 'error' => $exception->getMessage()]);
-            report($exception);
-        }
-    }
-
-    /**
-     * Создание чека "В кредит"
-     */
-    public function createCreditReceipt(Payment $payment): void
-    {
-        try {
-            $receiptData = new CreditReceiptData();
-            $receiptData
-                ->setPaymentMode(PaymentMode::CREDIT)
-                ->setSettlementType(SettlementType::PREPAYMENT)
-                ->setIsFullPayment(true);
-
-            $builder = $receiptData->getReceiptData($payment);
-            $request = $builder->build();
-            $this->logger->info('Start create receipt credit', $request->toArray());
-
-            $this->yandexService->createReceipt($request)->jsonSerialize();
-        } catch (\Throwable $exception) {
-            $this->logger->error('Error creating receipt credit', ['local_payment_id' => $payment->id, 'error' => $exception->getMessage()]);
-            report($exception);
-        }
-    }
-
-    /**
-     * Создание чека "Погашение кредита"
-     */
-    public function createCreditPaymentReceipt(Payment $payment): void
-    {
-        try {
-            $receiptData = new CreditReceiptData();
-            $receiptData
-                ->setPaymentMode(PaymentMode::CREDIT_PAYMENT)
-                ->setSettlementType(SettlementType::PREPAYMENT)
-                ->setIsFullPayment(true);
-
-            $builder = $receiptData->getReceiptData($payment);
-            $request = $builder->build();
-            $this->logger->info('Start create receipt credit payment', $request->toArray());
-
-            $this->yandexService->createReceipt($request)->jsonSerialize();
-        } catch (\Throwable $exception) {
-            $this->logger->error('Error creating receipt credit payment', ['local_payment_id' => $payment->id, 'error' => $exception->getMessage()]);
             report($exception);
         }
     }

@@ -5,8 +5,8 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex\Receipt;
 use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
-use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequest;
-use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequestBuilder;
+use YooKassa\Request\Receipts\CreatePostReceiptRequest;
+use YooKassa\Request\Receipts\CreatePostReceiptRequestBuilder;
 use YooKassa\Model\CurrencyCode;
 use YooKassa\Model\Receipt\SettlementType;
 use YooKassa\Model\ReceiptCustomer;
@@ -49,7 +49,7 @@ class RefundReceiptData extends ReceiptData
     {
         return CreatePostReceiptRequest::builder()
             ->setType(ReceiptType::REFUND)
-            ->setPaymentId($paymentId)
+            ->setObjectId($paymentId, ReceiptType::PAYMENT)
             ->setCustomer(new ReceiptCustomer([
                 'phone' => $order->customerPhone(),
             ]))
@@ -73,10 +73,9 @@ class RefundReceiptData extends ReceiptData
             $offer = $offers[$item->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
-            $quantityToRefund = (float) $item->qty + $item->qty_canceled;
-            $price = $item->unit_price;
+            $qtyToRefund = (float) $item->qty + $item->qty_canceled;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $quantityToRefund, $price);
+            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $qtyToRefund);
             $receiptItems[] = new ReceiptItem($receiptItemInfo);
         }
         if ((float) $order->delivery_price > 0) {
@@ -106,10 +105,8 @@ class RefundReceiptData extends ReceiptData
             $offer = $offers[$basketItem->offer_id] ?? null;
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
-            $quantity = $basketItem->qty;
-            $price = $basketItem->unit_price;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($basketItem, $offer, $merchant, $quantity, $price);
+            $receiptItemInfo = $this->getReceiptItemInfo($basketItem, $offer, $merchant, $basketItem->qty);
             $receiptItems[] = new ReceiptItem($receiptItemInfo);
         }
 
