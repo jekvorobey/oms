@@ -236,8 +236,11 @@ class OrderUPDCreator extends OrderDocumentsCreator
         /** @var BasketItem $item */
         foreach ($this->getItems() as $item) {
             if ($this->isProductType) {
-                $nds = $this->getMerchantVatValue($item->offer_id, $this->offers, $this->merchants);
-                $ndsSum = -1 * ($item->price / (1 + $nds / 100) - $item->price);
+                $merchantNds = $this->getMerchantVatValue($item->offer_id, $this->offers, $this->merchants);
+                $ndsSum = 0;
+                if ($merchantNds && $merchantNds > 0) {
+                    $ndsSum = -1 * ($item->price / (1 + $merchantNds / 100) - $item->price);
+                }
                 $totalSums['priceWithoutNds'] += $item->price - $ndsSum;
                 $totalSums['ndsSum'] += $ndsSum;
                 $totalSums['price'] += $item->price;
@@ -291,8 +294,13 @@ class OrderUPDCreator extends OrderDocumentsCreator
     protected function getBodyInfo(BasketItem $operation, int $operationNumber): array
     {
         if ($this->isProductType) {
-            $nds = $this->getMerchantVatValue($operation->offer_id, $this->offers, $this->merchants);
-            $ndsSum = -1 * ($operation->price / (1 + $nds / 100) - $operation->price);
+            $merchantNds = $this->getMerchantVatValue($operation->offer_id, $this->offers, $this->merchants);
+            $ndsValue = 0;
+            $ndsSum = 0;
+            if ($merchantNds && $merchantNds > 0) {
+                $ndsValue = $merchantNds;
+                $ndsSum = -1 * ($operation->price / (1 + $ndsValue / 100) - $operation->price);
+            }
             $offer = $this->offers->where('id', $operation->offer_id)->first();
 
             return [
@@ -306,8 +314,8 @@ class OrderUPDCreator extends OrderDocumentsCreator
                 'AD' => ($operation->price - $ndsSum) / $operation->qty,
                 'AN' => $operation->price - $ndsSum,
                 'AW' => 'без акциза',
-                'BA' => $nds ? $nds . '%' : 'без НДС',
-                'BC' => $nds ? $ndsSum : '--',
+                'BA' => $ndsValue ? $ndsValue . '%' : 'без НДС',
+                'BC' => $ndsSum ?? '--',
                 'BG' => $operation->price,
                 'BK' => '--',
                 'BP' => '--',
