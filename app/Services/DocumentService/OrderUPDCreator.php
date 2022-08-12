@@ -236,8 +236,12 @@ class OrderUPDCreator extends OrderDocumentsCreator
         /** @var BasketItem $item */
         foreach ($this->getItems() as $item) {
             if ($this->isProductType) {
-                $nds = $this->getMerchantVatValue($item->offer_id, $this->offers, $this->merchants);
-                $ndsSum = -1 * ($item->price / (1 + $nds / 100) - $item->price);
+                $merchantNds = $this->getMerchantVatValue($item->offer_id, $this->offers, $this->merchants);
+                $ndsSum = 0;
+                if ($merchantNds && $merchantNds > 0) {
+                    $ndsValue = $merchantNds;
+                    $ndsSum = -1 * ($item->price / (1 + $ndsValue / 100) - $item->price);
+                }
                 $totalSums['priceWithoutNds'] += $item->price - $ndsSum;
                 $totalSums['ndsSum'] += $ndsSum;
                 $totalSums['price'] += $item->price;
