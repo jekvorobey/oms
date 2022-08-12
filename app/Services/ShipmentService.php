@@ -281,6 +281,12 @@ class ShipmentService
         );
     }
 
+    public function saveShipmentUpdFile(Shipment $shipment, int $fileId)
+    {
+        $shipment->upd_file_id = $fileId;
+        $shipment->save();
+    }
+
     /**
      * Отправить уведомление мерчанту о созданном отправлении
      */

@@ -11,6 +11,7 @@ class PaymentMethodsSeeder extends Seeder
             'name' => 'Онлайн оплата',
             'code' => 'prepaid',
             'active' => true,
+            'is_available_for_mc' => true,
             'button_text' => '
 <div class="text-bold checkout-product-panel__item-payment-title">
     Онлайн оплата
@@ -28,6 +29,21 @@ class PaymentMethodsSeeder extends Seeder
     </div>
     <div class="checkout-product-panel__item-payment-list-item">
         <svg class="icon" width="56" height="24"><use xlink:href="#icon-yandex"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="30" height="24"><use xlink:href="#icon-sbp"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="25" height="24"><use xlink:href="#icon-alfa"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="30" height="24"><use xlink:href="#icon-sber-pay"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="40" height="24"><use xlink:href="#icon-tinkoff"></use></svg>
+    </div>
+    <div class="checkout-product-panel__item-payment-list-item">
+        <svg class="icon" width="40" height="24"><use xlink:href="#icon-ukassa"></use></svg>
     </div>
 </div>
             ',
@@ -48,6 +64,7 @@ class PaymentMethodsSeeder extends Seeder
             'active' => true,
             'is_apply_discounts' => true,
             'is_need_create_payment' => false,
+            'is_available_for_mc' => true,
             'settings' => [
                 'is_fixed_discount' => false,
                 'discount' => '14',
@@ -70,6 +87,15 @@ class PaymentMethodsSeeder extends Seeder
             'active' => true,
             'is_need_create_payment' => true,
             'button_text' => '<svg class="icon" width="251" height="60"><use xlink:href="#icon-b2b-sberbank"></use></svg>',
+        ],
+        [
+            'id' => PaymentMethod::BANK_TRANSFER_FOR_LEGAL,
+            'name' => 'Оплата со счёта юридического лица',
+            'code' => 'bank_transfer_for_legal',
+            'active' => true,
+            'is_need_create_payment' => false,
+            'is_available_for_mc' => true,
+            'button_text' => '<p class="text-bold">Оплата со счёта юридического лица</p>',
         ],
     ];
 
