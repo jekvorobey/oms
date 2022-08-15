@@ -246,6 +246,7 @@ class Order extends AbstractModel
 
     /** @var array */
     protected $casts = [
+        'certificates' => 'array',
         'status_at' => 'datetime:Y-m-d H:i:s',
         'payment_status_at' => 'datetime:Y-m-d H:i:s',
         'is_problem_at' => 'datetime:Y-m-d H:i:s',

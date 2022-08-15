@@ -239,9 +239,9 @@ class Shipment extends AbstractModel
 
     /** @var array */
     protected $casts = [
-        'psd' => 'datetime:Y-m-d',
-        'fsd' => 'datetime:H:i:s',
-        'is_problem_at' => 'datetime:H:i:s',
+        'psd' => 'datetime:Y-m-d H:i:s',
+        'fsd' => 'datetime:Y-m-d H:i:s',
+        'is_problem_at' => 'datetime:Y-m-d H:i:s',
         'status_at' => 'datetime:Y-m-d H:i:s',
         'payment_status_at' => 'datetime:Y-m-d H:i:s',
         'is_canceled_at' => 'datetime:Y-m-d H:i:s',
