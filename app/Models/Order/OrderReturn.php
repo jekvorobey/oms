@@ -54,6 +54,11 @@ class OrderReturn extends AbstractModel
     /** @var bool */
     protected static $unguarded = true;
 
+    /** @var array */
+    protected $casts = [
+        'status_at' => 'datetime:Y-m-d H:i:s',
+    ];
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderReturnItem::class);

@@ -175,9 +175,12 @@ class Cargo extends AbstractModel
         'width' => 'float',
         'height' => 'float',
         'length' => 'float',
-        'intake_date' => 'date',
+        'intake_date' => 'datetime:Y-m-d',
         'intake_time_from' => 'datetime:H:i:s',
         'intake_time_to' => 'datetime:H:i:s',
+        'status_at' => 'datetime:Y-m-d H:i:s',
+        'is_problem_at' => 'datetime:Y-m-d H:i:s',
+        'is_canceled_at' => 'datetime:Y-m-d H:i:s',
     ];
 
     /** @var array */

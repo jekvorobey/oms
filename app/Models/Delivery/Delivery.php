@@ -308,6 +308,12 @@ class Delivery extends AbstractModel
         'width' => 'float',
         'height' => 'float',
         'length' => 'float',
+        'payment_status_at' => 'datetime:Y-m-d H:i:s',
+        'is_problem_at' => 'datetime:Y-m-d H:i:s',
+        'is_canceled_at' => 'datetime:Y-m-d H:i:s',
+        'pdd' => 'datetime:Y-m-d H:i:s',
+        'status_at' => 'datetime:Y-m-d H:i:s',
+        'status_xml_id_at' => 'datetime:Y-m-d H:i:s',
     ];
 
     /** @var array */

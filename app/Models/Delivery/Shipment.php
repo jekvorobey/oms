@@ -238,6 +238,16 @@ class Shipment extends AbstractModel
     protected $table = 'shipments';
 
     /** @var array */
+    protected $casts = [
+        'psd' => 'datetime:Y-m-d',
+        'fsd' => 'datetime:H:i:s',
+        'is_problem_at' => 'datetime:H:i:s',
+        'status_at' => 'datetime:Y-m-d H:i:s',
+        'payment_status_at' => 'datetime:Y-m-d H:i:s',
+        'is_canceled_at' => 'datetime:Y-m-d H:i:s',
+    ];
+
+    /** @var array */
     protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems', 'exports'];
 
     /**
