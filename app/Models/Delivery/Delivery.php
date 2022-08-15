@@ -302,8 +302,8 @@ class Delivery extends AbstractModel
     /** @var array */
     protected $casts = [
         'delivery_address' => 'array',
-        'delivery_at' => 'datetime',
-        'delivered_at' => 'datetime',
+        'delivery_at' => 'datetime: Y-m-d H:i:s',
+        'delivered_at' => 'datetime: Y-m-d H:i:s',
         'weight' => 'float',
         'width' => 'float',
         'height' => 'float',
