@@ -245,6 +245,9 @@ class Shipment extends AbstractModel
         'status_at' => 'datetime:Y-m-d H:i:s',
         'payment_status_at' => 'datetime:Y-m-d H:i:s',
         'is_canceled_at' => 'datetime:Y-m-d H:i:s',
+        'required_shipping_at' => 'datetime:Y-m-d H:i:s',
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
     ];
 
     /** @var array */
