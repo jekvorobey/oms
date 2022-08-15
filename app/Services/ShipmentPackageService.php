@@ -76,7 +76,7 @@ class ShipmentPackageService
             $ok = $shipmentPackageItem->delete();
         } else {
             /** @var BasketItem $basketItem */
-            $basketItem = BasketItem::query()->firstOrFail($basketItemId);
+            $basketItem = BasketItem::query()->findOrFail($basketItemId);
 
             if ($basketItem->qty < $qty) {
                 throw new DeliveryServiceInvalidConditions('Shipment package qty can\'t be more than basket item qty');

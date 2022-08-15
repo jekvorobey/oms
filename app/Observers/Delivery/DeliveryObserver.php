@@ -162,7 +162,7 @@ class DeliveryObserver
             $user = $delivery->order->getUser();
 
             if ($delivery->getOriginal('delivery_address') != '[]' && $delivery->getAttributes()['delivery_address']) {
-                $oldAddr = $delivery->getOriginal('delivery_address')['address_string'];
+                $oldAddr = Arr::get($delivery->getOriginal('delivery_address'), 'address_string');
                 $newAddr = Arr::get($delivery->delivery_address, 'address_string');
 
                 if (
