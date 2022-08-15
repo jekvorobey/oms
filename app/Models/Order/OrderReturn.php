@@ -75,7 +75,7 @@ class OrderReturn extends AbstractModel
     public static function makeNumber(int $orderId): string
     {
         /** @var Order $order */
-        $order = Order::query()->firstOrFail($orderId)->load('orderReturns');
+        $order = Order::query()->findOrFail($orderId)->load('orderReturns');
 
         return $order->number . '-return-' . ($order->orderReturns->count() + 1);
     }

@@ -73,6 +73,7 @@ class DeliveryObserver
      * Handle the delivery "updated" event.
      * @return void
      * @throws Exception
+     * @throws Throwable
      */
     public function updated(Delivery $delivery)
     {
@@ -160,8 +161,8 @@ class DeliveryObserver
             $user = $delivery->order->getUser();
 
             if ($delivery->getOriginal('delivery_address') != '[]' && $delivery->getAttributes()['delivery_address']) {
-                $oldAddr = json_decode($delivery->getOriginal('delivery_address'))->address_string;
-                $newAddr = json_decode($delivery->getAttributes()['delivery_address'])->address_string;
+                $oldAddr = $delivery->getOriginal('delivery_address')['address_string'];
+                $newAddr = $delivery->getAttributes()['delivery_address']['address_string'];
 
                 if (
                     $oldAddr != $newAddr
