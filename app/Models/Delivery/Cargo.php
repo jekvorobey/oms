@@ -176,6 +176,8 @@ class Cargo extends AbstractModel
         'height' => 'float',
         'length' => 'float',
         'intake_date' => 'date',
+        'intake_time_from' => 'datetime:H:i:s',
+        'intake_time_to' => 'datetime:H:i:s',
     ];
 
     /** @var array */
@@ -319,14 +321,5 @@ class Cargo extends AbstractModel
         }
 
         return $result;
-    }
-
-    public function toArray(): array
-    {
-        $array = parent::toArray();
-        $array['intake_time_from'] = $array['intake_time_from']->format('H:i:s');
-        $array['intake_time_to'] = $array['intake_time_to']->format('H:i:s');
-
-        return $array;
     }
 }
