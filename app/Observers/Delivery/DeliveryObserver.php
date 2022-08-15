@@ -24,6 +24,7 @@ use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use Illuminate\Support\Arr;
 use Throwable;
 
 /**
@@ -162,7 +163,7 @@ class DeliveryObserver
 
             if ($delivery->getOriginal('delivery_address') != '[]' && $delivery->getAttributes()['delivery_address']) {
                 $oldAddr = $delivery->getOriginal('delivery_address')['address_string'];
-                $newAddr = $delivery->getAttributes()['delivery_address']['address_string'];
+                $newAddr = Arr::get($delivery->delivery_address, 'address_string');
 
                 if (
                     $oldAddr != $newAddr
