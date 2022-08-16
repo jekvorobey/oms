@@ -53,9 +53,14 @@ return [
         'key' => env('Y_MAPS_KEY'),
     ],
 
-    'credit_line_payment' => [
-        'host' => env('CREDIT_LINE_PAYMENT_HOST'),
+    'credit_line' => [
         'login' => env('CREDIT_LINE_PAYMENT_LOGIN'),
         'password' => env('CREDIT_LINE_PAYMENT_PASSWORD'),
+    ],
+
+    'kit_invest' => [
+        'companyId' => env('KIT_INVEST_PAYMENT_COMPANY_ID'),
+        'login' => env('KIT_INVEST_PAYMENT_LOGIN'),
+        'password' => env('KIT_INVEST_PAYMENT_PASSWORD'),
     ],
 ];

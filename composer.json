@@ -47,6 +47,14 @@
         {
             "type": "vcs",
             "url": "git@git.yiilab.com:ibt.studio/ibt-cms-lib"
+        },
+        {
+            "type": "vcs",
+            "url": "git@git.yiilab.com:ibt.studio/laravel-pp-credit-sdk"
+        },
+        {
+            "type": "vcs",
+            "url": "git@git.yiilab.com:ibt.studio/laravel-kit-invest-sdk"
         }
     ],
     "require": {
@@ -66,6 +74,8 @@
         "ibt/message-lib": "dev-master",
         "ibt/pim-lib": "dev-master",
         "ibt/store-lib": "dev-master",
+        "ibt/pp-credit-sdk": "dev-feature/BX-7042-add-api-credit-line",
+        "ibt/kit-invest-sdk": "dev-feature/BX-6834-credit-fiskal-receipt",
         "jenssegers/date": "^4.0",
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",

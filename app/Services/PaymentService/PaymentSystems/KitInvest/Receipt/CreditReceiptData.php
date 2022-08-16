@@ -1,16 +1,10 @@
 <?php
 
-namespace App\Services\PaymentService\PaymentSystems\Yandex\Receipt;
+namespace App\Services\PaymentService\PaymentSystems\KitInvest\Receipt;
 
 use App\Models\Basket\Basket;
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
-use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequest;
-use App\Services\PaymentService\PaymentSystems\Yandex\SDK\CreatePostReceiptRequestBuilder;
-use YooKassa\Model\CurrencyCode;
-use YooKassa\Model\ReceiptCustomer;
-use YooKassa\Model\ReceiptItem;
-use YooKassa\Model\ReceiptType;
 
 class CreditReceiptData extends ReceiptData
 {

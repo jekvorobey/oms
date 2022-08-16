@@ -4,6 +4,7 @@ namespace App\Models\Payment;
 
 use App\Models\Order\Order;
 use App\Models\WithHistory;
+use App\Services\PaymentService\PaymentSystems\KitInvest\KitInvestPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
@@ -128,6 +129,8 @@ class Payment extends AbstractModel
         switch ($this->payment_system) {
             case PaymentSystem::YANDEX:
                 return new YandexPaymentSystem();
+            case PaymentSystem::CREDIT:
+                return new KitInvestPaymentSystem();
             case PaymentSystem::TEST:
                 return new LocalPaymentSystem();
         }

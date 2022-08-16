@@ -11,7 +11,10 @@ use App\Models\Payment\PaymentSystem;
 use App\Services\CreditService\CreditService;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
+use IBT\CreditLine\Enum\OrderStatusEnum;
+use IBT\KitInvest\KitInvest;
 use Illuminate\Console\Command;
+use Throwable;
 
 /**
  * Class CheckCreditLineStatus
@@ -24,9 +27,18 @@ class CheckCreditLineStatus extends Command
 
     public function handle()
     {
+
+        /** @var KitInvest $kitInvest */
+        $kitInvest = resolve(KitInvest::class);
+        $paymentInfo = $kitInvest->getPaymentInfo('220711144739485');
+
+        dump($paymentInfo);
+        //return 0;
+
+
         Order::query()
             ->where('payment_method_id', PaymentMethod::CREDITPAID)
-            ->where('is_canceled', 0)
+            //->where('is_canceled', 0)
             ->each(function (Order $order) {
                 $this->checkCreditOrder($order);
             });
@@ -40,13 +52,16 @@ class CheckCreditLineStatus extends Command
         /** @var PaymentService $paymentService */
         $paymentService = resolve(PaymentService::class);
 
-        try {
+        //try {
             $creditService = new CreditService();
             $checkStatus = $creditService->checkStatus($order);
-        } catch (\Throwable $exception) {
-            report($exception);
-            return;
-        }
+        //} catch (\Throwable $exception) {
+        //    report($exception);
+        //    return;
+        //}
+
+        dump($checkStatus);
+        //return;
 
         if (!$checkStatus) {
             return;
@@ -79,13 +94,13 @@ class CheckCreditLineStatus extends Command
             !$order->is_canceled
             && in_array(
                 $creditStatusIdNew,
-                [CreditService::CREDIT_ORDER_STATUS_REFUSED, CreditService::CREDIT_ORDER_STATUS_ANNULED],
+                [OrderStatusEnum::CREDIT_ORDER_STATUS_REFUSED, OrderStatusEnum::CREDIT_ORDER_STATUS_ANNULED],
                 true
             )
         ) {
             try {
                 $orderService->cancel($order, CreditService::ORDER_RETURN_REASON_ID);
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 report($exception);
             }
 
@@ -100,7 +115,7 @@ class CheckCreditLineStatus extends Command
             $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
             && $order->payments->isEmpty()
             && $creditStatusId !== $creditStatusIdNew
-            && $creditStatusIdNew === CreditService::CREDIT_ORDER_STATUS_CASHED
+            && $creditStatusIdNew === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
         ) {
             $payment = $this->createPayment($order);
             if ($payment instanceof Payment) {
@@ -120,7 +135,7 @@ class CheckCreditLineStatus extends Command
             && $creditStatusId !== $creditStatusIdNew
             && in_array(
                 $creditStatusIdNew,
-                [CreditService::CREDIT_ORDER_STATUS_ACCEPTED, CreditService::CREDIT_ORDER_STATUS_SIGNED],
+                [OrderStatusEnum::CREDIT_ORDER_STATUS_ACCEPTED, OrderStatusEnum::CREDIT_ORDER_STATUS_SIGNED],
                 true
             )
         ) {
@@ -140,7 +155,7 @@ class CheckCreditLineStatus extends Command
             in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DELIVERING, OrderStatus::READY_FOR_RECIPIENT], true)
             && $order->payments->isNotEmpty()
             && $creditStatusId !== $creditStatusIdNew
-            && $creditStatusIdNew === CreditService::CREDIT_ORDER_STATUS_CASHED
+            && $creditStatusIdNew === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
         ) {
             $payment = $order->payments()->first();
             if ($payment instanceof Payment) {
@@ -164,7 +179,7 @@ class CheckCreditLineStatus extends Command
         $writer = new OrderWriter();
         try {
             $writer->setPayments($order, collect([$payment]));
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             report($exception);
             return null;
         }

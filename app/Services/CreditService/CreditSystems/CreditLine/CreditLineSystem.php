@@ -3,6 +3,7 @@
 namespace App\Services\CreditService\CreditSystems\CreditLine;
 
 use App\Services\CreditService\CreditSystems\CreditSystemInterface;
+use IBT\CreditLine\CreditLine;
 use Illuminate\Support\Facades\Log;
 use Monolog\Logger;
 
@@ -14,7 +15,7 @@ class CreditLineSystem implements CreditSystemInterface
 {
     public const CREDIT_ORDER_ERROR_NOT_FIND = -5;
 
-    /** @var SDK\CreditLine */
+    /** @var CreditLine */
     private $creditLineService;
     /** @var Logger */
     private $logger;
@@ -24,10 +25,10 @@ class CreditLineSystem implements CreditSystemInterface
      */
     public function __construct()
     {
-        $this->creditLineService = resolve(SDK\CreditLine::class);
+        $this->creditLineService = resolve(CreditLine::class);
         $this->logger = Log::channel('credits');
 
-        $this->creditLineService->auth(env('CREDIT_LINE_PAYMENT_HOST'), env('CREDIT_LINE_PAYMENT_LOGIN'), env('CREDIT_LINE_PAYMENT_PASSWORD'));
+        //$this->creditLineService->auth(env('CREDIT_LINE_PAYMENT_HOST'), env('CREDIT_LINE_PAYMENT_LOGIN'), env('CREDIT_LINE_PAYMENT_PASSWORD'));
     }
 
     /**

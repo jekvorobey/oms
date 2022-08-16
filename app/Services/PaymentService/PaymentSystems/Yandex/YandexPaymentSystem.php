@@ -356,4 +356,22 @@ class YandexPaymentSystem implements PaymentSystemInterface
     {
         $this->processExternalPayment($localPayment, $payment);
     }
+
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function createCreditReceipt(Payment $payment): void
+    {
+        return;
+    }
+
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function createCreditPaymentReceipt(Payment $payment): void
+    {
+        return;
+    }
 }
