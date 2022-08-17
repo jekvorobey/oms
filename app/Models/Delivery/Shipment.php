@@ -140,6 +140,11 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *         description="последнее сообщение мерчанта о проблеме со сборкой"
  *     ),
  *     @OA\Property(
+ *         property="upd_file_id",
+ *         type="integer",
+ *         description="ID файла УПД"
+ *     ),
+ *     @OA\Property(
  *         property="barcode_file_id",
  *         type="integer",
  *         description="ID файла штрихкода"
@@ -174,6 +179,8 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property Carbon|null $status_at - дата установки статуса
  * @property int $payment_status - статус оплаты
  * @property Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property string|null $payment_document_number - номер платежно-расчетного документа
+ * @property Carbon|null $payment_document_date - дата платежно-расчетного документа
  * @property int $is_problem - флаг, что отправление проблемное
  * @property Carbon|null $is_problem_at - дата установки флага проблемного отправления
  * @property int $is_canceled - флаг, что отправление отменено
@@ -189,8 +196,9 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property float $weight - вес (расчитывается автоматически)
  * @property string $required_shipping_at - требуемая дата отгрузки (устарело, использовать psd!)
  * @property string $assembly_problem_comment - последнее сообщение мерчанта о проблеме со сборкой
- * @property string $barcode_file_id - ID файла штрихкода
- * @property string $cdek_receipt_file_id - ID файла квитанции от сдэк
+ * @property int $upd_file_id - ID файла УПД
+ * @property int $barcode_file_id - ID файла штрихкода
+ * @property int $cdek_receipt_file_id - ID файла квитанции от сдэк
  *
  * //dynamic attributes
  * @property int $package_qty - кол-во коробок отправления
@@ -224,8 +232,11 @@ class Shipment extends AbstractModel
         'required_shipping_at',
         'assembly_problem_comment',
         'delivery_service_zero_mile',
+        'upd_file_id',
         'barcode_file_id',
         'cdek_receipt_file_id',
+        'payment_document_number',
+        'payment_document_date',
     ];
 
     /** @var array */
