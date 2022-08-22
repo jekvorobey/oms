@@ -74,6 +74,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             });
             Route::put('payments', 'OrdersController@setPayments');
             Route::get('payments/check-credit-status', 'OrdersController@paymentCheckCreditStatus');
+            Route::put('payments/create-credit-payment-receipt', 'OrdersController@paymentCreateCreditPaymentReceipt');
             Route::put('comment', 'OrdersController@setComment');
 
             Route::put('items/{offerId}', 'Basket\CustomerBasketController@setItemByOrder');

@@ -297,7 +297,7 @@ class OrdersController extends Controller
      *     @OA\Response(response="500", description="unable to save order"),
      * )
      *
-     * Задать список оплат заказа
+     * Проверить статус оформленного кредита/рассрочки
      * @throws Exception
      */
     public function paymentCheckCreditStatus(
@@ -308,6 +308,43 @@ class OrdersController extends Controller
         $order = $orderService->getOrder($id);
         $result = $creditService->checkStatus($order);
 
+        return response($result, 200);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/payments/create-credit-payment-receipt",
+     *     tags={"Заказы"},
+     *     description="Сформировать фискальный чек к кредитному заказу",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="product not found"),
+     *     @OA\Response(response="500", description="unable to save order"),
+     * )
+     *
+     * Сформировать фискальный чек к кредитному заказу
+     * @throws Exception
+     */
+    public function paymentCreateCreditPaymentReceipt(
+        int $id,
+        Request $request,
+        OrderService $orderService,
+        CreditService $creditService,
+        PaymentService $paymentService
+    ): Response {
+        $order = $orderService->getOrder($id);
+        $data = $request->all();
+
+        $validator = Validator::make($data, [
+            'receipt_type' => 'nullable|integer',
+        ]);
+        if ($validator->fails()) {
+            throw new BadRequestHttpException($validator->errors()->first());
+        }
+
+        $result = $creditService->checkStatus($order);
+
+        //$paymentService->sendCreditPaymentReceipt();
         return response($result, 200);
     }
 
