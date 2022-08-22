@@ -345,6 +345,19 @@ class DeliveryService
                 } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
                 }
+
+                /**
+                 * Т.к. в DPD вместо обновления заказа нужно отменять предыдущий и создавать новый,
+                 * то нужно перезаписывать xml_id в $delivery
+                 */
+                if ($delivery->delivery_service == \Greensight\Logistics\Dto\Lists\DeliveryService::SERVICE_DPD
+                    && isset($deliveryOrderOutputDto->xml_id)
+                    && !empty($deliveryOrderOutputDto->xml_id)
+                    && $delivery->xml_id != $deliveryOrderOutputDto->xml_id
+                ) {
+                    $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
+                }
+
                 $delivery->save();
             }
 
@@ -736,17 +749,25 @@ class DeliveryService
      */
     public function cancelDeliveryOrder(Delivery $delivery): void
     {
-        if ($delivery->xml_id) {
+        $xmlId = $delivery->xml_id;
+
+        //отмена в DPD по внутреннему номеру
+        if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_DPD && empty($xmlId)) {
+            $xmlId = $delivery->getDeliveryServiceNumber();
+        }
+
+        if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
+            return;
+        }
+
+        if ($xmlId) {
             // IBT-621: не удалять xml_id при отмене доставки
             // $delivery->xml_id = '';
             // $delivery->save();
 
-            if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
-                return;
-            }
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
+            $deliveryOrderService->cancelOrder($delivery->delivery_service, $xmlId);
         }
     }
 
