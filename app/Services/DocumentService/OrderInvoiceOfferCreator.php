@@ -61,14 +61,14 @@ class OrderInvoiceOfferCreator extends OrderDocumentsCreator
                 'itemName' => htmlspecialchars($basketItem->name, ENT_QUOTES | ENT_XML1),
                 'itemMeasure' => 'шт.',
                 'itemQTY' => qty_format($basketItem->qty),
-                'itemPrice' => price_format($basketItem->unit_price),
-                'itemSum' => price_format($basketItem->price),
+                'itemPrice' => number_format($basketItem->unit_price, 2, '.', ' '),
+                'itemSum' => number_format($basketItem->price, 2, '.', ' '),
             ];
         })->all();
         $templateProcessor->cloneRowAndSetValues('number', $values);
-        $templateProcessor->setValue('items_price', price_format($this->order->price - $this->order->delivery_price));
-        $templateProcessor->setValue('delivery_price', price_format($this->order->delivery_price));
-        $templateProcessor->setValue('order_price', price_format($this->order->price));
+        $templateProcessor->setValue('items_price', number_format($this->order->price - $this->order->delivery_price, 2, '.', ' '));
+        $templateProcessor->setValue('delivery_price', number_format($this->order->delivery_price, 2, '.', ' '));
+        $templateProcessor->setValue('order_price', number_format($this->order->price, 2, '.', ' '));
         $path = $this->generateDocumentPath();
         $templateProcessor->saveAs($path);
 

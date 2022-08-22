@@ -807,10 +807,10 @@ class OrdersController extends Controller
                         $discount['discount_id'] = $orderDiscount->discount_id;
                         $discount['order_change'] = $orderDiscount->change;
 
+                        $discount['change'] = 0;
                         foreach ($orderDiscount->items as $discountItem) {
-                            $discount['change'] = 0;
                             if ($discountItem['offer_id'] == $item->offer_id) {
-                                $discount['change'] += $orderDiscount->change;
+                                $discount['change'] += $discountItem['change'];
                             }
                         }
 
