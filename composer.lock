@@ -1462,7 +1462,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.yiilab.com:ibt.studio/ibt-cm-lib",
+                "url": "git@gitlab.com:iBT.studio/ibt-cm-lib",
                 "reference": "d901c4a33a77a70ef06f5d66838d645fc5d240b0"
             },
             "require": {
@@ -1505,7 +1505,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.yiilab.com:ibt.studio/ibt-cms-lib",
+                "url": "git@gitlab.com:iBT.studio/ibt-cms-lib",
                 "reference": "d8d8756541ce30a26d4ab41fa913a820a55e43fc"
             },
             "require": {
@@ -1537,7 +1537,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.yiilab.com:ibt.studio/ibt-common-ms-code.git",
+                "url": "git@gitlab.com:iBT.studio/ibt-common-ms-code.git",
                 "reference": "d7de5c1d4a42a1a12c95bb9246efde1ff892da26"
             },
             "require": {
@@ -1596,7 +1596,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.yiilab.com:ibt.studio/ibt-logistics-lib",
+                "url": "git@gitlab.com:iBT.studio/ibt-logistics-lib",
                 "reference": "5bdd0b946145a99d22ab5ed7fa19609335157052"
             },
             "require": {
@@ -1639,7 +1639,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.yiilab.com:ibt.studio/ibt-marketing-lib",
+                "url": "git@gitlab.com:iBT.studio/ibt-marketing-lib",
                 "reference": "f7891c621ad790c6f0702723a6c7256ae986e1be"
             },
             "require": {
@@ -1682,7 +1682,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.yiilab.com:ibt.studio/ibt-merchant-management-lib",
+                "url": "git@gitlab.com:iBT.studio/ibt-merchant-management-lib",
                 "reference": "d635fb3a10d178be026e0150a22c1cd15c831cfa"
             },
             "require": {
@@ -1714,7 +1714,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.yiilab.com:ibt.studio/ibt-message-lib",
+                "url": "git@gitlab.com:iBT.studio/ibt-message-lib",
                 "reference": "6cf86a8d20da58db0c6f06dfefca314c4b8074fb"
             },
             "require": {
@@ -1757,7 +1757,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.yiilab.com:ibt.studio/ibt-pim-lib",
+                "url": "git@gitlab.com:iBT.studio/ibt-pim-lib",
                 "reference": "3cb1d790a494a820f64602fa48333f0a714a4adc"
             },
             "require": {
@@ -1789,7 +1789,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.yiilab.com:ibt.studio/ibt-store-lib",
+                "url": "git@gitlab.com:iBT.studio/ibt-store-lib",
                 "reference": "dec8e203816bf308d46bdf11e31eb0d015b8fba1"
             },
             "require": {
@@ -2411,7 +2411,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@git.yiilab.com:maxim.kyprov/laravel-health-check.git",
+                "url": "git@gitlab.com:iBT.studio/laravel-health-check.git",
                 "reference": "e3aec2e50a58542bc405ac81c2b36cf2f75842ab"
             },
             "require": {
