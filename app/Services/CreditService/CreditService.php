@@ -13,10 +13,17 @@ class CreditService
 {
     public const ORDER_RETURN_REASON_ID = 15;
 
-    public function checkStatus(Order $order): ?array
+    public function getCreditOrder(Order $order): ?array
     {
         $creditModel = new Credit();
 
-        return $creditModel->creditSystem()->checkCreditOrder($order->number);
+        return $creditModel->creditSystem()->getCreditOrder($order->number);
+    }
+
+    public function checkCreditOrder(Order $order): ?array
+    {
+        $creditModel = new Credit();
+
+        return $creditModel->creditSystem()->checkCreditOrder($order);
     }
 }

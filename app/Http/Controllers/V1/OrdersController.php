@@ -306,7 +306,7 @@ class OrdersController extends Controller
         CreditService $creditService
     ): Response {
         $order = $orderService->getOrder($id);
-        $result = $creditService->checkStatus($order);
+        $result = $creditService->checkCreditOrder($order);
 
         return response($result, 200);
     }
@@ -344,7 +344,7 @@ class OrdersController extends Controller
 
         $result = $creditService->checkStatus($order);
 
-        //$paymentService->sendCreditPaymentReceipt();
+        $paymentService->sendCreditPaymentReceipt();
         return response($result, 200);
     }
 

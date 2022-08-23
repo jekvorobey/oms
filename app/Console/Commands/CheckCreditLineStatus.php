@@ -54,7 +54,7 @@ class CheckCreditLineStatus extends Command
 
         //try {
             $creditService = new CreditService();
-            $checkStatus = $creditService->checkStatus($order);
+            $checkStatus = $creditService->getCreditOrder($order);
         //} catch (\Throwable $exception) {
         //    report($exception);
         //    return;
