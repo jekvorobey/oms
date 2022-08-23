@@ -460,12 +460,24 @@ class DeliveryService
             $senderDto->company_name = $merchant->legal_name;
             $senderDto->store_id = $shipment->store_id;
             $senderDto->inn = $merchant->inn;
+
             $storeContact = $store->storeContact[0];
             $senderDto->contact_name = $storeContact->name;
             $senderDto->email = $storeContact->email;
             $senderDto->phone = phoneNumberFormat($storeContact->phone);
             $senderDto->cdek_city_code = $cdekSenderAddress['code'] ?? null;
             $senderDto->comment = $storeAddress['comment'] ?? null;
+
+            if (count($store->storeContact) > 1) {
+                $senderDto->additional_contacts = collect();
+                foreach ($store->storeContact->slice(1) as $additionalStoreContact) {
+                    $senderDto->additional_contacts->add(new StoreContactDto([
+                        'contact_name' => $additionalStoreContact->name,
+                        'phone' => phoneNumberFormat($additionalStoreContact->phone),
+                        'email' => $additionalStoreContact->email,
+                    ]));
+                }
+            }
         } else {
             /**
              * Иначе указываем данные маркетплейса
