@@ -65,7 +65,7 @@ class CreditLineSystem implements CreditSystemInterface
     }
 
     /**
-     * Проверить статус кредитного заказа во внешней системе
+     * Проверить статус кредитного заказа во внешней системе  и обновить заказ
      * @throws \Exception
      */
     public function checkCreditOrder(Order $order): ?array
@@ -118,8 +118,6 @@ class CreditLineSystem implements CreditSystemInterface
             } catch (Throwable $exception) {
                 report($exception);
             }
-
-            return null;
         }
 
         /*

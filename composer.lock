@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "90a7309b2d6a4cd1733ed5cc75094a83",
+    "content-hash": "b12daa2122bb09cb7547517443651bd6",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1764,11 +1764,11 @@
         },
         {
             "name": "ibt/kit-invest-sdk",
-            "version": "dev-feature/BX-6834-credit-fiskal-receipt",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/laravel-kit-invest-sdk",
-                "reference": "4d2def072ff09a5ff5854d777d25beec47e82a05"
+                "reference": "a1bc4f410f5483d52ea1c3ec0d91fa5076712fbe"
             },
             "require": {
                 "ext-curl": "*",
@@ -1795,7 +1795,7 @@
                 ]
             },
             "description": "IBT online kit invest sdk",
-            "time": "2022-08-13T17:43:30+00:00"
+            "time": "2022-08-14T17:55:30+00:00"
         },
         {
             "name": "ibt/logistics-lib",
@@ -1992,11 +1992,11 @@
         },
         {
             "name": "ibt/pp-credit-sdk",
-            "version": "dev-feature/BX-7042-add-api-credit-line",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "git@git.yiilab.com:ibt.studio/laravel-pp-credit-sdk",
-                "reference": "995906069d035f025ae63b4308ec9b007f25c40a"
+                "reference": "4e3e9c2a6f09c3d601a94decb9322e8af554a261"
             },
             "require": {
                 "ext-json": "*",
@@ -2025,7 +2025,7 @@
                 ]
             },
             "description": "IBT CreditLine sdk",
-            "time": "2022-08-13T18:30:23+00:00"
+            "time": "2022-08-14T17:04:41+00:00"
         },
         {
             "name": "ibt/store-lib",
@@ -5581,16 +5581,16 @@
         },
         {
             "name": "spatie/calendar-links",
-            "version": "1.7.2",
+            "version": "1.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/calendar-links.git",
-                "reference": "bb96f1db8478009ad8f206a3bafb2b9aa6b648c3"
+                "reference": "654fc0174e6279539b9bf0abdc3339e34c5286d7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/calendar-links/zipball/bb96f1db8478009ad8f206a3bafb2b9aa6b648c3",
-                "reference": "bb96f1db8478009ad8f206a3bafb2b9aa6b648c3",
+                "url": "https://api.github.com/repos/spatie/calendar-links/zipball/654fc0174e6279539b9bf0abdc3339e34c5286d7",
+                "reference": "654fc0174e6279539b9bf0abdc3339e34c5286d7",
                 "shasum": ""
             },
             "require": {
@@ -5628,7 +5628,7 @@
             ],
             "support": {
                 "issues": "https://github.com/spatie/calendar-links/issues",
-                "source": "https://github.com/spatie/calendar-links/tree/1.7.2"
+                "source": "https://github.com/spatie/calendar-links/tree/1.8.0"
             },
             "funding": [
                 {
@@ -5636,7 +5636,7 @@
                     "type": "custom"
                 }
             ],
-            "time": "2022-06-09T08:24:01+00:00"
+            "time": "2022-08-20T12:59:17+00:00"
         },
         {
             "name": "swagger-api/swagger-ui",
@@ -8369,15 +8369,15 @@
         },
         {
             "name": "yoomoney/yookassa-sdk-php",
-            "version": "2.5.0",
+            "version": "2.5.1",
             "source": {
                 "type": "git",
                 "url": "https://git.yoomoney.ru/scm/sdk/yookassa-sdk-php.git",
-                "reference": "823cd4232c33dc0fff994d676c3a0a200cbc4287"
+                "reference": "b4a597983a64589ccf2c3609979750f8cd9298c7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://git.yoomoney.ru/rest/api/latest/projects/SDK/repos/yookassa-sdk-php/archive?at=refs%2Ftags%2F2.5.0&format=zip"
+                "url": "https://git.yoomoney.ru/rest/api/latest/projects/SDK/repos/yookassa-sdk-php/archive?at=refs%2Ftags%2F2.5.1&format=zip"
             },
             "require": {
                 "ext-curl": "*",
@@ -8416,7 +8416,7 @@
                 "yookassa",
                 "yoomoney"
             ],
-            "time": "2022-08-01T09:36:20+00:00"
+            "time": "2022-08-18T08:12:45+00:00"
         },
         {
             "name": "zendframework/zend-escaper",
