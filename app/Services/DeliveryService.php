@@ -465,6 +465,7 @@ class DeliveryService
             $senderDto->email = $storeContact->email;
             $senderDto->phone = phoneNumberFormat($storeContact->phone);
             $senderDto->cdek_city_code = $cdekSenderAddress['code'] ?? null;
+            $senderDto->comment = $storeAddress['comment'] ?? null;
         } else {
             /**
              * Иначе указываем данные маркетплейса
