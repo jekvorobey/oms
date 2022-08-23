@@ -1,0 +1,20 @@
+services:
+  ibt-oms-ms:
+    container_name: ibt-oms-ms
+    image: registry.ibt.ru:5050/ibt.studio/ibt-oms-ms/ibt-oms-ms:v1.19.6
+    restart: always
+    env_file:
+      - ./svc/ibt-oms-ms/.env
+    environment:
+      - PHP_SOCK_FILE=/sockets/ibt-oms-ms_php
+    volumes:
+      - /sockets/:/sockets/
+      - ./svc/ibt-oms-ms/.env:/var/www/.env
+    hostname: ibt-oms-ms.prod
+    networks:
+      prod.svc.cluster.local:
+        aliases:
+          - ibt-oms-ms.prod.svc.cluster.local
+    extra_hosts:
+      - "mysql-master:host-gateway"
+      - "redis-master.redis:host-gateway"
