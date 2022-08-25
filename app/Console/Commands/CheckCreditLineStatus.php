@@ -2,12 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Core\Order\OrderWriter;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentMethod;
-use App\Models\Payment\PaymentSystem;
 use App\Services\CreditService\CreditService;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
@@ -117,7 +115,7 @@ class CheckCreditLineStatus extends Command
             && $creditStatusId !== $creditStatusIdNew
             && $creditStatusIdNew === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
         ) {
-            $payment = $this->createPayment($order);
+            $payment = $creditService->createCreditPayment($order);
             if ($payment instanceof Payment) {
                 $paymentService->sendIncomeFullPaymentReceipt($payment);
             }
@@ -139,7 +137,7 @@ class CheckCreditLineStatus extends Command
                 true
             )
         ) {
-            $payment = $this->createPayment($order);
+            $payment = $creditService->createCreditPayment($order);
             if ($payment instanceof Payment) {
                 $paymentService->sendCreditReceipt($payment);
             }
@@ -164,26 +162,5 @@ class CheckCreditLineStatus extends Command
 
             return;
         }
-    }
-
-    public function createPayment(Order $order): ?Payment
-    {
-        $paymentSum = round($order->price * (100 - (float) $order->credit_discount), 2);
-
-        $payment = new Payment();
-        $payment->payment_method = PaymentMethod::CREDITPAID;
-        $payment->payment_system = PaymentSystem::CREDIT;
-        $payment->order_id = $order->id;
-        $payment->sum = $paymentSum;
-
-        $writer = new OrderWriter();
-        try {
-            $writer->setPayments($order, collect([$payment]));
-        } catch (Throwable $exception) {
-            report($exception);
-            return null;
-        }
-
-        return $payment;
     }
 }

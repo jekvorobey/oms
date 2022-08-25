@@ -342,7 +342,7 @@ class OrdersController extends Controller
             throw new BadRequestHttpException($validator->errors()->first());
         }
 
-        $result = $creditService->checkStatus($order);
+        $result = $creditService->checkCreditOrder($order);
 
         $paymentService->sendCreditPaymentReceipt();
         return response($result, 200);

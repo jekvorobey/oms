@@ -4,6 +4,7 @@ namespace App\Services\CreditService;
 
 use App\Models\Credit\Credit;
 use App\Models\Order\Order;
+use App\Models\Payment\Payment;
 
 /**
  * Class CreditService
@@ -25,5 +26,12 @@ class CreditService
         $creditModel = new Credit();
 
         return $creditModel->creditSystem()->checkCreditOrder($order);
+    }
+
+    public function createCreditPayment(Order $order): ?Payment
+    {
+        $creditModel = new Credit();
+
+        return $creditModel->creditSystem()->createCreditPayment($order);
     }
 }

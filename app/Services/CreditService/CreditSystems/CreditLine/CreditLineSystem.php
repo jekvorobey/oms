@@ -73,27 +73,24 @@ class CreditLineSystem implements CreditSystemInterface
         /** @var OrderService $orderService */
         $orderService = resolve(OrderService::class);
 
-        /** @var PaymentService $paymentService */
-        $paymentService = resolve(PaymentService::class);
-
         $creditOrder = $this->creditLineService->getOrderStatus($order->number);
 
         if ($creditOrder->getErrorCode() === self::CREDIT_ORDER_ERROR_NOT_FIND) {
             return null;
         }
 
-        $creditStatusId = $order->credit_status_id;
-        $creditDiscount = (float) $order->credit_discount;
-        $creditStatusIdNew = $creditOrder->getStatusId();
-        $creditDiscountNew = $creditOrder->getDiscount();
         $isUpdateOrder = false;
 
+        $creditStatusId = $order->credit_status_id;
+        $creditStatusIdNew = $creditOrder->getStatusId();
         // Обновить статус кредитного договора, если он отличается от текущего
         if ($creditStatusId !== $creditStatusIdNew) {
             $order->credit_status_id = $creditStatusIdNew;
             $isUpdateOrder = true;
         }
 
+        $creditDiscount = (float) $order->credit_discount;
+        $creditDiscountNew = $creditOrder->getDiscount();
         // Обновить процент скидки
         if ($creditDiscount !== (float) $creditDiscountNew) {
             $order->credit_discount = (float) $creditDiscountNew;
@@ -108,7 +105,7 @@ class CreditLineSystem implements CreditSystemInterface
         if (
             !$order->is_canceled
             && in_array(
-                $creditStatusIdNew,
+                $order->credit_status_id,
                 [OrderStatusEnum::CREDIT_ORDER_STATUS_REFUSED, OrderStatusEnum::CREDIT_ORDER_STATUS_ANNULED],
                 true
             )
@@ -120,56 +117,78 @@ class CreditLineSystem implements CreditSystemInterface
             }
         }
 
-        /*
-        //Формирование кассового чека с расчетом "Предоплата"
-        //если заказ в статусе "Передан в доставку"
-        //и статус кредитной заявки сменился на "Cached"
-        //и нет ранее сформированных чеков
+        return [];
+    }
+
+    /**
+     * Формирование кассового чека с расчетом "Предоплата"
+     * если заказ в статусе "Передан в доставку"
+     * и статус кредитной заявки сменился на "Cached"
+     * и нет ранее сформированных чеков
+     */
+    public function sendCreditPaymentReceiptTypePrepayment(Order $order)
+    {
+        /** @var PaymentService $paymentService */
+        $paymentService = resolve(PaymentService::class);
+
         if (
             $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
             && $order->payments->isEmpty()
-            && $creditStatusId !== $creditStatusIdNew
-            && $creditStatusIdNew === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
+            && $order->credit_status_id === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
         ) {
-            $payment = $this->createPayment($order);
+            $payment = $this->createCreditPayment($order);
             if ($payment instanceof Payment) {
                 $paymentService->sendIncomeFullPaymentReceipt($payment);
             }
 
             return null;
         }
+    }
 
-        //Формирование кассового чека с расчетом "В кредит"
-        //если заказ в статусе "Передан в доставку"
-        //и статусы кредитной заявки сменились на ???
-        //и нет ранее сформированных чеков
+    /**
+     * Формирование кассового чека с расчетом "В кредит"
+     * если заказ в статусе "Передан в доставку"
+     * и статусы кредитной заявки сменились на ???
+     * и нет ранее сформированных чеков
+     */
+    public function sendCreditPaymentReceiptTypeOnCredit(Order $order)
+    {
+        /** @var PaymentService $paymentService */
+        $paymentService = resolve(PaymentService::class);
+
         if (
             $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
             && $order->payments->isEmpty()
-            && $creditStatusId !== $creditStatusIdNew
             && in_array(
-                $creditStatusIdNew,
+                $order->credit_status_id,
                 [OrderStatusEnum::CREDIT_ORDER_STATUS_ACCEPTED, OrderStatusEnum::CREDIT_ORDER_STATUS_SIGNED],
                 true
             )
         ) {
-            $payment = $this->createPayment($order);
+            $payment = $this->createCreditPayment($order);
             if ($payment instanceof Payment) {
                 $paymentService->sendCreditReceipt($payment);
             }
 
             return null;
         }
+    }
 
-        //Формирование кассового чека с расчетом "Погашение кредита"
-        //если статус кредитной заявки сменился на "Cached"
-        //и заказ еще в пути
-        //и ранее был выбит чек с расчетом "В кредит"
+    /**
+     * Формирование кассового чека с расчетом "Погашение кредита"
+     * если статус кредитной заявки сменился на "Cached"
+     * и заказ еще в пути
+     * и ранее был выбит чек с расчетом "В кредит"
+     */
+    public function sendCreditPaymentReceiptTypeRepaymentCredit(Order $order)
+    {
+        /** @var PaymentService $paymentService */
+        $paymentService = resolve(PaymentService::class);
+
         if (
             in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DELIVERING, OrderStatus::READY_FOR_RECIPIENT], true)
             && $order->payments->isNotEmpty()
-            && $creditStatusId !== $creditStatusIdNew
-            && $creditStatusIdNew === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
+            && $order->credit_status_id === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
         ) {
             $payment = $order->payments()->first();
             if ($payment instanceof Payment) {
@@ -178,12 +197,9 @@ class CreditLineSystem implements CreditSystemInterface
 
             return null;
         }
-        */
-        return [];
     }
 
-
-    public function createPayment(Order $order): ?Payment
+    public function createCreditPayment(Order $order): ?Payment
     {
         $paymentSum = round($order->price * (100 - (float) $order->credit_discount), 2);
 
