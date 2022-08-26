@@ -643,7 +643,14 @@ class DeliveryService
 
         /** @var Collection|Delivery[] $deliveriesByService */
         foreach ($deliveriesByServices as $deliveryServiceId => $deliveriesByService) {
-            $deliveriesByService = $deliveriesByService->keyBy('xml_id');
+            switch ($deliveryServiceId) {
+                case LogisticsDeliveryService::SERVICE_DPD:
+                    $deliveriesByService = $deliveriesByService->keyBy(fn($deliveryByService) => $deliveryByService->getDeliveryServiceNumber());
+                    break;
+                default:
+                    $deliveriesByService = $deliveriesByService->keyBy('xml_id');
+                    break;
+            }
 
             try {
                 /** @var DeliveryOrderService $deliveryOrderService */
@@ -658,7 +665,11 @@ class DeliveryService
             }
 
             foreach ($deliveryOrderStatusDtos as $deliveryOrderStatusDto) {
-                $delivery = $deliveriesByService[$deliveryOrderStatusDto->xml_id] ?? null;
+                $orderNumberOrXmlId = $deliveryServiceId == LogisticsDeliveryService::SERVICE_DPD
+                    ? $deliveryOrderStatusDto->number
+                    : $deliveryOrderStatusDto->xml_id;
+
+                $delivery = $deliveriesByService[$orderNumberOrXmlId] ?? null;
                 if (!$delivery) {
                     continue;
                 }
