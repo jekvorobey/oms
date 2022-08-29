@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Greensight\CommonMsa\Models\AbstractModel;
+use OpenApi\Annotations as OA;
 
 /**
  * @OA\Schema(

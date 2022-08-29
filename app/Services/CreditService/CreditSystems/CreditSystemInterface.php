@@ -24,5 +24,5 @@ interface CreditSystemInterface
     /**
      * Создать платеж к кредитному заказу
      */
-    public function createCreditPayment(Order $order): ?Payment;
+    public function createCreditPayment(Order $order, int $receiptType): ?Payment;
 }

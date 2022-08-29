@@ -4,6 +4,7 @@ namespace App\Services\PaymentService\PaymentSystems;
 
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
+use phpDocumentor\Reflection\Types\Mixed_;
 
 /**
  * Interface PaymentSystemInterface
@@ -63,14 +64,24 @@ interface PaymentSystemInterface
     public function createIncomeReceipt(Payment $payment, bool $isFullPayment): void;
 
     /**
+     * Создание чека "Предоплата в кредит"
+     */
+    public function createCreditPrepaymentReceipt(Payment $payment): ?array;
+
+    /**
      * Создание чека "В кредит"
      */
-    public function createCreditReceipt(Payment $payment): void;
+    public function createCreditReceipt(Payment $payment): ?array;
 
     /**
      * Создание чека "Погашение кредита"
      */
-    public function createCreditPaymentReceipt(Payment $payment): void;
+    public function createCreditPaymentReceipt(Payment $payment): ?array;
+
+    /**
+     * Отправить чек в кассу для фискализации
+     */
+    public function sendReceipt(Payment $payment, array $receipt): ?array;
 
     /**
      * Создание чека возврата (при отмене всего заказа/платежа)

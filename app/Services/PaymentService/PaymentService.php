@@ -8,6 +8,7 @@ use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\PaymentService\PaymentSystems\Exceptions\Payment as PaymentException;
+use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
@@ -56,12 +57,14 @@ class PaymentService
         }
 
         $paymentSystem = $payment->paymentSystem();
-        $hours = $paymentSystem->duration();
-        if ($hours) {
-            $payment->expires_at = Carbon::now()->addHours($hours);
+        if ($paymentSystem instanceof PaymentSystemInterface) {
+            $hours = $paymentSystem->duration();
+            if ($hours) {
+                $payment->expires_at = Carbon::now()->addHours($hours);
+            }
+            $payment->save();
+            $paymentSystem->createExternalPayment($payment, $returnUrl);
         }
-        $payment->save();
-        $paymentSystem->createExternalPayment($payment, $returnUrl);
 
         return $payment->payment_link;
     }
@@ -209,38 +212,98 @@ class PaymentService
         $payment->save();
     }
 
-    public function sendCreditReceipt(Payment $payment): void
+    /**
+     * Создание объекта фискального чека для кредитов - признак способа расчета "Предоплата"
+     * при передаче товара после поступления ДС от банка
+     */
+    public function createCreditPrepaymentReceipt(?Payment $payment): ?array
     {
-        if ($payment->is_credit_receipt_sent) {
-            return;
+        if (!$payment instanceof Payment) {
+            return null;
+        }
+
+        if ($payment->is_prepayment_receipt_sent) {
+            return null;
         }
 
         $paymentSystem = $payment->paymentSystem();
         if (!$paymentSystem) {
-            return;
+            return null;
         }
 
-        $paymentSystem->createCreditReceipt($payment);
+        $creditPaymentReceipt = $paymentSystem->createCreditPrepaymentReceipt($payment);
+
+        $payment->is_prepayment_receipt_sent = true;
+        $payment->save();
+
+        return $creditPaymentReceipt;
+    }
+
+    /**
+     * Создание объекта фискального чека для кредитов - признак способа расчета "В кредит"
+     * при передаче товара до поступления ДС от банка
+     */
+    public function createCreditReceipt(Payment $payment): ?array
+    {
+        if ($payment->is_credit_receipt_sent || $payment->is_prepayment_receipt_sent) {
+            return null;
+        }
+
+        $paymentSystem = $payment->paymentSystem();
+        if (!$paymentSystem) {
+            return null;
+        }
+
+        $creditPaymentReceipt = $paymentSystem->createCreditReceipt($payment);
 
         $payment->is_credit_receipt_sent = true;
         $payment->save();
+
+        return $creditPaymentReceipt;
     }
 
-    public function sendCreditPaymentReceipt(Payment $payment): void
+    /**
+     * Создание объекта фискального чека для кредитов - признак способа расчета "Оплата кредита"
+     * при поступлении оплаты от банка и ранее сформированного чека с признаком способа расчета "В кредит" (см. выше)
+     */
+    public function createCreditPaymentReceipt(?Payment $payment): ?array
     {
-        if ($payment->is_credit_payment_receipt_sent || !$payment->is_credit_receipt_sent) {
-            return;
+        if (!$payment instanceof Payment) {
+            return null;
+        }
+
+        //if ($payment->is_credit_payment_receipt_sent || $payment->is_prepayment_receipt_sent || !$payment->is_credit_receipt_sent) {
+        //    return null;
+        //}
+
+        $paymentSystem = $payment->paymentSystem();
+        if (!$paymentSystem) {
+            return null;
+        }
+
+        $creditPaymentReceipt = $paymentSystem->createCreditPaymentReceipt($payment);
+
+        $payment->is_credit_payment_receipt_sent = true;
+        $payment->save();
+
+        return $creditPaymentReceipt;
+    }
+
+    /**
+     * Отправка сформированного фискального чека на фискализацию
+     */
+    public function sendCreditPaymentReceipt(?Payment $payment, array $receipt): ?array
+    {
+        if (!$payment instanceof Payment) {
+            return null;
         }
 
         $paymentSystem = $payment->paymentSystem();
         if (!$paymentSystem) {
-            return;
+            return null;
         }
 
-        $paymentSystem->createCreditPaymentReceipt($payment);
-
-        $payment->is_credit_payment_receipt_sent = true;
-        $payment->save();
+        return $paymentSystem->sendReceipt($payment, $receipt);
     }
 
     public function updatePaymentInfo(Payment $payment): void

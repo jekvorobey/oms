@@ -5,7 +5,8 @@ namespace App\Services\PaymentService\PaymentSystems\KitInvest\Receipt;
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Services\PaymentService\PaymentSystems\KitInvest\OrderData;
-use IBT\KitInvest\Models\CheckModel;
+use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
+use IBT\KitInvest\Enum\ReceiptEnum;
 use IBT\KitInvest\Models\SubjectModel;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Pim\Services\OfferService\OfferService;
@@ -38,89 +39,88 @@ abstract class ReceiptData extends OrderData
         ?object $merchant,
         float $quantity,
         float $price,
-        ?string $paymentMode = null
+        ?int $payAttribute = null
     ): array {
-        $paymentMode = $paymentMode ?: $this->getItemPaymentMode($item);
-        $paymentSubject = $this->getItemPaymentSubject($item);
+        $payAttribute = $payAttribute ?: $this->getItemPaymentMode($item);
+        if ($payAttribute == ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_CREDIT_PAYMENT) {
+            $goodsAttribute = ReceiptEnum::RECEIPT_PAYMENT_SUBJECT_PAYMENT;
+        } else {
+            $goodsAttribute = $this->getItemPaymentSubject($item);
+        }
         $agentType = $this->getItemAgentType($item);
         $vatCode = $this->getItemVatCode($offerInfo, $merchant);
 
-        $result = new SubjectModel();
-        $result
-            ->setSubjectName($item->name)
-            ->setQuantity($quantity)
-            ->setPrice($price)
-            ->setTax($vatCode)
-        ;
-
         $result = [
-            //'description' => $item->name,
-            //'quantity' => $quantity,
-            //'amount' => [
-            //    'value' => $price,
-            //    'currency' => CurrencyCode::RUB,
-            //],
-            'vat_code' => $vatCode,
-            'payment_mode' => $paymentMode,
-            'payment_subject' => $paymentSubject,
+            'subjectName' => $item->name,
+            'quantity' => $quantity,
+            'price' => $price * 100,
+            'tax' => $vatCode,
+            'payAttribute' => $payAttribute,
+            'goodsAttribute' => $goodsAttribute,
         ];
 
         if (isset($merchant) && $agentType) {
-            $result['supplier'] = [
-                'inn' => $merchant->inn,
+            $result['supplierInn'] = $merchant->inn;
+            $result['supplierInfo'] = [
+                'name' => $merchant->legal_name,
+                //'phoneNumbers' => $merchant->phone, //ToDo Add merchant global phone in database
             ];
-            $result['agent_type'] = $agentType;
+            $result['agentType'] = $agentType;
         }
 
         return $result;
     }
 
-    protected function getItemPaymentSubject(BasketItem $item): string
+    protected function getItemPaymentSubject(BasketItem $item): int
     {
         if ($item->type === Basket::TYPE_PRODUCT && !$this->isFullPayment) {
-            return PaymentSubject::PAYMENT;
+            return ReceiptEnum::RECEIPT_PAYMENT_SUBJECT_PAYMENT;
         }
 
         return [
-                Basket::TYPE_MASTER => PaymentSubject::SERVICE,
-                Basket::TYPE_PRODUCT => PaymentSubject::COMMODITY,
-                Basket::TYPE_CERTIFICATE => PaymentSubject::PAYMENT,
-            ][$item->type] ?? PaymentSubject::COMMODITY;
+                Basket::TYPE_MASTER => ReceiptEnum::RECEIPT_PAYMENT_SUBJECT_SERVICE,
+                Basket::TYPE_PRODUCT => ReceiptEnum::RECEIPT_PAYMENT_SUBJECT_COMMODITY,
+                Basket::TYPE_CERTIFICATE => ReceiptEnum::RECEIPT_PAYMENT_SUBJECT_PAYMENT,
+            ][$item->type] ?? ReceiptEnum::RECEIPT_PAYMENT_SUBJECT_COMMODITY;
     }
 
-    protected function getItemPaymentMode(BasketItem $item): string
+    protected function getItemPaymentMode(BasketItem $item): int
     {
         if ($item->type === Basket::TYPE_PRODUCT && !$this->isFullPayment) {
-            return PaymentMode::FULL_PREPAYMENT;
+            return ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_FULL_PREPAYMENT; //Полная предварительная оплата
         }
 
         return [
-                Basket::TYPE_CERTIFICATE => PaymentMode::ADVANCE,
-            ][$item->type] ?? PaymentMode::FULL_PAYMENT;
+                Basket::TYPE_CERTIFICATE => ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_ADVANCE, //Аванс
+            ][$item->type] ?? ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_FULL_PAYMENT; //Полная оплата, в том числе с учетом аванса
     }
 
-    protected function getItemAgentType(BasketItem $item): ?string
+    protected function getItemAgentType(BasketItem $item): ?int
     {
         return [
-                Basket::TYPE_MASTER => AgentType::AGENT,
-                Basket::TYPE_PRODUCT => AgentType::COMMISSIONER,
+                Basket::TYPE_MASTER => ReceiptEnum::RECEIPT_AGENT_TYPE_AGENT,
+                Basket::TYPE_PRODUCT => ReceiptEnum::RECEIPT_AGENT_TYPE_COMMISSIONER,
             ][$item->type] ?? null;
     }
 
-    protected function getDeliveryReceiptItem(float $deliveryPrice, ?string $paymentMode = null): ReceiptItem
+    protected function getDeliveryReceiptItem(float $deliveryPrice, ?int $payAttribute = null): SubjectModel
     {
-        $paymentMode = $paymentMode ?: ($this->isFullPayment ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT);
+        if (!$payAttribute) {
+            $payAttribute = $this->isFullPayment ? ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_FULL_PAYMENT : ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_FULL_PREPAYMENT;
+        }
+        if ($payAttribute == ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_CREDIT_PAYMENT) {
+            $goodsAttribute = ReceiptEnum::RECEIPT_PAYMENT_SUBJECT_PAYMENT;
+        } else {
+            $goodsAttribute = $this->isFullPayment ? ReceiptEnum::RECEIPT_PAYMENT_SUBJECT_SERVICE : ReceiptEnum::RECEIPT_PAYMENT_SUBJECT_PAYMENT;
+        }
 
-        return new ReceiptItem([
-            'description' => 'Доставка',
+        return new SubjectModel([
+            'subjectName' => 'Доставка',
             'quantity' => 1,
-            'amount' => [
-                'value' => $deliveryPrice,
-                'currency' => CurrencyCode::RUB,
-            ],
-            'vat_code' => VatCode::CODE_DEFAULT,
-            'payment_mode' => $paymentMode,
-            'payment_subject' => $this->isFullPayment ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
+            'price' => $deliveryPrice * 100,
+            'tax' => VatCode::CODE_DEFAULT,
+            'payAttribute' => $payAttribute,
+            'goodsAttribute ' => $goodsAttribute,
         ]);
     }
 }

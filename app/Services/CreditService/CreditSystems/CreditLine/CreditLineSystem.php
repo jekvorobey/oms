@@ -89,11 +89,11 @@ class CreditLineSystem implements CreditSystemInterface
             $isUpdateOrder = true;
         }
 
-        $creditDiscount = (float) $order->credit_discount;
+        $creditDiscount = $order->credit_discount;
         $creditDiscountNew = $creditOrder->getDiscount();
         // Обновить процент скидки
-        if ($creditDiscount !== (float) $creditDiscountNew) {
-            $order->credit_discount = (float) $creditDiscountNew;
+        if ($creditDiscount !== $creditDiscountNew) {
+            $order->credit_discount = $creditDiscountNew;
             $isUpdateOrder = true;
         }
 
@@ -117,7 +117,7 @@ class CreditLineSystem implements CreditSystemInterface
             }
         }
 
-        return [];
+        return $creditOrder->toArray();
     }
 
     /**
@@ -133,10 +133,10 @@ class CreditLineSystem implements CreditSystemInterface
 
         if (
             $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
-            && $order->payments->isEmpty()
             && $order->credit_status_id === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
+            && $order->payments->isEmpty()
         ) {
-            $payment = $this->createCreditPayment($order);
+            $payment = $this->createCreditPayment($order, CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_PREPAYMENT);
             if ($payment instanceof Payment) {
                 $paymentService->sendIncomeFullPaymentReceipt($payment);
             }
@@ -151,7 +151,7 @@ class CreditLineSystem implements CreditSystemInterface
      * и статусы кредитной заявки сменились на ???
      * и нет ранее сформированных чеков
      */
-    public function sendCreditPaymentReceiptTypeOnCredit(Order $order)
+    public function sendCreditPaymentReceiptTypeOnCredit(Order $order): ?array
     {
         /** @var PaymentService $paymentService */
         $paymentService = resolve(PaymentService::class);
@@ -165,13 +165,13 @@ class CreditLineSystem implements CreditSystemInterface
                 true
             )
         ) {
-            $payment = $this->createCreditPayment($order);
+            $payment = $this->createCreditPayment($order, CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_ON_CREDIT);
             if ($payment instanceof Payment) {
-                $paymentService->sendCreditReceipt($payment);
+                $creditPaymentReceipt = $paymentService->sendCreditReceipt($payment);
             }
-
-            return null;
         }
+
+        return $creditPaymentReceipt ?? null;
     }
 
     /**
@@ -180,28 +180,32 @@ class CreditLineSystem implements CreditSystemInterface
      * и заказ еще в пути
      * и ранее был выбит чек с расчетом "В кредит"
      */
-    public function sendCreditPaymentReceiptTypeRepaymentCredit(Order $order)
+    public function sendCreditPaymentReceiptTypeRepaymentCredit(Order $order): ?array
     {
         /** @var PaymentService $paymentService */
         $paymentService = resolve(PaymentService::class);
 
         if (
-            in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DELIVERING, OrderStatus::READY_FOR_RECIPIENT], true)
+            $order->credit_status_id === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
+            && in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DELIVERING, OrderStatus::READY_FOR_RECIPIENT], true)
             && $order->payments->isNotEmpty()
-            && $order->credit_status_id === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
         ) {
             $payment = $order->payments()->first();
             if ($payment instanceof Payment) {
-                $paymentService->sendCreditPaymentReceipt($payment);
+                $creditPaymentReceipt = $paymentService->sendCreditPaymentReceipt($payment);
             }
-
-            return null;
         }
+
+        return $creditPaymentReceipt ?? null;
     }
 
-    public function createCreditPayment(Order $order): ?Payment
+    public function createCreditPayment(Order $order, int $receiptType): ?Payment
     {
-        $paymentSum = round($order->price * (100 - (float) $order->credit_discount), 2);
+
+        //TODO НАЙТИ СОЗДАННЫЕ ЧЕКИ-ПЛАТЕЖИ В ЗАВИСИМОСТИ ОТ ТИПА ИЛИ СОЗДАТЬ НОВЫЙ ПЛАТЕЖ
+
+        //$paymentSum = round($order->price * (100 - $order->credit_discount) / 100, 2);
+        $paymentSum = $order->price;
 
         $payment = new Payment();
         $payment->payment_method = PaymentMethod::CREDITPAID;

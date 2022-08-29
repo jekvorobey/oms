@@ -5,47 +5,62 @@ namespace App\Services\PaymentService\PaymentSystems\KitInvest\Receipt;
 use App\Models\Basket\Basket;
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
+use IBT\KitInvest\Enum\ReceiptEnum;
+use IBT\KitInvest\Models\CheckModel;
+use IBT\KitInvest\Models\PayModel;
+use IBT\KitInvest\Models\SubjectModel;
+use Pim\Core\PimException;
 
 class CreditReceiptData extends ReceiptData
 {
-    public ?string $paymentMode = null;
-    public ?string $settlementType = null;
+    public ?int $payAttribute = ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_CREDIT;
     private ?float $amountPayment = null;
 
-    /** @return static */
-    public function setPaymentMode(string $paymentMode): self
+    /** @return $this */
+    public function setPayAttribute(int $payAttribute): self
     {
-        $this->paymentMode = $paymentMode;
+        $this->payAttribute = $payAttribute;
 
         return $this;
     }
 
-    /** @return static */
-    public function setSettlementType(string $settlementType): self
-    {
-        $this->settlementType = $settlementType;
-
-        return $this;
-    }
-
-    public function getReceiptData(Payment $payment): CreatePostReceiptRequestBuilder
+    public function getReceiptData(Payment $payment): array
     {
         $order = $payment->order;
 
-        $builder = CreatePostReceiptRequest::builder();
-        $builder
-            ->setType(ReceiptType::PAYMENT)
-            ->setCustomer(new ReceiptCustomer([
-                'phone' => $order->customerPhone(),
-            ]))
-            ->setSend(true)
-            ->setPaymentId($payment->external_payment_id);
+        $items = $this->getReceiptItems($payment);
 
-        $builder->setItems($this->getReceiptItems($payment));
+        $pays = new PayModel();
+        switch ($this->payAttribute) {
+            case ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_FULL_PREPAYMENT:
+                $pays->setPrepaymentSum($this->amountPayment * 100);
+                break;
+            case ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_CREDIT:
+                $pays->setPostpaySum($this->amountPayment * 100);
+                break;
+            case ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_CREDIT_PAYMENT:
+                $pays->setEMoneySum($this->amountPayment * 100);
+                break;
+            default:
+                $pays->setPostpaySum($this->amountPayment * 100);
+        }
 
-        $builder->setSettlements($this->getSettlements());
+        $receipt = new CheckModel();
+        $receipt
+            ->setCheckId($order->number . '/' . $payment->id)
+            ->setTaxSystemType(ReceiptEnum::RECEIPT_TAX_SYSTEM_USN_COST) //4 - УСН доход-расход
+            ->setCalculationType(ReceiptEnum::RECEIPT_TYPE_INCOME) //1 Признак расчета - приход
+            ->setSum($this->amountPayment * 100) //Сумма чека в копейках
+            ->setPay($pays)
+            ->setSubjects($items);
 
-        return $builder;
+        if ($order->customerEmail()) {
+            $receipt->setEmail($order->customerEmail());
+        } else if ($order->customerPhone()) {
+            $receipt->setPhone($order->customerPhone());
+        }
+
+        return $receipt->toArray();
     }
 
     /**
@@ -78,50 +93,35 @@ class CreditReceiptData extends ReceiptData
             $merchant = $merchants[$merchantId] ?? null;
 
             $quantity = $item->qty;
-            if ((float) $order->credit_discount > 0 && (float) $order->credit_discount < 100) {
-                $price = round($item->unit_price * (100 - (float) $order->credit_discount), 2);
-            } else {
+            // Remove discount credit
+            //if ((float) $order->credit_discount > 0 && (float) $order->credit_discount < 100) {
+            //    $price = round($item->unit_price * (100 - (float) $order->credit_discount), 2);
+            //} else {
                 $price = $item->unit_price;
-            }
+            //}
 
             if ($quantity && $price) {
-                $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $quantity, $price, $this->paymentMode);
+                $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $quantity, $price, $this->payAttribute);
                 $this->amountPayment += $price * $quantity;
 
-                $receiptItems[] = new ReceiptItem($receiptItemInfo);
+                $receiptItems[] = new SubjectModel($receiptItemInfo);
             }
         }
 
-        if ((float) $order->delivery_price > 0 && !$deliveryForReturn) {
-            if ((float) $order->credit_discount > 0 && (float) $order->credit_discount < 100) {
-                $deliveryPrice = round($order->delivery_price * (100 - (float) $order->credit_discount), 2);
-            } else {
+        if ($order->delivery_price > 0 && !$deliveryForReturn) {
+            // Remove discount credit
+            //if ((float) $order->credit_discount > 0 && (float) $order->credit_discount < 100) {
+            //    $deliveryPrice = round($order->delivery_price * (100 - (float) $order->credit_discount), 2);
+            //} else {
                 $deliveryPrice = $order->delivery_price;
-            }
+            //}
 
             if ($deliveryPrice) {
-                $receiptItems[] = $this->getDeliveryReceiptItem($deliveryPrice, $this->paymentMode);
+                $receiptItems[] = $this->getDeliveryReceiptItem($deliveryPrice, $this->payAttribute);
                 $this->amountPayment += $deliveryPrice;
             }
         }
 
         return $receiptItems;
-    }
-
-    /**
-     * Формирование признаков оплаты (в кредит, Погашение кредита)
-     */
-    private function getSettlements(): array
-    {
-        $settlements = [];
-        $settlements[] = [
-            'type' => $this->settlementType,
-            'amount' => [
-                'value' => $this->amountPayment,
-                'currency' => CurrencyCode::RUB,
-            ],
-        ];
-
-        return $settlements;
     }
 }

@@ -14,6 +14,10 @@ class CreditService
 {
     public const ORDER_RETURN_REASON_ID = 15;
 
+    public const CREDIT_PAYMENT_RECEIPT_TYPE_PREPAYMENT = 1;
+    public const CREDIT_PAYMENT_RECEIPT_TYPE_ON_CREDIT = 2;
+    public const CREDIT_PAYMENT_RECEIPT_TYPE_PAYMENT = 3;
+
     public function getCreditOrder(Order $order): ?array
     {
         $creditModel = new Credit();
@@ -28,10 +32,10 @@ class CreditService
         return $creditModel->creditSystem()->checkCreditOrder($order);
     }
 
-    public function createCreditPayment(Order $order): ?Payment
+    public function createCreditPayment(Order $order, int $receiptType): ?Payment
     {
         $creditModel = new Credit();
 
-        return $creditModel->creditSystem()->createCreditPayment($order);
+        return $creditModel->creditSystem()->createCreditPayment($order, $receiptType);
     }
 }

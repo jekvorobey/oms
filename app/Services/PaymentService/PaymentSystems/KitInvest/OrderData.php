@@ -3,7 +3,7 @@
 namespace App\Services\PaymentService\PaymentSystems\KitInvest;
 
 use App\Models\Order\Order;
-use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
+use IBT\KitInvest\Enum\ReceiptEnum;
 use Illuminate\Support\Collection;
 use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Dto\VatDto;
@@ -56,9 +56,10 @@ abstract class OrderData
     protected function getMerchants(array $merchantIds): Collection
     {
         $merchantQuery = $this->merchantService->newQuery()
-            ->addFields(MerchantDto::entity(), 'id', 'inn')
+            ->addFields(MerchantDto::entity(), 'id', 'inn', 'legal_name')
             ->include('vats')
             ->setFilter('id', $merchantIds);
+
         return $this->merchantService->merchants($merchantQuery)->keyBy('id');
     }
 
@@ -103,16 +104,16 @@ abstract class OrderData
     protected function getItemVatCode(?object $offerInfo, ?object $merchant): ?int
     {
         if (!isset($offerInfo, $merchant)) {
-            return VatCode::CODE_DEFAULT;
+            return ReceiptEnum::RECEIPT_SUBJECT_TAX_NONE;
         }
         $vatValue = $this->getMerchantVatValue($offerInfo, $merchant);
 
         return [
-                -1 => VatCode::CODE_DEFAULT,
-                0 => VatCode::CODE_0_PERCENT,
-                10 => VatCode::CODE_10_PERCENT,
-                20 => VatCode::CODE_20_PERCENT,
-            ][$vatValue] ?? VatCode::CODE_DEFAULT;
+                -1 => ReceiptEnum::RECEIPT_SUBJECT_TAX_NONE,
+                0 => ReceiptEnum::RECEIPT_SUBJECT_TAX_0,
+                10 => ReceiptEnum::RECEIPT_SUBJECT_TAX_10,
+                20 => ReceiptEnum::RECEIPT_SUBJECT_TAX_20,
+            ][$vatValue] ?? ReceiptEnum::RECEIPT_SUBJECT_TAX_NONE;
     }
 
     protected function getMerchantVatValue(object $offerInfo, object $merchant): ?int

@@ -31,6 +31,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use OpenApi\Annotations as OA;
 use Pim\Core\PimException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -342,9 +343,38 @@ class OrdersController extends Controller
             throw new BadRequestHttpException($validator->errors()->first());
         }
 
-        $result = $creditService->checkCreditOrder($order);
+        $receiptType = $data['receipt_type'];
+        $checkCreditOrder = $creditService->checkCreditOrder($order);
 
-        $paymentService->sendCreditPaymentReceipt();
+        $payment = $creditService->createCreditPayment($order, $receiptType);
+        if ($payment instanceof Payment) {
+            switch ($receiptType) {
+                case CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_PREPAYMENT:
+                    $creditPaymentReceipt = $paymentService->createCreditPrepaymentReceipt($payment);
+                    break;
+                case CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_ON_CREDIT:
+                    $creditPaymentReceipt = $paymentService->createCreditReceipt($payment);
+                    break;
+                case CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_PAYMENT:
+                    $creditPaymentReceipt = $paymentService->createCreditPaymentReceipt($payment);
+                    break;
+                default:
+                    $creditPaymentReceipt = null;
+            }
+
+            if ($creditPaymentReceipt) {
+                $resultSendReceipt = $paymentService->sendCreditPaymentReceipt($payment, $creditPaymentReceipt);
+            }
+        }
+
+        $result = [
+            'request' => $data,
+            'payment' => $payment,
+            'checkOrder' => $checkCreditOrder,
+            'receipt' => $creditPaymentReceipt ?? null,
+            'resultSendReceipt' => $resultSendReceipt ?? null
+        ];
+
         return response($result, 200);
     }
 
