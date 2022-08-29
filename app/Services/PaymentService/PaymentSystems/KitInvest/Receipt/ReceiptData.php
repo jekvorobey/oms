@@ -6,9 +6,15 @@ use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Services\PaymentService\PaymentSystems\KitInvest\OrderData;
 use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
+use Greensight\CommonMsa\Dto\UserDto;
+use Greensight\CommonMsa\Rest\RestQuery;
+use Greensight\CommonMsa\Services\AuthService\UserService;
 use IBT\KitInvest\Enum\ReceiptEnum;
 use IBT\KitInvest\Models\SubjectModel;
+use MerchantManagement\Dto\MerchantDto;
+use MerchantManagement\Dto\OperatorDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
+use MerchantManagement\Services\OperatorService\OperatorService;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\PublicEventService\PublicEventService;
 
@@ -49,6 +55,7 @@ abstract class ReceiptData extends OrderData
         }
         $agentType = $this->getItemAgentType($item);
         $vatCode = $this->getItemVatCode($offerInfo, $merchant);
+        $merchantUser = $this->getMerchantUser($merchant);
 
         $result = [
             'subjectName' => $item->name,
@@ -63,7 +70,9 @@ abstract class ReceiptData extends OrderData
             $result['supplierInn'] = $merchant->inn;
             $result['supplierInfo'] = [
                 'name' => $merchant->legal_name,
-                //'phoneNumbers' => $merchant->phone, //ToDo Add merchant global phone in database
+                'phoneNumbers' => [
+                    ($merchantUser && $merchantUser->phone) ? $merchantUser->phone : $merchant->inn
+                ],
             ];
             $result['agentType'] = $agentType;
         }
@@ -122,5 +131,35 @@ abstract class ReceiptData extends OrderData
             'payAttribute' => $payAttribute,
             'goodsAttribute ' => $goodsAttribute,
         ]);
+    }
+
+    private function getMerchantUser(?object $merchant): ?UserDto
+    {
+        if (!$merchant) {
+            return null;
+        }
+
+        $operatorService = resolve(OperatorService::class);
+        $userService = resolve(UserService::class);
+
+        /** @var OperatorDto $operatorIsMain */
+        $operatorIsMain = $operatorService->operators(
+            (new RestQuery())->setFilter('merchant_id', $merchant->id)->setFilter('is_main', true)
+        )->first();
+
+        if (is_null($operatorIsMain)) {
+            $operatorIsMain = $operatorService->operators(
+                (new RestQuery())->setFilter('merchant_id', $merchant->id)
+            )->first();
+        }
+
+        if ($operatorIsMain) {
+            /** @var UserDto $userMain */
+            return $userService
+                ->users((new RestQuery())->setFilter('id', $operatorIsMain->user_id))
+                ->first();
+        }
+
+        return null;
     }
 }
