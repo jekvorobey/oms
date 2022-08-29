@@ -67,11 +67,11 @@ abstract class ReceiptData extends OrderData
         ];
 
         if (isset($merchant) && $agentType) {
-            $result['supplierInn'] = $merchant->inn;
+            $result['supplierINN'] = $merchant->inn;
             $result['supplierInfo'] = [
                 'name' => $merchant->legal_name,
                 'phoneNumbers' => [
-                    ($merchantUser && $merchantUser->phone) ? $merchantUser->phone : $merchant->inn
+                    ($merchantUser && $merchantUser->phone) ? $merchantUser->phone : $merchant->inn,
                 ],
             ];
             $result['agentType'] = $agentType;
