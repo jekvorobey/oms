@@ -1,6 +1,6 @@
 services:
-  ENV-ibt-admin:
-    container_name: ENV-ibt-admin
+  ENV-ibt-oms-ms:
+    container_name: ENV-ibt-oms-ms
     image: registry.ibt.ru:5050/ibt-admin:${TAG}
     restart: always
     env_file:
