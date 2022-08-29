@@ -4,7 +4,7 @@ variables:
     REGISTRY_PASS: Ohng5zahzi1quahV
     CONTAINER_IMAGE: $REGISTRY/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME
     LOCAL_PATH: /home/$CI_PROJECT_ROOT_NAMESPACE/svc/$CI_PROJECT_NAME
-    DEV_SERVER: NONE
+    DEV_SERVER: 77.223.118.180
     DEV_DOMAIN: NONE
     PROD_SERVER: 77.223.118.180
     PROD_DOMAIN: NONE
@@ -71,10 +71,13 @@ Stage:
     environment:
         name: stage
     script:
+        - ENV="stage"
         - CONTAINER_IMAGE=`echo $REGISTRY/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME | tr '[:upper:]' '[:lower:]'`
+        - LOCAL_PATH="/home/"$CI_PROJECT_ROOT_NAMESPACE"/"$ENV"/svc/"$CI_PROJECT_NAME
         - echo "deploy to $DEV_SERVER"
         - echo "$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG @ $LOCAL_PATH"
         - ssh -o StrictHostKeyChecking=no root@$DEV_SERVER "mkdir -p $LOCAL_PATH/"
+        - sed -r "s|(image:.).*:.*|\1$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG|;s|ENV|$ENV|g" -i docker-compose.yml
         - scp -o StrictHostKeyChecking=no docker-compose.yml root@$DEV_SERVER:$LOCAL_PATH/docker-compose.yml
         - ssh -o StrictHostKeyChecking=no root@$DEV_SERVER "export TAG=$CONTAINER_IMAGE_TAG; export IMAGE=$CONTAINER_IMAGE; cd $LOCAL_PATH; docker-compose up -d"
 #    only:
@@ -88,10 +91,13 @@ Production:
     environment:
         name: production
     script:
+        - ENV="prod"
+        - CONTAINER_IMAGE=`echo $REGISTRY/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME | tr '[:upper:]' '[:lower:]'`
+        - LOCAL_PATH="/home/"$CI_PROJECT_ROOT_NAMESPACE"/"$ENV"/svc/"$CI_PROJECT_NAME
         - echo "deploy to $PROD_SERVER"
         - echo "$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG @ $LOCAL_PATH"
         - ssh -o StrictHostKeyChecking=no root@$PROD_SERVER "mkdir -p $LOCAL_PATH/"
-        - sed -r "s|(image:.).*:.*|\1$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG|" -i docker-compose.yml
+        - sed -r "s|(image:.).*:.*|\1$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG|;s|ENV|$ENV|g" -i docker-compose.yml
         - scp -o StrictHostKeyChecking=no docker-compose.yml root@$PROD_SERVER:$LOCAL_PATH/docker-compose.yml
         - ssh -o StrictHostKeyChecking=no root@$PROD_SERVER "cd $LOCAL_PATH; docker-compose -f ../../docker-compose.yml -f docker-compose.yml up -d"
 #    only:

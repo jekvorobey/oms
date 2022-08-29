@@ -1,20 +1,19 @@
 services:
-  ibt-oms-ms:
-    container_name: ibt-oms-ms
-    image: registry.ibt.ru:5050/ibt.studio/ibt-oms-ms/ibt-oms-ms:v1.19.6
+  ENV-ibt-admin:
+    container_name: ENV-ibt-admin
+    image: registry.ibt.ru:5050/ibt-admin:${TAG}
     restart: always
     env_file:
-      - /home/iBT.studio/svc/ibt-oms-ms/.env
+      - /home/iBT.studio/ENV/svc/ibt-admin/.env
     environment:
-      - PHP_SOCK_FILE=/sockets/ibt-oms-ms_php
+      - PHP_SOCK_FILE=/sockets/ibt-admin_php
     volumes:
       - /sockets/:/sockets/
-      - /home/iBT.studio/svc/ibt-oms-ms/.env:/var/www/.env
-    hostname: ibt-oms-ms.prod
+      - /home/iBT.studio/ENV/svc/ibt-admin/.env:/var/www/.env
+    hostname: ibt-admin.ENV
     networks:
-      prod.svc.cluster.local:
+      ENV.svc.cluster.local:
         aliases:
-          - ibt-oms-ms.prod.svc.cluster.local
+          - ibt-admin.ENV.svc.cluster.local
     extra_hosts:
       - "mysql-master:host-gateway"
-      - "redis-master.redis:host-gateway"
