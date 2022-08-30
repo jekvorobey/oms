@@ -6,7 +6,7 @@ services:
     env_file:
       - /home/iBT.studio/ENV/svc/ibt-admin/.env
     environment:
-      - PHP_SOCK_FILE=/sockets/ibt-admin_php
+      - PHP_SOCK_FILE=/sockets/ENV-ibt-admin_php
     volumes:
       - /sockets/:/sockets/
       - /home/iBT.studio/ENV/svc/ibt-admin/.env:/var/www/.env
