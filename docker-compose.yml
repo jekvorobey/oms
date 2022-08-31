@@ -17,3 +17,4 @@ services:
           - ibt-oms-ms.ENV.svc.cluster.local
     extra_hosts:
       - "mysql-master:host-gateway"
+      - "redis-ENV:host-gateway"
