@@ -33,6 +33,7 @@ use Illuminate\Validation\Rule;
 use Pim\Core\PimException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Throwable;
 
 /**
  * Class OrdersController
@@ -120,7 +121,7 @@ class OrdersController extends Controller
      *     ),
      *     @OA\Response(response="404", description=""),
      * )
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function tickets(int $id, Request $request, OrderTicketsCreator $orderTicketsCreator): JsonResponse
     {
@@ -780,10 +781,10 @@ class OrdersController extends Controller
                         $discount['discount_id'] = $orderDiscount->discount_id;
                         $discount['order_change'] = $orderDiscount->change;
 
+                        $discount['change'] = 0;
                         foreach ($orderDiscount->items as $discountItem) {
-                            $discount['change'] = 0;
                             if ($discountItem['offer_id'] == $item->offer_id) {
-                                $discount['change'] += $orderDiscount->change;
+                                $discount['change'] += $discountItem['change'];
                             }
                         }
 
@@ -815,6 +816,7 @@ class OrdersController extends Controller
                     'created_at' => $shipment->delivery->order->created_at->format('Y-m-d H:i:s'),
                     'items' => $items,
                     'order_id' => $shipment->delivery->order->id,
+                    'customer_id' => $shipment->delivery->order->customer_id,
                     'shipment_id' => $shipment->id,
                     'merchant_id' => $shipment->merchant_id,
                     'status' => $shipment->status,

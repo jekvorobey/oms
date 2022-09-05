@@ -351,6 +351,7 @@ class OrderService
         $orderInfoDto->receiverName = $order->receiver_name;
         $orderInfoDto->receiverEmail = $order->receiver_email;
         $orderInfoDto->receiverPhone = $order->receiver_phone;
+        $orderInfoDto->paymentMethod = $order->paymentMethod;
 
         if (empty($cardStructs)) {
             $orderInfoDto->canRepeat = false;
