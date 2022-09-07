@@ -79,7 +79,7 @@ Stage:
         - ssh -o StrictHostKeyChecking=no root@$DEV_SERVER "mkdir -p $LOCAL_PATH/"
         - sed -r "s|(image:.).*:.*|\1$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG|;s|ENV|$ENV|g" -i docker-compose.yml
         - scp -o StrictHostKeyChecking=no docker-compose.yml root@$DEV_SERVER:$LOCAL_PATH/docker-compose.yml
-        - ssh -o StrictHostKeyChecking=no root@$DEV_SERVER "cd $LOCAL_PATH; docker-compose -f ../../../docker-compose.yml -f docker-compose.yml up -d"
+        - ssh -o StrictHostKeyChecking=no root@$DEV_SERVER "cd $LOCAL_PATH; docker-compose -f ../../../docker-compose.yml -f docker-compose.yml up -d; docker exec ibt-ingress nginx -s reload"
 #    only:
 #        - tags
     when: manual
@@ -99,7 +99,7 @@ Production:
         - ssh -o StrictHostKeyChecking=no root@$PROD_SERVER "mkdir -p $LOCAL_PATH/"
         - sed -r "s|(image:.).*:.*|\1$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG|;s|ENV|$ENV|g" -i docker-compose.yml
         - scp -o StrictHostKeyChecking=no docker-compose.yml root@$PROD_SERVER:$LOCAL_PATH/docker-compose.yml
-        - ssh -o StrictHostKeyChecking=no root@$PROD_SERVER "cd $LOCAL_PATH; docker-compose -f ../../../docker-compose.yml -f docker-compose.yml up -d"
+        - ssh -o StrictHostKeyChecking=no root@$PROD_SERVER "cd $LOCAL_PATH; docker-compose -f ../../../docker-compose.yml -f docker-compose.yml up -d; docker exec ibt-ingress nginx -s reload"
 #    only:
 #        - tags    
     when: manual
