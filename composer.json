@@ -42,6 +42,10 @@
         },
         {
             "type": "vcs",
+            "url": "git@gitlab.com:iBT.studio/ibt-cm-lib"
+        },
+        {
+            "type": "vcs",
             "url": "git@gitlab.com:iBT.studio/ibt-cms-lib"
         },
         {
