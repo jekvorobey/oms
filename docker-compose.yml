@@ -11,6 +11,7 @@ services:
       - /sockets/:/sockets/
       - /home/iBT.studio/ENV/data/jwt_key/:/var/www/jwt_key/
       - /home/iBT.studio/ENV/svc/ibt-oms-ms/.env:/var/www/.env
+      - /home/iBT.studio/ENV/svc/ibt-oms-ms/php.ini:/usr/local/etc/php/php.ini
     hostname: ibt-oms-ms.ENV
     networks:
       ENV.svc.cluster.local:
