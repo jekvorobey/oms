@@ -527,7 +527,6 @@ class Delivery extends AbstractModel
                         ->whereNotNull('error_xml_id')
                     );
             })
-            ->where('delivery_service', '=', 5)
             ->whereNotIn('status', static::getFinalStatus());
 
         if ($withShipments) {
