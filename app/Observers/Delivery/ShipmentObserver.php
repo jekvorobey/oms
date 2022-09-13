@@ -43,7 +43,7 @@ class ShipmentObserver
         ShipmentStatus::ON_POINT_IN => DeliveryStatus::ON_POINT_IN,
     ];
 
-    static private bool $isDeliveryOrderCreated = false;
+    static private array $createdDeliveryOrders= [];
 
     /**
      * Handle the shipment "updating" event.
@@ -266,13 +266,13 @@ class ShipmentObserver
                  * todo костыль чтобы заказ на доставку не создавался два раза в DPD
                  * todo разобраться почему так
                  */
-                if (!static::$isDeliveryOrderCreated) {
+                if (!in_array($delivery->id, static::$createdDeliveryOrders)) {
                     /** @var DeliveryService $deliveryService */
                     $deliveryService = resolve(DeliveryService::class);
                     $deliveryService->saveDeliveryOrder($delivery);
 
                     if ($delivery->delivery_service == DeliveryServiceDto::SERVICE_DPD) {
-                        static::$isDeliveryOrderCreated = true;
+                        static::$createdDeliveryOrders[] = $delivery->id;
                     }
                 }
 
