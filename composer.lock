@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "12faa59119724ac8c8c659626b258e3e",
+    "content-hash": "488530a7ebb1d6fe410f9ce2e1fc6a72",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -1833,27 +1833,26 @@
         },
         {
             "name": "ibt/merchant-management-lib",
-            "version": "dev-master",
+            "version": "dev-feature/BX-7620-cash-receipts-own-company",
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-merchant-management-lib.git",
-                "reference": "99c3c162cdb4bf9948eb8e203e8c71cf766b5c35"
+                "reference": "b30eb80fac0e43a033be03f6e353cf9948f2a121"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-merchant-management-lib/repository/archive.zip?sha=99c3c162cdb4bf9948eb8e203e8c71cf766b5c35",
-                "reference": "99c3c162cdb4bf9948eb8e203e8c71cf766b5c35",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-merchant-management-lib/repository/archive.zip?sha=b30eb80fac0e43a033be03f6e353cf9948f2a121",
+                "reference": "b30eb80fac0e43a033be03f6e353cf9948f2a121",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
                 "ibt/common-lib": "dev-master",
-                "php": "^7.1.3"
+                "php": "^7.1.3|^8.1"
             },
             "require-dev": {
                 "laravel/framework": "^5.8"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1870,7 +1869,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965528/issues"
             },
-            "time": "2022-08-04T14:17:36+00:00"
+            "time": "2022-09-15T13:21:01+00:00"
         },
         {
             "name": "ibt/message-lib",

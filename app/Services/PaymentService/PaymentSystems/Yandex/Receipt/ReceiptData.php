@@ -6,6 +6,7 @@ use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
 use App\Services\PaymentService\PaymentSystems\Yandex\OrderData;
+use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\PublicEventService\PublicEventService;
@@ -40,7 +41,7 @@ abstract class ReceiptData extends OrderData
     {
         $paymentMode = $this->getItemPaymentMode($item);
         $paymentSubject = $this->getItemPaymentSubject($item);
-        $agentType = $this->getItemAgentType($item);
+        $agentType = $this->getItemAgentType($item, $merchant);
         $vatCode = $this->getItemVatCode($offerInfo, $merchant);
 
         $result = [
@@ -89,11 +90,15 @@ abstract class ReceiptData extends OrderData
         ][$item->type] ?? PaymentMode::FULL_PAYMENT;
     }
 
-    protected function getItemAgentType(BasketItem $item): ?string
+    protected function getItemAgentType(BasketItem $item, ?object $merchant): ?string
     {
+        if (!$merchant || !isset($merchant->commissionaire_type, $merchant->agent_type)) {
+            return null;
+        }
+
         return [
-            Basket::TYPE_MASTER => AgentType::AGENT,
-            Basket::TYPE_PRODUCT => AgentType::COMMISSIONER,
+            Basket::TYPE_MASTER => $merchant->commissionaire_type ? AgentType::AGENT : null,
+            Basket::TYPE_PRODUCT => $merchant->agent_type ? AgentType::COMMISSIONER : null,
         ][$item->type] ?? null;
     }
 
