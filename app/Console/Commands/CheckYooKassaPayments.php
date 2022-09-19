@@ -15,10 +15,19 @@ class CheckYooKassaPayments extends Command
 
     public function handle()
     {
-        Payment::query()
-            ->whereNotIn('status', [PaymentStatus::PAID, PaymentStatus::TIMEOUT, PaymentStatus::ERROR])
+        $q = Payment::query()
             ->where('payment_system', PaymentSystem::YANDEX)
-            ->where('created_at', '<', now()->subHour())
+            ->where(function ($query) {
+                $query->where(function ($query) {
+                    $query
+                        ->whereNotIn('status', [PaymentStatus::PAID, PaymentStatus::TIMEOUT, PaymentStatus::ERROR])
+                        ->where('created_at', '<', now()->subHour());
+                })->orWhere(function ($query) {
+                    $query
+                        ->whereIn('status', [PaymentStatus::ERROR])
+                        ->where('created_at', '>', now()->subDay());
+                });
+            })
             ->with('order')
             ->each(function (Payment $payment) {
                 if ($payment->order->remaining_price <= $payment->order->spent_certificate) {
