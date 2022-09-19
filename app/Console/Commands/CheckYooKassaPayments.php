@@ -25,7 +25,7 @@ class CheckYooKassaPayments extends Command
                 })->orWhere(function ($query) {
                     $query
                         ->whereIn('status', [PaymentStatus::ERROR])
-                        ->where('created_at', '>', now()->subDays(3));
+                        ->where('created_at', '>', now()->subDays(7));
                 });
             })
             ->with('order')
