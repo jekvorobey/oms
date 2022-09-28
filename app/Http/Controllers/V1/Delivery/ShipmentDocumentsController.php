@@ -9,6 +9,7 @@ use App\Services\DocumentService\OrderUPDCreator;
 use App\Services\DocumentService\ShipmentAcceptanceActCreator;
 use App\Services\DocumentService\ShipmentAssemblingCardCreator;
 use App\Services\DocumentService\ShipmentInventoryCreator;
+use App\Services\DocumentService\ShipmentsReceiptInvoiceCreator;
 use App\Services\Dto\Out\DocumentDto;
 use App\Services\ShipmentService;
 use Exception;
@@ -170,6 +171,42 @@ class ShipmentDocumentsController extends DocumentController
         /** @var Shipment $shipment */
         $shipment = $this->shipmentService->getShipment($shipmentId);
         $documentDto = new DocumentDto(['file_id' => $shipment->upd_file_id, 'success' => true]);
+
+        return $this->documentResponse($documentDto);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="api/v1/shipments/documents/receipt-invoice",
+     *     tags={"Документы"},
+     *     description="Сформировать список накладных по отправлениям",
+     *     @OA\Response(
+     *         response="204",
+     *         description="",
+     *     ),
+     *     @OA\Response(response="404", description=""),
+     * )
+     * @throws Throwable
+     */
+    public function receiptInvoice(
+        Request $request,
+        ShipmentsReceiptInvoiceCreator $shipmentsReceiptInvoiceCreator
+    ): JsonResponse {
+        $data = $request->all();
+
+        $shipmentIds = $data['id'] ?? null;
+        $shipments = $this->shipmentService->getShipments($shipmentIds);
+
+        return response()->json($shipments ? $shipments : null);
+
+        if ($shipments) {
+            $documentDto = $shipmentsReceiptInvoiceCreator->setShipments($shipments)->create();
+            if (!$documentDto->success) {
+                throw new \RuntimeException('receiptInvoice not formed');
+            }
+        } else {
+            throw new \RuntimeException('shipments not found');
+        }
 
         return $this->documentResponse($documentDto);
     }
