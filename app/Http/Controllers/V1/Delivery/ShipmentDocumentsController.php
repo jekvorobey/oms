@@ -16,6 +16,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use RuntimeException;
 use Throwable;
 
 class ShipmentDocumentsController extends DocumentController
@@ -192,30 +193,20 @@ class ShipmentDocumentsController extends DocumentController
         Request $request,
         ShipmentsReceiptInvoiceCreator $shipmentsReceiptInvoiceCreator
     ): JsonResponse {
-        $data = $request->all();
 
-        $shipmentIds = $data['id'] ?? null;
+        $data = $request->all();
+        $shipmentIds = $data['id'] ?? [];
+        $asPdf = $data['as_pdf'] ?? false;
+
         $shipments = $this->shipmentService->getShipments($shipmentIds);
 
-        $basketItems = [];
-        foreach ($shipments as $shipment) {
-            $basketItems[] = $shipmentsReceiptInvoiceCreator->basketItems($shipment);
-        }
-
-        $result = [
-            'shipments' => $shipments,
-            'basketItems' => $basketItems,
-        ];
-
-        return response()->json($result);
-
         if ($shipments) {
-            $documentDto = $shipmentsReceiptInvoiceCreator->setShipments($shipments)->create();
+            $documentDto = $shipmentsReceiptInvoiceCreator->setShipments($shipments)->setAsPdf($asPdf)->create();
             if (!$documentDto->success) {
-                throw new \RuntimeException('receiptInvoice not formed');
+                throw new RuntimeException('receiptInvoice not formed');
             }
         } else {
-            throw new \RuntimeException('shipments not found');
+            throw new RuntimeException('shipments not found');
         }
 
         return $this->documentResponse($documentDto);

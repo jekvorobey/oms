@@ -76,7 +76,7 @@ class OrderDocumentCreatorHelper
             $rowValues = $getRowValues($item, $rowIndex, $itemNumber);
             static::fillRow($sheet, $rowValues, $rowIndex);
             $itemsHeight += $sheet->getRowDimension($rowIndex)->getRowHeight(Dimension::UOM_CENTIMETERS);
-            if ($itemsHeight + $pageHeight > self::BREAK_TABLE_HEIGHT) {
+            if ($itemsHeight + $pageHeight > self::BREAK_TABLE_HEIGHT && $breakRowTitle) {
                 $breakRowsCount++;
                 $rowIndex = static::fillBreakRow($sheet, $rowIndex, $breakRowTitle, $breakRowsCount);
                 $pageHeight = self::TABLE_HEADER_HEIGHT + self::FILE_FOOTER_HEIGHT;
