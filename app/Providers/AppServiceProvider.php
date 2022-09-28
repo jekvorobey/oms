@@ -28,6 +28,9 @@ use App\Observers\Order\OrderCommentObserver;
 use App\Observers\Order\OrderObserver;
 use App\Observers\Order\OrderReturnObserver;
 use App\Observers\Payment\PaymentObserver;
+use IBT\CreditLine\CreditLine;
+use IBT\KitInvest\KitInvest;
+use IBT\KitInvest\KitInvestServicesClient;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use L5Swagger\L5SwaggerServiceProvider;
@@ -57,9 +60,21 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->app->singleton(Client::class, function () {
-            $client = new Client();
-            $client->setAuth(config('services.y_checkout.shop_id'), config('services.y_checkout.key'));
-            return $client;
+            $yooKassaClient = new Client();
+            $yooKassaClient->setAuth(config('services.y_checkout.shop_id'), config('services.y_checkout.key'));
+            return $yooKassaClient;
+        });
+
+        $this->app->singleton(CreditLine::class, function () {
+            $creditLineClient = new CreditLine();
+            $creditLineClient->setAuth(config('services.credit_line.login'), config('services.credit_line.password'));
+            return $creditLineClient;
+        });
+
+        $this->app->singleton(KitInvest::class, function () {
+            $kitInvestClient = new KitInvest();
+            $kitInvestClient->setAuth(config('services.kit_invest.companyId'), config('services.kit_invest.login'), config('services.kit_invest.password'));
+            return $kitInvestClient;
         });
 
         $this->addObservers();
