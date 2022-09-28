@@ -25,18 +25,9 @@ class CheckCreditLineStatus extends Command
 
     public function handle()
     {
-
-        /** @var KitInvest $kitInvest */
-        $kitInvest = resolve(KitInvest::class);
-        $paymentInfo = $kitInvest->getPaymentInfo('220711144739485');
-
-        dump($paymentInfo);
-        //return 0;
-
-
         Order::query()
             ->where('payment_method_id', PaymentMethod::CREDITPAID)
-            //->where('is_canceled', 0)
+            ->where('is_canceled', 0)
             ->each(function (Order $order) {
                 $this->checkCreditOrder($order);
             });
@@ -50,16 +41,13 @@ class CheckCreditLineStatus extends Command
         /** @var PaymentService $paymentService */
         $paymentService = resolve(PaymentService::class);
 
-        //try {
+        try {
             $creditService = new CreditService();
             $checkStatus = $creditService->getCreditOrder($order);
-        //} catch (\Throwable $exception) {
-        //    report($exception);
-        //    return;
-        //}
-
-        dump($checkStatus);
-        //return;
+        } catch (\Throwable $exception) {
+            report($exception);
+            return;
+        }
 
         if (!$checkStatus) {
             return;
