@@ -71,7 +71,7 @@
         "ibt/kit-invest-sdk": "dev-master",
         "ibt/logistics-lib": "dev-master",
         "ibt/marketing-lib": "dev-master",
-        "ibt/merchant-management-lib": "dev-feature/BX-7620-cash-receipts-own-company",
+        "ibt/merchant-management-lib": "dev-master",
         "ibt/message-lib": "dev-master",
         "ibt/pim-lib": "dev-master",
         "ibt/pp-credit-sdk": "dev-master",
