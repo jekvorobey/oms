@@ -2,30 +2,29 @@
 
 namespace App\Services\DocumentService;
 
-use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
-use App\Services\OrderService;
-use Cms\Services\OptionService\OptionService;
 use Greensight\Customer\Dto\CustomerDto;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use MerchantManagement\Dto\MerchantDto;
-use MerchantManagement\Dto\VatDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Exception;
 use Pim\Core\PimException;
-use Pim\Dto\Offer\OfferDto;
-use Pim\Services\OfferService\OfferService;
+use Pim\Dto\BrandDto;
+use Pim\Dto\CategoryDto;
+use Pim\Dto\Product\ProductDto;
+use Pim\Services\ProductService\ProductService;
 
 class ShipmentsReceiptInvoiceCreator extends DocumentCreator
 {
     /** Номер стартовой строки для заполнения таблицы товаров */
     private const START_BODY_TABLE_ROW = 15;
+    private const BARCODE_PRODUCT_PROPERTY_ID = 297;
     protected ?Collection $shipments;
     protected ?Collection $offers;
     protected ?Collection $merchants;
@@ -47,7 +46,7 @@ class ShipmentsReceiptInvoiceCreator extends DocumentCreator
     {
         $today = OrderDocumentCreatorHelper::formatDate(Carbon::today());
 
-        return "Приходная накладная (дата выгрузки: {$today})";
+        return "Приходная накладная (дата выгрузки: $today)";
     }
 
     /**
@@ -125,74 +124,23 @@ class ShipmentsReceiptInvoiceCreator extends DocumentCreator
         );
     }
 
-    protected function fillTotalSums(Worksheet $sheet, int $lastRowIndex)
-    {
-        $totalSums = ['priceWithoutNds' => 0, 'ndsSum' => 0, 'price' => 0];
-        /** @var BasketItem $item */
-        foreach ($this->getItems() as $item) {
-            if ($this->isProductType) {
-                $merchantNds = 0;
-                $ndsSum = 0;
-                if ($merchantNds && $merchantNds > 0) {
-                    $ndsSum = -1 * ($item->price / (1 + $merchantNds / 100) - $item->price);
-                }
-                $totalSums['priceWithoutNds'] += $item->price - $ndsSum;
-                $totalSums['ndsSum'] += $ndsSum;
-                $totalSums['price'] += $item->price;
-            } else {
-                $totalSums['priceWithoutNds'] += $item->price;
-                $totalSums['ndsSum'] = '--';
-                $totalSums['price'] = $totalSums['priceWithoutNds'];
-            }
-        }
-
-        $sumColumns = ['AN' => $totalSums['priceWithoutNds'], 'BC' => $totalSums['ndsSum'], 'BG' => $totalSums['price']];
-        OrderDocumentCreatorHelper::setTotalSumCells($sheet, $sumColumns, $lastRowIndex);
-    }
-
     protected function getBodyInfo(BasketItem $operation, int $operationNumber): array
     {
-        if ($this->isProductType) {
-            $merchantNds = 0;
-            $ndsValue = 0;
-            $ndsSum = 0;
-            if ($merchantNds && $merchantNds > 0) {
-                $ndsValue = $merchantNds;
-                $ndsSum = -1 * ($operation->price / (1 + $ndsValue / 100) - $operation->price);
-            }
-            $offer = $this->offers->where('id', $operation->offer_id)->first();
-
-            return [
-                'B' => $offer['product']['vendor_code'],
-                'F' => $operationNumber,
-                'J' => $operation->name,
-                'S' => '--',
-                'W' => '796',
-                'Y' => 'шт',
-                'AA' => qty_format($operation->qty),
-                'AD' => ($operation->price - $ndsSum) / $operation->qty,
-                'AN' => $operation->price - $ndsSum,
-                'AW' => 'без акциза',
-                'BA' => $ndsValue ? $ndsValue . '%' : 'без НДС',
-                'BC' => $ndsSum ?? '--',
-                'BG' => $operation->price,
-                'BK' => '--',
-                'BP' => '--',
-                'BR' => '--',
-            ];
-        }
+        $ndsSum = 0;
+        $offer = $this->offers->where('id', $operation->offer_id)->first();
 
         return [
+            'B' => $offer['product']['vendor_code'],
             'F' => $operationNumber,
             'J' => $operation->name,
             'S' => '--',
-            'W' => '--',
-            'Y' => '--',
-            'AA' => '--',
-            'AD' => '--',
-            'AN' => $operation->price,
+            'W' => '796',
+            'Y' => 'шт',
+            'AA' => qty_format($operation->qty),
+            'AD' => ($operation->price - $ndsSum) / $operation->qty,
+            'AN' => $operation->price - $ndsSum,
             'AW' => 'без акциза',
-            'BA' => '--',
+            'BA' => 'без НДС',
             'BC' => '--',
             'BG' => $operation->price,
             'BK' => '--',
@@ -201,20 +149,63 @@ class ShipmentsReceiptInvoiceCreator extends DocumentCreator
         ];
     }
 
-    /**
-     * @throws PimException
-     */
-    protected function getOffers(): void
+    public function basketItems(Shipment $shipment): array
     {
-        $offerIds = $this->getItems()->pluck('offer_id')->all();
-        /** @var OfferService $offerService */
-        $offerService = resolve(OfferService::class);
-        $offersQuery = $offerService->newQuery()
-            ->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id')
-            ->include('product')
-            ->setFilter('id', $offerIds);
+        /** @var ProductService $productService */
+        $productService = resolve(ProductService::class);
 
-        $this->offers = $offerService->offers($offersQuery)->keyBy('id');
+        /** @var Collection|BasketItem[] $basketItems */
+        $basketItems = $shipment->basketItems()->getResults()->keyBy('id');
+        $products = [];
+        if ($basketItems) {
+            $offersIds = $basketItems->pluck('offer_id')->toArray();
+            $restQuery = $productService->newQuery()
+                ->addFields(ProductDto::entity(), 'vendor_code')
+                ->include('properties')
+                ->include(CategoryDto::entity(), BrandDto::entity());
+            $productsByOffers = $productService->productsByOffers($restQuery, $offersIds);
+
+            foreach ($basketItems as $basketItem) {
+                if (!$productsByOffers->has($basketItem->offer_id)) {
+                    continue;
+                }
+
+                $productByOffers = $productsByOffers[$basketItem->offer_id];
+                /** @var ProductDto $product */
+                $product = $productByOffers['product'];
+                $products[$basketItem->id] = $product->toArray();
+                $products[$basketItem->id]['barcodes'] = $this->productBarcodes($product);
+                $basketItem['qty_original'] = $basketItem->qty;
+            }
+
+            if ($shipment->packages()) {
+                foreach ($shipment->packages() as $package) {
+                    if ($package->items()) {
+                        foreach ($package->items() as $packageItem) {
+                            $basketItems[$packageItem->basket_item_id]['qty'] -= $packageItem->qty;
+                        }
+                    }
+                }
+            }
+        }
+
+        return [
+            'shipment' => $shipment,
+            'basketItems' => $basketItems,
+            'products' => $products,
+        ];
+    }
+
+    private function productBarcodes(ProductDto $product): ?string
+    {
+        $barcodes = null;
+        foreach ($product->properties as $property) {
+            if ($property->property_id === self::BARCODE_PRODUCT_PROPERTY_ID && $property->value) {
+                $barcodes = ($barcodes ? $barcodes . ', ' : '') . $property->value;
+            }
+        }
+
+        return $barcodes;
     }
 
     protected function getMerchants(array $merchantIds): void

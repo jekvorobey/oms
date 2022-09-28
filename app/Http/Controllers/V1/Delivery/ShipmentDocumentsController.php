@@ -197,7 +197,17 @@ class ShipmentDocumentsController extends DocumentController
         $shipmentIds = $data['id'] ?? null;
         $shipments = $this->shipmentService->getShipments($shipmentIds);
 
-        return response()->json($shipments ? $shipments : null);
+        $basketItems = [];
+        foreach ($shipments as $shipment) {
+            $basketItems[] = $shipmentsReceiptInvoiceCreator->basketItems($shipment);
+        }
+
+        $result = [
+            'shipments' => $shipments,
+            'basketItems' => $basketItems,
+        ];
+
+        return response()->json($result);
 
         if ($shipments) {
             $documentDto = $shipmentsReceiptInvoiceCreator->setShipments($shipments)->create();
