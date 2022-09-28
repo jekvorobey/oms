@@ -12,11 +12,15 @@ class PaymentSystem
     /** Яндекс.Касса */
     public const YANDEX = 1;
 
+    /** кредит */
+    public const CREDIT = 10;
+
     /** тестовая система */
     public const TEST = 42;
 
     /** @var int */
     public $id;
+
     /** @var string */
     public $name;
 
