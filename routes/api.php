@@ -154,6 +154,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::get('', 'HistoryController@readByShipment');
             });
         });
+        Route::prefix('documents')->group(function () {
+            Route::post('receipt-invoice', 'Delivery\ShipmentDocumentsController@receiptInvoice');
+        });
     });
 
     Route::prefix('cargos')->group(function () {

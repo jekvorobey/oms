@@ -38,6 +38,7 @@ class OrderDocument extends AbstractModel
 {
     public const INVOICE_OFFER_TYPE = 'invoice_offer';
     public const UPD_TYPE = 'upd';
+    public const RECEIPT_INVOICE = 'receipt_invoice';
 
     /** @var string */
     protected $table = 'orders_documents';

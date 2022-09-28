@@ -9,12 +9,14 @@ use App\Services\DocumentService\OrderUPDCreator;
 use App\Services\DocumentService\ShipmentAcceptanceActCreator;
 use App\Services\DocumentService\ShipmentAssemblingCardCreator;
 use App\Services\DocumentService\ShipmentInventoryCreator;
+use App\Services\DocumentService\ShipmentsReceiptInvoiceCreator;
 use App\Services\Dto\Out\DocumentDto;
 use App\Services\ShipmentService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use RuntimeException;
 use Throwable;
 
 class ShipmentDocumentsController extends DocumentController
@@ -170,6 +172,42 @@ class ShipmentDocumentsController extends DocumentController
         /** @var Shipment $shipment */
         $shipment = $this->shipmentService->getShipment($shipmentId);
         $documentDto = new DocumentDto(['file_id' => $shipment->upd_file_id, 'success' => true]);
+
+        return $this->documentResponse($documentDto);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="api/v1/shipments/documents/receipt-invoice",
+     *     tags={"Документы"},
+     *     description="Сформировать список накладных по отправлениям",
+     *     @OA\Response(
+     *         response="204",
+     *         description="",
+     *     ),
+     *     @OA\Response(response="404", description=""),
+     * )
+     * @throws Throwable
+     */
+    public function receiptInvoice(
+        Request $request,
+        ShipmentsReceiptInvoiceCreator $shipmentsReceiptInvoiceCreator
+    ): JsonResponse {
+
+        $data = $request->all();
+        $shipmentIds = $data['id'] ?? [];
+        $asPdf = $data['as_pdf'] ?? false;
+
+        $shipments = $this->shipmentService->getShipments($shipmentIds);
+
+        if ($shipments) {
+            $documentDto = $shipmentsReceiptInvoiceCreator->setShipments($shipments)->setAsPdf($asPdf)->create();
+            if (!$documentDto->success) {
+                throw new RuntimeException('receiptInvoice not formed');
+            }
+        } else {
+            throw new RuntimeException('shipments not found');
+        }
 
         return $this->documentResponse($documentDto);
     }
