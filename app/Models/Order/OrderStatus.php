@@ -46,8 +46,10 @@ class OrderStatus
 
     /** @var int */
     public $id;
+
     /** @var string */
     public $name;
+
     /** @var int[] - типы заказов, для которых актуален статус */
     public $types;
 

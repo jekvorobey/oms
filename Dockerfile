@@ -17,6 +17,12 @@ RUN composer install --no-interaction --no-progress --prefer-dist --no-scripts -
 
 FROM registry.ibt.ru:5050/php:7.4-redis
 
+RUN docker-php-ext-configure opcache --enable-opcache \
+    && docker-php-ext-install opcache
+
+RUN mkdir -p /usr/share/man/man1
+RUN apt -y update && apt -y install libreoffice
+
 #RUN apt-get update && apt-get install -y --no-install-recommends --no-install-suggests && rm -rf /var/lib/apt/lists/*
 WORKDIR /var/www
 
