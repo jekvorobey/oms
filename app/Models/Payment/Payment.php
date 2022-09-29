@@ -4,6 +4,7 @@ namespace App\Models\Payment;
 
 use App\Models\Order\Order;
 use App\Models\WithHistory;
+use App\Services\PaymentService\PaymentSystems\KitInvest\KitInvestPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
@@ -11,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Greensight\CommonMsa\Models\AbstractModel;
+use OpenApi\Annotations as OA;
 
 /**
  * @OA\Schema(
@@ -78,6 +80,8 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property string $payment_type
  * @property bool $is_prepayment_receipt_sent
  * @property bool $is_fullpayment_receipt_sent
+ * @property bool $is_credit_receipt_sent
+ * @property bool $is_credit_payment_receipt_sent
  * @property array $data
  *
  * @property-read Order $order
@@ -126,6 +130,8 @@ class Payment extends AbstractModel
         switch ($this->payment_system) {
             case PaymentSystem::YANDEX:
                 return new YandexPaymentSystem();
+            case PaymentSystem::CREDIT:
+                return new KitInvestPaymentSystem();
             case PaymentSystem::TEST:
                 return new LocalPaymentSystem();
         }

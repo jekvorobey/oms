@@ -6,6 +6,7 @@ use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Services\PaymentService\PaymentSystems\Yandex\Dictionary\VatCode;
 use App\Services\PaymentService\PaymentSystems\Yandex\OrderData;
+use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\PublicEventService\PublicEventService;
@@ -36,18 +37,24 @@ abstract class ReceiptData extends OrderData
         return $this;
     }
 
-    protected function getReceiptItemInfo(BasketItem $item, ?object $offerInfo, ?object $merchant, float $qty): array
-    {
-        $paymentMode = $this->getItemPaymentMode($item);
+    protected function getReceiptItemInfo(
+        BasketItem $item,
+        ?object $offerInfo,
+        ?object $merchant,
+        float $quantity,
+        float $price,
+        ?string $paymentMode = null
+    ): array {
+        $paymentMode = $paymentMode ?: $this->getItemPaymentMode($item);
         $paymentSubject = $this->getItemPaymentSubject($item);
-        $agentType = $this->getItemAgentType($item);
+        $agentType = $this->getItemAgentType($item, $merchant);
         $vatCode = $this->getItemVatCode($offerInfo, $merchant);
 
         $result = [
             'description' => $item->name,
-            'quantity' => $qty,
+            'quantity' => $quantity,
             'amount' => [
-                'value' => $item->unit_price,
+                'value' => $price,
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => $vatCode,
@@ -89,16 +96,22 @@ abstract class ReceiptData extends OrderData
         ][$item->type] ?? PaymentMode::FULL_PAYMENT;
     }
 
-    protected function getItemAgentType(BasketItem $item): ?string
+    protected function getItemAgentType(BasketItem $item, ?object $merchant): ?string
     {
+        if (!$merchant || !isset($merchant->commissionaire_type, $merchant->agent_type)) {
+            return null;
+        }
+
         return [
-            Basket::TYPE_MASTER => AgentType::AGENT,
-            Basket::TYPE_PRODUCT => AgentType::COMMISSIONER,
+            Basket::TYPE_MASTER => $merchant->commissionaire_type ? AgentType::AGENT : null,
+            Basket::TYPE_PRODUCT => $merchant->agent_type ? AgentType::COMMISSIONER : null,
         ][$item->type] ?? null;
     }
 
-    protected function getDeliveryReceiptItem(float $deliveryPrice): ReceiptItem
+    protected function getDeliveryReceiptItem(float $deliveryPrice, ?string $paymentMode = null): ReceiptItem
     {
+        $paymentMode = $paymentMode ?: ($this->isFullPayment ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT);
+
         return new ReceiptItem([
             'description' => 'Доставка',
             'quantity' => 1,
@@ -107,7 +120,7 @@ abstract class ReceiptData extends OrderData
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => VatCode::CODE_DEFAULT,
-            'payment_mode' => $this->isFullPayment ? PaymentMode::FULL_PAYMENT : PaymentMode::FULL_PREPAYMENT,
+            'payment_mode' => $paymentMode,
             'payment_subject' => $this->isFullPayment ? PaymentSubject::SERVICE : PaymentSubject::PAYMENT,
         ]);
     }
