@@ -5,17 +5,18 @@ namespace App\Console\Commands;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentSystem;
 use App\Services\OrderService;
+use App\Services\PaymentService\PaymentService;
 use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
 use Illuminate\Console\Command;
 use YooKassa\Model\Payment as YooKassaPayment;
 use Throwable;
 
-class ResendingPaymentReceipt extends Command
+class ResendingIncomeFullPaymentReceipt extends Command
 {
-    protected $signature = 'payment:resending {orderId?}';
-    protected $description = 'Повторная отправка оплат для формирования фискальных чеков';
+    protected $signature = 'payment:resending:fullpayment {orderId?}';
+    protected $description = 'Повторная отправка оплат формирования фискальных чеков (полная оплата)';
 
-    public function handle(OrderService $orderService)
+    public function handle(OrderService $orderService, PaymentService $paymentService)
     {
         $orderId = $this->argument('orderId');
         $order = $orderService->getOrder($orderId);
@@ -24,14 +25,14 @@ class ResendingPaymentReceipt extends Command
         foreach ($order->payments as $payment) {
             echo 'PaymentId: ' . $payment->id . "\n";
             if ($payment->payment_system === PaymentSystem::YANDEX) {
-                $this->resendingReceipt($payment);
+                $this->resendingReceipt($payment, $paymentService);
             } else {
                 echo 'Exit. PaymentSystemId: ' . $payment->payment_system . "\n";
             }
         }
     }
 
-    private function resendingReceipt(Payment $payment): void
+    private function resendingReceipt(Payment $payment, PaymentService $paymentService): void
     {
         try {
             $paymentSystem = $payment->paymentSystem();
@@ -40,7 +41,10 @@ class ResendingPaymentReceipt extends Command
                 $paymentInfo = $paymentSystem->paymentInfo($payment);
                 echo 'PaymentInfoId: ' . $paymentInfo->getId() . "\n";
                 if ($paymentInfo instanceof YooKassaPayment) {
-                    $paymentSystem->handlePushPayment($paymentInfo->toArray());
+                    $payment->is_fullpayment_receipt_sent = false;
+                    $payment->save();
+
+                    $paymentService->sendIncomeFullPaymentReceipt($payment);
                 }
             }
         } catch (Throwable $e) {

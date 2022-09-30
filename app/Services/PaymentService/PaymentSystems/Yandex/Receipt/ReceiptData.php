@@ -97,13 +97,13 @@ abstract class ReceiptData extends OrderData
 
     protected function getItemAgentType(BasketItem $item, ?object $merchant): ?string
     {
-        if (!$merchant || !isset($merchant->commissionaire_type, $merchant->agent_type)) {
+        if (!$merchant) {
             return null;
         }
 
         return [
-            Basket::TYPE_MASTER => $merchant->commissionaire_type ? AgentType::AGENT : null,
-            Basket::TYPE_PRODUCT => $merchant->agent_type ? AgentType::COMMISSIONER : null,
+            Basket::TYPE_MASTER => $merchant['commissionaire_type'] ? AgentType::AGENT : null,
+            Basket::TYPE_PRODUCT => $merchant['agent_type'] ? AgentType::COMMISSIONER : null,
         ][$item->type] ?? null;
     }
 

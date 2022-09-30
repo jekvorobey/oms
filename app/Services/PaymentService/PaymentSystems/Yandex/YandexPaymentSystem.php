@@ -111,7 +111,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
     }
 
-    private function processRefundSucceeded(AbstractNotification $notification): void
+    public function processRefundSucceeded(AbstractNotification $notification): void
     {
         $refundId = $notification->getObject()->getId();
         $paymentId = $notification->getObject()->getPaymentId();
@@ -129,7 +129,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
     }
 
-    private function processExternalPayment(Payment $localPayment, YooKassaPayment $payment): void
+    public function processExternalPayment(Payment $localPayment, YooKassaPayment $payment): void
     {
         switch ($payment->status) {
             case PaymentStatus::PENDING:
