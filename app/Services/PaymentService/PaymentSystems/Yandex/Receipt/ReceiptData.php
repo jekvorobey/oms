@@ -42,7 +42,6 @@ abstract class ReceiptData extends OrderData
         ?object $offerInfo,
         ?object $merchant,
         float $quantity,
-        float $price,
         ?string $paymentMode = null
     ): array {
         $paymentMode = $paymentMode ?: $this->getItemPaymentMode($item);
@@ -54,7 +53,7 @@ abstract class ReceiptData extends OrderData
             'description' => $item->name,
             'quantity' => $quantity,
             'amount' => [
-                'value' => $price,
+                'value' => $item->unit_price,
                 'currency' => CurrencyCode::RUB,
             ],
             'vat_code' => $vatCode,
