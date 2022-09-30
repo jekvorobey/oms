@@ -97,14 +97,20 @@ abstract class ReceiptData extends OrderData
 
     protected function getItemAgentType(BasketItem $item, ?object $merchant): ?string
     {
+        return [
+                Basket::TYPE_MASTER => AgentType::AGENT,
+                Basket::TYPE_PRODUCT => AgentType::COMMISSIONER,
+            ][$item->type] ?? null;
+/*
         if (!$merchant) {
             return null;
         }
 
         return [
-            Basket::TYPE_MASTER => $merchant['commissionaire_type'] ? AgentType::AGENT : null,
-            Basket::TYPE_PRODUCT => $merchant['agent_type'] ? AgentType::COMMISSIONER : null,
+            Basket::TYPE_MASTER => $merchant['agent_type'] ? AgentType::AGENT : null,
+            Basket::TYPE_PRODUCT => $merchant['commissionaire_type'] ? AgentType::COMMISSIONER : null,
         ][$item->type] ?? null;
+*/
     }
 
     protected function getDeliveryReceiptItem(float $deliveryPrice, ?string $paymentMode = null): ReceiptItem
