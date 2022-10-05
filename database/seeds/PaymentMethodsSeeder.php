@@ -68,8 +68,6 @@ class PaymentMethodsSeeder extends Seeder
             'settings' => [
                 'is_fixed_discount' => false,
                 'discount' => '14',
-                'is_displayed_in_catalog' => false,
-                'installment_period' => '12',
                 'signingKD' => 'KO',
             ],
             'min_available_price' => 10000,
