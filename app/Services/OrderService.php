@@ -16,6 +16,8 @@ use App\Services\PaymentService\PaymentService;
 use App\Services\PublicEventService\Email\PublicEventCartRepository;
 use App\Services\PublicEventService\Email\PublicEventCartStruct;
 use Exception;
+use Greensight\Message\Dto\Mail\PublicEvent\Ticket\TicketEmailDto;
+use Greensight\Message\Services\MailService\MailService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -526,7 +528,7 @@ class OrderService
         //     }
         // }
 
-        // $ticketEmailDto = new TicketEmailDto();
+         $ticketEmailDto = new TicketEmailDto();
         // $customerInfoDto = new CustomerInfoDto();
         // $customerInfoDto->setName($order->receiver_name);
         // $customerInfoDto->setPhone($order->receiver_phone);
@@ -541,7 +543,7 @@ class OrderService
         //     $ticketEmailDto->addFileId($documentDto->file_id);
         // }
 
-        // $mailService = resolve(MailService::class);
-        // $mailService->send($ticketEmailDto);
+         $mailService = resolve(MailService::class);
+         $mailService->send($ticketEmailDto);
     }
 }

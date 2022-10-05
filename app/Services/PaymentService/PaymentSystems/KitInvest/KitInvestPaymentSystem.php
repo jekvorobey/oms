@@ -98,9 +98,9 @@ class KitInvestPaymentSystem implements PaymentSystemInterface
             ->setCheck(new CheckModel($receipt));
 
         //ToDo Block send to service
-        if ($receiptModel instanceof ReceiptModel) {
-            return $receiptModel->toArray();
-        }
+        //if ($receiptModel instanceof ReceiptModel) {
+        //    return $receiptModel->toArray();
+        //}
 
         try {
             $result = $this->kitInvestService->sendReceiptModel($receiptModel);
