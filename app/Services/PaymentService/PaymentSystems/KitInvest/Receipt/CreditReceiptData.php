@@ -65,6 +65,7 @@ class CreditReceiptData extends ReceiptData
 
     /**
      * Получение позиций заказа для чека
+     * @throws PimException
      */
     protected function getReceiptItems(Payment $payment): array
     {
