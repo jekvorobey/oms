@@ -6,11 +6,11 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentMethod;
+use App\Models\Payment\PaymentStatus;
 use App\Services\CreditService\CreditService;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
 use IBT\CreditLine\Enum\OrderStatusEnum;
-use IBT\KitInvest\KitInvest;
 use Illuminate\Console\Command;
 use Throwable;
 
@@ -28,6 +28,7 @@ class CheckCreditLineStatus extends Command
         Order::query()
             ->where('payment_method_id', PaymentMethod::CREDITPAID)
             ->where('is_canceled', 0)
+            ->whereNotIn('status', [OrderStatus::DONE])
             ->each(function (Order $order) {
                 $this->checkCreditOrder($order);
             });
@@ -44,7 +45,7 @@ class CheckCreditLineStatus extends Command
         try {
             $creditService = new CreditService();
             $checkStatus = $creditService->getCreditOrder($order);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             report($exception);
             return;
         }
@@ -54,7 +55,7 @@ class CheckCreditLineStatus extends Command
         }
 
         $creditStatusId = $order->credit_status_id;
-        $creditDiscount = (float) $order->credit_discount;
+        $creditDiscount = $order->credit_discount;
         $creditStatusIdNew = $checkStatus['statusId'];
         $creditDiscountNew = $checkStatus['discount'];
         $isUpdateOrder = false;
@@ -68,6 +69,13 @@ class CheckCreditLineStatus extends Command
         // Обновить процент скидки
         if ($creditDiscount !== (float) $creditDiscountNew) {
             $order->credit_discount = (float) $creditDiscountNew;
+            $isUpdateOrder = true;
+        }
+
+        // Отметка об оплате заказа, если кредитная заявка подписана
+        if ($order->payment_status !== PaymentStatus::PAID && $creditDiscountNew == OrderStatusEnum::CREDIT_ORDER_STATUS_SIGNED) {
+            $order->payment_status = PaymentStatus::PAID;
+            $order->payment_status_at = now();
             $isUpdateOrder = true;
         }
 
@@ -99,13 +107,16 @@ class CheckCreditLineStatus extends Command
         //и нет ранее сформированных чеков
         if (
             $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
-            && $order->payments->isEmpty()
             && $creditStatusId !== $creditStatusIdNew
             && $creditStatusIdNew === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
+            && $order->payments->isEmpty()
         ) {
-            $payment = $creditService->createCreditPayment($order);
+            $payment = $creditService->createCreditPayment($order, CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_PREPAYMENT);
             if ($payment instanceof Payment) {
-                $paymentService->sendIncomeFullPaymentReceipt($payment);
+                $creditPaymentReceipt = $paymentService->createCreditPrepaymentReceipt($payment);
+                if ($creditPaymentReceipt) {
+                    $paymentService->sendCreditPaymentReceipt($payment, $creditPaymentReceipt);
+                }
             }
 
             return;
@@ -117,17 +128,20 @@ class CheckCreditLineStatus extends Command
         //и нет ранее сформированных чеков
         if (
             $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
-            && $order->payments->isEmpty()
             && $creditStatusId !== $creditStatusIdNew
             && in_array(
                 $creditStatusIdNew,
                 [OrderStatusEnum::CREDIT_ORDER_STATUS_ACCEPTED, OrderStatusEnum::CREDIT_ORDER_STATUS_SIGNED],
                 true
             )
+            && $order->payments->isEmpty()
         ) {
-            $payment = $creditService->createCreditPayment($order);
+            $payment = $creditService->createCreditPayment($order, CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_ON_CREDIT);
             if ($payment instanceof Payment) {
-                $paymentService->sendCreditReceipt($payment);
+                $creditPaymentReceipt = $paymentService->createCreditReceipt($payment);
+                if ($creditPaymentReceipt) {
+                    $paymentService->sendCreditPaymentReceipt($payment, $creditPaymentReceipt);
+                }
             }
 
             return;
@@ -139,16 +153,18 @@ class CheckCreditLineStatus extends Command
         //и ранее был выбит чек с расчетом "В кредит"
         if (
             in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DELIVERING, OrderStatus::READY_FOR_RECIPIENT], true)
-            && $order->payments->isNotEmpty()
             && $creditStatusId !== $creditStatusIdNew
             && $creditStatusIdNew === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
+            && $order->payments->isNotEmpty()
         ) {
             $payment = $order->payments()->first();
             if ($payment instanceof Payment) {
-                $paymentService->sendCreditPaymentReceipt($payment);
+                $creditPaymentReceipt = $paymentService->createCreditPaymentReceipt($payment);
+                if ($creditPaymentReceipt) {
+                    $paymentService->sendCreditPaymentReceipt($payment, $creditPaymentReceipt);
+                }
             }
-
-            return;
         }
     }
 }
+

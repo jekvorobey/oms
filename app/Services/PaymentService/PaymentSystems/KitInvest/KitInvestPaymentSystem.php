@@ -101,9 +101,6 @@ class KitInvestPaymentSystem implements PaymentSystemInterface
             $request = $receiptData->getReceiptData($payment, $isMerchant);
             $this->logger->info('Start create return payment receipt', $request);
         } catch (Throwable $exception) {
-
-            dump($exception);
-
             $this->logger->error('Error creating return payment receipt', ['local_payment_id' => $payment->id, 'error' => $exception->getMessage()]);
             report($exception);
         }
@@ -120,9 +117,9 @@ class KitInvestPaymentSystem implements PaymentSystemInterface
             ->setCheck(new CheckModel($receipt));
 
         //ToDo Block send to service
-        if ($receiptModel instanceof ReceiptModel) {
-            return $receiptModel->toArray();
-        }
+        //if ($receiptModel instanceof ReceiptModel) {
+        //    return $receiptModel->toArray();
+        //}
 
         try {
             $result = $this->kitInvestService->sendReceiptModel($receiptModel);
