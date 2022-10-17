@@ -57,8 +57,10 @@ class IncomeReceiptData extends ReceiptData
             $merchantId = $offer['merchant_id'] ?? null;
             $merchant = $merchants[$merchantId] ?? null;
 
-            $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $item->qty);
-            $receiptItems[] = new ReceiptItem($receiptItemInfo);
+            if ($item->unit_price > 0) {
+                $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $item->qty);
+                $receiptItems[] = new ReceiptItem($receiptItemInfo);
+            }
         }
 
         if ((float) $order->delivery_price > 0 && !$deliveryForReturn) {
