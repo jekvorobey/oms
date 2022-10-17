@@ -103,7 +103,7 @@ class RefundReceiptData extends ReceiptData
             $quantity = $item->qty;
             $price = $item->unit_price;
 
-            if ($quantity && $price) {
+            if ($quantity && $price > 0) {
                 $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $quantity, $price, $this->payAttribute);
                 $this->amountPayment += $price * $quantity;
 
