@@ -30,7 +30,7 @@
         },
         {
             "type": "vcs",
-            "url": "ggit@gitlab.com:iBT.studio/ibt-merchant-management-lib"
+            "url": "git@gitlab.com:iBT.studio/ibt-merchant-management-lib"
         },
         {
             "type": "vcs",
@@ -47,6 +47,14 @@
         {
             "type": "vcs",
             "url": "git@gitlab.com:iBT.studio/ibt-cms-lib"
+        },
+        {
+            "type": "vcs",
+            "url": "git@gitlab.com:iBT.studio/laravel-pp-credit-sdk"
+        },
+        {
+            "type": "vcs",
+            "url": "git@gitlab.com:iBT.studio/laravel-kit-invest-sdk"
         }
     ],
     "require": {
@@ -56,19 +64,23 @@
         "barryvdh/laravel-snappy": "^1.0",
         "darkaonline/l5-swagger": "^8.3",
         "doctrine/dbal": "^3.3",
+        "fideloper/proxy": "^4.0",
         "ibt/cm-lib": "dev-master",
         "ibt/cms-lib": "dev-master",
         "ibt/common-lib": "dev-master",
+        "ibt/kit-invest-sdk": "dev-master",
         "ibt/logistics-lib": "dev-master",
         "ibt/marketing-lib": "dev-master",
         "ibt/merchant-management-lib": "dev-master",
         "ibt/message-lib": "dev-master",
         "ibt/pim-lib": "dev-master",
+        "ibt/pp-credit-sdk": "dev-master",
         "ibt/store-lib": "dev-master",
         "laravel/framework": "9.*",
         "laravel/tinker": "^2.7",
         "letsgoi/laravel-health-check": "dev-master",
         "ncjoes/office-converter": "^1.0",
+        "phpoffice/phpspreadsheet": "^1.18",
         "phpoffice/phpword": "^0.18",
         "predis/predis": "^2.0",
         "sentry/sentry-laravel": "^2.12",

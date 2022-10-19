@@ -344,6 +344,19 @@ class DeliveryService
                 } else {
                     $delivery->error_xml_id = $deliveryOrderOutputDto->message;
                 }
+
+                /**
+                 * Т.к. в DPD вместо обновления заказа нужно отменять предыдущий и создавать новый,
+                 * то нужно перезаписывать xml_id в $delivery
+                 */
+                if ($delivery->delivery_service == \Greensight\Logistics\Dto\Lists\DeliveryService::SERVICE_DPD
+                    && isset($deliveryOrderOutputDto->xml_id)
+                    && !empty($deliveryOrderOutputDto->xml_id)
+                    && $delivery->xml_id != $deliveryOrderOutputDto->xml_id
+                ) {
+                    $delivery->xml_id = $deliveryOrderOutputDto->xml_id;
+                }
+
                 $delivery->save();
             }
 
@@ -459,11 +472,24 @@ class DeliveryService
             $senderDto->company_name = $merchant->legal_name;
             $senderDto->store_id = $shipment->store_id;
             $senderDto->inn = $merchant->inn;
+
             $storeContact = $store->storeContact[0];
             $senderDto->contact_name = $storeContact->name;
             $senderDto->email = $storeContact->email;
             $senderDto->phone = phoneNumberFormat($storeContact->phone);
             $senderDto->cdek_city_code = $cdekSenderAddress['code'] ?? null;
+            $senderDto->comment = $storeAddress['comment'] ?? null;
+
+            if (count($store->storeContact) > 1) {
+                $senderDto->additional_contacts = collect();
+                foreach ($store->storeContact->slice(1) as $additionalStoreContact) {
+                    $senderDto->additional_contacts->add(new StoreContactDto([
+                        'contact_name' => $additionalStoreContact->name,
+                        'phone' => phoneNumberFormat($additionalStoreContact->phone),
+                        'email' => $additionalStoreContact->email,
+                    ]));
+                }
+            }
         } else {
             /**
              * Иначе указываем данные маркетплейса
@@ -552,6 +578,7 @@ class DeliveryService
                     $deliveryOrderPlaceDto->height = (int) ceil($package->height);
                     $deliveryOrderPlaceDto->length = (int) ceil($package->length);
                     $deliveryOrderPlaceDto->weight = (int) ceil($package->weight);
+                    $deliveryOrderPlaceDto->package_id = $package->xml_id;
 
                     $items = collect();
                     $deliveryOrderPlaceDto->items = $items;
@@ -627,7 +654,14 @@ class DeliveryService
 
         /** @var Collection|Delivery[] $deliveriesByService */
         foreach ($deliveriesByServices as $deliveryServiceId => $deliveriesByService) {
-            $deliveriesByService = $deliveriesByService->keyBy('xml_id');
+            switch ($deliveryServiceId) {
+                case LogisticsDeliveryService::SERVICE_DPD:
+                    $deliveriesByService = $deliveriesByService->keyBy(fn($deliveryByService) => $deliveryByService->getDeliveryServiceNumber());
+                    break;
+                default:
+                    $deliveriesByService = $deliveriesByService->keyBy('xml_id');
+                    break;
+            }
 
             try {
                 /** @var DeliveryOrderService $deliveryOrderService */
@@ -642,7 +676,11 @@ class DeliveryService
             }
 
             foreach ($deliveryOrderStatusDtos as $deliveryOrderStatusDto) {
-                $delivery = $deliveriesByService[$deliveryOrderStatusDto->xml_id] ?? null;
+                $orderNumberOrXmlId = $deliveryServiceId == LogisticsDeliveryService::SERVICE_DPD
+                    ? $deliveryOrderStatusDto->number
+                    : $deliveryOrderStatusDto->xml_id;
+
+                $delivery = $deliveriesByService[$orderNumberOrXmlId] ?? null;
                 if (!$delivery) {
                     continue;
                 }
@@ -668,6 +706,14 @@ class DeliveryService
                         $deliveryOrderStatusDto->status_xml_id,
                         new Carbon($deliveryOrderStatusDto->status_date)
                     );
+
+                    if (empty($delivery->xml_id) && $deliveryOrderStatusDto->xml_id) {
+                        $delivery->xml_id = $deliveryOrderStatusDto->xml_id;
+
+                        if (!empty($delivery->error_xml_id) && empty($deliveryOrderStatusDto->message)) {
+                            $delivery->error_xml_id = null;
+                        }
+                    }
 
                     $delivery->save();
                 } catch (Throwable $e) {
@@ -732,17 +778,25 @@ class DeliveryService
      */
     public function cancelDeliveryOrder(Delivery $delivery): void
     {
-        if ($delivery->xml_id) {
+        $xmlId = $delivery->xml_id;
+
+        //отмена в DPD по внутреннему номеру
+        if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_DPD && empty($xmlId)) {
+            $xmlId = $delivery->getDeliveryServiceNumber();
+        }
+
+        if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
+            return;
+        }
+
+        if ($xmlId) {
             // IBT-621: не удалять xml_id при отмене доставки
             // $delivery->xml_id = '';
             // $delivery->save();
 
-            if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
-                return;
-            }
             /** @var DeliveryOrderService $deliveryOrderService */
             $deliveryOrderService = resolve(DeliveryOrderService::class);
-            $deliveryOrderService->cancelOrder($delivery->delivery_service, $delivery->xml_id);
+            $deliveryOrderService->cancelOrder($delivery->delivery_service, $xmlId);
         }
     }
 

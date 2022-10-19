@@ -118,6 +118,16 @@ use Greensight\CommonMsa\Models\AbstractModel;
  *         description="дата установки статуса оплаты"
  *     ),
  *     @OA\Property(
+ *         property="credit_status_id",
+ *         type="integer",
+ *         description="Статус заявки на кредит"
+ *     ),
+ *     @OA\Property(
+ *         property="credit_discount",
+ *         type="number",
+ *         description="Процент скидки по кредиту"
+ *     ),
+ *     @OA\Property(
  *         property="is_problem",
  *         type="integer",
  *         description="флаг, что заказ проблемный"
@@ -202,6 +212,9 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property int $payment_status - статус оплаты (см. \App\Models\Payment\PaymentStatus)
  * @property int $payment_method_id - способ оплаты (см. \App\Models\Payment\PaymentMethod)
  * @property Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property int $credit_status_id - статус заявки на кредит
+ * @property float $credit_discount - процент скидки по кредиту
+ *
  * @property int $is_problem - флаг, что заказ проблемный
  * @property Carbon|null $is_problem_at - дата установки флага проблемного заказа
  * @property int $is_canceled - флаг, что заказ отменен
@@ -241,6 +254,7 @@ class Order extends AbstractModel
 
     /** @var UserDto */
     protected $user;
+
     /** @var CustomerDto */
     protected $customer;
 

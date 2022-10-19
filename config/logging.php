@@ -77,6 +77,20 @@ return [
             'permission' => 0777, // TODO: temporary solution, before ELK
         ],
 
+        'payments-kit-invest' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/payments-kit-invest.log'),
+            'level' => 'debug',
+            'permission' => 0777,
+        ],
+
+        'credits' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/credits.log'),
+            'level' => 'debug',
+            'permission' => 0777,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

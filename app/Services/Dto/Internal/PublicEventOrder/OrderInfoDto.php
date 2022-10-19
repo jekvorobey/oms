@@ -2,6 +2,7 @@
 
 namespace App\Services\Dto\Internal\PublicEventOrder;
 
+use App\Models\Payment\PaymentMethod;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
@@ -40,6 +41,8 @@ class OrderInfoDto implements Arrayable
     public $hasBadOffers = false; //todo
     /** @var Collection|PublicEventInfoDto[] */
     public $publicEvents;
+    /** @var PaymentMethod */
+    public $paymentMethod;
 
     /**
      * OrderInfoDto constructor.
@@ -73,6 +76,7 @@ class OrderInfoDto implements Arrayable
             'publicEvents' => $this->publicEvents->map(function (PublicEventInfoDto $publicEventInfoDto) {
                 return $publicEventInfoDto->toArray();
             })->toArray(),
+            'paymentMethod' => $this->paymentMethod,
         ];
     }
 }

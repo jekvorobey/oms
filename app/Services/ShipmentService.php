@@ -19,6 +19,7 @@ use Greensight\Logistics\Dto\Order\DeliveryOrderBarcodesDto;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Collection;
 use MerchantManagement\Dto\OperatorCommunicationMethod;
 use MerchantManagement\Dto\OperatorDto;
 use MerchantManagement\Services\OperatorService\OperatorService;
@@ -39,6 +40,15 @@ class ShipmentService
     public function getShipment(int $shipmentId): Shipment
     {
         return Shipment::findOrFail($shipmentId);
+    }
+    /**
+     * Получить объект отправления по его id
+     *
+     * @throws ModelNotFoundException
+     */
+    public function getShipments(?array $shipmentIds): ?Collection
+    {
+        return Shipment::find($shipmentIds);
     }
 
     /**
@@ -279,6 +289,12 @@ class ShipmentService
                 'return_reason_id' => $returnReasonId,
             ]
         );
+    }
+
+    public function saveShipmentUpdFile(Shipment $shipment, int $fileId)
+    {
+        $shipment->upd_file_id = $fileId;
+        $shipment->save();
     }
 
     /**

@@ -20,6 +20,7 @@ use App\Http\Controllers\V1\OrdersPromoCodesController;
 use App\Http\Controllers\V1\PaymentMethodsController;
 use App\Http\Controllers\V1\PaymentsController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\V1\OrderDocumentsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -91,7 +92,10 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::get('count', [HistoryController::class, 'countByOrder']);
                 Route::get('', [HistoryController::class, 'readByOrder']);
             });
+
             Route::put('payments', [OrdersController::class, 'setPayments']);
+            Route::get('payments/check-credit-status', [OrdersController::class, 'paymentCheckCreditStatus']);
+            Route::put('payments/create-credit-payment-receipt', [OrdersController::class, 'paymentCreateCreditPaymentReceipt']);
             Route::put('comment', [OrdersController::class, 'setComment']);
 
             Route::put('items/{offerId}', [CustomerBasketController::class, 'setItemByOrder']);
@@ -122,6 +126,12 @@ Route::namespace('V1')->prefix('v1')->group(function () {
             Route::put('capture-payment', [OrdersController::class, 'capturePayment']);
             Route::delete('', [OrdersController::class, 'delete']);
             Route::get('tickets', [OrdersController::class, 'tickets']);
+            Route::prefix('documents')->group(function () {
+                Route::get('generate-invoice-offer', [OrderDocumentsController::class, 'generateInvoiceOffer']);
+                Route::get('generate-upd', [OrderDocumentsController::class, 'generateUPD']);
+                Route::get('upd', [OrderDocumentsController::class, 'upd']);
+                Route::get('invoice-offer', [OrderDocumentsController::class, 'invoiceOffer']);
+            });
         });
 
         Route::prefix('return-reasons')->group(function () {
@@ -164,6 +174,9 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::get('count', [HistoryController::class, 'countByShipment']);
                 Route::get('', [HistoryController::class, 'readByShipment']);
             });
+        });
+        Route::prefix('documents')->group(function () {
+            Route::post('receipt-invoice', 'Delivery\ShipmentDocumentsController@receiptInvoice');
         });
     });
 
@@ -257,6 +270,8 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                     Route::get('acceptance-act', [ShipmentDocumentsController::class, 'acceptanceAct']);
                     Route::get('inventory', [ShipmentDocumentsController::class, 'inventory']);
                     Route::get('assembling-card', [ShipmentDocumentsController::class, 'assemblingCard']);
+                    Route::get('generate-upd', [ShipmentDocumentsController::class, 'generateUPD']);
+                    Route::get('upd', [ShipmentDocumentsController::class, 'upd']);
                 });
 
                 Route::put('', [ShipmentsController::class, 'update']);

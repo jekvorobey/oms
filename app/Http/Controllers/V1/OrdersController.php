@@ -19,6 +19,7 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\DocumentService\OrderTicketsCreator;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
+use App\Services\CreditService\CreditService;
 use Carbon\Carbon;
 use Exception;
 use Greensight\CommonMsa\Rest\RestQuery;
@@ -30,9 +31,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use OpenApi\Annotations as OA;
 use Pim\Core\PimException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Throwable;
 
 /**
  * Class OrdersController
@@ -121,7 +124,7 @@ class OrdersController extends Controller
      *     ),
      *     @OA\Response(response="404", description=""),
      * )
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function tickets(int $id, Request $request, OrderTicketsCreator $orderTicketsCreator): JsonResponse
     {
@@ -283,6 +286,97 @@ class OrdersController extends Controller
         $writer->setPayments($order, $payments);
 
         return response('', 204);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="api/v1/orders/{id}/payments/check-credit-status",
+     *     tags={"Заказы"},
+     *     description="Проверить статус оформленного кредита/рассрочки",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="product not found"),
+     *     @OA\Response(response="500", description="unable to save order"),
+     * )
+     *
+     * Проверить статус оформленного кредита/рассрочки
+     * @throws Exception
+     */
+    public function paymentCheckCreditStatus(
+        int $id,
+        OrderService $orderService,
+        CreditService $creditService
+    ): Response {
+        $order = $orderService->getOrder($id);
+        $result = $creditService->checkCreditOrder($order);
+
+        return response($result, 200);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="api/v1/orders/{id}/payments/create-credit-payment-receipt",
+     *     tags={"Заказы"},
+     *     description="Сформировать фискальный чек к кредитному заказу",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="product not found"),
+     *     @OA\Response(response="500", description="unable to save order"),
+     * )
+     *
+     * Сформировать фискальный чек к кредитному заказу
+     * @throws Exception
+     */
+    public function paymentCreateCreditPaymentReceipt(
+        int $id,
+        Request $request,
+        OrderService $orderService,
+        CreditService $creditService,
+        PaymentService $paymentService
+    ): Response {
+        $order = $orderService->getOrder($id);
+        $data = $request->all();
+
+        $validator = Validator::make($data, [
+            'receipt_type' => 'nullable|integer',
+        ]);
+        if ($validator->fails()) {
+            throw new BadRequestHttpException($validator->errors()->first());
+        }
+
+        $receiptType = $data['receipt_type'];
+        $checkCreditOrder = $creditService->checkCreditOrder($order);
+
+        $payment = $creditService->createCreditPayment($order, $receiptType);
+        if ($payment instanceof Payment) {
+            switch ($receiptType) {
+                case CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_PREPAYMENT:
+                    $creditPaymentReceipt = $paymentService->createCreditPrepaymentReceipt($payment);
+                    break;
+                case CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_ON_CREDIT:
+                    $creditPaymentReceipt = $paymentService->createCreditReceipt($payment);
+                    break;
+                case CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_PAYMENT:
+                    $creditPaymentReceipt = $paymentService->createCreditPaymentReceipt($payment);
+                    break;
+                default:
+                    $creditPaymentReceipt = null;
+            }
+
+            if ($creditPaymentReceipt) {
+                $resultSendReceipt = $paymentService->sendCreditPaymentReceipt($payment, $creditPaymentReceipt);
+            }
+        }
+
+        $result = [
+            'request' => $data,
+            'payment' => $payment,
+            'checkOrder' => $checkCreditOrder,
+            'receipt' => $creditPaymentReceipt ?? null,
+            'resultSendReceipt' => $resultSendReceipt ?? null
+        ];
+
+        return response($result, 200);
     }
 
     /**
@@ -781,10 +875,10 @@ class OrdersController extends Controller
                         $discount['discount_id'] = $orderDiscount->discount_id;
                         $discount['order_change'] = $orderDiscount->change;
 
+                        $discount['change'] = 0;
                         foreach ($orderDiscount->items as $discountItem) {
-                            $discount['change'] = 0;
                             if ($discountItem['offer_id'] == $item->offer_id) {
-                                $discount['change'] += $orderDiscount->change;
+                                $discount['change'] += $discountItem['change'];
                             }
                         }
 
@@ -816,6 +910,7 @@ class OrdersController extends Controller
                     'created_at' => $shipment->delivery->order->created_at->format('Y-m-d H:i:s'),
                     'items' => $items,
                     'order_id' => $shipment->delivery->order->id,
+                    'customer_id' => $shipment->delivery->order->customer_id,
                     'shipment_id' => $shipment->id,
                     'merchant_id' => $shipment->merchant_id,
                     'status' => $shipment->status,

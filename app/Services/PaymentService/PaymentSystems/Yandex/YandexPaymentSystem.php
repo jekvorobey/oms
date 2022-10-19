@@ -111,7 +111,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
     }
 
-    private function processRefundSucceeded(AbstractNotification $notification): void
+    public function processRefundSucceeded(AbstractNotification $notification): void
     {
         $refundId = $notification->getObject()->getId();
         $paymentId = $notification->getObject()->getPaymentId();
@@ -129,7 +129,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         }
     }
 
-    private function processExternalPayment(Payment $localPayment, YooKassaPayment $payment): void
+    public function processExternalPayment(Payment $localPayment, YooKassaPayment $payment): void
     {
         switch ($payment->status) {
             case PaymentStatus::PENDING:
@@ -355,5 +355,45 @@ class YandexPaymentSystem implements PaymentSystemInterface
     public function updatePaymentStatus(Payment $localPayment, $payment): void
     {
         $this->processExternalPayment($localPayment, $payment);
+    }
+
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function createCreditPrepaymentReceipt(Payment $payment): ?array
+    {
+        // TODO: Implement createCreditPrepaymentReceipt() method.
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function createCreditReceipt(Payment $payment): ?array
+    {
+        // TODO: Implement createCreditReceipt() method.
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function createCreditPaymentReceipt(Payment $payment): ?array
+    {
+        // TODO: Implement createCreditPaymentReceipt() method.
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
+    public function sendReceipt(Payment $payment, array $receipt): ?array
+    {
+        // TODO: Implement createCreditPaymentReceipt() method.
+        return null;
     }
 }

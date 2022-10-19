@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Greensight\CommonMsa\Models\AbstractModel;
+use Greensight\Logistics\Dto\Lists\DeliveryService;
 
 /**
  * @OA\Schema(
@@ -521,9 +522,16 @@ class Delivery extends AbstractModel
     {
         $query = self::query()
             ->where('is_canceled', false)
-            ->whereNotNull('xml_id')
-            ->where('xml_id', '!=', '')
+            ->where(function($query) {
+                return $query
+                    ->where(fn($query) => $query->whereNotNull('xml_id')->where('xml_id', '!=', ''))
+                    ->orWhere(fn($query) => $query->where('delivery_service', '=', DeliveryService::SERVICE_DPD)
+                        ->whereNull('xml_id')
+                        ->whereNotNull('error_xml_id')
+                    );
+            })
             ->whereNotIn('status', static::getFinalStatus());
+
         if ($withShipments) {
             $query->with('shipments');
         }

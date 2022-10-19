@@ -1,3 +1,105 @@
-include:
-    - project: ibt.studio/ci-templates
-      file: /templates/.php-fpm.project.template.yml
+variables:
+    REGISTRY: registry.ibt.ru:5050
+    REGISTRY_USER: gitlab
+    REGISTRY_PASS: Ohng5zahzi1quahV
+    CONTAINER_IMAGE: $REGISTRY/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME
+    LOCAL_PATH: /home/$CI_PROJECT_ROOT_NAMESPACE/svc/$CI_PROJECT_NAME
+    DEV_SERVER: 77.223.118.180
+    DEV_DOMAIN: NONE
+    PROD_SERVER: 77.223.118.180
+    PROD_DOMAIN: NONE
+
+.main_deploy_settings: &main_deploy_settings
+    stage: deploy
+    image: alpine:latest
+    variables:
+        ANSIBLE_HOST_KEY_CHECKING: "False"
+    before_script:
+        - CONTAINER_IMAGE=`echo $REGISTRY/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME | tr '[:upper:]' '[:lower:]'`
+        - if [[ -z "$CI_COMMIT_TAG" ]]; then CONTAINER_IMAGE_TAG=${CI_COMMIT_SHORT_SHA}; else CONTAINER_IMAGE_TAG=${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}; fi
+        - apk update && apk add openssh-client
+        - mkdir -p ~/.ssh
+        - echo "$SSH_RSA" | tr -d '\r' > ~/.ssh/id_rsa
+        - chmod -R 0400 ~/.ssh; chmod 0600 ~/.ssh/id_rsa
+        - echo "Host *\n\tStrictHostKeyChecking no" >> ~/.ssh/config
+
+stages:
+    - test
+    - build
+    - deploy
+
+#Test stages
+Unit:
+    stage: test
+    image:
+        name: docker
+    script:
+        - echo test
+    artifacts:
+        reports:
+            junit: report.xml
+
+Coverage:
+    stage: test
+    image:
+        name: docker
+    script:
+        - echo test
+
+# Build stages
+Build:
+    stage: build
+    image: docker:stable
+    script:
+        - CONTAINER_IMAGE=`echo $REGISTRY/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME | tr '[:upper:]' '[:lower:]'`        
+        - if [[ -z "$CI_COMMIT_TAG" ]]; then CONTAINER_IMAGE_TAG=${CI_COMMIT_SHORT_SHA}; else CONTAINER_IMAGE_TAG=${CI_COMMIT_TAG}-${CI_COMMIT_SHORT_SHA}; fi 
+        - mkdir -p gitlab_key/
+        - echo "$SSH_RSA" | tr -d '\r' > gitlab_key/id_rsa
+        - docker login -u $REGISTRY_USER -p $REGISTRY_PASS  $REGISTRY
+        - docker pull $CONTAINER_IMAGE:latest || true
+        - docker build --cache-from $CONTAINER_IMAGE:latest -t $CONTAINER_IMAGE:latest -t $CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG .
+        - docker build -t $CONTAINER_IMAGE:latest -t $CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG .
+        - docker image push $CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG
+        - docker image push $CONTAINER_IMAGE:latest
+    # rules:
+    #   - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+#    only:
+#        - tags    
+
+Stage:
+    <<: *main_deploy_settings
+    environment:
+        name: stage
+    script:
+        - ENV="stage"
+        - CONTAINER_IMAGE=`echo $REGISTRY/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME | tr '[:upper:]' '[:lower:]'`
+        - LOCAL_PATH="/home/"$CI_PROJECT_ROOT_NAMESPACE"/"$ENV"/svc/"$CI_PROJECT_NAME
+        - echo "deploy to $DEV_SERVER"
+        - echo "$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG @ $LOCAL_PATH"
+        - ssh -o StrictHostKeyChecking=no root@$DEV_SERVER "mkdir -p $LOCAL_PATH/"
+        - sed -r "s|(image:.).*:.*|\1$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG|;s|ENV|$ENV|g" -i docker-compose.yml
+        - scp -o StrictHostKeyChecking=no docker-compose.yml root@$DEV_SERVER:$LOCAL_PATH/docker-compose.yml
+        - ssh -o StrictHostKeyChecking=no root@$DEV_SERVER "cd $LOCAL_PATH; docker-compose -f ../../../docker-compose.yml -f docker-compose.yml up -d; docker exec ibt-ingress nginx -s reload"
+#    only:
+#        - tags
+    when: manual
+#  rules:
+#    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+Production:
+    <<: *main_deploy_settings
+    environment:
+        name: production
+    script:
+        - ENV="prod"
+        - CONTAINER_IMAGE=`echo $REGISTRY/$CI_PROJECT_ROOT_NAMESPACE/$CI_PROJECT_NAME | tr '[:upper:]' '[:lower:]'`
+        - LOCAL_PATH="/home/"$CI_PROJECT_ROOT_NAMESPACE"/"$ENV"/svc/"$CI_PROJECT_NAME
+        - echo "deploy to $PROD_SERVER"
+        - echo "$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG @ $LOCAL_PATH"
+        - ssh -o StrictHostKeyChecking=no root@$PROD_SERVER "mkdir -p $LOCAL_PATH/"
+        - sed -r "s|(image:.).*:.*|\1$CONTAINER_IMAGE:$CONTAINER_IMAGE_TAG|;s|ENV|$ENV|g" -i docker-compose.yml
+        - scp -o StrictHostKeyChecking=no docker-compose.yml root@$PROD_SERVER:$LOCAL_PATH/docker-compose.yml
+        - ssh -o StrictHostKeyChecking=no root@$PROD_SERVER "cd $LOCAL_PATH; docker-compose -f ../../../docker-compose.yml -f docker-compose.yml up -d; docker exec ibt-ingress nginx -s reload"
+#    only:
+#        - tags    
+    when: manual

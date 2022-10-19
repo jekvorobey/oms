@@ -24,6 +24,7 @@ abstract class DocumentController extends Controller
         $fileDto = $fileService->getFiles([$documentDto->file_id])->firstOrFail();
 
         return response()->json([
+            'id' => $fileDto->id,
             'absolute_url' => $fileDto->absoluteUrl(),
             'original_name' => $fileDto->original_name,
             'size' => $fileDto->size,

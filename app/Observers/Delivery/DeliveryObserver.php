@@ -453,6 +453,9 @@ class DeliveryObserver
 
             $allDeliveriesHasStatus = true;
             foreach ($order->deliveries as $orderDelivery) {
+                if ($orderDelivery->id === $delivery->id) {
+                    continue;
+                }
                 if ($orderDelivery->is_canceled) {
                     continue;
                 }

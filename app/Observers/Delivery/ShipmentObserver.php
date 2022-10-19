@@ -20,6 +20,7 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use MerchantManagement\Dto\OperatorCommunicationMethod;
 use MerchantManagement\Services\OperatorService\OperatorService;
+use Greensight\Logistics\Dto\Lists\DeliveryService as DeliveryServiceDto;
 
 /**
  * Class ShipmentObserver
@@ -41,6 +42,8 @@ class ShipmentObserver
         ShipmentStatus::SHIPPED => DeliveryStatus::SHIPPED,
         ShipmentStatus::ON_POINT_IN => DeliveryStatus::ON_POINT_IN,
     ];
+
+    static private array $createdDeliveryOrders= [];
 
     /**
      * Handle the shipment "updating" event.
@@ -254,9 +257,25 @@ class ShipmentObserver
                 $shipment->loadMissing('delivery.shipments');
                 $delivery = $shipment->delivery;
 
-                /** @var DeliveryService $deliveryService */
-                $deliveryService = resolve(DeliveryService::class);
-                $deliveryService->saveDeliveryOrder($delivery);
+                //в DPD создаем заказ только в статусе "собрано"
+                if ($delivery->delivery_service == DeliveryServiceDto::SERVICE_DPD && $shipment->status == ShipmentStatus::ASSEMBLING) {
+                    return;
+                }
+
+                /**
+                 * todo костыль чтобы заказ на доставку не создавался два раза в DPD
+                 * todo разобраться почему так
+                 */
+                if (!in_array($delivery->id, static::$createdDeliveryOrders)) {
+                    /** @var DeliveryService $deliveryService */
+                    $deliveryService = resolve(DeliveryService::class);
+                    $deliveryService->saveDeliveryOrder($delivery);
+
+                    if ($delivery->delivery_service == DeliveryServiceDto::SERVICE_DPD) {
+                        static::$createdDeliveryOrders[] = $delivery->id;
+                    }
+                }
+
             } catch (DeliveryServiceInvalidConditions $e) {
                 logger(['saveDeliveryOrder error' => $e->getMessage()]);
             } catch (\Throwable $e) {
@@ -382,6 +401,9 @@ class ShipmentObserver
 
             $allShipmentsHasStatus = true;
             foreach ($delivery->shipments as $deliveryShipment) {
+                if ($deliveryShipment->id === $shipment->id) {
+                    continue;
+                }
                 if ($deliveryShipment->is_canceled) {
                     continue;
                 }

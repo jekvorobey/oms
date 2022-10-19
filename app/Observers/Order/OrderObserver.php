@@ -718,7 +718,7 @@ class OrderObserver
                                 )->first();
 
                                 $productItem['button'] = [
-                                    'link' => sprintf('%s/catalog/%s/%s#characteristics', config('app.showcase_host'), $category->code, $product->code),
+                                    'link' => sprintf('%s/product/%s', config('app.showcase_host'), $product->code),
                                     'text' => 'ОСТАВИТЬ ОТЗЫВ',
                                 ];
                             }
