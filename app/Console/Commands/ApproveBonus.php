@@ -7,6 +7,7 @@ use App\Models\Order\OrderBonus;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\PaymentStatus;
 use Carbon\Carbon;
+use Exception;
 use Greensight\Marketing\Dto\Option\OptionDto;
 use Greensight\Marketing\Services\OptionService\OptionService as MarketingOptionService;
 use Illuminate\Console\Command;
@@ -32,7 +33,7 @@ class ApproveBonus extends Command
 
     /**
      * Execute the console command.
-     * @throws \Exception
+     * @throws Exception
      */
     public function handle()
     {
@@ -52,6 +53,7 @@ class ApproveBonus extends Command
             })
             ->get();
 
+        /** @var Order $order */
         foreach ($orders as $order) {
             /** @var OrderBonus $orderBonus */
             foreach ($order->bonuses as $orderBonus) {

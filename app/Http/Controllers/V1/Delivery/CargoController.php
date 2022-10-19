@@ -15,8 +15,6 @@ use Greensight\CommonMsa\Rest\Controller\ReadAction;
 use Greensight\CommonMsa\Rest\Controller\UpdateAction;
 use Greensight\CommonMsa\Rest\Controller\Validation\RequiredOnPost;
 use Greensight\Logistics\Dto\Lists\DeliveryService;
-use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -232,10 +230,12 @@ class CargoController extends Controller
      *     @OA\Response(response="404", description="cargo not found"),
      * )
      * Проверить наличие ошибок в заявке на вызов курьера во внешнем сервисе
-     * @return Application|ResponseFactory|Response
      */
-    public function checkExternalStatus(int $id, OmsDeliveryService $deliveryService, CargoService $cargoService)
-    {
+    public function checkExternalStatus(
+        int $id,
+        OmsDeliveryService $deliveryService,
+        CargoService $cargoService
+    ): Response {
         $cargo = $cargoService->getCargo($id);
         $deliveryService->checkExternalStatus($cargo);
 

@@ -1,5 +1,7 @@
 <?php
 
+namespace Database\Seeders;
+
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
@@ -11,6 +13,8 @@ use App\Models\Order\Order;
 use App\Services\DeliveryService;
 use App\Services\ShipmentPackageService;
 use App\Services\ShipmentService;
+use Exception;
+use Faker\Factory;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\DeliveryOrderStatus\B2CplDeliveryOrderStatus;
 use Greensight\Logistics\Dto\Lists\DeliveryService as LogisticsDeliveryService;
@@ -129,7 +133,7 @@ class DeliverySeeder extends Seeder
      */
     public function run()
     {
-        $faker = Faker\Factory::create('ru_RU');
+        $faker = Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
 
         /** @var DeliveryService $deliveryService */
@@ -272,7 +276,7 @@ class DeliverySeeder extends Seeder
                         /** @var ShipmentService $shipmentService */
                         $shipmentService = resolve(ShipmentService::class);
                         $shipmentService->addShipment2Cargo($shipment);
-                    } catch (Throwable $e) {
+                    } catch (\Throwable) {
                         //
                     }
                 }
@@ -280,7 +284,7 @@ class DeliverySeeder extends Seeder
                 //Создаем заказ на доставку у службы доставки
                 try {
                     $deliveryService->saveDeliveryOrder($delivery);
-                } catch (Throwable $e) {
+                } catch (\Throwable) {
                     //
                 }
             }

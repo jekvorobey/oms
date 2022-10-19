@@ -40,9 +40,6 @@ class DeliveryType
         ];
     }
 
-    /**
-     * @return array
-     */
     public static function validValues(): array
     {
         return [

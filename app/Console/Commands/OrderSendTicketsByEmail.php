@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Order\Order;
 use App\Services\OrderService;
 use Illuminate\Console\Command;
+use Throwable;
 
 /**
  * Команда для тестирования отправки билетов заказа с мастер-классами по почте
@@ -29,17 +30,13 @@ class OrderSendTicketsByEmail extends Command
 
     /**
      * Execute the console command.
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function handle(OrderService $orderService)
     {
         $orderId = $this->argument('orderId');
         /** @var Order $order */
-        $order = Order::query()->where('id', $orderId)->with('basket.items')->first();
-        if (!$order) {
-            throw new \Exception("Заказ с id=$orderId не найден");
-        }
-
+        $order = Order::query()->where('id', $orderId)->with('basket.items')->firstOrFail();
         $orderService->sendTicketsEmail($order);
     }
 }

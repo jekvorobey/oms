@@ -7,6 +7,7 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
 use App\Services\DeliveryService as OmsDeliveryService;
 use App\Services\OrderService;
+use Exception;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
 use Greensight\CommonMsa\Rest\Controller\ReadAction;
@@ -332,7 +333,7 @@ class DeliveryController extends Controller
      *     @OA\Response(response="404", description="delivery not found"),
      * )
      * Отменить доставку
-     * @throws \Exception
+     * @throws Exception
      */
     public function cancel(int $id, Request $request, OmsDeliveryService $deliveryService): Response
     {
@@ -357,7 +358,7 @@ class DeliveryController extends Controller
      *     @OA\Response(response="404", description="delivery not found"),
      * )
      * Создать/обновить заказ на доставку у службы доставки
-     * @throws \Exception
+     * @throws Exception
      */
     public function saveDeliveryOrder(int $id, OmsDeliveryService $deliveryService): Response
     {
@@ -427,6 +428,7 @@ class DeliveryController extends Controller
             'status' => 'required|string',
             'status_date' => 'required|string',
         ]);
+        /** @var Delivery $delivery */
         $delivery = $deliveryService->getDeliveryByXmlId($data['xml_id']);
         $deliveryService->updateDeliveryStatus($delivery, $data);
 

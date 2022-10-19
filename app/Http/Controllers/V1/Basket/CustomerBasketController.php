@@ -6,7 +6,6 @@ use App\Http\Requests\SetItemToBasketRequest;
 use App\Models\Basket\BasketItem;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
-use App\Services\BasketService\BasketService;
 use App\Services\BasketService\CustomerBasketService;
 use App\Services\OrderService;
 use Exception;
@@ -17,10 +16,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Pim\Core\PimException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use App\Core\Basket\BasketReader;
 use Greensight\CommonMsa\Rest\RestQuery;
+use Throwable;
 
 class CustomerBasketController extends BasketController
 {
@@ -29,6 +29,9 @@ class CustomerBasketController extends BasketController
         $this->basketService = resolve(CustomerBasketService::class);
     }
 
+    /**
+     * @throws PimException
+     */
     public function list(Request $request): JsonResponse
     {
         $reader = new BasketReader();
@@ -38,6 +41,9 @@ class CustomerBasketController extends BasketController
         ]);
     }
 
+    /**
+     * @throws PimException
+     */
     public function count(Request $request): JsonResponse
     {
         $reader = new BasketReader();
@@ -225,8 +231,7 @@ class CustomerBasketController extends BasketController
 
     /**
      * Обновить корзину (поле manager_comment)
-     *
-     * @param BasketService $basketService
+     * @throws Throwable
      */
     public function update(int $id, Request $request, CustomerBasketService $customerBasketService): Response
     {
@@ -241,11 +246,7 @@ class CustomerBasketController extends BasketController
         }
 
         $basket->fill($data);
-        $ok = $basket->save();
-
-        if (!$ok) {
-            throw new HttpException(500, 'unable to save basket');
-        }
+        $basket->saveOrFail();
 
         return response('', 204);
     }

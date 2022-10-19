@@ -44,9 +44,6 @@ class PaymentSystem
         ];
     }
 
-    /**
-     * @return array
-     */
     public static function validValues(): array
     {
         return [

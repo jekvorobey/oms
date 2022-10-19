@@ -34,10 +34,7 @@ class CargoStatus
         $this->name = $name;
     }
 
-    /**
-     * @return array|self[]
-     */
-    public static function all()
+    public static function all(): array
     {
         return [
             self::CREATED => new self(self::CREATED, 'Создан'),
@@ -46,9 +43,6 @@ class CargoStatus
         ];
     }
 
-    /**
-     * @return array
-     */
     public static function validValues(): array
     {
         return array_keys(static::all());

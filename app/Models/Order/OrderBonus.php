@@ -34,6 +34,8 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property int $bonus
  * @property int $valid_period (период действия бонуса в днях)
  * @property array|null $items
+ *
+ * @property Order $order - заказ
  */
 class OrderBonus extends AbstractModel
 {
@@ -97,10 +99,7 @@ class OrderBonus extends AbstractModel
         ]);
     }
 
-    /**
-     * @return Carbon|null
-     */
-    public function getExpirationDate()
+    public function getExpirationDate(): ?Carbon
     {
         return $this->valid_period ? Carbon::now()->addDays($this->valid_period + 1) : null;
     }

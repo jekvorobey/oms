@@ -22,7 +22,6 @@ class PaymentData extends OrderData
 {
     /**
      * Формирование данных для создания платежа
-     * @throws PimException
      */
     public function getCreateData(Order $order, string $returnLink): CreatePaymentRequestBuilder
     {
@@ -84,7 +83,7 @@ class PaymentData extends OrderData
     /**
      * @throws PimException
      */
-    protected function getVatAmount(Order $order)
+    protected function getVatAmount(Order $order): float|int
     {
         $amount = 0;
         $offerIds = $order->basket->items->pluck('offer_id')->all();

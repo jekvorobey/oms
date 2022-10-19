@@ -10,6 +10,7 @@ use App\Services\ShipmentService;
 use Exception;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Pim\Services\SearchService\SearchService;
+use Throwable;
 
 /**
  * Class BasketItemObserver
@@ -82,6 +83,7 @@ class BasketItemObserver
 
     /**
      * Создать возврат по заказу
+     * @throws Throwable
      */
     private function createOrderReturn(BasketItem $basketItem): void
     {
@@ -112,13 +114,13 @@ class BasketItemObserver
 
     /**
      * Автоматическая установка флага отмены для отправления, если все её товары отменены
-     * @throws Exception
+     * @throws Throwable
      */
     private function setIsCanceledToShipment(BasketItem $basketItem): void
     {
         if ($basketItem->is_canceled && $basketItem->wasChanged('is_canceled')) {
             /** @var Shipment $shipment */
-            $shipment = Shipment::find($basketItem->shipmentItem->shipment_id);
+            $shipment = Shipment::query()->findOrFail($basketItem->shipmentItem->shipment_id);
             if ($shipment->is_canceled) {
                 return;
             }

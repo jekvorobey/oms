@@ -16,6 +16,7 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -246,7 +247,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  */
 class Order extends AbstractModel
 {
-    use WithMainHistory;
+    use WithMainHistory, HasFactory;
 
     /** @var bool */
     protected static $unguarded = true;
@@ -260,6 +261,10 @@ class Order extends AbstractModel
     /** @var array */
     protected $casts = [
         'certificates' => 'array',
+        'status_at' => 'datetime:Y-m-d H:i:s',
+        'payment_status_at' => 'datetime:Y-m-d H:i:s',
+        'is_problem_at' => 'datetime:Y-m-d H:i:s',
+        'is_canceled_at' => 'datetime:Y-m-d H:i:s',
     ];
 
     public function basket(): HasOne

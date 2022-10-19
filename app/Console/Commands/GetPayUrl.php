@@ -34,10 +34,7 @@ class GetPayUrl extends Command
     {
         $orderId = $this->argument('orderId');
         /** @var Order $order */
-        $order = Order::query()->where('id', $orderId)->with('payments')->first();
-        if (!$order) {
-            throw new Exception("Заказ с id=$orderId не найден");
-        }
+        $order = Order::query()->where('id', $orderId)->with('payments')->firstOrFail();
 
         dump($paymentService->start($order->payments->first()->id, 'random'));
     }

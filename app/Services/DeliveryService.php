@@ -35,7 +35,6 @@ use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Store\Dto\StoreContactDto;
 use Greensight\Store\Dto\StorePickupTimeDto;
 use Greensight\Store\Services\StoreService\StoreService;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -59,9 +58,9 @@ class DeliveryService
      *
      * @throws ModelNotFoundException
      */
-    public function getDelivery(int $deliveryId): Delivery
+    public function getDelivery(int $deliveryId)
     {
-        return Delivery::findOrFail($deliveryId);
+        return Delivery::query()->findOrFail($deliveryId);
     }
 
     /**
@@ -69,7 +68,7 @@ class DeliveryService
      */
     public function getDeliveryByXmlId(int $xmlId)
     {
-        return Delivery::query()->where('xml_id', $xmlId)->first();
+        return Delivery::query()->where('xml_id', $xmlId)->firstOrFail();
     }
 
     /**
@@ -108,7 +107,7 @@ class DeliveryService
         $courierCallInputDto = new CourierCallInputDto();
 
         /** @var StoreContactDto $storeContact */
-        $storeContact = $store->storeContact()[0] ?? null;
+        $storeContact = $store->storeContact[0] ?? null;
 
         $senderDto = new SenderDto();
         $senderDto->address_string = $store->address['address_string'] ?? '';
@@ -162,11 +161,11 @@ class DeliveryService
         //Получаем доступные дни недели для отгрузки грузов курьерам службы доставки текущего груза
         /** @var Collection|StorePickupTimeDto[] $storePickupTimes */
         $storePickupTimes = collect();
-        if ($store->storePickupTime()) {
+        if ($store->storePickupTime) {
             for ($day = 1; $day <= 7; $day++) {
                 //Ищем время отгрузки с учетом службы доставки
                 /** @var StorePickupTimeDto $pickupTimeDto */
-                $pickupTimeDto = $store->storePickupTime()->filter(function (StorePickupTimeDto $item) use (
+                $pickupTimeDto = $store->storePickupTime->filter(function (StorePickupTimeDto $item) use (
                     $day,
                     $cargo
                 ) {
@@ -645,7 +644,7 @@ class DeliveryService
      */
     public function updateDeliveryStatusFromDeliveryService(): void
     {
-        /** @var Collection $deliveries */
+        /** @var Collection|Delivery[] $deliveries */
         $deliveries = Delivery::deliveriesInDelivery()->load('order');
         if ($deliveries->isEmpty()) {
             return;
@@ -728,10 +727,8 @@ class DeliveryService
 
     /**
      * Получить от сдэк статус и обновить статус заказа на доставку
-     * @param Model|Delivery $delivery
-     * @param array $data
      */
-    public function updateDeliveryStatus($delivery, array $data): void
+    public function updateDeliveryStatus(Delivery $delivery, array $data): void
     {
         $delivery->setStatusXmlId(
             $data['statusCode'],

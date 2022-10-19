@@ -46,19 +46,19 @@ class FullCancelOrders extends Command
         foreach ($orders as $order) {
             try {
                 $orderService->cancel($order);
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
             }
 
             foreach ($order->deliveries as $delivery) {
                 try {
                     $deliveryService->cancelDelivery($delivery, $order->return_reason_id);
-                } catch (\Throwable $e) {
+                } catch (\Throwable) {
                 }
 
                 foreach ($delivery->shipments as $shipment) {
                     try {
                         $shipmentService->cancelShipment($shipment, $order->return_reason_id);
-                    } catch (\Throwable $e) {
+                    } catch (\Throwable) {
                     }
                 }
             }
@@ -72,13 +72,13 @@ class FullCancelOrders extends Command
         foreach ($deliveries as $delivery) {
             try {
                 $deliveryService->cancelDelivery($delivery, $delivery->return_reason_id);
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
             }
 
             foreach ($delivery->shipments as $shipment) {
                 try {
                     $shipmentService->cancelShipment($shipment, $shipment->return_reason_id);
-                } catch (\Throwable $e) {
+                } catch (\Throwable) {
                 }
             }
         }

@@ -53,9 +53,6 @@ class SpeakerInfoDto implements Arrayable
         $this->linkedin = $this->getSocialLogin($linkedin);
     }
 
-    /**
-     * @return array
-     */
     public function toArray(): array
     {
         return [

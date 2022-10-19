@@ -65,9 +65,6 @@ class PublicEventInfoDto implements Arrayable
         $this->ticketsInfo->push($ticketsInfoDto);
     }
 
-    /**
-     * @return array
-     */
     public function toArray(): array
     {
         return [

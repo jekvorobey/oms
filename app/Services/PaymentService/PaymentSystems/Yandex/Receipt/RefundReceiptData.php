@@ -5,6 +5,7 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex\Receipt;
 use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
+use Pim\Core\PimException;
 use YooKassa\Request\Receipts\CreatePostReceiptRequest;
 use YooKassa\Request\Receipts\CreatePostReceiptRequestBuilder;
 use YooKassa\Model\CurrencyCode;
@@ -58,6 +59,7 @@ class RefundReceiptData extends ReceiptData
 
     /**
      * Сформировать позиции для возврата всех позиций заказа
+     * @throws PimException
      */
     protected function getReceiptItemsForFullRefund(Order $order): array
     {
@@ -87,6 +89,7 @@ class RefundReceiptData extends ReceiptData
 
     /**
      * Get receipt items from order
+     * @throws PimException
      */
     protected function getReceiptItemsForPartiallyRefund(OrderReturn $orderReturn): array
     {

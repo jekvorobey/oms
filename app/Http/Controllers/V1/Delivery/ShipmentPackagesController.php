@@ -19,7 +19,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 /**
  * Class ShipmentPackagesController
@@ -98,9 +98,6 @@ class ShipmentPackagesController extends Controller
         return ShipmentPackage::FILLABLE;
     }
 
-    /**
-     * @return array
-     */
     protected function inputValidators(): array
     {
         return [
@@ -181,6 +178,7 @@ class ShipmentPackagesController extends Controller
      *     @OA\Response(response="500", description="Не удалось сохранить данные"),
      * )
      * Создать коробку отправления
+     * @throws Throwable
      */
     public function create(int $shipmentId, Request $request, ShipmentService $shipmentService): JsonResponse
     {
@@ -194,10 +192,7 @@ class ShipmentPackagesController extends Controller
         $data['shipment_id'] = $shipmentId;
 
         $shipmentPackage = new ShipmentPackage($data);
-        $ok = $shipmentPackage->save();
-        if (!$ok) {
-            throw new HttpException(500, 'unable to save shipment package');
-        }
+        $shipmentPackage->saveOrFail();
 
         return response()->json([
             'id' => $shipmentPackage->id,
@@ -271,7 +266,7 @@ class ShipmentPackagesController extends Controller
             }
 
             return response('', 204);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new HttpException(500, $e->getMessage());
         }
     }
@@ -393,10 +388,7 @@ class ShipmentPackagesController extends Controller
         $query = $modelClass::modifyQuery($baseQuery, $restQuery);
 
         /** @var RestSerializable $model */
-        $model = $query->first();
-        if (!$model) {
-            throw new NotFoundHttpException();
-        }
+        $model = $query->firstOrFail();
 
         return response()->json([
             'items' => $model->toRest($restQuery),
@@ -446,7 +438,7 @@ class ShipmentPackagesController extends Controller
             }
 
             return response('', 204);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new HttpException(500, $e->getMessage());
         }
     }

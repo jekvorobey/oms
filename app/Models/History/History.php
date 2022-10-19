@@ -2,6 +2,7 @@
 
 namespace App\Models\History;
 
+use App\Models\WithHistory;
 use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Illuminate\Database\Eloquent\Model;
@@ -72,9 +73,9 @@ class History extends AbstractModel
 
     /**
      * @param Model|Model[] $mainModels Привязываем событие к основным сущностям, на деталке которых оно будет выводится в истории изменения
-     * @param Model|WithMainHistory $model
+     * @param Model|WithMainHistory|WithHistory $model
      */
-    public static function saveEvent(int $type, $mainModels, Model $model): void
+    public static function saveEvent(int $type, $mainModels, $model): void
     {
         /** @var RequestInitiator $user */
         $user = resolve(RequestInitiator::class);

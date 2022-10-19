@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Payment\Payment as ExternalPayment;
+use App\Models\Payment\Payment;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Contracts\View\View;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Routing\Redirector;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Contracts\Foundation\Application;
 
 /**
  * Контроллер, который эмулирует работу внешней системы оплаты.
@@ -13,16 +19,17 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class LocalPaymentController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * @throws GuzzleException
+     */
+    public function index(Request $request): View|Factory|Redirector|RedirectResponse|Application
     {
         $paymentId = $request->get('paymentId');
         if (!$paymentId) {
             throw new NotFoundHttpException();
         }
-        $payment = ExternalPayment::byExternalPaymentId($paymentId)->first();
-        if (!$payment) {
-            throw new NotFoundHttpException();
-        }
+        /** @var Payment $payment */
+        $payment = Payment::byExternalPaymentId($paymentId)->firstOrFail();
 
         $done = $request->get('done');
 

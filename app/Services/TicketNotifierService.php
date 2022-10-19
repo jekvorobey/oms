@@ -68,6 +68,9 @@ class TicketNotifierService
     /** @var OrderTicketsCreator */
     protected $orderTicketsCreator;
 
+    /** @var CustomerService */
+    protected $customerService;
+
     protected RedirectService $redirectService;
 
     public function __construct(

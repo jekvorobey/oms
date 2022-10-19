@@ -13,7 +13,6 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\CargoService;
 use App\Services\DeliveryService;
 use App\Services\ShipmentService;
-use Exception;
 use Greensight\CommonMsa\Dto\FileDto;
 use Greensight\CommonMsa\Rest\Controller\CountAction;
 use Greensight\CommonMsa\Rest\Controller\DeleteAction;
@@ -32,7 +31,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 /**
  * Class ShipmentsController
@@ -183,9 +182,8 @@ class ShipmentsController extends Controller
      * )
      *
      * Получить ID и сумму (руб.) принятых мерчантом заказов за период
-     * @return JsonResponse
      */
-    public function getActiveIds()
+    public function getActiveIds(): JsonResponse
     {
         $data = $this->validate(request(), [
             'merchant_id' => 'required|integer',
@@ -211,7 +209,7 @@ class ShipmentsController extends Controller
         return response()->json([
             'count' => $orders_count,
             'price' => $orders_price,
-        ], 200);
+        ]);
     }
 
     /**
@@ -238,9 +236,8 @@ class ShipmentsController extends Controller
      *     )
      * )
      * Получить ID и сумму (руб.) доставленных заказов у мерчанта за период
-     * @return JsonResponse
      */
-    public function getDeliveredIds()
+    public function getDeliveredIds(): JsonResponse
     {
         $data = $this->validate(request(), [
             'merchant_id' => 'required|integer',
@@ -264,7 +261,7 @@ class ShipmentsController extends Controller
         return response()->json([
             'count' => $orders_count,
             'price' => $orders_price,
-        ], 200);
+        ]);
     }
 
     /**
@@ -339,6 +336,7 @@ class ShipmentsController extends Controller
      * )
      *
      * Создать отправление
+     * @throws Throwable
      */
     public function create(int $deliveryId, Request $request, DeliveryService $deliveryService): JsonResponse
     {
@@ -352,10 +350,7 @@ class ShipmentsController extends Controller
         $data['delivery_id'] = $deliveryId;
 
         $shipment = new Shipment($data);
-        $ok = $shipment->save();
-        if (!$ok) {
-            throw new HttpException(500, 'unable to save shipment');
-        }
+        $shipment->saveOrFail();
 
         return response()->json([
             'id' => $shipment->id,
@@ -590,10 +585,7 @@ class ShipmentsController extends Controller
         $query = $modelClass::modifyQuery($baseQuery, $restQuery);
 
         /** @var RestSerializable $model */
-        $model = $query->first();
-        if (!$model) {
-            throw new NotFoundHttpException();
-        }
+        $model = $query->firstOrFail();
 
         return response()->json([
             'items' => $model->toRest($restQuery),
@@ -601,7 +593,7 @@ class ShipmentsController extends Controller
     }
 
     /**
-     *  @OA\Post (
+     * @OA\Post (
      *     path=" api/v1/shipments/{id}/items/{basketItemId}",
      *     tags={"Корзина"},
      *     description="Создать элемент (товар с одного склада одного мерчанта) отправления",
@@ -612,6 +604,7 @@ class ShipmentsController extends Controller
      *     @OA\Response(response="500", description="unable to save shipment item"),
      * )
      * Создать элемент (товар с одного склада одного мерчанта) отправления
+     * @throws Throwable
      */
     public function createItem(int $shipmentId, int $basketItemId, ShipmentService $shipmentService): Response
     {
@@ -620,10 +613,7 @@ class ShipmentsController extends Controller
         $shipmentItem = new ShipmentItem();
         $shipmentItem->shipment_id = $shipmentId;
         $shipmentItem->basket_item_id = $basketItemId;
-        $ok = $shipmentItem->save();
-        if (!$ok) {
-            throw new HttpException(500, 'unable to save shipment item');
-        }
+        $shipmentItem->saveOrFail();
 
         return response('', 201);
     }
@@ -646,14 +636,11 @@ class ShipmentsController extends Controller
         $shipmentItem = ShipmentItem::query()
             ->where('shipment_id', $shipmentId)
             ->where('basket_item_id', $basketItemId)
-            ->first();
-        if (!$shipmentItem) {
-            throw new NotFoundHttpException('shipment item not found');
-        }
+            ->firstOrFail();
 
         try {
             $ok = $shipmentItem->delete();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $ok = false;
             report($e);
         }
@@ -708,7 +695,7 @@ class ShipmentsController extends Controller
             );
 
             return response('', 204);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new HttpException(500, $e->getMessage());
         }
     }
@@ -787,7 +774,7 @@ class ShipmentsController extends Controller
         }
 
         /** @var FileDto $fileDto */
-        $fileDto = $fileService->getFiles([$result->file_id])->first();
+        $fileDto = $fileService->getFiles([$result->file_id])->firstOrFail();
 
         return response()->json([
             'absolute_url' => $fileDto->absoluteUrl(),
@@ -856,7 +843,7 @@ class ShipmentsController extends Controller
      *     @OA\Response(response="404", description="product not found"),
      * )
      * Отменить отправление
-     * @throws Exception
+     * @throws Throwable
      */
     public function cancel(int $id, Request $request, ShipmentService $shipmentService): Response
     {
@@ -972,7 +959,7 @@ class ShipmentsController extends Controller
         ]);
 
         /** @var ShipmentExport $shipmentExport */
-        $shipmentExport = ShipmentExport::whereNull('shipment_xml_id')
+        $shipmentExport = ShipmentExport::query()->whereNull('shipment_xml_id')
             ->where('shipment_id', $data['shipment_id'])
             ->where('merchant_integration_id', $data['merchant_integration_id'])
             ->first();
@@ -984,7 +971,7 @@ class ShipmentsController extends Controller
 
             $shipmentExport->save();
         } else {
-            $shipmentExport = ShipmentExport::create($data);
+            $shipmentExport = ShipmentExport::query()->create($data);
         }
 
         return response()->json([

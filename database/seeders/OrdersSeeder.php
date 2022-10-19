@@ -1,5 +1,7 @@
 <?php
 
+namespace Database\Seeders;
+
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\DeliveryType;
@@ -7,6 +9,7 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderComment;
 use App\Models\Order\OrderStatus;
 use App\Services\OrderService;
+use Faker\Factory;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Store\Dto\StockDto;
@@ -33,7 +36,7 @@ class OrdersSeeder extends Seeder
      */
     public function run()
     {
-        $faker = Faker\Factory::create('ru_RU');
+        $faker = Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
 
         /** @var OrderService $orderService */
@@ -153,7 +156,7 @@ class OrdersSeeder extends Seeder
             if ($faker->boolean()) {
                 try {
                     $orderService->cancel($order);
-                } catch (Throwable $e) {
+                } catch (\Throwable) {
                 }
             }
 

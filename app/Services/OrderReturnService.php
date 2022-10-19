@@ -18,6 +18,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use MerchantManagement\Dto\MerchantBillOperation\ShipmentStatusDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
+use Pim\Core\PimException;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Services\OfferService\OfferService;
 use Throwable;
@@ -112,7 +113,7 @@ class OrderReturnService
         OrderReturn $orderReturn,
         BasketItem $basketItem,
         OrderReturnItemDto $item
-    ): OrderReturnItem {
+    ): void {
         $orderReturnItem = new OrderReturnItem();
         $orderReturnItem->order_return_id = $orderReturn->id;
         $orderReturnItem->basket_item_id = $basketItem->id;
@@ -150,8 +151,6 @@ class OrderReturnService
         $orderReturnItem->price = $item->price; // $basketItem->price / $basketItem->qty * $orderReturnItem->qty;
         $orderReturnItem->commission = 0; //todo Доделать расчет суммы удержанной комиссии
         $orderReturnItem->save();
-
-        return $orderReturnItem;
     }
 
     private function calcOrderReturnPrice(OrderReturn $orderReturn, ?int $price = null): void
@@ -223,7 +222,7 @@ class OrderReturnService
 
     /**
      * Отправка данных о возврате в ibt-cm-ms
-     * @throws \Pim\Core\PimException
+     * @throws PimException
      */
     private function returnReferralBillingOperations(
         Collection $basketItems,

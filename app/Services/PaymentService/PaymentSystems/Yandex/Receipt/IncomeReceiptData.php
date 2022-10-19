@@ -5,6 +5,7 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex\Receipt;
 use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Order\OrderReturn;
+use Pim\Core\PimException;
 use YooKassa\Request\Receipts\CreatePostReceiptRequest;
 use YooKassa\Request\Receipts\CreatePostReceiptRequestBuilder;
 use YooKassa\Model\CurrencyCode;
@@ -33,6 +34,7 @@ class IncomeReceiptData extends ReceiptData
 
     /**
      * Получение позиций заказа для чека
+     * @throws PimException
      */
     protected function getReceiptItems(Order $order): array
     {

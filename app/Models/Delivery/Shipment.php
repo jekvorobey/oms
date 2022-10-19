@@ -10,6 +10,7 @@ use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -212,8 +213,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  */
 class Shipment extends AbstractModel
 {
-    use WithMainHistory;
-    use WithWeightAndSizes;
+    use WithMainHistory, WithWeightAndSizes, HasFactory;
 
     private const SIDES = ['width', 'height', 'length'];
 
@@ -247,6 +247,19 @@ class Shipment extends AbstractModel
 
     /** @var string */
     protected $table = 'shipments';
+
+    /** @var array */
+    protected $casts = [
+        'psd' => 'datetime:Y-m-d H:i:s',
+        'fsd' => 'datetime:Y-m-d H:i:s',
+        'is_problem_at' => 'datetime:Y-m-d H:i:s',
+        'status_at' => 'datetime:Y-m-d H:i:s',
+        'payment_status_at' => 'datetime:Y-m-d H:i:s',
+        'is_canceled_at' => 'datetime:Y-m-d H:i:s',
+        'required_shipping_at' => 'datetime:Y-m-d H:i:s',
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
+    ];
 
     /** @var array */
     protected static $restIncludes = ['delivery', 'packages', 'packages.items', 'cargo', 'items', 'basketItems', 'exports'];
@@ -702,9 +715,6 @@ class Shipment extends AbstractModel
         }
     }
 
-    /**
-     * @return array
-     */
     public function toRest(RestQuery $restQuery): array
     {
         $result = $this->toArray();
