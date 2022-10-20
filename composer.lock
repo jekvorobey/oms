@@ -1935,12 +1935,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-common-ms-code.git",
-                "reference": "eb8119539d2a33f9269f40fb865d92917c174ddc"
+                "reference": "e6c5f11f63197371758c9299dc24d5b222c41db9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-common-ms-code/repository/archive.zip?sha=eb8119539d2a33f9269f40fb865d92917c174ddc",
-                "reference": "eb8119539d2a33f9269f40fb865d92917c174ddc",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-common-ms-code/repository/archive.zip?sha=e6c5f11f63197371758c9299dc24d5b222c41db9",
+                "reference": "e6c5f11f63197371758c9299dc24d5b222c41db9",
                 "shasum": ""
             },
             "require": {
@@ -1995,7 +1995,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965392/issues"
             },
-            "time": "2022-09-22T08:13:05+00:00"
+            "time": "2022-10-20T12:19:27+00:00"
         },
         {
             "name": "ibt/kit-invest-sdk",
