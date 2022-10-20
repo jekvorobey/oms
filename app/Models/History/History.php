@@ -85,7 +85,12 @@ class History extends AbstractModel
 
         $event->entity_id = $model->getKey();
         $event->entity_type = class_basename($model);
-        $event->data = $type !== HistoryType::TYPE_DELETE ? $model->getDirty() : $model->toArray();
+
+        $modelData = $model->toArray();
+        $event->data = $type !== HistoryType::TYPE_DELETE
+            ? array_intersect_key($modelData, $model->getDirty())   //костыль, т.к. getDirty не сериализует даты в v9
+            : $modelData;
+
         $event->save();
 
         //Привязываем событие к основным сущностям, деталке которых оно будет выводится в истории изменения
