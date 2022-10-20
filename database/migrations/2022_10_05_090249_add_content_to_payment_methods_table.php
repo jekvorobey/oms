@@ -23,7 +23,7 @@ class AddContentToPaymentMethodsTable extends Migration
                 'is_fixed_discount' => false,
                 'discount' => '14',
                 'is_displayed_in_catalog' => false,
-                'is_displayed_in_mk' => false,
+                'is_displayed_in_public_events' => false,
                 'installment_period' => '12',
                 'signingKD' => 'KO',
             ]),
