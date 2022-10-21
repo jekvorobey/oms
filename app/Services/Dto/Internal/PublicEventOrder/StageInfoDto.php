@@ -3,7 +3,7 @@
 namespace App\Services\Dto\Internal\PublicEventOrder;
 
 use Illuminate\Support\Carbon;
-use Jenssegers\Date\Date;
+use Illuminate\Support\Facades\Date;
 
 /**
  * Class StageInfoDto
@@ -55,17 +55,11 @@ class StageInfoDto
         return $formatDate($this->dateFrom) . ($this->dateFrom != $this->dateTo ? ' - ' . $formatDate($this->dateTo) : '');
     }
 
-    /**
-     * @param string $date
-     */
     public function setTimeFrom(string $time): void
     {
         $this->timeFrom = Carbon::createFromFormat(self::TIME_FORMAT, $time);
     }
 
-    /**
-     * @param string $date
-     */
     public function setTimeTo(string $time): void
     {
         $this->timeTo = Carbon::createFromFormat(self::TIME_FORMAT, $time);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Order\Order;
 use App\Models\Order\OrderDiscount;
+use Illuminate\Http\JsonResponse;
 
 /**
  * Class OrderDiscountController
@@ -29,9 +30,8 @@ class OrderDiscountController extends Controller
      *         )
      *     )
      * )
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function KPIForDiscount(int $discountId)
+    public function KPIForDiscount(int $discountId): JsonResponse
     {
         # Сумма заказов с использованием скидки (в рублях)
         $ordersSumWithDiscount = (int) Order::query()

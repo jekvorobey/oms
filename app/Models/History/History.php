@@ -2,6 +2,7 @@
 
 namespace App\Models\History;
 
+use App\Models\WithHistory;
 use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Services\RequestInitiator\RequestInitiator;
 use Illuminate\Database\Eloquent\Model;
@@ -72,9 +73,9 @@ class History extends AbstractModel
 
     /**
      * @param Model|Model[] $mainModels Привязываем событие к основным сущностям, на деталке которых оно будет выводится в истории изменения
-     * @param Model|WithMainHistory $model
+     * @param Model|WithMainHistory|WithHistory $model
      */
-    public static function saveEvent(int $type, $mainModels, Model $model): void
+    public static function saveEvent(int $type, $mainModels, $model): void
     {
         /** @var RequestInitiator $user */
         $user = resolve(RequestInitiator::class);
@@ -84,7 +85,12 @@ class History extends AbstractModel
 
         $event->entity_id = $model->getKey();
         $event->entity_type = class_basename($model);
-        $event->data = $type !== HistoryType::TYPE_DELETE ? $model->getDirty() : $model->toArray();
+
+        $modelData = $model->toArray();
+        $event->data = $type !== HistoryType::TYPE_DELETE
+            ? array_intersect_key($modelData, $model->getDirty())   //костыль, т.к. getDirty не сериализует даты в v9
+            : $modelData;
+
         $event->save();
 
         //Привязываем событие к основным сущностям, деталке которых оно будет выводится в истории изменения

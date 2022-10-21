@@ -16,8 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 /**
  * Class OrdersExportController
@@ -132,9 +131,8 @@ class OrdersExportController extends Controller
      *         )
      *     )
      * )
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function read(Request $request, RequestInitiator $client)
+    public function read(Request $request, RequestInitiator $client): JsonResponse
     {
         /** @var Model|RestSerializable $modelClass */
         $modelClass = $this->modelClass();
@@ -152,10 +150,7 @@ class OrdersExportController extends Controller
                 );
 
                 /** @var RestSerializable $model */
-                $model = $query->first();
-                if (!$model) {
-                    throw new NotFoundHttpException();
-                }
+                $model = $query->firstOrFail();
 
                 $items = [
                     $model->toRest($restQuery),
@@ -197,9 +192,8 @@ class OrdersExportController extends Controller
      *         )
      *     )
      * )
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function count(Request $request, RequestInitiator $client)
+    public function count(Request $request, RequestInitiator $client): JsonResponse
     {
         $orderId = $request->route('id');
         if ($orderId) {
@@ -247,6 +241,7 @@ class OrdersExportController extends Controller
      *     @OA\Response(response="400", description="Bad request"),
      *     @OA\Response(response="500", description="unable to save delivery"),
      * )
+     * @throws Throwable
      */
     public function create(int $orderId, Request $request): JsonResponse
     {
@@ -259,11 +254,7 @@ class OrdersExportController extends Controller
         }
         /** @var OrderExport $model */
         $model = new $modelClass($data);
-        $ok = $model->save();
-
-        if (!$ok) {
-            throw new HttpException(500);
-        }
+        $model->saveOrFail();
 
         return response()->json([
             'id' => $model->id,

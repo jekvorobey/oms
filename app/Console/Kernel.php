@@ -79,22 +79,21 @@ class Kernel extends ConsoleKernel
         $stores = Cache::remember('stores_with_pickup_times', 60 * 60, function () {
             /** @var StoreService $storeService */
             $storeService = resolve(StoreService::class);
-            $storeQuery = $storeService->newQuery()
-                ->include('storePickupTime');
+            $storeQuery = $storeService->newQuery()->include('storePickupTime');
             $stores = $storeService->stores($storeQuery);
             return $stores->filter(function (StoreDto $store) {
-                return !is_null($store->storePickupTime());
+                return !is_null($store->storePickupTime);
             });
         });
 
         foreach ($stores as $store) {
-            foreach ($store->storePickupTime() as $pickupTime) {
+            foreach ($store->storePickupTime as $pickupTime) {
                 if ($pickupTime->day == $dayOfWeek) {
                     if ($pickupTime->cargo_export_time) {
                         try {
                             $schedule->command(CargoExport::class, [$store->id, $pickupTime->delivery_service])
                                 ->at((new \DateTime($pickupTime->cargo_export_time))->format('H:i'));
-                        } catch (\Throwable $e) {
+                        } catch (\Throwable) {
                         }
                     }
                 }

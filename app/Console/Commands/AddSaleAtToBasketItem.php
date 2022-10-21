@@ -6,6 +6,7 @@ use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
+use Pim\Core\PimException;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Services\OfferService\OfferService;
 
@@ -32,7 +33,7 @@ class AddSaleAtToBasketItem extends Command
 
     /**
      * Execute the console command.
-     * @throws \Pim\Core\PimException
+     * @throws PimException
      */
     public function handle()
     {

@@ -6,6 +6,7 @@ use App\Models\WithMainHistory;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Greensight\CommonMsa\Models\AbstractModel;
@@ -139,8 +140,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  */
 class Cargo extends AbstractModel
 {
-    use WithMainHistory;
-    use WithWeightAndSizes;
+    use WithMainHistory, WithWeightAndSizes, HasFactory;
 
     private const SIDES = ['width', 'height', 'length'];
 
@@ -175,9 +175,12 @@ class Cargo extends AbstractModel
         'width' => 'float',
         'height' => 'float',
         'length' => 'float',
-        'intake_date' => 'date',
-        'intake_time_from' => 'time',
-        'intake_time_to' => 'time',
+        'intake_date' => 'datetime:Y-m-d',
+        'intake_time_from' => 'datetime:H:i:s',
+        'intake_time_to' => 'datetime:H:i:s',
+        'status_at' => 'datetime:Y-m-d H:i:s',
+        'is_problem_at' => 'datetime:Y-m-d H:i:s',
+        'is_canceled_at' => 'datetime:Y-m-d H:i:s',
     ];
 
     /** @var array */
@@ -312,9 +315,6 @@ class Cargo extends AbstractModel
         return parent::modifyQuery($query, $modifiedRestQuery);
     }
 
-    /**
-     * @return array
-     */
     public function toRest(RestQuery $restQuery): array
     {
         $result = $this->toArray();

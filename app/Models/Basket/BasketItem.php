@@ -12,6 +12,7 @@ use App\Services\PublicEventService\Cart\PublicEventCartStruct;
 use Exception;
 use Greensight\CommonMsa\Services\FileService\FileService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -78,7 +79,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  */
 class BasketItem extends AbstractModel
 {
-    use WithHistory;
+    use WithHistory, HasFactory;
 
     /** @var bool */
     protected static $unguarded = true;
@@ -254,12 +255,11 @@ class BasketItem extends AbstractModel
      */
     public function getItemMedia(): array
     {
-        switch ($this->type) {
-            case Basket::TYPE_PRODUCT:
-                return $this->getProductMedia();
-            case Basket::TYPE_MASTER:
-                return $this->getMasterMedia();
-        }
+        return match ($this->type) {
+            Basket::TYPE_PRODUCT => $this->getProductMedia(),
+            Basket::TYPE_MASTER => $this->getMasterMedia(),
+            default => [],
+        };
     }
 
     /**
@@ -276,10 +276,10 @@ class BasketItem extends AbstractModel
         $offer = $offerService->offers(
             $offerService->newQuery()
                 ->setFilter('id', $this->offer_id)
-        )->first();
+        )->firstOrFail();
 
         return $productService
-            ->allImages([$offer->product_id], ProductImageType::TYPE_MAIN)
+            ->allImages([$offer->product_id], ProductImageType::TYPE_CATALOG)
             ->map(function (ProductImageDto $image) {
                 return $image->url;
             })
@@ -299,7 +299,7 @@ class BasketItem extends AbstractModel
         $sprint = $sprintService->find(
             $sprintService->query()
                 ->setFilter('id', $this->product['sprint_id'])
-        )->first();
+        )->firstOrFail();
 
         return $publicEventMediaService
             ->find(

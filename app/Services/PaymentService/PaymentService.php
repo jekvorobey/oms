@@ -26,7 +26,7 @@ class PaymentService
      */
     public function getPayment(int $paymentId): ?Payment
     {
-        return Payment::find($paymentId);
+        return Payment::findOrFail($paymentId);
     }
 
     /**

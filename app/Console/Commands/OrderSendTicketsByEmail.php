@@ -38,11 +38,7 @@ class OrderSendTicketsByEmail extends Command
     {
         $orderId = $this->argument('orderId');
         /** @var Order $order */
-        $order = Order::query()->where('id', $orderId)->with('basket.items')->first();
-        if (!$order) {
-            throw new RuntimeException("Заказ с id=$orderId не найден");
-        }
-
+        $order = Order::query()->where('id', $orderId)->with('basket.items')->firstOrFail();
 
         if ($order->type == Basket::TYPE_MASTER) {
             app(TicketNotifierService::class)->notify($order);

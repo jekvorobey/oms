@@ -4,6 +4,7 @@ namespace App\Core\Order;
 
 use App\Models\Order\Order;
 use App\Models\Payment\Payment;
+use Exception;
 use Illuminate\Support\Collection;
 
 class OrderWriter
@@ -11,7 +12,7 @@ class OrderWriter
     /**
      * Задать список оплат для заказа.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function setPayments(Order $order, Collection $payments): void
     {

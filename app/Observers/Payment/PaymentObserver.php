@@ -56,15 +56,11 @@ class PaymentObserver
 
     public function isNeedCreateIncomeReceipt(Payment $payment): bool
     {
-        switch ($payment->order->type) {
-            case Basket::TYPE_PRODUCT:
-            case Basket::TYPE_CERTIFICATE:
-                return in_array($payment->status, [PaymentStatus::HOLD, PaymentStatus::PAID]);
-            case Basket::TYPE_MASTER:
-                return $payment->order->price > 0 && $payment->status == PaymentStatus::PAID;
-            default:
-                return false;
-        }
+        return match ($payment->order->type) {
+            Basket::TYPE_PRODUCT, Basket::TYPE_CERTIFICATE => in_array($payment->status, [PaymentStatus::HOLD, PaymentStatus::PAID]),
+            Basket::TYPE_MASTER => $payment->order->price > 0 && $payment->status == PaymentStatus::PAID,
+            default => false,
+        };
     }
 
     public function createRefundReceipt(Payment $payment): void

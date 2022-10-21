@@ -65,4 +65,14 @@ class PaymentMethod extends AbstractModel
         'is_available_for_mc' => 'bool',
         'settings' => 'json',
     ];
+
+    public static function validValues(): array
+    {
+        return [
+            self::PREPAID,
+            self::POSTPAID,
+            self::CREDITPAID,
+            self::B2B_SBERBANK,
+        ];
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Services\BasketService;
 
 use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
+use Exception;
 use Http\Discovery\Exception\NotFoundException;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -23,7 +24,7 @@ class GuestBasketService extends BasketService
         return $basket;
     }
 
-    public function findFreeUserBasket(int $type, $customerId): Basket
+    public function findFreeUserBasket(int $type, int|string $customerId): Basket
     {
         $basketMappings = Cache::get($customerId);
         $typeKey = $this->getBasketKey($type);
@@ -41,7 +42,7 @@ class GuestBasketService extends BasketService
         return $basket;
     }
 
-    protected function createBasket(int $type, $customerId): Basket
+    protected function createBasket(int $type, int|string $customerId): Basket
     {
         $basket = new Basket();
         $basket->id = $this->generateId();
@@ -85,6 +86,7 @@ class GuestBasketService extends BasketService
 
     /**
      * Создать/изменить/удалить товар временной корзины
+     * @throws Exception
      */
     public function setItem(Basket $basket, int $offerId, array $data): bool
     {
@@ -128,32 +130,27 @@ class GuestBasketService extends BasketService
 
     private function getBasketKey(int $type): string
     {
-        switch ($type) {
-            case Basket::TYPE_PRODUCT:
-                return 'product';
-            case Basket::TYPE_CERTIFICATE:
-                return 'certificate';
-            case Basket::TYPE_MASTER:
-                return 'master';
-            default:
-                throw new NotFoundException("Type of basket $type not found");
-        }
+        return match ($type) {
+            Basket::TYPE_PRODUCT => 'product',
+            Basket::TYPE_CERTIFICATE => 'certificate',
+            Basket::TYPE_MASTER => 'master',
+            default => throw new NotFoundException("Type of basket $type not found"),
+        };
     }
 
     private function getBasketTypeByKey(string $type): int
     {
-        switch ($type) {
-            case 'product':
-                return Basket::TYPE_PRODUCT;
-            case 'certificate':
-                return Basket::TYPE_CERTIFICATE;
-            case 'master':
-                return Basket::TYPE_MASTER;
-            default:
-                throw new NotFoundException("Type of basket $type not found");
-        }
+        return match ($type) {
+            'product' => Basket::TYPE_PRODUCT,
+            'certificate' => Basket::TYPE_CERTIFICATE,
+            'master' => Basket::TYPE_MASTER,
+            default => throw new NotFoundException("Type of basket $type not found"),
+        };
     }
 
+    /**
+     * @throws Exception
+     */
     private function generateId(): int
     {
         return random_int(

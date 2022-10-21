@@ -35,11 +35,7 @@ class OrderTicket2Pdf extends Command
     {
         $orderId = $this->argument('orderId');
         /** @var Order $order */
-        $order = Order::query()->where('id', $orderId)->with('basket.items')->first();
-        if (!$order) {
-            throw new \Exception("Заказ с id=$orderId не найден");
-        }
-
+        $order = Order::query()->where('id', $orderId)->with('basket.items')->firstOrFail();
         $documentDto = $orderTicketsCreator->setOrder($order)->create();
 
         $this->output->writeln($documentDto->success ? $documentDto->file_id : $documentDto->message);

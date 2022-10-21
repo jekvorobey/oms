@@ -1,14 +1,21 @@
 <?php
 
-/** @var \Illuminate\Database\Eloquent\Factory $factory */
+namespace Database\Factories;
 
 use App\Models\Basket\Basket;
-use Faker\Generator as Faker;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(Basket::class, function (Faker $faker) {
-    return [
-        'customer_id' => $faker->randomNumber(),
-        'is_belongs_to_order' => true,
-        'type' => Basket::TYPE_PRODUCT,
-    ];
-});
+class BasketFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     */
+    public function definition(): array
+    {
+        return [
+            'customer_id' => $this->faker->randomNumber(),
+            'is_belongs_to_order' => true,
+            'type' => Basket::TYPE_PRODUCT,
+        ];
+    }
+}

@@ -1,11 +1,14 @@
 <?php
 
+namespace Database\Seeders;
+
 use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentMethod;
 use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentSystem;
 use App\Services\PaymentService\PaymentService;
+use Faker\Factory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 
@@ -17,11 +20,12 @@ class PaymentsSeeder extends Seeder
     public const FAKER_SEED = 123456;
 
     /**
-     * Run the database seeds.
+     * Run the database seeders.
+     * @throws \App\Services\PaymentService\PaymentSystems\Exceptions\Payment
      */
     public function run()
     {
-        $faker = Faker\Factory::create('ru_RU');
+        $faker = Factory::create('ru_RU');
         $faker->seed(self::FAKER_SEED);
 
         /** @var PaymentService $paymentService */

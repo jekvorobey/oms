@@ -10,9 +10,6 @@ use Greensight\Message\Dto\Notification\NotificationDto;
  */
 class AbstractNotification
 {
-    /**
-     * @return array
-     */
     protected function getBaseNotification(): NotificationDto
     {
         return new NotificationDto([

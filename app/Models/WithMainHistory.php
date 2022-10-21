@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Core\Notifications\NotificationInterface;
 use App\Models\History\History;
 use App\Models\History\HistoryMainEntity;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Collection;
 
@@ -33,8 +32,7 @@ trait WithMainHistory
         return $this->morphToMany(History::class, 'main_entity', HistoryMainEntity::class);
     }
 
-    /** @return Model|WithMainHistory */
-    protected function historyMainModel()
+    protected function historyMainModel(): self
     {
         return $this;
     }

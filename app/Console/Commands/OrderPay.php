@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Order\Order;
 use App\Services\OrderService;
+use Exception;
 use Illuminate\Console\Command;
 
 /**
@@ -27,16 +28,13 @@ class OrderPay extends Command
 
     /**
      * Execute the console command.
-     * @throws \Exception
+     * @throws Exception
      */
     public function handle(OrderService $orderService)
     {
         $orderId = $this->argument('orderId');
         /** @var Order $order */
-        $order = Order::query()->where('id', $orderId)->with('payments')->first();
-        if (!$order) {
-            throw new \Exception("Заказ с id=$orderId не найден");
-        }
+        $order = Order::query()->where('id', $orderId)->with('payments')->firstOrFail();
 
         $orderService->pay($order);
     }

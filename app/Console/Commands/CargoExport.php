@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Delivery\Cargo;
 use App\Models\Delivery\CargoStatus;
 use App\Services\DeliveryService;
+use Exception;
 use Illuminate\Console\Command;
 
 /**
@@ -29,7 +30,7 @@ class CargoExport extends Command
 
     /**
      * Execute the console command.
-     * @throws \Exception
+     * @throws Exception
      */
     public function handle(DeliveryService $deliveryService)
     {

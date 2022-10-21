@@ -39,7 +39,7 @@ class CancelUnpaidOrders extends Command
         foreach ($orders as $order) {
             try {
                 $orderService->cancel($order);
-            } catch (\Throwable $e) {
+            } catch (\Throwable) {
                 //
             }
         }

@@ -4,6 +4,7 @@ namespace App\Models\Basket;
 
 use App\Models\Order\Order;
 use Greensight\CommonMsa\Models\AbstractModel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
@@ -41,6 +42,8 @@ use Illuminate\Support\Collection;
  */
 class Basket extends AbstractModel
 {
+    use HasFactory;
+
     /** корзина с товарами */
     public const TYPE_PRODUCT = 1;
 

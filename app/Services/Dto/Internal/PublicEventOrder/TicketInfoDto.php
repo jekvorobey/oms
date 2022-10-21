@@ -25,9 +25,6 @@ class TicketInfoDto implements Arrayable
     /** @var string */
     public $email;
 
-    /**
-     * @return array
-     */
     public function toArray(): array
     {
         return [

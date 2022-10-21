@@ -131,9 +131,6 @@ class ShipmentStatus
         ];
     }
 
-    /**
-     * @return array
-     */
     public static function validValues(): array
     {
         return array_keys(static::all());

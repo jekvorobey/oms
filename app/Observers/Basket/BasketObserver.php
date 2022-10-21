@@ -3,6 +3,7 @@
 namespace App\Observers\Basket;
 
 use App\Models\Basket\Basket;
+use Exception;
 
 /**
  * Class BasketObserver
@@ -12,7 +13,7 @@ class BasketObserver
 {
     /**
      * Handle the basket "deleting" event.
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleting(Basket $basket)
     {

@@ -2,9 +2,11 @@
 
 namespace App\Services\DocumentService;
 
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use NcJoes\OfficeConverter\OfficeConverter;
+use NcJoes\OfficeConverter\OfficeConverterException;
 use PhpOffice\PhpWord\TemplateProcessor;
 use Pim\Dto\Product\ProductByOfferDto;
 use Pim\Dto\Product\ProductDto;
@@ -25,6 +27,9 @@ abstract class TemplatedDocumentCreator extends DocumentCreator
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     protected function createDocument(): string
     {
         $templateProcessor = $this->initTemplateProcessor();
@@ -42,7 +47,10 @@ abstract class TemplatedDocumentCreator extends DocumentCreator
         return $path;
     }
 
-    /** Инициализация сервиса для работы с docx-шаблоном */
+    /**
+     * Инициализация сервиса для работы с docx-шаблоном
+     * @throws Exception
+     */
     protected function initTemplateProcessor(): TemplateProcessor
     {
         $programTemplate = $this->getFileWithSuffix($this->documentName(), self::TEMPLATE_SUFFIX);
@@ -66,10 +74,14 @@ abstract class TemplatedDocumentCreator extends DocumentCreator
         return $productService->productsByOffers($productQuery, $offersIds);
     }
 
+    /**
+     * @throws OfficeConverterException
+     * @throws Exception
+     */
     protected function convertToPdf(string $path): string
     {
         if (!$bin = config('libreoffice.bin')) {
-            throw new \Exception('libreoffice.bin is empty!');
+            throw new Exception('libreoffice.bin is empty!');
         }
 
         $converter = new OfficeConverter($path, null, $bin, false);

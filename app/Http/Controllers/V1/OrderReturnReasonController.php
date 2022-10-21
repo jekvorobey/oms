@@ -143,9 +143,6 @@ class OrderReturnReasonController extends Controller
         return OrderReturnReason::FILLABLE;
     }
 
-    /**
-     * @return array
-     */
     protected function inputValidators(): array
     {
         return [

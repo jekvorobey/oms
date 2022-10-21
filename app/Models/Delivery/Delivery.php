@@ -8,6 +8,7 @@ use App\Models\WithHistory;
 use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Services\ListsService\ListsService;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
@@ -223,7 +224,7 @@ use Greensight\Logistics\Dto\Lists\DeliveryService;
  * @property string $error_xml_id - текст последней ошибки при создании/обновлении заказа на доставку в службе доставки
  * @property string $status_xml_id - статус заказа на доставку в службе доставки
  * @property int $payment_status - статус оплаты
- * @property \Illuminate\Support\Carbon|null $payment_status_at - дата установки статуса оплаты
+ * @property Carbon|null $payment_status_at - дата установки статуса оплаты
  * @property int $is_problem - флаг, что доставка проблемная
  * @property Carbon|null $is_problem_at - дата установки флага проблемной доставки
  * @property int $is_canceled - флаг, что доставка отменена
@@ -259,8 +260,7 @@ use Greensight\Logistics\Dto\Lists\DeliveryService;
  */
 class Delivery extends AbstractModel
 {
-    use WithHistory;
-    use WithWeightAndSizes;
+    use WithHistory, WithWeightAndSizes, HasFactory;
 
     private const SIDES = ['width', 'height', 'length'];
 
@@ -303,12 +303,18 @@ class Delivery extends AbstractModel
     /** @var array */
     protected $casts = [
         'delivery_address' => 'array',
-        'delivery_at' => 'datetime',
-        'delivered_at' => 'datetime',
+        'delivery_at' => 'datetime:Y-m-d H:i:s',
+        'delivered_at' => 'datetime:Y-m-d H:i:s',
         'weight' => 'float',
         'width' => 'float',
         'height' => 'float',
         'length' => 'float',
+        'payment_status_at' => 'datetime:Y-m-d H:i:s',
+        'is_problem_at' => 'datetime:Y-m-d H:i:s',
+        'is_canceled_at' => 'datetime:Y-m-d H:i:s',
+        'pdd' => 'datetime:Y-m-d H:i:s',
+        'status_at' => 'datetime:Y-m-d H:i:s',
+        'status_xml_id_at' => 'datetime:Y-m-d H:i:s',
     ];
 
     /** @var array */
@@ -388,9 +394,6 @@ class Delivery extends AbstractModel
         }
     }
 
-    /**
-     * @param array $address
-     */
     public function formDeliveryAddressString(array $address): string
     {
         return (string) join(', ', array_filter([

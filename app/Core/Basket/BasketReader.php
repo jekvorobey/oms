@@ -9,6 +9,7 @@ use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Pim\Core\PimException;
 use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\OfferService\OfferService;
@@ -18,6 +19,9 @@ class BasketReader
 {
     public const PAGE_SIZE = 10;
 
+    /**
+     * @throws PimException
+     */
     public function list(RestQuery $restQuery): Collection
     {
         $query = Basket::query();
@@ -43,6 +47,9 @@ class BasketReader
         }
     }
 
+    /**
+     * @throws PimException
+     */
     public function count(RestQuery $restQuery): array
     {
         $pagination = $restQuery->getPage();
@@ -61,7 +68,7 @@ class BasketReader
     }
 
     /**
-     * @throws \Pim\Core\PimException
+     * @throws PimException
      */
     protected function addFilter(Builder $query, RestQuery $restQuery): void
     {
@@ -173,8 +180,8 @@ class BasketReader
         //фильтр по сумме корзины
         $totalPriceFilter = $restQuery->getFilter('price');
         if (is_array($totalPriceFilter) && count($totalPriceFilter) > 0) {
-            $query->whereExists(function ($subquery) use ($totalPriceFilter) {
-                $subquery
+            $query->whereExists(function ($subQuery) use ($totalPriceFilter) {
+                $subQuery
                     ->from(with(new BasketItem())->getTable())
                     ->selectRaw('SUM(price) AS basket_total_price')
                     ->whereRaw('basket_id = baskets.id')
@@ -182,7 +189,7 @@ class BasketReader
 
                 foreach ($totalPriceFilter as $totalPriceFilterItem) {
                     [$op, $value] = $totalPriceFilterItem;
-                    $subquery->having('basket_total_price', $op, $value);
+                    $subQuery->having('basket_total_price', $op, $value);
                 }
             });
 

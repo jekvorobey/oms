@@ -93,22 +93,15 @@ class AnalyticsService
     {
         $shipmentStatus = (int) $shipment->status;
 
-        switch (true) {
-            case $shipmentStatus >= ShipmentStatus::AWAITING_CONFIRMATION && $shipment->is_canceled:
-                return self::STATUS_CANCELED;
-            case $shipmentStatus === ShipmentStatus::SHIPPED:
-                return self::STATUS_SHIPPED;
-            case $shipmentStatus >= ShipmentStatus::ON_POINT_IN && $shipmentStatus <= ShipmentStatus::DELIVERING:
-                return self::STATUS_TRANSITION;
-            case $shipmentStatus === ShipmentStatus::DONE:
-                return self::STATUS_DONE;
-            case $shipmentStatus >= ShipmentStatus::CANCELLATION_EXPECTED:
-                return self::STATUS_RETURNED;
-            case $shipmentStatus >= ShipmentStatus::AWAITING_CONFIRMATION:
-                return self::STATUS_ACCEPTED;
-            default:
-                return null;
-        }
+        return match (true) {
+            $shipmentStatus >= ShipmentStatus::AWAITING_CONFIRMATION && $shipment->is_canceled => self::STATUS_CANCELED,
+            $shipmentStatus === ShipmentStatus::SHIPPED => self::STATUS_SHIPPED,
+            $shipmentStatus >= ShipmentStatus::ON_POINT_IN && $shipmentStatus <= ShipmentStatus::DELIVERING => self::STATUS_TRANSITION,
+            $shipmentStatus === ShipmentStatus::DONE => self::STATUS_DONE,
+            $shipmentStatus >= ShipmentStatus::CANCELLATION_EXPECTED => self::STATUS_RETURNED,
+            $shipmentStatus >= ShipmentStatus::AWAITING_CONFIRMATION => self::STATUS_ACCEPTED,
+            default => null,
+        };
     }
 
     private function fillShipmentProductData(&$data, Shipment $shipment): void
@@ -220,8 +213,7 @@ class AnalyticsService
     {
         $interval = new AnalyticsDateInterval($request->start, $request->end);
 
-        /** @var Builder|BelongsTo $query */
-        $shipmentQueryCallback = fn($query) => $query
+        $shipmentQueryCallback = fn(BelongsTo|Builder $query) => $query
             ->where('merchant_id', $request->merchantId)
             ->whereBetween('status_at', $interval->currentPeriod())
             ->where('status', ShipmentStatus::DONE)
@@ -313,8 +305,6 @@ class AnalyticsService
 
     private function shipmentQuery(array $period, int $merchantId): callable
     {
-        return fn($query) => $query
-            ->where('merchant_id', $merchantId)
-            ->whereBetween('created_at', $period);
+        return fn($query) => $query->where('merchant_id', $merchantId)->whereBetween('created_at', $period);
     }
 }

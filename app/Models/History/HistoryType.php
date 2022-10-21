@@ -44,7 +44,7 @@ class HistoryType
     /**
      * @return array|self[]
      */
-    public static function all()
+    public static function all(): array
     {
         return [
             new self(self::TYPE_CREATE, 'Создание сущности'),
@@ -56,9 +56,6 @@ class HistoryType
         ];
     }
 
-    /**
-     * @return array
-     */
     public static function validValues(): array
     {
         return [

@@ -25,6 +25,7 @@ class Controller extends BaseController
         if ($validator->fails()) {
             throw new BadRequestHttpException($validator->errors()->first());
         }
+
         return $data;
     }
 }

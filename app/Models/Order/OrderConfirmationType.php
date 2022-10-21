@@ -29,10 +29,7 @@ class OrderConfirmationType
         $this->name = $name;
     }
 
-    /**
-     * @return array
-     */
-    public static function all()
+    public static function all(): array
     {
         return [
             self::SMS => new self(self::SMS, 'Подтвердить заказ по SMS'),
@@ -43,9 +40,6 @@ class OrderConfirmationType
         ];
     }
 
-    /**
-     * @return array
-     */
     public static function validValues(): array
     {
         return array_keys(static::all());
