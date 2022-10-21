@@ -901,8 +901,10 @@ class OrdersController extends Controller
                         'bonuses' => $bonuses,
                         'merchant_id' => $shipment->merchant_id,
                         'is_canceled' => $shipment->is_canceled,
-                        'is_canceled_at' => $shipment->is_canceled_at,
-                        'status_at' => $shipment->status_at > $shipment->payment_status_at ? $shipment->status_at : $shipment->payment_status_at,
+                        'is_canceled_at' => $shipment->is_canceled_at?->format('Y-m-d H:i:s'),
+                        'status_at' => $shipment->status_at > $shipment->payment_status_at
+                            ? $shipment->status_at?->format('Y-m-d H:i:s')
+                            : $shipment->payment_status_at?->format('Y-m-d H:i:s'),
                     ];
                 }
 
@@ -915,9 +917,9 @@ class OrdersController extends Controller
                     'merchant_id' => $shipment->merchant_id,
                     'status' => $shipment->status,
                     'is_canceled' => $shipment->is_canceled,
-                    'is_canceled_at' => $shipment->is_canceled_at,
-                    'status_at' => $shipment->status_at,
-                    'payment_status_at' => $shipment->payment_status_at,
+                    'is_canceled_at' => $shipment->is_canceled_at?->format('Y-m-d H:i:s'),
+                    'status_at' => $shipment->status_at?->format('Y-m-d H:i:s'),
+                    'payment_status_at' => $shipment->payment_status_at?->format('Y-m-d H:i:s'),
                 ];
             }),
         ]);
