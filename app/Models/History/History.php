@@ -88,7 +88,7 @@ class History extends AbstractModel
 
         $modelData = $model->toArray();
         $event->data = $type !== HistoryType::TYPE_DELETE
-            ? array_intersect_key($modelData, $model->getDirty())   //костыль, т.к. getDirty не сериализует даты в v9
+            ? array_intersect_key($modelData, array_merge($model->getDirty(), ['status_at' => '']))   //костыль, т.к. getDirty не сериализует даты в v9
             : $modelData;
 
         $event->save();
