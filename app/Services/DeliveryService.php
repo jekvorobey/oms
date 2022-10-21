@@ -122,6 +122,7 @@ class DeliveryService
         $senderDto->house = $store->address['house'] ?? '';
         $senderDto->block = $store->address['block'] ?? '';
         $senderDto->flat = $store->address['flat'] ?? '';
+        $senderDto->comment = $store->address['comment'] ?? '';
         $senderDto->company_name = $merchant->legal_name;
         $senderDto->contact_name = $storeContact->name ?? '';
         $senderDto->email = $storeContact->email ?? '';

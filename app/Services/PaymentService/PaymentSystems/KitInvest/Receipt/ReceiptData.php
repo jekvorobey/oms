@@ -17,6 +17,7 @@ use MerchantManagement\Services\MerchantService\MerchantService;
 use MerchantManagement\Services\OperatorService\OperatorService;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\PublicEventService\PublicEventService;
+use YooKassa\Model\Receipt\AgentType;
 
 /**
  * Абстрактный класс для формирования запроса на создание чека
@@ -53,7 +54,7 @@ abstract class ReceiptData extends OrderData
         } else {
             $goodsAttribute = $this->getItemPaymentSubject($item);
         }
-        $agentType = $this->getItemAgentType($item);
+        $agentType = $this->getItemAgentType($item, $merchant);
         $vatCode = $this->getItemVatCode($offerInfo, $merchant);
         $merchantUser = $this->getMerchantUser($merchant);
 
@@ -104,12 +105,16 @@ abstract class ReceiptData extends OrderData
             ][$item->type] ?? ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_FULL_PAYMENT; //Полная оплата, в том числе с учетом аванса
     }
 
-    protected function getItemAgentType(BasketItem $item): ?int
+    protected function getItemAgentType(BasketItem $item, ?object $merchant): ?int
     {
+        if (!$merchant) {
+            return null;
+        }
+
         return [
-                Basket::TYPE_MASTER => ReceiptEnum::RECEIPT_AGENT_TYPE_AGENT,
-                Basket::TYPE_PRODUCT => ReceiptEnum::RECEIPT_AGENT_TYPE_COMMISSIONER,
-            ][$item->type] ?? null;
+            Basket::TYPE_MASTER => $merchant->agent_type ? 64 : null,
+            Basket::TYPE_PRODUCT => $merchant->commissionaire_type ? 32 : null,
+        ][$item->type] ?? null;
     }
 
     protected function getDeliveryReceiptItem(float $deliveryPrice, ?int $payAttribute = null): SubjectModel

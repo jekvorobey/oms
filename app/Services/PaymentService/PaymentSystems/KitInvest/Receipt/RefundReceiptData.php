@@ -11,7 +11,7 @@ use IBT\KitInvest\Models\PayModel;
 use IBT\KitInvest\Models\SubjectModel;
 use Pim\Core\PimException;
 
-class CreditReceiptData extends ReceiptData
+class RefundReceiptData extends ReceiptData
 {
     public ?int $payAttribute = ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_CREDIT;
     private ?float $amountPayment = null;
@@ -24,16 +24,19 @@ class CreditReceiptData extends ReceiptData
         return $this;
     }
 
-    public function getReceiptData(Payment $payment): array
+    public function getReceiptData(Payment $payment, ?bool $isMerchant = true): array
     {
         $order = $payment->order;
 
-        $items = $this->getReceiptItems($payment);
+        $items = $this->getReceiptItems($payment, $isMerchant);
 
         $pays = new PayModel();
         switch ($this->payAttribute) {
             case ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_FULL_PREPAYMENT:
                 $pays->setPrepaymentSum($this->amountPayment * 100);
+                break;
+            case ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_FULL_PAYMENT:
+                $pays->setPostpaySum($this->amountPayment * 100);
                 break;
             case ReceiptEnum::RECEIPT_SUBJECT_PAY_ATTRIBUTE_CREDIT:
                 $pays->setPostpaySum($this->amountPayment * 100);
@@ -49,7 +52,7 @@ class CreditReceiptData extends ReceiptData
         $receipt
             ->setCheckId($order->number . '/' . $payment->id)
             ->setTaxSystemType(ReceiptEnum::RECEIPT_TAX_SYSTEM_USN_COST) //4 - УСН доход-расход
-            ->setCalculationType(ReceiptEnum::RECEIPT_TYPE_INCOME) //1 Признак расчета - приход
+            ->setCalculationType(ReceiptEnum::RECEIPT_TYPE_RETURN_INCOME) //2 Признак расчета - возврат прихода
             ->setSum($this->amountPayment * 100) //Сумма чека в копейках
             ->setPay($pays)
             ->setSubjects($items);
@@ -67,7 +70,7 @@ class CreditReceiptData extends ReceiptData
      * Получение позиций заказа для чека
      * @throws PimException
      */
-    protected function getReceiptItems(Payment $payment): array
+    protected function getReceiptItems(Payment $payment, ?bool $isMerchant = true): array
     {
         $order = $payment->order;
 
@@ -84,6 +87,10 @@ class CreditReceiptData extends ReceiptData
 
         [$offers, $merchants] = $this->loadOffersAndMerchants($offerIds, $order);
 
+        if (!$isMerchant) {
+            $merchants = [];
+        }
+
         foreach ($order->basket->items as $item) {
             if ($item->isCanceled()) {
                 continue;
@@ -94,12 +101,7 @@ class CreditReceiptData extends ReceiptData
             $merchant = $merchants[$merchantId] ?? null;
 
             $quantity = $item->qty;
-            // Remove discount credit
-            //if ((float) $order->credit_discount > 0 && (float) $order->credit_discount < 100) {
-            //    $price = round($item->unit_price * (100 - (float) $order->credit_discount), 2);
-            //} else {
-                $price = $item->unit_price;
-            //}
+            $price = $item->unit_price;
 
             if ($quantity && $price > 0) {
                 $receiptItemInfo = $this->getReceiptItemInfo($item, $offer, $merchant, $quantity, $price, $this->payAttribute);
@@ -110,12 +112,7 @@ class CreditReceiptData extends ReceiptData
         }
 
         if ($order->delivery_price > 0 && !$deliveryForReturn) {
-            // Remove discount credit
-            //if ((float) $order->credit_discount > 0 && (float) $order->credit_discount < 100) {
-            //    $deliveryPrice = round($order->delivery_price * (100 - (float) $order->credit_discount), 2);
-            //} else {
-                $deliveryPrice = $order->delivery_price;
-            //}
+            $deliveryPrice = $order->delivery_price;
 
             if ($deliveryPrice) {
                 $receiptItems[] = $this->getDeliveryReceiptItem($deliveryPrice, $this->payAttribute);

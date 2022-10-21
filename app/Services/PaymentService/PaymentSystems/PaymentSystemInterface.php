@@ -79,6 +79,11 @@ interface PaymentSystemInterface
     public function createCreditPaymentReceipt(Payment $payment): ?array;
 
     /**
+     * Создание чека "Погашение кредита"
+     */
+    public function createReturnReceipt(Payment $payment, int $payAttribute, ?bool $isMerchant = true): ?array;
+
+    /**
      * Отправить чек в кассу для фискализации
      */
     public function sendReceipt(Payment $payment, array $receipt): ?array;

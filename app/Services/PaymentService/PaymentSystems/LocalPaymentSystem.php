@@ -182,6 +182,16 @@ class LocalPaymentSystem implements PaymentSystemInterface
      * @inheritDoc
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
+    public function createReturnReceipt(Payment $payment, int $payAttribute, ?bool $isMerchant = true): ?array
+    {
+        // TODO: Implement createReturnReceipt() method.
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
+     */
     public function sendReceipt(Payment $payment, array $receipt): ?array
     {
         // TODO: Implement createCreditPaymentReceipt() method.
