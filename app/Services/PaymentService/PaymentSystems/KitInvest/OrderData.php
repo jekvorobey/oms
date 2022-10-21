@@ -56,7 +56,7 @@ abstract class OrderData
     protected function getMerchants(array $merchantIds): Collection
     {
         $merchantQuery = $this->merchantService->newQuery()
-            ->addFields(MerchantDto::entity(), 'id', 'inn', 'legal_name')
+            ->addFields(MerchantDto::entity(), 'id', 'inn', 'legal_name', 'commissionaire_type', 'agent_type')
             ->include('vats')
             ->setFilter('id', $merchantIds);
 

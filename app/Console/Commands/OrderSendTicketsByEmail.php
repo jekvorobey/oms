@@ -2,9 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Basket\Basket;
 use App\Models\Order\Order;
-use App\Services\OrderService;
+use App\Services\TicketNotifierService;
 use Illuminate\Console\Command;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -32,11 +34,14 @@ class OrderSendTicketsByEmail extends Command
      * Execute the console command.
      * @throws Throwable
      */
-    public function handle(OrderService $orderService)
+    public function handle(): void
     {
         $orderId = $this->argument('orderId');
         /** @var Order $order */
         $order = Order::query()->where('id', $orderId)->with('basket.items')->firstOrFail();
-        $orderService->sendTicketsEmail($order);
+
+        if ($order->type == Basket::TYPE_MASTER) {
+            app(TicketNotifierService::class)->notify($order);
+        }
     }
 }

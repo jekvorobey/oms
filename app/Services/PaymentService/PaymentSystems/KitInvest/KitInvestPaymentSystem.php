@@ -5,6 +5,7 @@ namespace App\Services\PaymentService\PaymentSystems\KitInvest;
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
 use App\Services\PaymentService\PaymentSystems\KitInvest\Receipt\CreditReceiptData;
+use App\Services\PaymentService\PaymentSystems\KitInvest\Receipt\RefundReceiptData;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use IBT\KitInvest\Enum\ReceiptEnum;
 use IBT\KitInvest\KitInvest;
@@ -83,6 +84,24 @@ class KitInvestPaymentSystem implements PaymentSystemInterface
             $this->logger->info('Start create credit payment receipt', $request);
         } catch (Throwable $exception) {
             $this->logger->error('Error creating credit payment receipt', ['local_payment_id' => $payment->id, 'error' => $exception->getMessage()]);
+            report($exception);
+        }
+
+        return $request ?? null;
+    }
+
+    public function createReturnReceipt(Payment $payment, int $payAttribute, ?bool $isMerchant = true): ?array
+    {
+        $receiptData = new RefundReceiptData();
+        $receiptData
+            ->setPayAttribute($payAttribute)
+            ->setIsFullPayment(true);
+
+        try {
+            $request = $receiptData->getReceiptData($payment, $isMerchant);
+            $this->logger->info('Start create return payment receipt', $request);
+        } catch (Throwable $exception) {
+            $this->logger->error('Error creating return payment receipt', ['local_payment_id' => $payment->id, 'error' => $exception->getMessage()]);
             report($exception);
         }
 
@@ -175,16 +194,17 @@ class KitInvestPaymentSystem implements PaymentSystemInterface
      * @inheritDoc
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
-    public function cancel(string $paymentId): array
+    public function createRefundAllReceipt(Payment $payment): void
     {
-        return [];
+        // TODO: Implement createIncomeReceipt() method.
     }
 
     /**
      * @inheritDoc
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
-    public function createRefundAllReceipt(Payment $payment): void
+    public function cancel(string $paymentId): array
     {
+        return [];
     }
 }
