@@ -530,7 +530,7 @@ class OrderService
         //     }
         // }
 
-         $ticketEmailDto = new TicketEmailDto();
+        // $ticketEmailDto = new TicketEmailDto();
         // $customerInfoDto = new CustomerInfoDto();
         // $customerInfoDto->setName($order->receiver_name);
         // $customerInfoDto->setPhone($order->receiver_phone);
@@ -545,7 +545,7 @@ class OrderService
         //     $ticketEmailDto->addFileId($documentDto->file_id);
         // }
 
-         $mailService = resolve(MailService::class);
-         $mailService->send($ticketEmailDto);
+        // $mailService = resolve(MailService::class);
+        // $mailService->send($ticketEmailDto);
     }
 }

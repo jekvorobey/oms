@@ -5,15 +5,16 @@ namespace App\Services\DocumentService;
 use App\Models\Order\Order;
 use App\Services\OrderService;
 use Exception;
-use PDF;
+use Barryvdh\Snappy\Facades\SnappyPdf as PDF;
 use Pim\Core\PimException;
+use RuntimeException;
 
 class OrderTicketsCreator extends DocumentCreator
 {
     protected OrderService $orderService;
 
     protected Order $order;
-    protected ?int $basketItemId;
+    protected ?int $basketItemId = null;
 
     public function __construct(OrderService $orderService)
     {
@@ -46,13 +47,13 @@ class OrderTicketsCreator extends DocumentCreator
     protected function createDocument(): string
     {
         if (!$this->order->isPaid()) {
-            throw new Exception('Order is not paid');
+            throw new RuntimeException('Order is not paid');
         }
 
         $orderInfoDto = $this->orderService->getPublicEventsOrderInfo($this->order, true, $this->basketItemId);
 
         if (!$orderInfoDto) {
-            throw new Exception('Order is not PublicEventOrder');
+            throw new RuntimeException('Order is not PublicEventOrder');
         }
 
         $path = $this->generateDocumentPath();
@@ -60,6 +61,7 @@ class OrderTicketsCreator extends DocumentCreator
         $pdf = PDF::loadView('pdf::ticket', [
             'order' => $orderInfoDto,
         ]);
+        $pdf->setOption('enable-local-file-access', true);
 
         $pdf->save($path, true);
 
