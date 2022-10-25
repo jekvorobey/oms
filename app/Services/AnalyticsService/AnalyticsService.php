@@ -42,10 +42,10 @@ class AnalyticsService
 
         /** @var Shipment[]|EloquentCollection $shipments */
         $shipments = Shipment::with([
-            'basketItems' => fn(BelongsToMany $relation) => $relation->selectRaw('price*qty as sum, qty')
+            'basketItems' => fn(BelongsToMany $relation) => $relation->selectRaw('price as sum, qty')
                 ->where('is_returned', false),
         ])
-            ->select(['id', 'status', 'created_at', 'is_canceled'])
+            ->select(['id', 'status', 'created_at', 'is_canceled', 'number'])
             ->where('merchant_id', $request->merchantId)
             ->whereBetween('created_at', $interval->fullPeriod())
             ->where('status', '>=', ShipmentStatus::AWAITING_CONFIRMATION)
@@ -73,10 +73,11 @@ class AnalyticsService
             'countProducts' => 0,
         ];
 
-        $result = array_map(fn() => $defaultAssocArray, array_flip(self::SHIPMENT_STATUS_GROUPS));
+        $result = array_map(static fn() => $defaultAssocArray, array_flip(self::SHIPMENT_STATUS_GROUPS));
 
         foreach ($shipments as $shipment) {
             /** @var Shipment $shipment */
+
             if ($statusGroup = $this->getShipmentStatusGroup($shipment)) {
                 $this->fillShipmentProductData($result[$statusGroup], $shipment);
 
@@ -91,17 +92,24 @@ class AnalyticsService
 
     private function getShipmentStatusGroup(Shipment $shipment): ?string
     {
-        $shipmentStatus = (int) $shipment->status;
+        $shipmentStatus = $shipment->status;
 
-        return match (true) {
-            $shipmentStatus >= ShipmentStatus::AWAITING_CONFIRMATION && $shipment->is_canceled => self::STATUS_CANCELED,
-            $shipmentStatus === ShipmentStatus::SHIPPED => self::STATUS_SHIPPED,
-            $shipmentStatus >= ShipmentStatus::ON_POINT_IN && $shipmentStatus <= ShipmentStatus::DELIVERING => self::STATUS_TRANSITION,
-            $shipmentStatus === ShipmentStatus::DONE => self::STATUS_DONE,
-            $shipmentStatus >= ShipmentStatus::CANCELLATION_EXPECTED => self::STATUS_RETURNED,
-            $shipmentStatus >= ShipmentStatus::AWAITING_CONFIRMATION => self::STATUS_ACCEPTED,
-            default => null,
-        };
+        switch (true) {
+            case $shipmentStatus >= ShipmentStatus::AWAITING_CONFIRMATION && $shipment->is_canceled:
+                return self::STATUS_CANCELED;
+            case $shipmentStatus === ShipmentStatus::SHIPPED:
+                return self::STATUS_SHIPPED;
+            case $shipmentStatus >= ShipmentStatus::ON_POINT_IN && $shipmentStatus <= ShipmentStatus::DELIVERING:
+                return self::STATUS_TRANSITION;
+            case $shipmentStatus === ShipmentStatus::DONE:
+                return self::STATUS_DONE;
+            case $shipmentStatus >= ShipmentStatus::CANCELLATION_EXPECTED:
+                return self::STATUS_RETURNED;
+            case $shipmentStatus >= ShipmentStatus::AWAITING_CONFIRMATION:
+                return self::STATUS_ACCEPTED;
+            default:
+                return null;
+        }
     }
 
     private function fillShipmentProductData(&$data, Shipment $shipment): void
@@ -118,7 +126,7 @@ class AnalyticsService
 
         /** @var Collection|EloquentCollection[] $shipments */
         $shipments = Shipment::with([
-            'basketItems' => fn($query) => $query->selectRaw('price*qty as sum')->where('is_returned', false),
+            'basketItems' => fn($query) => $query->selectRaw('price as sum')->where('is_returned', false),
         ])
             ->whereHas('basketItems', fn($query) => $query->where('is_returned', false))
             ->where('merchant_id', $request->merchantId)
