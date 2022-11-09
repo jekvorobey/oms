@@ -110,12 +110,12 @@ class ShipmentService
             return null;
         }
 
-        if ($shipment->barcode_file_id) {
-            return new DeliveryOrderBarcodesDto([
-                'success' => true,
-                'file_id' => $shipment->barcode_file_id,
-            ]);
-        }
+//        if ($shipment->barcode_file_id) {
+//            return new DeliveryOrderBarcodesDto([
+//                'success' => true,
+//                'file_id' => $shipment->barcode_file_id,
+//            ]);
+//        }
 
         try {
             /** @var DeliveryOrderService $deliveryOrderService */
