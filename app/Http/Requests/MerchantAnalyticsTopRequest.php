@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 /**
  * @property int $limit
  */
-class AnalyticsTopRequest extends AnalyticsRequest
+class MerchantAnalyticsTopRequest extends MerchantAnalyticsRequest
 {
     public function rules(): array
     {

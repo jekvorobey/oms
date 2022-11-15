@@ -2,8 +2,8 @@
 
 namespace App\Services\AnalyticsService;
 
-use App\Http\Requests\AnalyticsRequest;
-use App\Http\Requests\AnalyticsTopRequest;
+use App\Http\Requests\MerchantAnalyticsRequest;
+use App\Http\Requests\MerchantAnalyticsTopRequest;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
 
-class AnalyticsService
+class MerchantAnalyticsService
 {
     public const SHIPMENT_STATUS_GROUPS = [
         self::STATUS_ACCEPTED,
@@ -36,7 +36,7 @@ class AnalyticsService
     public const STATUS_RETURNED = 'returned';
 
     /** @throws Exception */
-    public function getCountedByStatusProductItemsForPeriod(AnalyticsRequest $request): ?array
+    public function getCountedByStatusProductItemsForPeriod(MerchantAnalyticsRequest $request): ?array
     {
         $interval = new AnalyticsDateInterval($request->start, $request->end);
 
@@ -120,7 +120,7 @@ class AnalyticsService
     }
 
     /** @throws Exception */
-    public function getMerchantSalesAnalytics(AnalyticsRequest $request): array
+    public function getMerchantSalesAnalytics(MerchantAnalyticsRequest $request): array
     {
         $interval = new AnalyticsDateInterval($request->start, $request->end);
 
@@ -174,7 +174,7 @@ class AnalyticsService
     }
 
     /** @throws Exception */
-    public function getMerchantBestsellers(AnalyticsTopRequest $request): Collection
+    public function getMerchantBestsellers(MerchantAnalyticsTopRequest $request): Collection
     {
         $interval = new AnalyticsDateInterval($request->start, $request->end);
         $topProductsQuery = BasketItem::query()->select('id', 'offer_id', 'name', 'price', 'qty');
@@ -217,7 +217,7 @@ class AnalyticsService
     }
 
     /** @throws Exception */
-    public function getProductsTurnover(AnalyticsTopRequest $request, bool $descending = false): Collection
+    public function getProductsTurnover(MerchantAnalyticsTopRequest $request, bool $descending = false): Collection
     {
         $interval = new AnalyticsDateInterval($request->start, $request->end);
 
@@ -261,7 +261,7 @@ class AnalyticsService
         return $result->sortBy('days', SORT_REGULAR, $descending)->take($request->limit)->values();
     }
 
-    private function getStockHistory(AnalyticsTopRequest $request): Collection
+    private function getStockHistory(MerchantAnalyticsTopRequest $request): Collection
     {
         /** @var StockService $stockService */
         $stockService = resolve(StockService::class);
