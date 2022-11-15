@@ -1,6 +1,7 @@
 <?php
 
-use App\Http\Controllers\V1\AnalyticsController;
+use App\Http\Controllers\V1\Analytics\DashboardsAnalyticsController;
+use App\Http\Controllers\V1\Analytics\MerchantAnalyticsController;
 use App\Http\Controllers\V1\Basket\CustomerBasketController;
 use App\Http\Controllers\V1\Basket\GuestBasketController;
 use App\Http\Controllers\V1\CheckoutController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\V1\Delivery\ShipmentsController;
 use App\Http\Controllers\V1\DocumentTemplatesController;
 use App\Http\Controllers\V1\HistoryController;
 use App\Http\Controllers\V1\OrderDiscountController;
+use App\Http\Controllers\V1\OrderDocumentsController;
 use App\Http\Controllers\V1\OrderReturnReasonController;
 use App\Http\Controllers\V1\OrdersController;
 use App\Http\Controllers\V1\OrdersExportController;
@@ -20,7 +22,6 @@ use App\Http\Controllers\V1\OrdersPromoCodesController;
 use App\Http\Controllers\V1\PaymentMethodsController;
 use App\Http\Controllers\V1\PaymentsController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\V1\OrderDocumentsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -197,12 +198,23 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('merchant-analytics')->group(function () {
-        Route::get('products-shipments', [AnalyticsController::class, 'productsShipments'])->name('analytics.productsShipments');
-        Route::get('sales', [AnalyticsController::class, 'sales'])->name('analytics.sales');
+        Route::get('products-shipments', [MerchantAnalyticsController::class, 'productsShipments'])->name('analytics.productsShipments');
+        Route::get('sales', [MerchantAnalyticsController::class, 'sales'])->name('analytics.sales');
         Route::prefix('top')->group(function () {
-            Route::get('bestsellers', [AnalyticsController::class, 'bestsellers'])->name('analytics.bestsellers');
-            Route::get('fastest', [AnalyticsController::class, 'fastest'])->name('analytics.fastest');
-            Route::get('outsiders', [AnalyticsController::class, 'outsiders'])->name('analytics.outsiders');
+            Route::get('bestsellers', [MerchantAnalyticsController::class, 'bestsellers'])->name('analytics.bestsellers');
+            Route::get('fastest', [MerchantAnalyticsController::class, 'fastest'])->name('analytics.fastest');
+            Route::get('outsiders', [MerchantAnalyticsController::class, 'outsiders'])->name('analytics.outsiders');
+        });
+    });
+
+    Route::prefix('analytics')->group(function () {
+        Route::prefix('dashboard')->group(function () {
+            Route::prefix('sales')->group(function () {
+                Route::get('day-by-hour', [DashboardsAnalyticsController::class, 'salesDayByHour'])->name('dashboardsAnalytics.salesDayByHour');
+                Route::get('month-by-day', [DashboardsAnalyticsController::class, 'salesMonthByDay'])->name('dashboardsAnalytics.salesMonthByDay');
+                Route::get('year-by-month', [DashboardsAnalyticsController::class, 'salesYearByMonth'])->name('dashboardsAnalytics.salesYearByMonth');
+                Route::get('all-period-by-day', [DashboardsAnalyticsController::class, 'salesAllPeriodByDay'])->name('dashboardsAnalytics.salesAllPeriodByDay');
+            });
         });
     });
 

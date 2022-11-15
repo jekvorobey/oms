@@ -9,7 +9,7 @@ use Illuminate\Foundation\Http\FormRequest;
  * @property string $start
  * @property string $end
  */
-class AnalyticsRequest extends FormRequest
+class MerchantAnalyticsRequest extends FormRequest
 {
     public function rules(): array
     {
