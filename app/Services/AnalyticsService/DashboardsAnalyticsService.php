@@ -6,28 +6,54 @@ use App\Http\Requests\DashboardsAnalyticsRequest;
 use App\Models\Basket\Basket;
 use App\Models\Order\Order;
 use App\Models\Payment\PaymentStatus;
+use Illuminate\Support\Facades\DB;
 use DateTime;
 use Exception;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Support\Facades\DB;
 
 class DashboardsAnalyticsService
 {
+    private function getSQLSelectColumns(): array
+    {
+        return [
+            DB::raw('COUNT(DISTINCT orders.id) as countOrdersFull'),
+            DB::raw('SUM(orders.price) as amountOrdersFull'),
+            DB::raw('SUM(basketItems.qty) as countProductsFull'),
+            DB::raw('SUM(orders.delivery_price) as amountDeliveryFull'),
+            DB::raw('COUNT(DISTINCT (CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.id END)) AS countOrders'),
+            DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.price END) AS amountOrders'),
+            DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE basketItems.qty END) AS countProducts'),
+            DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.delivery_price END) AS amountDelivery'),
+        ];
+    }
+
+    private function getSQLBasketRaw(): string
+    {
+        return "(
+            SELECT
+                basket_items.basket_id AS basketId,
+                SUM(basket_items.price) AS price,
+                SUM(basket_items.qty) AS qty
+            FROM basket_items
+            GROUP BY basketId) basketItems";
+    }
+
+
+    /**
+     * @throws Exception
+     */
     public function salesAllPeriodByDay(): array
     {
-        /** @var Order[]|EloquentCollection $shipments */
+        $columns = $this->getSQLSelectColumns();
+        $columns = array_merge([
+            'orders.type as type',
+            DB::raw('DATE_FORMAT(orders.created_at, \'%Y-%m-%d\') as date')
+        ], $columns);
+
         $orders = Order::query()
-            ->select([
-                'orders.type as type',
-                DB::raw('DATE_FORMAT(orders.created_at, \'%Y-%m-%d\') as date'),
-                DB::raw('COUNT(DISTINCT orders.id) as countOrdersFull'),
-                DB::raw('SUM(basket_items.price * basket_items.qty) as amountOrdersFull'),
-                DB::raw('SUM(basket_items.qty) as countProductsFull'),
-                DB::raw('COUNT(DISTINCT (CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.id END)) AS countOrders'),
-                DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE (basket_items.price * basket_items.qty) END) AS amountOrders'),
-                DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE basket_items.qty END) AS countProducts'),
-            ])
-            ->leftJoin('basket_items', 'basket_items.basket_id', '=', 'orders.basket_id')
+            ->select($columns)
+            ->join(DB::raw($this->getSQLBasketRaw()), function($join) {
+                $join->on('orders.basket_id', '=', 'basketItems.basketId');
+            })
             ->groupBy('orders.type', 'date')
             ->orderBy('date')
             ->get();
@@ -36,11 +62,10 @@ class DashboardsAnalyticsService
         foreach ($orders->toArray() as $item) {
             $item['nameType'] = $this->getOrderTypeName((int) $item['type']);
             $this->recalculation($item);
-
             $results[] = $item;
         }
 
-        return $results;
+        return array_values($results);
     }
 
     /**
@@ -48,18 +73,16 @@ class DashboardsAnalyticsService
      */
     public function salesDayByHour(DashboardsAnalyticsRequest $request): array
     {
-        /** @var Order[]|EloquentCollection $shipments */
+        $columns = $this->getSQLSelectColumns();
+        $columns = array_merge([
+            DB::raw('DATE_FORMAT(orders.created_at, \'%H\') as hour'),
+        ], $columns);
+
         $orders = Order::query()
-            ->select([
-                DB::raw('DATE_FORMAT(orders.created_at, \'%H\') as hour'),
-                DB::raw('COUNT(DISTINCT orders.id) as countOrdersFull'),
-                DB::raw('SUM(basket_items.price * basket_items.qty) as amountOrdersFull'),
-                DB::raw('SUM(basket_items.qty) as countProductsFull'),
-                DB::raw('COUNT(DISTINCT (CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.id END)) AS countOrders'),
-                DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE (basket_items.price * basket_items.qty) END) AS amountOrders'),
-                DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE basket_items.qty END) AS countProducts'),
-            ])
-            ->leftJoin('basket_items', 'basket_items.basket_id', '=', 'orders.basket_id')
+            ->select($columns)
+            ->join(DB::raw($this->getSQLBasketRaw()), function($join) {
+                $join->on('orders.basket_id', '=', 'basketItems.basketId');
+            })
             ->where('orders.created_at', '>=', $request->start)
             ->where('orders.created_at', '<=', $request->end)
             ->groupBy('hour')
@@ -95,18 +118,16 @@ class DashboardsAnalyticsService
      */
     public function salesMonthByDay(DashboardsAnalyticsRequest $request): array
     {
-        /** @var Order[]|EloquentCollection $shipments */
+        $columns = $this->getSQLSelectColumns();
+        $columns = array_merge([
+            DB::raw('DATE_FORMAT(orders.created_at, \'%Y-%m-%d\') as date'),
+        ], $columns);
+
         $orders = Order::query()
-            ->select([
-                DB::raw('DATE_FORMAT(orders.created_at, \'%Y-%m-%d\') as date'),
-                DB::raw('COUNT(DISTINCT orders.id) as countOrdersFull'),
-                DB::raw('SUM(basket_items.price * basket_items.qty) as amountOrdersFull'),
-                DB::raw('SUM(basket_items.qty) as countProductsFull'),
-                DB::raw('COUNT(DISTINCT (CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.id END)) AS countOrders'),
-                DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE (basket_items.price * basket_items.qty) END) AS amountOrders'),
-                DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE basket_items.qty END) AS countProducts'),
-            ])
-            ->leftJoin('basket_items', 'basket_items.basket_id', '=', 'orders.basket_id')
+            ->select($columns)
+            ->join(DB::raw($this->getSQLBasketRaw()), function($join) {
+                $join->on('orders.basket_id', '=', 'basketItems.basketId');
+            })
             ->where('orders.created_at', '>=', $request->start)
             ->where('orders.created_at', '<=', $request->end)
             ->groupBy('date')
@@ -132,7 +153,7 @@ class DashboardsAnalyticsService
 
         $this->aggregate($results, true);
 
-        if ((new DateTime($request->start))->format('Y-m-d') === (new DateTime())->format('Y-m-d')) {
+        if ((new DateTime($request->start))->format('Y-m-01') === (new DateTime())->format('Y-m-01')) {
             $this->clearAggregateByKey($results, (new DateTime())->format('Y-m-d'));
         }
 
@@ -144,18 +165,16 @@ class DashboardsAnalyticsService
      */
     public function salesYearByMonth(DashboardsAnalyticsRequest $request): array
     {
-        /** @var Order[]|EloquentCollection $shipments */
+        $columns = $this->getSQLSelectColumns();
+        $columns = array_merge([
+            DB::raw('DATE_FORMAT(orders.created_at, \'%Y-%m-01\') as month'),
+        ], $columns);
+
         $orders = Order::query()
-            ->select([
-                DB::raw('DATE_FORMAT(orders.created_at, \'%Y-%m-01\') as month'),
-                DB::raw('COUNT(DISTINCT orders.id) as countOrdersFull'),
-                DB::raw('SUM(basket_items.price * basket_items.qty) as amountOrdersFull'),
-                DB::raw('SUM(basket_items.qty) as countProductsFull'),
-                DB::raw('COUNT(DISTINCT (CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.id END)) AS countOrders'),
-                DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE (basket_items.price * basket_items.qty) END) AS amountOrders'),
-                DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE basket_items.qty END) AS countProducts'),
-            ])
-            ->leftJoin('basket_items', 'basket_items.basket_id', '=', 'orders.basket_id')
+            ->select($columns)
+            ->join(DB::raw($this->getSQLBasketRaw()), function($join) {
+                $join->on('orders.basket_id', '=', 'basketItems.basketId');
+            })
             ->where('orders.created_at', '>=', $request->start)
             ->where('orders.created_at', '<=', $request->end)
             ->groupBy('month')
@@ -205,14 +224,17 @@ class DashboardsAnalyticsService
     private function recalculation(array &$item): void
     {
         $item['amountOrdersFull'] = isset($item['amountOrdersFull']) ? (float) $item['amountOrdersFull'] : 0;
+        $item['amountDeliveryFull'] = isset($item['amountDeliveryFull']) ? (float) $item['amountDeliveryFull'] : 0;
         $item['countOrdersFull'] = isset($item['countOrdersFull']) ? (int) $item['countOrdersFull'] : 0;
         $item['countProductsFull'] = isset($item['countProductsFull']) ? (int) $item['countProductsFull'] : 0;
 
         $item['amountOrders'] = isset($item['amountOrders']) ? (float) $item['amountOrders'] : 0;
+        $item['amountDelivery'] = isset($item['amountDelivery']) ? (float) $item['amountDelivery'] : 0;
         $item['countOrders'] = isset($item['countOrders']) ? (int) $item['countOrders'] : 0;
         $item['countProducts'] = isset($item['countProducts']) ? (int) $item['countProducts'] : 0;
 
         $item['amountOrdersCancel'] = ($item['amountOrdersFull'] - $item['amountOrders']);
+        $item['amountDeliveryCancel'] = ($item['amountDeliveryFull'] - $item['amountDelivery']);
         $item['countOrdersCancel'] = ($item['countOrdersFull'] - $item['countOrders']);
         $item['countProductsCancel'] = ($item['countProductsFull'] - $item['countProducts']);
     }
