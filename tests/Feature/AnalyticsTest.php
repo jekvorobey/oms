@@ -12,7 +12,7 @@ use App\Models\Order\Order;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentStatus;
 use App\Services\AnalyticsService\AnalyticsDateInterval;
-use App\Services\AnalyticsService\AnalyticsService;
+use App\Services\AnalyticsService\MerchantAnalyticsService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Faker\Factory;
@@ -127,12 +127,12 @@ class AnalyticsTest extends TestCase
 
         $expectedData = [
             'shipments' => [
-                AnalyticsService::STATUS_ACCEPTED => $shipmentTemplateData,
-                AnalyticsService::STATUS_SHIPPED => $shipmentTemplateData,
-                AnalyticsService::STATUS_TRANSITION => $shipmentTemplateData,
-                AnalyticsService::STATUS_DONE => $shipmentTemplateData,
-                AnalyticsService::STATUS_CANCELED => $shipmentTemplateData,
-                AnalyticsService::STATUS_RETURNED => $shipmentTemplateData,
+                MerchantAnalyticsService::STATUS_ACCEPTED => $shipmentTemplateData,
+                MerchantAnalyticsService::STATUS_SHIPPED => $shipmentTemplateData,
+                MerchantAnalyticsService::STATUS_TRANSITION => $shipmentTemplateData,
+                MerchantAnalyticsService::STATUS_DONE => $shipmentTemplateData,
+                MerchantAnalyticsService::STATUS_CANCELED => $shipmentTemplateData,
+                MerchantAnalyticsService::STATUS_RETURNED => $shipmentTemplateData,
             ],
             'sales' => self::PERIODS,
             'bestsellers' => self::PERIODS,
@@ -156,12 +156,12 @@ class AnalyticsTest extends TestCase
             }
 
             $statuses = [
-                AnalyticsService::STATUS_CANCELED => $faker->numberBetween(ShipmentStatus::AWAITING_CONFIRMATION, ShipmentStatus::DELIVERING),
-                AnalyticsService::STATUS_SHIPPED => ShipmentStatus::SHIPPED,
-                AnalyticsService::STATUS_TRANSITION => $faker->numberBetween(ShipmentStatus::ON_POINT_IN, ShipmentStatus::DELIVERING),
-                AnalyticsService::STATUS_DONE => ShipmentStatus::DONE,
-                AnalyticsService::STATUS_RETURNED => ShipmentStatus::CANCELLATION_EXPECTED,
-                AnalyticsService::STATUS_ACCEPTED => $faker->numberBetween(ShipmentStatus::AWAITING_CONFIRMATION, ShipmentStatus::ASSEMBLED),
+                MerchantAnalyticsService::STATUS_CANCELED => $faker->numberBetween(ShipmentStatus::AWAITING_CONFIRMATION, ShipmentStatus::DELIVERING),
+                MerchantAnalyticsService::STATUS_SHIPPED => ShipmentStatus::SHIPPED,
+                MerchantAnalyticsService::STATUS_TRANSITION => $faker->numberBetween(ShipmentStatus::ON_POINT_IN, ShipmentStatus::DELIVERING),
+                MerchantAnalyticsService::STATUS_DONE => ShipmentStatus::DONE,
+                MerchantAnalyticsService::STATUS_RETURNED => ShipmentStatus::CANCELLATION_EXPECTED,
+                MerchantAnalyticsService::STATUS_ACCEPTED => $faker->numberBetween(ShipmentStatus::AWAITING_CONFIRMATION, ShipmentStatus::ASSEMBLED),
             ];
             $sIdx = array_rand($statuses);
 
@@ -201,12 +201,12 @@ class AnalyticsTest extends TestCase
                 $expectedData['shipments'][$sIdx]['countProducts'] += $basketItemsQty;
             }
             $expectedData['shipments'][$sIdx][$sumIdx] += $basketItemsSum;
-            if ($sIdx !== AnalyticsService::STATUS_ACCEPTED) {
+            if ($sIdx !== MerchantAnalyticsService::STATUS_ACCEPTED) {
                 if ($isCurrentPeriod) {
-                    $expectedData['shipments'][AnalyticsService::STATUS_ACCEPTED]['countShipments']++;
-                    $expectedData['shipments'][AnalyticsService::STATUS_ACCEPTED]['countProducts'] += $basketItemsQty;
+                    $expectedData['shipments'][MerchantAnalyticsService::STATUS_ACCEPTED]['countShipments']++;
+                    $expectedData['shipments'][MerchantAnalyticsService::STATUS_ACCEPTED]['countProducts'] += $basketItemsQty;
                 }
-                $expectedData['shipments'][AnalyticsService::STATUS_ACCEPTED][$sumIdx] += $basketItemsSum;
+                $expectedData['shipments'][MerchantAnalyticsService::STATUS_ACCEPTED][$sumIdx] += $basketItemsSum;
             }
             $intervalNumber = $shipmentAt->{AnalyticsDateInterval::TYPES[$intervalType]['groupBy']};
             if ($statuses[$sIdx] === ShipmentStatus::DONE) {
@@ -261,7 +261,7 @@ class AnalyticsTest extends TestCase
                 'status' => $statuses[$sIdx],
                 'status_at' => $shipmentAt,
                 'payment_status' => PaymentStatus::PAID,
-                'is_canceled' => $sIdx === AnalyticsService::STATUS_CANCELED,
+                'is_canceled' => $sIdx === MerchantAnalyticsService::STATUS_CANCELED,
             ]);
 
             foreach ($basketItems as $basketItem) {

@@ -1,15 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\V1;
+namespace App\Http\Controllers\V1\Analytics;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\AnalyticsRequest;
-use App\Http\Requests\AnalyticsTopRequest;
-use App\Services\AnalyticsService\AnalyticsService;
+use App\Http\Requests\MerchantAnalyticsRequest;
+use App\Http\Requests\MerchantAnalyticsTopRequest;
+use App\Services\AnalyticsService\MerchantAnalyticsService;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use function response;
 
-class AnalyticsController extends Controller
+class MerchantAnalyticsController extends Controller
 {
     /**
      * @OA\Get(
@@ -25,7 +26,7 @@ class AnalyticsController extends Controller
      * Получить количества отправлений, товаров и суммы по товарам мерчанта за период, сгруппированные по статусу
      * @throws Exception
      */
-    public function productsShipments(AnalyticsRequest $request, AnalyticsService $service): JsonResponse
+    public function productsShipments(MerchantAnalyticsRequest $request, MerchantAnalyticsService $service): JsonResponse
     {
         return response()->json(
             $service->getCountedByStatusProductItemsForPeriod($request)
@@ -46,7 +47,7 @@ class AnalyticsController extends Controller
      * Получить продажи мерчанта в конкретный период интервально.
      * @throws Exception
      */
-    public function sales(AnalyticsRequest $request, AnalyticsService $service): JsonResponse
+    public function sales(MerchantAnalyticsRequest $request, MerchantAnalyticsService $service): JsonResponse
     {
         return response()->json(
             $service->getMerchantSalesAnalytics($request)
@@ -67,7 +68,7 @@ class AnalyticsController extends Controller
      * Получить список бестселлеров мерчанта.
      * @throws Exception
      */
-    public function bestsellers(AnalyticsTopRequest $request, AnalyticsService $service): JsonResponse
+    public function bestsellers(MerchantAnalyticsTopRequest $request, MerchantAnalyticsService $service): JsonResponse
     {
         return response()->json(
             $service->getMerchantBestsellers($request)
@@ -88,7 +89,7 @@ class AnalyticsController extends Controller
      * Получить топ продуктов мерчанта по скорости продаж.
      * @throws Exception
      */
-    public function fastest(AnalyticsTopRequest $request, AnalyticsService $service): JsonResponse
+    public function fastest(MerchantAnalyticsTopRequest $request, MerchantAnalyticsService $service): JsonResponse
     {
         return response()->json(
             $service->getProductsTurnover($request)
@@ -109,7 +110,7 @@ class AnalyticsController extends Controller
      * Получить топ продуктов-аутсайдеров мерчанта.
      * @throws Exception
      */
-    public function outsiders(AnalyticsTopRequest $request, AnalyticsService $service): JsonResponse
+    public function outsiders(MerchantAnalyticsTopRequest $request, MerchantAnalyticsService $service): JsonResponse
     {
         return response()->json(
             $service->getProductsTurnover($request, true)
