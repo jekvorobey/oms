@@ -48,9 +48,10 @@ abstract class ReceiptData extends OrderData
         $paymentSubject = $this->getItemPaymentSubject($item);
         $agentType = $this->getItemAgentType($item, $merchant);
         $vatCode = $this->getItemVatCode($offerInfo, $merchant);
+        $productName = $this->getShortName($item->name);
 
         $result = [
-            'description' => $item->name,
+            'description' => $productName,
             'quantity' => $quantity,
             'amount' => [
                 'value' => $item->unit_price,
