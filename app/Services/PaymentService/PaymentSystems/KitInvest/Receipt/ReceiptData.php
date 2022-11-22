@@ -57,9 +57,10 @@ abstract class ReceiptData extends OrderData
         $agentType = $this->getItemAgentType($item, $merchant);
         $vatCode = $this->getItemVatCode($offerInfo, $merchant);
         $merchantUser = $this->getMerchantUser($merchant);
+        $productName = $this->getShortName($item->name);
 
         $result = [
-            'subjectName' => $item->name,
+            'subjectName' => $productName,
             'quantity' => $quantity,
             'price' => $price * 100,
             'tax' => $vatCode,
@@ -70,7 +71,7 @@ abstract class ReceiptData extends OrderData
         if (isset($merchant) && $agentType) {
             $result['supplierINN'] = $merchant->inn;
             $result['supplierInfo'] = [
-                'name' => $merchant->legal_name,
+                //'name' => $merchant->legal_name,
                 'phoneNumbers' => [
                     ($merchantUser && $merchantUser->phone) ? $merchantUser->phone : $merchant->inn,
                 ],
