@@ -20,6 +20,10 @@ use YooKassa\Request\Payments\Payment\CreateCaptureRequestBuilder;
 
 class PaymentData extends OrderData
 {
+    //Холдирование: false вкл., true - выкл.
+    public const DEFAULT_PAYMENT_CAPTURE = true;
+    public const DEFAULT_PAYMENT_B2B_CAPTURE = true;
+
     /**
      * Формирование данных для создания платежа
      */
@@ -29,7 +33,7 @@ class PaymentData extends OrderData
         $builder
             ->setAmount(new MonetaryAmount($order->cashless_price))
             ->setCurrency(CurrencyCode::RUB)
-            ->setCapture(false)
+            ->setCapture(self::DEFAULT_PAYMENT_CAPTURE)
             ->setConfirmation([
                 'type' => ConfirmationType::REDIRECT,
                 'returnUrl' => $returnLink,
@@ -63,7 +67,7 @@ class PaymentData extends OrderData
         $b2bSberbankData->setVatData($b2bSberbankVatData);
 
         $builder->setPaymentMethodData($b2bSberbankData);
-        $builder->setCapture(true);
+        $builder->setCapture(self::DEFAULT_PAYMENT_B2B_CAPTURE);
     }
 
     /**

@@ -218,7 +218,7 @@ class DashboardsAnalyticsService
     }
     private function paymentStatusCancel(): string
     {
-        return implode(',' ,[PaymentStatus::NOT_PAID, PaymentStatus::TIMEOUT, PaymentStatus::ERROR]);
+        return implode(',' ,[PaymentStatus::NOT_PAID, PaymentStatus::TIMEOUT, PaymentStatus::ERROR, PaymentStatus::WAITING]);
     }
 
     private function recalculation(array &$item): void

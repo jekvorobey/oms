@@ -708,10 +708,10 @@ class DeliveryService
                         new Carbon($deliveryOrderStatusDto->status_date)
                     );
 
-                    if (empty($delivery->xml_id) && $deliveryOrderStatusDto->xml_id) {
+                    if ($deliveryOrderStatusDto->xml_id && $delivery->xml_id != $deliveryOrderStatusDto->xml_id) {
                         $delivery->xml_id = $deliveryOrderStatusDto->xml_id;
 
-                        if (!empty($delivery->error_xml_id) && empty($deliveryOrderStatusDto->message)) {
+                        if (empty($deliveryOrderStatusDto->message)) {
                             $delivery->error_xml_id = null;
                         }
                     }

@@ -160,4 +160,14 @@ abstract class OrderData
 
         return null;
     }
+
+    protected function getShortName(?string $name): string
+    {
+        if (strlen($name) > 128) {
+            $len = mb_strlen($name, 'UTF-8') - (strlen($name) - 128);
+            $name = mb_substr($name, 0, mb_strrpos(mb_substr($name, 0, $len, 'UTF-8'), ' ', 0, 'UTF-8'), 'UTF-8');
+        }
+
+        return $name ?: "";
+    }
 }
