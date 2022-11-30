@@ -26,6 +26,11 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @OA\Schema(
  *     description="Отправление (набор товаров с одного склада одного мерчанта)",
  *     @OA\Property(
+ *         property="guid",
+ *         type="string",
+ *         description="уникальный guid записи"
+ *     ),
+ *     @OA\Property(
  *         property="delivery_id",
  *         type="integer",
  *         description="id доставки"
@@ -166,6 +171,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * Class Shipment
  * @package App\Models\Delivery
  *
+ * @property string $guid - уникальный guid записи
  * @property int $delivery_id
  * @property int $merchant_id
  * @property int $delivery_service_zero_mile - сервис доставки нулевой мили
@@ -221,6 +227,7 @@ class Shipment extends AbstractModel
      * Заполняемые поля модели
      */
     public const FILLABLE = [
+        'guid',
         'delivery_id',
         'merchant_id',
         'psd',
