@@ -2244,12 +2244,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-pim-lib.git",
-                "reference": "fd96d72f1d2b00a97a3379bc26d8c3b4266e6ba0"
+                "reference": "86ed921fae5c4bbd1178e3250302d9e557af2c39"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-pim-lib/repository/archive.zip?sha=fd96d72f1d2b00a97a3379bc26d8c3b4266e6ba0",
-                "reference": "fd96d72f1d2b00a97a3379bc26d8c3b4266e6ba0",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-pim-lib/repository/archive.zip?sha=86ed921fae5c4bbd1178e3250302d9e557af2c39",
+                "reference": "86ed921fae5c4bbd1178e3250302d9e557af2c39",
                 "shasum": ""
             },
             "require": {
@@ -2277,7 +2277,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965556/issues"
             },
-            "time": "2022-09-26T16:55:16+07:00"
+            "time": "2022-12-01T08:08:35+00:00"
         },
         {
             "name": "ibt/pp-credit-sdk",
