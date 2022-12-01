@@ -28,6 +28,11 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @OA\Schema(
  *     description="Заказы",
  *     @OA\Property(
+ *         property="guid",
+ *         type="string",
+ *         description="уникальный guid записи"
+ *     ),
+ *     @OA\Property(
  *         property="customer_id",
  *         type="integer",
  *         description="id покупателя"
@@ -187,6 +192,7 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * Class Order
  * @package App\Models
  *
+ * @property string $guid - уникальный guid записи
  * @property int $customer_id - id покупателя
  * @property int $basket_id - id корзины
  * @property int $type - тип заказа (Basket::TYPE_PRODUCT|Basket::TYPE_MASTER)

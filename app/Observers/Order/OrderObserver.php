@@ -30,6 +30,7 @@ use Greensight\Logistics\Dto\Lists\DeliveryMethod;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Pim\Dto\Certificate\CertificateRequestDto;
 use Pim\Dto\Certificate\CertificateRequestStatusDto;
 use Pim\Services\CertificateService\CertificateService;
@@ -63,6 +64,11 @@ class OrderObserver
 
         $this->sendCreatedNotification($order);
         $this->setOrderIdToCertificateRequest($order);
+    }
+
+    public function creating(Order $order): void
+    {
+        $order->guid = (string) Str::uuid();
     }
 
     /**
@@ -245,6 +251,10 @@ class OrderObserver
      */
     public function saving(Order $order)
     {
+        if (!$order->guid) {
+            $order->guid = (string) Str::uuid();
+        }
+
         $this->setPaymentStatusAt($order);
         $this->setProblemAt($order);
         $this->setCanceledAt($order);
