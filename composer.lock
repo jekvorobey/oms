@@ -1935,12 +1935,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-common-ms-code.git",
-                "reference": "916b86b1b48f6a6cad0b77747841a1a76811d2cc"
+                "reference": "17bdd4ed5b097ad04ca109099f0ba014b6421813"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-common-ms-code/repository/archive.zip?sha=916b86b1b48f6a6cad0b77747841a1a76811d2cc",
-                "reference": "916b86b1b48f6a6cad0b77747841a1a76811d2cc",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-common-ms-code/repository/archive.zip?sha=17bdd4ed5b097ad04ca109099f0ba014b6421813",
+                "reference": "17bdd4ed5b097ad04ca109099f0ba014b6421813",
                 "shasum": ""
             },
             "require": {
@@ -1995,7 +1995,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965392/issues"
             },
-            "time": "2022-10-25T08:04:02+00:00"
+            "time": "2022-12-01T09:31:28+00:00"
         },
         {
             "name": "ibt/kit-invest-sdk",
@@ -2151,12 +2151,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-merchant-management-lib.git",
-                "reference": "f674b3af76d14f69a11baeb4fc1739020729d076"
+                "reference": "9683dff1ed0406c3a6a36d19837e67fe47b47655"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-merchant-management-lib/repository/archive.zip?sha=f674b3af76d14f69a11baeb4fc1739020729d076",
-                "reference": "f674b3af76d14f69a11baeb4fc1739020729d076",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-merchant-management-lib/repository/archive.zip?sha=9683dff1ed0406c3a6a36d19837e67fe47b47655",
+                "reference": "9683dff1ed0406c3a6a36d19837e67fe47b47655",
                 "shasum": ""
             },
             "require": {
@@ -2184,7 +2184,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965528/issues"
             },
-            "time": "2022-09-28T08:06:50+00:00"
+            "time": "2022-12-01T09:29:54+00:00"
         },
         {
             "name": "ibt/message-lib",
@@ -2244,12 +2244,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-pim-lib.git",
-                "reference": "fd96d72f1d2b00a97a3379bc26d8c3b4266e6ba0"
+                "reference": "9fa609ae07578ec20f156519d21eaaf575fa4918"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-pim-lib/repository/archive.zip?sha=fd96d72f1d2b00a97a3379bc26d8c3b4266e6ba0",
-                "reference": "fd96d72f1d2b00a97a3379bc26d8c3b4266e6ba0",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-pim-lib/repository/archive.zip?sha=9fa609ae07578ec20f156519d21eaaf575fa4918",
+                "reference": "9fa609ae07578ec20f156519d21eaaf575fa4918",
                 "shasum": ""
             },
             "require": {
@@ -2277,7 +2277,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965556/issues"
             },
-            "time": "2022-09-26T16:55:16+07:00"
+            "time": "2022-12-01T09:01:56+00:00"
         },
         {
             "name": "ibt/pp-credit-sdk",
