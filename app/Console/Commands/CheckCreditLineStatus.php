@@ -10,6 +10,8 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\CreditService\CreditService;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
+use DateTime;
+use Exception;
 use IBT\CreditLine\Enum\OrderStatusEnum;
 use Illuminate\Console\Command;
 use Throwable;
@@ -23,17 +25,21 @@ class CheckCreditLineStatus extends Command
     protected $signature = 'creditline:check';
     protected $description = 'Проверить статусы кредитных договоров по кредитным заказам и актуализация статуса заказа';
 
-    public function handle()
+    public function handle(): void
     {
         Order::query()
             ->where('payment_method_id', PaymentMethod::CREDITPAID)
             ->where('is_canceled', 0)
             ->whereNotIn('status', [OrderStatus::DONE])
+            //->whereNotIn('payment_status', [PaymentStatus::PAID])
             ->each(function (Order $order) {
                 $this->checkCreditOrder($order);
             });
     }
 
+    /**
+     * @throws Exception
+     */
     private function checkCreditOrder(Order $order): void
     {
         /** @var OrderService $orderService */
@@ -50,7 +56,27 @@ class CheckCreditLineStatus extends Command
             return;
         }
 
+        // Не найдена кредитная заявка
         if (!$checkStatus) {
+
+            // Отмена заказа, если
+            // заказ не отменен ранее,
+            // статус заказа - создан,
+            // статус оплаты заказа - не оплачен,
+            // заказ создан более 7-х дней
+            if (
+                !$order->is_canceled
+                && $order->status == OrderStatus::CREATED
+                && $order->payment_status !== PaymentStatus::PAID
+                && (new DateTime($order->created_at))->format('Y-m-d') < (new DateTime())->modify('-7 day')->format('Y-m-d')
+            ) {
+                try {
+                    $orderService->cancel($order, CreditService::ORDER_RETURN_REASON_ID);
+                } catch (Throwable $exception) {
+                    report($exception);
+                }
+            }
+
             return;
         }
 
@@ -73,7 +99,10 @@ class CheckCreditLineStatus extends Command
         }
 
         // Отметка об оплате заказа, если кредитная заявка подписана
-        if ($order->payment_status !== PaymentStatus::PAID && $creditDiscountNew == OrderStatusEnum::CREDIT_ORDER_STATUS_SIGNED) {
+        if (
+            $order->payment_status !== PaymentStatus::PAID
+            && $creditDiscountNew == OrderStatusEnum::CREDIT_ORDER_STATUS_SIGNED
+        ) {
             $order->payment_status = PaymentStatus::PAID;
             $order->payment_status_at = now();
             $isUpdateOrder = true;
@@ -83,9 +112,10 @@ class CheckCreditLineStatus extends Command
             $order->save();
         }
 
-        // Отмена заказа, у которого не принята заявка на кредит и который не отменен ранее
+        // Отмена заказа, у которого отклонена заявка на кредит, который не оплачен, который не отменен ранее
         if (
             !$order->is_canceled
+            && $order->payment_status !== PaymentStatus::PAID
             && in_array(
                 $creditStatusIdNew,
                 [OrderStatusEnum::CREDIT_ORDER_STATUS_REFUSED, OrderStatusEnum::CREDIT_ORDER_STATUS_ANNULED],
@@ -152,9 +182,9 @@ class CheckCreditLineStatus extends Command
         //и заказ еще в пути
         //и ранее был выбит чек с расчетом "В кредит"
         if (
-            in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DELIVERING, OrderStatus::READY_FOR_RECIPIENT], true)
-            && $creditStatusId !== $creditStatusIdNew
+            $creditStatusId !== $creditStatusIdNew
             && $creditStatusIdNew === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
+            && in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DELIVERING, OrderStatus::READY_FOR_RECIPIENT], true)
             && $order->payments->isNotEmpty()
         ) {
             $payment = $order->payments()->first();
@@ -167,4 +197,3 @@ class CheckCreditLineStatus extends Command
         }
     }
 }
-
