@@ -7,6 +7,7 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentMethod;
+use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentSystem;
 use App\Services\CreditService\CreditService;
 use App\Services\CreditService\CreditSystems\CreditSystemInterface;
@@ -101,9 +102,10 @@ class CreditLineSystem implements CreditSystemInterface
             $order->save();
         }
 
-        // Отмена заказа, у которого не принята заявка на кредит и который не отменен ранее
+        // Отмена заказа, у которого отклонена заявка на кредит, который не оплачен, который не отменен ранее
         if (
             !$order->is_canceled
+            && $order->payment_status !== PaymentStatus::PAID
             && in_array(
                 $order->credit_status_id,
                 [OrderStatusEnum::CREDIT_ORDER_STATUS_REFUSED, OrderStatusEnum::CREDIT_ORDER_STATUS_ANNULED],
