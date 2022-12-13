@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\V1\Analytics\AnalyticsController;
 use App\Http\Controllers\V1\Analytics\DashboardsAnalyticsController;
 use App\Http\Controllers\V1\Analytics\MerchantAnalyticsController;
 use App\Http\Controllers\V1\Basket\CustomerBasketController;
@@ -208,6 +209,8 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('analytics')->group(function () {
+        Route::get('competition', [AnalyticsController::class, 'competition'])->name('analytics.competition');
+        Route::get('dump-orders', [AnalyticsController::class, 'dumpOrders'])->name('analytics.dumpOrders');
         Route::prefix('dashboard')->group(function () {
             Route::prefix('sales')->group(function () {
                 Route::get('day-by-hour', [DashboardsAnalyticsController::class, 'salesDayByHour'])->name('dashboardsAnalytics.salesDayByHour');

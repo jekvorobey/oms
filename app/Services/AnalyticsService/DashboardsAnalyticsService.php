@@ -18,11 +18,13 @@ class DashboardsAnalyticsService
             DB::raw('COUNT(DISTINCT orders.id) as countOrdersFull'),
             DB::raw('SUM(orders.price) as amountOrdersFull'),
             DB::raw('SUM(basketItems.qty) as countProductsFull'),
-            DB::raw('SUM(orders.delivery_price) as amountDeliveryFull'),
+            //DB::raw('SUM(orders.delivery_price) as amountDeliveryFull'),
+            DB::raw('0 as amountDeliveryFull'),
             DB::raw('COUNT(DISTINCT (CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.id END)) AS countOrders'),
             DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.price END) AS amountOrders'),
             DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE basketItems.qty END) AS countProducts'),
-            DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.delivery_price END) AS amountDelivery'),
+            //DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.delivery_price END) AS amountDelivery'),
+            DB::raw('0 AS amountDelivery'),
         ];
     }
 
@@ -36,7 +38,6 @@ class DashboardsAnalyticsService
             FROM basket_items
             GROUP BY basketId) basketItems";
     }
-
 
     /**
      * @throws Exception
@@ -216,6 +217,7 @@ class DashboardsAnalyticsService
             default => '',
         };
     }
+
     private function paymentStatusCancel(): string
     {
         return implode(',' ,[PaymentStatus::NOT_PAID, PaymentStatus::TIMEOUT, PaymentStatus::ERROR, PaymentStatus::WAITING]);
