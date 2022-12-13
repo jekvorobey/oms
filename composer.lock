@@ -1935,12 +1935,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-common-ms-code.git",
-                "reference": "17bdd4ed5b097ad04ca109099f0ba014b6421813"
+                "reference": "246c0609dae558b29c8ef1c30c9f7d7d8c6e2ff7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-common-ms-code/repository/archive.zip?sha=17bdd4ed5b097ad04ca109099f0ba014b6421813",
-                "reference": "17bdd4ed5b097ad04ca109099f0ba014b6421813",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-common-ms-code/repository/archive.zip?sha=246c0609dae558b29c8ef1c30c9f7d7d8c6e2ff7",
+                "reference": "246c0609dae558b29c8ef1c30c9f7d7d8c6e2ff7",
                 "shasum": ""
             },
             "require": {
@@ -1995,7 +1995,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965392/issues"
             },
-            "time": "2022-12-01T09:31:28+00:00"
+            "time": "2022-12-13T07:39:44+00:00"
         },
         {
             "name": "ibt/kit-invest-sdk",
@@ -2047,12 +2047,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-logistics-lib.git",
-                "reference": "293274b0deea941d5831a75d4281b87a90d9f005"
+                "reference": "9a68ea7609ecf0ef85dc419e4b20e075fc79a6c6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-logistics-lib/repository/archive.zip?sha=293274b0deea941d5831a75d4281b87a90d9f005",
-                "reference": "293274b0deea941d5831a75d4281b87a90d9f005",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-logistics-lib/repository/archive.zip?sha=9a68ea7609ecf0ef85dc419e4b20e075fc79a6c6",
+                "reference": "9a68ea7609ecf0ef85dc419e4b20e075fc79a6c6",
                 "shasum": ""
             },
             "require": {
@@ -2091,7 +2091,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965501/issues"
             },
-            "time": "2022-10-27T17:07:06+00:00"
+            "time": "2022-12-13T07:41:09+00:00"
         },
         {
             "name": "ibt/marketing-lib",
