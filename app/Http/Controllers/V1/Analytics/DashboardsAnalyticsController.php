@@ -7,6 +7,7 @@ use App\Http\Requests\DashboardsAnalyticsRequest;
 use App\Services\AnalyticsService\DashboardsAnalyticsService;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use OpenApi\Annotations as OA;
 use function response;
 
 class DashboardsAnalyticsController extends Controller

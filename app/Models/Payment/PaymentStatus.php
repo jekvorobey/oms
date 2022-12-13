@@ -52,6 +52,18 @@ class PaymentStatus
         ];
     }
 
+    public static function allByKey(): array
+    {
+        return [
+            self::NOT_PAID => new self(self::NOT_PAID, 'Не оплачено'),
+            self::PAID => new self(self::PAID, 'Оплачено'),
+            self::TIMEOUT => new self(self::TIMEOUT, 'Просрочено'),
+            self::HOLD => new self(self::HOLD, 'Средства захолдированы'),
+            self::ERROR => new self(self::ERROR, 'Ошибка проведения платежа'),
+            self::WAITING => new self(self::WAITING, 'Ожидает оплаты'),
+        ];
+    }
+
     public static function validValues(): array
     {
         return [
