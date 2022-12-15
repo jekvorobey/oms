@@ -58,9 +58,9 @@ class AnalyticsDumpOrdersService
                 DB::raw('basket_items.price AS price'),
                 DB::raw('GROUP_CONCAT(DISTINCT order_discounts.name SEPARATOR \' | \') AS discounts'),
                 DB::raw('GROUP_CONCAT(DISTINCT shipments.number SEPARATOR \', \') AS shipmentsNumber'),
-                //DB::raw('MIN(DATE_FORMAT(shipments.required_shipping_at, \'%Y-%m-%d\')) AS requiredShippingAt'),
-                //DB::raw('GROUP_CONCAT(DISTINCT delivery.number SEPARATOR \', \') AS deliveryNumber'),
                 DB::raw('MIN(DATE_FORMAT(delivery.delivery_at, \'%Y-%m-%d\')) AS deliveryAt'),
+                DB::raw('MAX(DATE_FORMAT(delivery.delivered_at, \'%Y-%m-%d\')) AS deliveredAt'),
+                DB::raw('MAX(DATE_FORMAT(delivery.status_at, \'%Y-%m-%d\')) AS deliveryStatusAt'),
                 DB::raw('MAX(delivery.point_id) AS pointId'),
                 DB::raw('orders.type AS orderType'),
                 DB::raw('orders.status AS orderStatus'),
@@ -81,14 +81,14 @@ class AnalyticsDumpOrdersService
             ->leftJoin(DB::raw('order_discounts'), function($join) {
                 $join->on('orders.id', '=', 'order_discounts.order_id');
             })
-            ->leftJoin(DB::raw('delivery'), function($join) {
-                $join->on('orders.id', '=', 'delivery.order_id');
-            })
             ->leftJoin(DB::raw('shipment_items'), function($join) {
                 $join->on('shipment_items.basket_item_id', '=', 'basket_items.id');
             })
             ->leftJoin(DB::raw('shipments'), function($join) {
                 $join->on('shipments.id', '=', 'shipment_items.shipment_id');
+            })
+            ->leftJoin(DB::raw('delivery'), function($join) {
+                $join->on('shipments.delivery_id', '=', 'delivery.id');
             })
 
             ->where('orders.is_canceled', '=', 0)
@@ -110,7 +110,10 @@ class AnalyticsDumpOrdersService
             $ordersBy = explode(' ', $request->orderBy);
             $ordersQuery->orderBy($ordersBy[0] ?? 'orderId', $ordersBy[1] ?? 'asc');
         } else {
-            $ordersQuery->orderBy('orderId');
+            $ordersQuery
+                ->orderBy('orderId')
+                ->orderBy('shipmentsNumber')
+            ;
         }
 
         $orders = $ordersQuery->get();
@@ -163,12 +166,26 @@ class AnalyticsDumpOrdersService
             $item['orderTypeName'] = $this->getOrderTypeName($item['orderType']);
 
             $item['overdueDays'] = null;
-            if ($item['deliveryAt'] && $item['orderType'] == Basket::TYPE_PRODUCT && $item['orderStatus'] !== OrderStatus::DONE) {
-                try {
-                    if ($item['deliveryAt'] <= (new DateTime())->format('Y-m-d')) {
-                        $item['overdueDays'] = (new DateTime())->diff(new DateTime($item['deliveryAt']))->format("%a");
+            if ($item['deliveryAt'] && $item['orderType'] == Basket::TYPE_PRODUCT) {
+
+                if (!$item['deliveredAt'] && $item['orderStatus'] == OrderStatus::DONE) {
+                    $item['deliveredAt'] = $item['deliveryStatusAt'];
+                }
+
+                if ($item['deliveredAt'] > $item['deliveryAt']) {
+                    try {
+                        if ($item['deliveryAt'] <= (new DateTime($item['deliveredAt']))->format('Y-m-d')) {
+                            $item['overdueDays'] = (new DateTime($item['deliveredAt']))->diff(new DateTime($item['deliveryAt']))->format("%a");
+                        }
+                    } catch (Exception) {
                     }
-                } catch (Exception) {
+                } else if (!$item['deliveredAt'] && $item['orderStatus'] !== OrderStatus::DONE) {
+                    try {
+                        if ($item['deliveryAt'] <= (new DateTime())->format('Y-m-d')) {
+                            $item['overdueDays'] = (new DateTime())->diff(new DateTime($item['deliveryAt']))->format("%a");
+                        }
+                    } catch (Exception) {
+                    }
                 }
             }
 
