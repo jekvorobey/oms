@@ -209,7 +209,6 @@ Route::namespace('V1')->prefix('v1')->group(function () {
     });
 
     Route::prefix('analytics')->group(function () {
-        Route::get('competition', [AnalyticsController::class, 'competition'])->name('analytics.competition');
         Route::get('dump-orders', [AnalyticsController::class, 'dumpOrders'])->name('analytics.dumpOrders');
         Route::prefix('dashboard')->group(function () {
             Route::prefix('sales')->group(function () {

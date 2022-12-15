@@ -30,16 +30,11 @@ use Pim\Services\CategoryService\CategoryService;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\ProductService\ProductService;
 
-class AnalyticsApiService
+class AnalyticsDumpOrdersService
 {
     public function __construct()
     {
         ini_set('memory_limit', '256M');
-    }
-
-    public function competition(AnalyticsRequest $request): array
-    {
-        return [];
     }
 
     public function dumpOrders(AnalyticsRequest $request): array
@@ -63,7 +58,9 @@ class AnalyticsApiService
                 DB::raw('basket_items.price AS price'),
                 DB::raw('GROUP_CONCAT(DISTINCT order_discounts.name SEPARATOR \' | \') AS discounts'),
                 DB::raw('GROUP_CONCAT(DISTINCT shipments.number SEPARATOR \', \') AS shipmentsNumber'),
-                DB::raw('MIN(DATE_FORMAT(shipments.required_shipping_at, \'%Y-%m-%d\')) AS requiredShippingAt'),
+                //DB::raw('MIN(DATE_FORMAT(shipments.required_shipping_at, \'%Y-%m-%d\')) AS requiredShippingAt'),
+                //DB::raw('GROUP_CONCAT(DISTINCT delivery.number SEPARATOR \', \') AS deliveryNumber'),
+                DB::raw('MIN(DATE_FORMAT(delivery.delivery_at, \'%Y-%m-%d\')) AS deliveryAt'),
                 DB::raw('MAX(delivery.point_id) AS pointId'),
                 DB::raw('orders.type AS orderType'),
                 DB::raw('orders.status AS orderStatus'),
@@ -73,6 +70,7 @@ class AnalyticsApiService
                 DB::raw('orders.payment_status AS paymentStatusName'),
                 DB::raw('orders.customer_id AS customerId'),
                 DB::raw('basket_items.offer_id AS offerId'),
+                DB::raw('basket_items.name AS productName'),
             ])
             ->join(DB::raw('basket_items'), function($join) {
                 $join->on('orders.basket_id', '=', 'basket_items.basket_id');
@@ -98,6 +96,10 @@ class AnalyticsApiService
             ->where('orders.created_at', '<=', $request->createdEnd)
             ->groupBy('orders.id', 'basket_items.id');
 
+        if ($request->paymentStatus) {
+            $ordersQuery->whereIn('orders.payment_status', explode(",", $request->paymentStatus));
+        }
+
         if ($request->top) {
             $ordersQuery->limit($request->top);
         }
@@ -113,10 +115,9 @@ class AnalyticsApiService
 
         $orders = $ordersQuery->get();
 
-
         $results = [];
 
-        $offersIds = $orders->pluck('offerId')->all();
+        $offersIds = $orders->pluck('offerId')->unique()->all();
         $productsByOffers = $this->getProductsByOffers($offersIds);
 
         $merchantsId = [];
@@ -143,13 +144,13 @@ class AnalyticsApiService
         $categories = $this->getCategories($categoriesId);
         $brands = $this->getBrands($brandsId);
 
-        $customersIds = $orders->pluck('customerId')->all();
+        $customersIds = $orders->pluck('customerId')->unique()->all();
         $customers = $this->getCustomers($customersIds);
-        //$usersIds = $customers->pluck('user_id')->all();
+        //$usersIds = $customers->pluck('user_id')->unique()->all();
         //$users = $this->getUsers($usersIds);
-        $pointsIds = $orders->pluck('pointId')->all();
+        $pointsIds = $orders->pluck('pointId')->unique()->all();
         $points = $this->getPoints($pointsIds);
-        $cityGuids = $points->pluck('city_guid')->all();
+        $cityGuids = $points->pluck('city_guid')->unique()->all();
         $cities = $this->getCities($cityGuids);
 
         foreach ($orders->toArray() as $item) {
@@ -161,16 +162,15 @@ class AnalyticsApiService
             $item['paymentStatusName'] = PaymentStatus::allByKey()[$item['paymentStatus']]->name ?? null;
             $item['orderTypeName'] = $this->getOrderTypeName($item['orderType']);
 
-            if ($item['requiredShippingAt'] && $item['orderStatus'] !== OrderStatus::DONE) {
+            $item['overdueDays'] = null;
+            if ($item['deliveryAt'] && $item['orderType'] == Basket::TYPE_PRODUCT && $item['orderStatus'] !== OrderStatus::DONE) {
                 try {
-                    if ($item['requiredShippingAt'] <= (new DateTime())->format('Y-m-d')) {
-                            $interval = (new DateTime())->diff(new DateTime($item['requiredShippingAt']));
-                        $overdueDays = $interval->d;
+                    if ($item['deliveryAt'] <= (new DateTime())->format('Y-m-d')) {
+                        $item['overdueDays'] = (new DateTime())->diff(new DateTime($item['deliveryAt']))->format("%a");
                     }
                 } catch (Exception) {
                 }
             }
-            $item['overdueDays'] = $overdueDays ?? null;
 
             /** @var ProductDto|null $product */
             $product = $productsByOffers[$item['offerId']]['product'] ?? null;
@@ -192,7 +192,7 @@ class AnalyticsApiService
             /** @var OfferDto|null $offer */
             $offer = $productsByOffers[$item['offerId']]['offer'] ?? null;
             if ($offer) {
-                $merchant = $merchants[$offer->merchant_id];
+                $merchant = $merchants[$offer->merchant_id] ?? null;
 
                 $item['merchantId'] = $offer->merchant_id ?? null;
                 $item['merchantName'] = $merchant->legal_name ?? null;
@@ -235,7 +235,7 @@ class AnalyticsApiService
     private function getCountRow(AnalyticsRequest $request): int
     {
         if ($request->count) {
-            $orders = Order::query()
+            $ordersQuery = Order::query()
                 ->select([
                     DB::raw('COUNT(DISTINCT basket_items.id) AS count'),
                 ])
@@ -244,8 +244,13 @@ class AnalyticsApiService
                 })
                 ->where('orders.is_canceled', '=', 0)
                 ->where('orders.created_at', '>=', $request->createdStart)
-                ->where('orders.created_at', '<=', $request->createdEnd)
-                ->get();
+                ->where('orders.created_at', '<=', $request->createdEnd);
+
+            if ($request->paymentStatus) {
+                $ordersQuery->whereIn('orders.payment_status', explode(",", $request->paymentStatus));
+            }
+
+            $orders = $ordersQuery->get();
 
             return ($orders->toArray())[0]['count'] ?? 0;
         }
@@ -278,13 +283,13 @@ class AnalyticsApiService
             $products = $productService->products($productQuery)->keyBy('id');
 
             foreach ($offers as $offer) {
-                if (!isset($products[$offer->product_id])) {
-                    continue;
-                }
+                //if (!isset($products[$offer->product_id])) {
+                //    continue;
+                //}
 
                 $productByOffer = new ProductByOfferDto();
                 $productByOffer->offer = $offer;
-                $productByOffer->product = $products[$offer->product_id];
+                $productByOffer->product = $products[$offer->product_id] ?? null;
                 $productsByOffers->put($offer->id, $productByOffer);
             }
         }
