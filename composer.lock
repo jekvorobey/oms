@@ -2099,12 +2099,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-marketing-lib.git",
-                "reference": "146f01b9d2cd19614784db455f937af2e4872537"
+                "reference": "066b3cd088873638e43fb51eedf39affe7023448"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-marketing-lib/repository/archive.zip?sha=146f01b9d2cd19614784db455f937af2e4872537",
-                "reference": "146f01b9d2cd19614784db455f937af2e4872537",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-marketing-lib/repository/archive.zip?sha=066b3cd088873638e43fb51eedf39affe7023448",
+                "reference": "066b3cd088873638e43fb51eedf39affe7023448",
                 "shasum": ""
             },
             "require": {
@@ -2143,7 +2143,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965511/issues"
             },
-            "time": "2022-09-08T18:59:06+07:00"
+            "time": "2022-12-15T04:12:43+00:00"
         },
         {
             "name": "ibt/merchant-management-lib",
@@ -2244,12 +2244,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-pim-lib.git",
-                "reference": "9fa609ae07578ec20f156519d21eaaf575fa4918"
+                "reference": "5702da2f29900aac8afc832b4b4d06a179435866"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-pim-lib/repository/archive.zip?sha=9fa609ae07578ec20f156519d21eaaf575fa4918",
-                "reference": "9fa609ae07578ec20f156519d21eaaf575fa4918",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-pim-lib/repository/archive.zip?sha=5702da2f29900aac8afc832b4b4d06a179435866",
+                "reference": "5702da2f29900aac8afc832b4b4d06a179435866",
                 "shasum": ""
             },
             "require": {
@@ -2277,7 +2277,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965556/issues"
             },
-            "time": "2022-12-01T09:01:56+00:00"
+            "time": "2022-12-15T06:58:01+00:00"
         },
         {
             "name": "ibt/pp-credit-sdk",
