@@ -18,6 +18,11 @@ use OpenApi\Annotations as OA;
  * @OA\Schema(
  *     description="Оплата",
  *     @OA\Property(
+ *         property="guid",
+ *         type="string",
+ *         description="уникальный guid записи"
+ *     ),
+ *     @OA\Property(
  *         property="order_id",
  *         type="integer",
  *         description="id заказа"
@@ -67,6 +72,7 @@ use OpenApi\Annotations as OA;
  * Class Payment
  * @package App\Models
  *
+ * @property string $guid - уникальный guid записи
  * @property int $order_id
  * @property float $sum
  * @property float $refund_sum

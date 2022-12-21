@@ -9,6 +9,7 @@ use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentType;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
+use Illuminate\Support\Str;
 
 /**
  * Class PaymentObserver
@@ -16,10 +17,18 @@ use App\Services\PaymentService\PaymentService;
  */
 class PaymentObserver
 {
+    public function creating(Payment $payment): void
+    {
+        $payment->guid = (string) Str::uuid();
+    }
+    
     public function saving(Payment $payment): void
     {
         if ($payment->isDirty('status') && $payment->status === PaymentStatus::PAID) {
             $payment->payed_at = now();
+        }
+        if (!$payment->guid) {
+            $payment->guid = (string) Str::uuid();
         }
     }
 

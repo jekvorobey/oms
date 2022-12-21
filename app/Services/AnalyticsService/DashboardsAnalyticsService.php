@@ -16,27 +16,31 @@ class DashboardsAnalyticsService
     {
         return [
             DB::raw('COUNT(DISTINCT orders.id) as countOrdersFull'),
-            DB::raw('SUM(orders.price) as amountOrdersFull'),
-            DB::raw('SUM(basketItems.qty) as countProductsFull'),
+            DB::raw('SUM(basketItems.priceFull) as amountOrdersFull'),
+            DB::raw('SUM(basketItems.qtyFull) as countProductsFull'),
             DB::raw('SUM(orders.delivery_price) as amountDeliveryFull'),
-            DB::raw('COUNT(DISTINCT (CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.id END)) AS countOrders'),
-            DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.price END) AS amountOrders'),
-            DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE basketItems.qty END) AS countProducts'),
-            DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN NULL ELSE orders.delivery_price END) AS amountDelivery'),
+            //DB::raw('0 as amountDeliveryFull'),
+            DB::raw('COUNT(DISTINCT (CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN 0 ELSE orders.id END)) AS countOrders'),
+            DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN 0 ELSE basketItems.price END) AS amountOrders'),
+            DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN 0 ELSE basketItems.qty END) AS countProducts'),
+            DB::raw('SUM(CASE WHEN orders.payment_status IN (' . $this->paymentStatusCancel() . ') THEN 0 ELSE orders.delivery_price END) AS amountDelivery'),
+            //DB::raw('0 AS amountDelivery'),
         ];
     }
 
     private function getSQLBasketRaw(): string
     {
         return "(
-            SELECT
-                basket_items.basket_id AS basketId,
-                SUM(basket_items.price) AS price,
-                SUM(basket_items.qty) AS qty
-            FROM basket_items
-            GROUP BY basketId) basketItems";
+                SELECT
+                    basket_items.basket_id AS basketId,
+                    SUM(basket_items.price) AS priceFull,
+                    SUM(basket_items.qty) AS qtyFull,
+                    SUM(CASE WHEN basket_items.is_canceled = 1 THEN 0 ELSE basket_items.price END) AS price,
+                    SUM(CASE WHEN basket_items.is_canceled = 1 THEN 0 ELSE basket_items.qty END) AS qty
+                FROM basket_items
+                GROUP BY basketId
+            ) AS basketItems";
     }
-
 
     /**
      * @throws Exception
@@ -51,7 +55,7 @@ class DashboardsAnalyticsService
 
         $orders = Order::query()
             ->select($columns)
-            ->join(DB::raw($this->getSQLBasketRaw()), function($join) {
+            ->leftJoin(DB::raw($this->getSQLBasketRaw()), function($join) {
                 $join->on('orders.basket_id', '=', 'basketItems.basketId');
             })
             ->groupBy('orders.type', 'date')
@@ -80,7 +84,7 @@ class DashboardsAnalyticsService
 
         $orders = Order::query()
             ->select($columns)
-            ->join(DB::raw($this->getSQLBasketRaw()), function($join) {
+            ->leftJoin(DB::raw($this->getSQLBasketRaw()), function($join) {
                 $join->on('orders.basket_id', '=', 'basketItems.basketId');
             })
             ->where('orders.created_at', '>=', $request->start)
@@ -125,7 +129,7 @@ class DashboardsAnalyticsService
 
         $orders = Order::query()
             ->select($columns)
-            ->join(DB::raw($this->getSQLBasketRaw()), function($join) {
+            ->leftJoin(DB::raw($this->getSQLBasketRaw()), function($join) {
                 $join->on('orders.basket_id', '=', 'basketItems.basketId');
             })
             ->where('orders.created_at', '>=', $request->start)
@@ -172,7 +176,7 @@ class DashboardsAnalyticsService
 
         $orders = Order::query()
             ->select($columns)
-            ->join(DB::raw($this->getSQLBasketRaw()), function($join) {
+            ->leftJoin(DB::raw($this->getSQLBasketRaw()), function($join) {
                 $join->on('orders.basket_id', '=', 'basketItems.basketId');
             })
             ->where('orders.created_at', '>=', $request->start)
@@ -216,6 +220,7 @@ class DashboardsAnalyticsService
             default => '',
         };
     }
+
     private function paymentStatusCancel(): string
     {
         return implode(',' ,[PaymentStatus::NOT_PAID, PaymentStatus::TIMEOUT, PaymentStatus::ERROR, PaymentStatus::WAITING]);
@@ -237,6 +242,10 @@ class DashboardsAnalyticsService
         $item['amountDeliveryCancel'] = ($item['amountDeliveryFull'] - $item['amountDelivery']);
         $item['countOrdersCancel'] = ($item['countOrdersFull'] - $item['countOrders']);
         $item['countProductsCancel'] = ($item['countProductsFull'] - $item['countProducts']);
+
+        $item['amountOrdersFull'] += $item['amountDeliveryFull'];
+        $item['amountOrders'] += $item['amountDelivery'];
+        $item['amountOrdersCancel'] += $item['amountDeliveryCancel'];
     }
 
     private function aggregate(array &$results, bool $addForecastAmount = false): void

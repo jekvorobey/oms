@@ -18,6 +18,7 @@ use Greensight\CommonMsa\Dto\UserDto;
 use Greensight\CommonMsa\Rest\RestQuery;
 use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
+use Illuminate\Support\Str;
 use MerchantManagement\Dto\OperatorCommunicationMethod;
 use MerchantManagement\Services\OperatorService\OperatorService;
 use Greensight\Logistics\Dto\Lists\DeliveryService as DeliveryServiceDto;
@@ -44,6 +45,11 @@ class ShipmentObserver
     ];
 
     static private array $createdDeliveryOrders= [];
+
+    public function creating(Shipment $shipment): void
+    {
+        $shipment->guid = (string) Str::uuid();
+    }
 
     /**
      * Handle the shipment "updating" event.
@@ -97,6 +103,10 @@ class ShipmentObserver
      */
     public function saving(Shipment $shipment)
     {
+        if (!$shipment->guid) {
+            $shipment->guid = (string) Str::uuid();
+        }
+
         $this->setStatusAt($shipment);
         $this->setPaymentStatusAt($shipment);
         $this->setProblemAt($shipment);

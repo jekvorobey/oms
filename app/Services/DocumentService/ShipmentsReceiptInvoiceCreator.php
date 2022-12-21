@@ -18,6 +18,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Exception;
 use Pim\Core\PimException;
 use Pim\Dto\BrandDto;
 use Pim\Dto\CategoryDto;
+use Pim\Dto\Offer\OfferDto;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\ProductService\ProductService;
 use RuntimeException;
@@ -147,7 +148,7 @@ class ShipmentsReceiptInvoiceCreator extends DocumentCreator
     protected function fillTotalQty(Worksheet $sheet, int $lastRowIndex): int
     {
         ++$lastRowIndex;
-        $sheet->setCellValue("E$lastRowIndex", $this->totalQty);
+        $sheet->setCellValue("F$lastRowIndex", $this->totalQty);
 
         return $lastRowIndex;
     }
@@ -158,9 +159,10 @@ class ShipmentsReceiptInvoiceCreator extends DocumentCreator
             'A' => $operationNumber,
             'B' => $operation['vendor_code'] ?? '',
             'C' => $operation['barcodes'] ?? '',
-            'D' => $operation['name'] ?? '',
-            'E' => $operation['qty'] ?? '',
-            'F' => $operation['shipments_number'] ?? '',
+            'D' => $operation['xml_id'] ?? '',
+            'E' => $operation['name'] ?? '',
+            'F' => $operation['qty'] ?? '',
+            'G' => $operation['shipments_number'] ?? '',
         ];
     }
 
@@ -218,10 +220,18 @@ class ShipmentsReceiptInvoiceCreator extends DocumentCreator
                 }
 
                 $productByOffers = $productsByOffers[$basketItem->offer_id];
+
                 /** @var ProductDto $product */
                 $product = $productByOffers['product'];
-                $products[$basketItem->id] = $product->toArray();
+                /** @var OfferDto $offer */
+                $offer = $productByOffers['offer'];
+
+                $productArray = $product->toArray();
+                $productArray['xml_id'] = $offer->xml_id; //$offer->merchant_id . '/' . $offer->product_id . '/' . $offer->id;
+
+                $products[$basketItem->id] = $productArray;
                 $products[$basketItem->id]['barcodes'] = $this->productBarcodes($product);
+
                 $basketItem['qty_original'] = $basketItem->qty;
             }
 

@@ -1935,12 +1935,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-common-ms-code.git",
-                "reference": "916b86b1b48f6a6cad0b77747841a1a76811d2cc"
+                "reference": "246c0609dae558b29c8ef1c30c9f7d7d8c6e2ff7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-common-ms-code/repository/archive.zip?sha=916b86b1b48f6a6cad0b77747841a1a76811d2cc",
-                "reference": "916b86b1b48f6a6cad0b77747841a1a76811d2cc",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-common-ms-code/repository/archive.zip?sha=246c0609dae558b29c8ef1c30c9f7d7d8c6e2ff7",
+                "reference": "246c0609dae558b29c8ef1c30c9f7d7d8c6e2ff7",
                 "shasum": ""
             },
             "require": {
@@ -1995,7 +1995,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965392/issues"
             },
-            "time": "2022-10-25T08:04:02+00:00"
+            "time": "2022-12-13T07:39:44+00:00"
         },
         {
             "name": "ibt/kit-invest-sdk",
@@ -2047,12 +2047,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-logistics-lib.git",
-                "reference": "293274b0deea941d5831a75d4281b87a90d9f005"
+                "reference": "9a68ea7609ecf0ef85dc419e4b20e075fc79a6c6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-logistics-lib/repository/archive.zip?sha=293274b0deea941d5831a75d4281b87a90d9f005",
-                "reference": "293274b0deea941d5831a75d4281b87a90d9f005",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-logistics-lib/repository/archive.zip?sha=9a68ea7609ecf0ef85dc419e4b20e075fc79a6c6",
+                "reference": "9a68ea7609ecf0ef85dc419e4b20e075fc79a6c6",
                 "shasum": ""
             },
             "require": {
@@ -2091,7 +2091,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965501/issues"
             },
-            "time": "2022-10-27T17:07:06+00:00"
+            "time": "2022-12-13T07:41:09+00:00"
         },
         {
             "name": "ibt/marketing-lib",
@@ -2099,12 +2099,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-marketing-lib.git",
-                "reference": "146f01b9d2cd19614784db455f937af2e4872537"
+                "reference": "066b3cd088873638e43fb51eedf39affe7023448"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-marketing-lib/repository/archive.zip?sha=146f01b9d2cd19614784db455f937af2e4872537",
-                "reference": "146f01b9d2cd19614784db455f937af2e4872537",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-marketing-lib/repository/archive.zip?sha=066b3cd088873638e43fb51eedf39affe7023448",
+                "reference": "066b3cd088873638e43fb51eedf39affe7023448",
                 "shasum": ""
             },
             "require": {
@@ -2143,7 +2143,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965511/issues"
             },
-            "time": "2022-09-08T18:59:06+07:00"
+            "time": "2022-12-15T04:12:43+00:00"
         },
         {
             "name": "ibt/merchant-management-lib",
@@ -2151,12 +2151,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-merchant-management-lib.git",
-                "reference": "f674b3af76d14f69a11baeb4fc1739020729d076"
+                "reference": "9683dff1ed0406c3a6a36d19837e67fe47b47655"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-merchant-management-lib/repository/archive.zip?sha=f674b3af76d14f69a11baeb4fc1739020729d076",
-                "reference": "f674b3af76d14f69a11baeb4fc1739020729d076",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-merchant-management-lib/repository/archive.zip?sha=9683dff1ed0406c3a6a36d19837e67fe47b47655",
+                "reference": "9683dff1ed0406c3a6a36d19837e67fe47b47655",
                 "shasum": ""
             },
             "require": {
@@ -2184,7 +2184,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965528/issues"
             },
-            "time": "2022-09-28T08:06:50+00:00"
+            "time": "2022-12-01T09:29:54+00:00"
         },
         {
             "name": "ibt/message-lib",
@@ -2244,12 +2244,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-pim-lib.git",
-                "reference": "fd96d72f1d2b00a97a3379bc26d8c3b4266e6ba0"
+                "reference": "5702da2f29900aac8afc832b4b4d06a179435866"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-pim-lib/repository/archive.zip?sha=fd96d72f1d2b00a97a3379bc26d8c3b4266e6ba0",
-                "reference": "fd96d72f1d2b00a97a3379bc26d8c3b4266e6ba0",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-pim-lib/repository/archive.zip?sha=5702da2f29900aac8afc832b4b4d06a179435866",
+                "reference": "5702da2f29900aac8afc832b4b4d06a179435866",
                 "shasum": ""
             },
             "require": {
@@ -2277,7 +2277,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965556/issues"
             },
-            "time": "2022-09-26T16:55:16+07:00"
+            "time": "2022-12-15T06:58:01+00:00"
         },
         {
             "name": "ibt/pp-credit-sdk",
