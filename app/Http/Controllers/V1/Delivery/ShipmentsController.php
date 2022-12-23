@@ -153,7 +153,7 @@ class ShipmentsController extends Controller
             'status' => ['nullable', Rule::in(ShipmentStatus::validValues())],
             'payment_status_at' => ['nullable', 'date'],
             'number' => [new RequiredOnPost(), 'string'],
-            'required_shipping_at' => [new RequiredOnPost(), 'date'],
+            'psd' => [new RequiredOnPost(), 'date'],
         ];
     }
 
