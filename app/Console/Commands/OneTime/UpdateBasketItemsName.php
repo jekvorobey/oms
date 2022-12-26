@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\OneTime;
 
+use App\Models\Basket\Basket;
 use App\Models\Basket\BasketItem;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentStatus;
@@ -38,6 +39,7 @@ class UpdateBasketItemsName extends Command
         /** @var Collection|BasketItem[] $basketItems */
         $basketItems = BasketItem::query()
             ->where('created_at', '>=', Carbon::createFromDate(2022, 12, 15))
+            ->where('type', Basket::TYPE_PRODUCT)
             ->get();
 
         /** @var OfferService $offerService */
