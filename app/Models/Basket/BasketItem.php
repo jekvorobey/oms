@@ -158,7 +158,7 @@ class BasketItem extends AbstractModel
             ) {
                 throw new BadRequestHttpException('offer without stocks');
             }
-            $this->name = $offerInfo->name;
+            $this->name = $offerInfo->full_name;
             $this->product = array_merge($this->product, [
                 'weight' => $offerInfo->weight,
                 'width' => $offerInfo->width,
