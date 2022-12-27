@@ -29,6 +29,7 @@ use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderInputDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderItemDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\DeliveryOrderPlaceDto;
 use Greensight\Logistics\Dto\Order\DeliveryOrderInput\RecipientDto;
+use Greensight\Logistics\Dto\Order\DeliveryOrderStatus\DeliveryOrderStatusDto;
 use Greensight\Logistics\Services\CourierCallService\CourierCallService;
 use Greensight\Logistics\Services\DeliveryOrderService\DeliveryOrderService;
 use Greensight\Logistics\Services\ListsService\ListsService;
@@ -645,6 +646,9 @@ class DeliveryService
      */
     public function updateDeliveryStatusFromDeliveryService(): void
     {
+        /** @var DeliveryOrderService $deliveryOrderService */
+        $deliveryOrderService = resolve(DeliveryOrderService::class);
+
         /** @var Collection|Delivery[] $deliveries */
         $deliveries = Delivery::deliveriesInDelivery()->load('order');
         if ($deliveries->isEmpty()) {
@@ -664,66 +668,68 @@ class DeliveryService
                     break;
             }
 
-            try {
-                /** @var DeliveryOrderService $deliveryOrderService */
-                $deliveryOrderService = resolve(DeliveryOrderService::class);
-                $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders(
-                    $deliveryServiceId,
-                    $deliveriesByService->keys()->all()
-                );
-            } catch (Throwable $e) {
-                report($e);
-                continue;
-            }
-
-            foreach ($deliveryOrderStatusDtos as $deliveryOrderStatusDto) {
-                $orderNumberOrXmlId = $deliveryServiceId == LogisticsDeliveryService::SERVICE_DPD
-                    ? $deliveryOrderStatusDto->number
-                    : $deliveryOrderStatusDto->xml_id;
-
-                $delivery = $deliveriesByService[$orderNumberOrXmlId] ?? null;
-                if (!$delivery) {
-                    continue;
-                }
-
-                if (!$deliveryOrderStatusDto->success) {
-                    continue;
-                }
-
+            foreach (array_chunk($deliveriesByService->keys()->all(), 5) as $deliveryNumbers) {
                 try {
-                    if ($deliveryOrderStatusDto->status && $delivery->status != $deliveryOrderStatusDto->status) {
-                        $delivery->status = $deliveryOrderStatusDto->status;
-
-                        if ($delivery->isPostPaid()) {
-                            if ($delivery->status === DeliveryStatus::DONE) {
-                                $delivery->payment_status = PaymentStatus::PAID;
-                            } elseif (in_array($delivery->status, [DeliveryStatus::CANCELLATION_EXPECTED, DeliveryStatus::RETURNED])) {
-                                $delivery->payment_status = PaymentStatus::TIMEOUT;
-                            }
-                        }
-                    }
-
-                    $delivery->setStatusXmlId(
-                        $deliveryOrderStatusDto->status_xml_id,
-                        new Carbon($deliveryOrderStatusDto->status_date)
-                    );
-
-                    if ($deliveryOrderStatusDto->xml_id && $delivery->xml_id != $deliveryOrderStatusDto->xml_id) {
-                        $delivery->xml_id = $deliveryOrderStatusDto->xml_id;
-
-                        if (empty($deliveryOrderStatusDto->message)) {
-                            $delivery->error_xml_id = null;
-                        }
-                    }
-
-                    $delivery->save();
+                    $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders($deliveryServiceId, $deliveryNumbers);
                 } catch (Throwable $e) {
-                    logger()->error("Error when updating status of Delivery #{$delivery->id} ({$delivery->xml_id})");
                     report($e);
                     continue;
                 }
+
+                foreach ($deliveryOrderStatusDtos as $deliveryOrderStatusDto) {
+                    $orderNumberOrXmlId = $deliveryServiceId == LogisticsDeliveryService::SERVICE_DPD
+                        ? $deliveryOrderStatusDto->number
+                        : $deliveryOrderStatusDto->xml_id;
+
+                    $delivery = $deliveriesByService[$orderNumberOrXmlId] ?? null;
+                    if (!$delivery) {
+                        continue;
+                    }
+
+                    if (!$deliveryOrderStatusDto->success) {
+                        continue;
+                    }
+
+                    try {
+                        $this->handleStatusResponseFromLogisticService($delivery, $deliveryOrderStatusDto);
+                    } catch (Throwable $e) {
+                        logger()->error("Error when updating status of Delivery #{$delivery->id} ({$delivery->xml_id})");
+                        report($e);
+                        continue;
+                    }
+                }
             }
         }
+    }
+
+    private function handleStatusResponseFromLogisticService(Delivery $delivery, DeliveryOrderStatusDto $deliveryOrderStatusDto): void
+    {
+        if ($deliveryOrderStatusDto->status && $delivery->status != $deliveryOrderStatusDto->status) {
+            $delivery->status = $deliveryOrderStatusDto->status;
+
+            if ($delivery->isPostPaid()) {
+                if ($delivery->status === DeliveryStatus::DONE) {
+                    $delivery->payment_status = PaymentStatus::PAID;
+                } elseif (in_array($delivery->status, [DeliveryStatus::CANCELLATION_EXPECTED, DeliveryStatus::RETURNED])) {
+                    $delivery->payment_status = PaymentStatus::TIMEOUT;
+                }
+            }
+        }
+
+        $delivery->setStatusXmlId(
+            $deliveryOrderStatusDto->status_xml_id,
+            new Carbon($deliveryOrderStatusDto->status_date)
+        );
+
+        if ($deliveryOrderStatusDto->xml_id && $delivery->xml_id != $deliveryOrderStatusDto->xml_id) {
+            $delivery->xml_id = $deliveryOrderStatusDto->xml_id;
+
+            if (empty($deliveryOrderStatusDto->message)) {
+                $delivery->error_xml_id = null;
+            }
+        }
+
+        $delivery->save();
     }
 
     /**
