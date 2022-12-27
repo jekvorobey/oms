@@ -72,6 +72,7 @@ class CheckCreditLineStatus extends Command
             ) {
                 try {
                     $orderService->cancel($order, CreditService::ORDER_RETURN_REASON_ID);
+                    echo "Заказ $order->number: отмена заказа - не найдена кредитная заявка \n";
                 } catch (Throwable $exception) {
                     report($exception);
                 }
@@ -98,10 +99,15 @@ class CheckCreditLineStatus extends Command
             $isUpdateOrder = true;
         }
 
-        // Отметка об оплате заказа, если кредитная заявка подписана
+        // Отметка об оплате заказа, который не отменен ранее, если кредитная заявка подписана
         if (
-            $order->payment_status !== PaymentStatus::PAID
-            && $creditDiscountNew == OrderStatusEnum::CREDIT_ORDER_STATUS_SIGNED
+            !$order->is_canceled
+            && $order->payment_status !== PaymentStatus::PAID
+            && in_array(
+                $creditStatusIdNew,
+                [OrderStatusEnum::CREDIT_ORDER_STATUS_SIGNED, OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED],
+                true
+            )
         ) {
             $order->payment_status = PaymentStatus::PAID;
             $order->payment_status_at = now();
@@ -124,6 +130,7 @@ class CheckCreditLineStatus extends Command
         ) {
             try {
                 $orderService->cancel($order, CreditService::ORDER_RETURN_REASON_ID);
+                echo "Заказ $order->id: отмена заказа - заявка отклонена \n";
             } catch (Throwable $exception) {
                 report($exception);
             }
@@ -136,9 +143,9 @@ class CheckCreditLineStatus extends Command
         //и статус кредитной заявки сменился на "Cached"
         //и нет ранее сформированных чеков
         if (
-            $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
-            && $creditStatusId !== $creditStatusIdNew
-            && $creditStatusIdNew === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
+            $order->credit_status_id === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
+            //&& $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
+            //&& $creditStatusId !== $creditStatusIdNew
             && $order->payments->isEmpty()
         ) {
             $payment = $creditService->createCreditPayment($order, CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_PREPAYMENT);
@@ -146,6 +153,7 @@ class CheckCreditLineStatus extends Command
                 $creditPaymentReceipt = $paymentService->createCreditPrepaymentReceipt($payment);
                 if ($creditPaymentReceipt) {
                     $paymentService->sendCreditPaymentReceipt($payment, $creditPaymentReceipt);
+                    echo "Заказ $order->id: создана оплата $payment->id и кассовый чек с расчетом 'Предоплата' \n";
                 }
             }
 
@@ -157,20 +165,21 @@ class CheckCreditLineStatus extends Command
         //и статусы кредитной заявки сменились на ???
         //и нет ранее сформированных чеков
         if (
-            $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
-            && $creditStatusId !== $creditStatusIdNew
-            && in_array(
-                $creditStatusIdNew,
+            in_array(
+                $order->credit_status_id,
                 [OrderStatusEnum::CREDIT_ORDER_STATUS_ACCEPTED, OrderStatusEnum::CREDIT_ORDER_STATUS_SIGNED],
                 true
             )
+            //&& $order->status === OrderStatus::TRANSFERRED_TO_DELIVERY
+            //&& $creditStatusId !== $creditStatusIdNew
             && $order->payments->isEmpty()
         ) {
             $payment = $creditService->createCreditPayment($order, CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_ON_CREDIT);
-            if ($payment instanceof Payment) {
+            if ($payment instanceof Payment && !$payment->is_credit_receipt_sent) {
                 $creditPaymentReceipt = $paymentService->createCreditReceipt($payment);
                 if ($creditPaymentReceipt) {
                     $paymentService->sendCreditPaymentReceipt($payment, $creditPaymentReceipt);
+                    echo "Заказ $order->id: создана оплата $payment->id и кассовый чек с расчетом 'В кредит' \n";
                 }
             }
 
@@ -182,16 +191,20 @@ class CheckCreditLineStatus extends Command
         //и заказ еще в пути
         //и ранее был выбит чек с расчетом "В кредит"
         if (
-            $creditStatusId !== $creditStatusIdNew
-            && $creditStatusIdNew === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
-            && in_array($order->status, [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DELIVERING, OrderStatus::READY_FOR_RECIPIENT], true)
+            $order->credit_status_id === OrderStatusEnum::CREDIT_ORDER_STATUS_CASHED
+            && in_array(
+                $order->status,
+                [OrderStatus::TRANSFERRED_TO_DELIVERY, OrderStatus::DELIVERING, OrderStatus::READY_FOR_RECIPIENT],
+                true
+            )
             && $order->payments->isNotEmpty()
         ) {
             $payment = $order->payments()->first();
-            if ($payment instanceof Payment) {
+            if ($payment instanceof Payment && $payment->is_credit_receipt_sent && !$payment->is_credit_payment_receipt_sent) {
                 $creditPaymentReceipt = $paymentService->createCreditPaymentReceipt($payment);
                 if ($creditPaymentReceipt) {
                     $paymentService->sendCreditPaymentReceipt($payment, $creditPaymentReceipt);
+                    echo "Заказ $order->id: обновлена оплата $payment->id и создан кассовый чек с расчетом 'Погашение кредита' \n";
                 }
             }
         }
