@@ -11,12 +11,14 @@ use Illuminate\Console\Command;
 class CheckYooKassaPayments extends Command
 {
     protected $signature = 'payments:check';
-    protected $description = 'Проверить платежи ЮКассы на наличие и актуализировать статус';
+    protected $description = 'Проверить платежи ЮКассы и Raiffeisen на наличие и актуализировать статус';
 
     public function handle()
     {
         $q = Payment::query()
-            ->where('payment_system', PaymentSystem::YANDEX)
+            //->where('payment_system', [PaymentSystem::YANDEX, PaymentSystem::RAIFFEISEN])
+            ->where('payment_system', PaymentSystem::RAIFFEISEN)
+            /*
             ->where(function ($query) {
                 $query->where(function ($query) {
                     $query
@@ -28,6 +30,7 @@ class CheckYooKassaPayments extends Command
                         ->where('created_at', '>', now()->subDays(7));
                 });
             })
+            */
             ->with('order')
             ->each(function (Payment $payment) {
                 if ($payment->order->remaining_price <= $payment->order->spent_certificate) {
@@ -40,6 +43,7 @@ class CheckYooKassaPayments extends Command
 
     private function checkStatus(Payment $payment): void
     {
+        dump($payment->external_payment_id);
         try {
             $paymentService = new PaymentService();
             $paymentService->updatePaymentInfo($payment);

@@ -14,6 +14,7 @@ class PaymentType
     public const B2B_SBERBANK = 'b2b_sberbank';
     public const MOBILE_BALANCE = 'mobile_balance';
     public const CASH = 'cash';
+    public const SBP_RAIFFEISEN = 'sbp_raiffeisen';
     //TODO::Добавить все типы оплаты
 
     /**
@@ -22,6 +23,6 @@ class PaymentType
      */
     public static function typesWithoutPartiallyCancel(): array
     {
-        return [self::B2B_SBERBANK, self::MOBILE_BALANCE, self::CASH];
+        return [self::B2B_SBERBANK, self::MOBILE_BALANCE, self::CASH, self::SBP_RAIFFEISEN];
     }
 }

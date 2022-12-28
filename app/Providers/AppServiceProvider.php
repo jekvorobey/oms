@@ -28,13 +28,13 @@ use App\Observers\Order\OrderCommentObserver;
 use App\Observers\Order\OrderObserver;
 use App\Observers\Order\OrderReturnObserver;
 use App\Observers\Payment\PaymentObserver;
-use IBT\CreditLine\CreditLine;
-use IBT\KitInvest\KitInvest;
-use IBT\KitInvest\KitInvestServicesClient;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
 use L5Swagger\L5SwaggerServiceProvider;
-use YooKassa\Client;
+use YooKassa\Client as YooKassaClient;
+use IBT\CreditLine\CreditLine as CreditLineClient;
+use IBT\KitInvest\KitInvest as KitInvestClient;
+use Raiffeisen\Ecom\Client as RaiffeisenClient;
 
 /**
  * Class AppServiceProvider
@@ -59,20 +59,24 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->singleton(Client::class, function () {
-            $yooKassaClient = new Client();
+        $this->app->singleton(YooKassaClient::class, function () {
+            $yooKassaClient = new YooKassaClient();
             $yooKassaClient->setAuth(config('services.y_checkout.shop_id'), config('services.y_checkout.key'));
             return $yooKassaClient;
         });
 
-        $this->app->singleton(CreditLine::class, function () {
-            $creditLineClient = new CreditLine();
+        $this->app->singleton(RaiffeisenClient::class, function () {
+            return new RaiffeisenClient(config('services.raiffeisen_payment.secretKey'), config('services.raiffeisen_payment.publicId'), config('services.raiffeisen_payment.host') ?: null);
+        });
+
+        $this->app->singleton(CreditLineClient::class, function () {
+            $creditLineClient = new CreditLineClient();
             $creditLineClient->setAuth(config('services.credit_line.login'), config('services.credit_line.password'));
             return $creditLineClient;
         });
 
-        $this->app->singleton(KitInvest::class, function () {
-            $kitInvestClient = new KitInvest();
+        $this->app->singleton(KitInvestClient::class, function () {
+            $kitInvestClient = new KitInvestClient();
             $kitInvestClient->setAuth(config('services.kit_invest.companyId'), config('services.kit_invest.login'), config('services.kit_invest.password'));
             return $kitInvestClient;
         });

@@ -10,9 +10,9 @@ use App\Models\Payment\PaymentStatus;
 use App\Services\PaymentService\PaymentSystems\Exceptions\Payment as PaymentException;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Support\Collection;
 use Pim\Services\CertificateService\CertificateService;
+use RuntimeException;
 
 /**
  * Класс-бизнес логики по работе с оплатами заказа
@@ -32,9 +32,10 @@ class PaymentService
     /**
      * Начать оплату.
      * Задаёт время когда оплата станет просроченной, и создаёт оплату во внешней системе оплаты.
-     * @return string адрес страницы оплаты во внешней системе
+     * @param int $paymentId
+     * @param string $returnUrl
+     * @return string|null адрес страницы оплаты во внешней системе
      * @throws PaymentException
-     * @throws Exception
      */
     public function start(int $paymentId, string $returnUrl): ?string
     {
@@ -50,7 +51,7 @@ class PaymentService
             }
 
             if (!$this->pay($payment)) {
-                throw new Exception('Ошибка при автоматической оплате');
+                throw new RuntimeException('Ошибка при автоматической оплате');
             }
 
             return $returnUrl;
