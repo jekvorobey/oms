@@ -197,13 +197,17 @@ class AnalyticsDumpOrdersService
                 /** @var BrandDto $brand */
                 $brand = $brands[$product->brand_id] ?? null;
 
-                $item['vendorCode'] = $product->vendor_code ?? null;
-                $item['productId'] = $product->id ?? null;
-                $item['productName'] = $product->name ?? null;
                 $item['brandId'] = $product->brand_id ?? null;
                 $item['brandName'] = $brand->name ?? null;
                 $item['categoryId'] = $product->category_id ?? null;
                 $item['categoryName'] = $category->name ?? null;
+                $item['vendorCode'] = $product->vendor_code ?? null;
+                $item['productId'] = $product->id ?? null;
+                if ($item['productName'] !== $product->name) {
+                    $optionsValue = str_replace($product->name, '', $item['productName']);
+                    $item['optionsValue'] = $optionsValue;
+                    //$item['productName'] = $product->name;
+                }
             }
 
             /** @var OfferDto|null $offer */
