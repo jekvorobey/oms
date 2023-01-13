@@ -12,6 +12,8 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Customer\Dto\CustomerDto;
 use Greensight\Customer\Services\CustomerService\CustomerService;
 use Greensight\Logistics\Dto\Lists\CityDto;
+use Greensight\Logistics\Dto\Lists\DeliveryService;
+use Greensight\Logistics\Dto\Lists\DeliveryServiceStatus;
 use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Illuminate\Support\Collection;
@@ -61,6 +63,7 @@ class AnalyticsDumpOrdersService
                 DB::raw('basket_items.price AS price'),
                 DB::raw('GROUP_CONCAT(DISTINCT order_discounts.name SEPARATOR \' | \') AS discounts'),
                 DB::raw('GROUP_CONCAT(DISTINCT shipments.number SEPARATOR \', \') AS shipmentsNumber'),
+                DB::raw('GROUP_CONCAT(DISTINCT delivery.delivery_service SEPARATOR \', \') AS deliveryService'),
                 DB::raw('MIN(DATE_FORMAT(delivery.delivery_at, \'%Y-%m-%d\')) AS deliveryAt'),
                 DB::raw('MAX(DATE_FORMAT(delivery.delivered_at, \'%Y-%m-%d\')) AS deliveredAt'),
                 DB::raw('MAX(DATE_FORMAT(delivery.status_at, \'%Y-%m-%d\')) AS deliveryStatusAt'),
@@ -125,6 +128,9 @@ class AnalyticsDumpOrdersService
 
         $offersIds = $orders->pluck('offerId')->unique()->all();
         $productsByOffers = $this->getProductsByOffers($offersIds);
+
+        $deliveryServiceIds = $orders->pluck('deliveryService')->unique()->all();
+        $deliveryServices = $this->getDeliveryServices();
 
         $merchantsId = [];
         $categoriesId = [];
@@ -289,6 +295,17 @@ class AnalyticsDumpOrdersService
                 $item['cityName'] = $city->name ?? null;
             }
 
+            $deliveryServiceIds = explode(",", $item['deliveryService']);
+            $item['deliveryService'] = null;
+
+            foreach ($deliveryServiceIds as $id) {
+                /** @var DeliveryService|null $deliveryService */
+                $deliveryService = $deliveryServices[$id] ?? null;
+                if ($deliveryService instanceof DeliveryService) {
+                    $item['deliveryService'] = ($item['deliveryService'] ? ', ' : '') . $deliveryService->name;
+                }
+            }
+
             $results[] = $item;
         }
 
@@ -359,6 +376,17 @@ class AnalyticsDumpOrdersService
         }
 
         return $productsByOffers;
+    }
+
+    private function getDeliveryServices(): Collection
+    {
+        /** @var ListsService $listService */
+        $listService = resolve(ListsService::class);
+        $deliveryServiceQuery = $listService->newQuery();
+
+        $deliveryServices = $listService->deliveryServices($deliveryServiceQuery)->keyBy('id')->all();
+
+        return collect($deliveryServices);
     }
 
     private function getMerchants(array $merchantsIds): Collection
