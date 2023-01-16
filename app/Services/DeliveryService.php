@@ -668,7 +668,7 @@ class DeliveryService
                     break;
             }
 
-            foreach (array_chunk($deliveriesByService->keys()->all(), 5) as $deliveryNumbers) {
+            foreach (array_chunk($deliveriesByService->keys()->all(), 20) as $deliveryNumbers) {
                 try {
                     $deliveryOrderStatusDtos = $deliveryOrderService->statusOrders($deliveryServiceId, $deliveryNumbers);
                 } catch (Throwable $e) {
