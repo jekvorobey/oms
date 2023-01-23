@@ -118,6 +118,8 @@ abstract class BasketController extends Controller
     {
         $response = [
             'id' => $basket->id,
+            'type' => $basket->type,
+            'customer_id' => $basket->customer_id,
         ];
         if ($request->get('items')) {
             $response['items'] = $this->getItems($basket);
