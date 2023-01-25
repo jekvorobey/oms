@@ -792,9 +792,10 @@ class DeliveryService
             $xmlId = $delivery->getDeliveryServiceNumber();
         }
 
-        if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
-            return;
-        }
+        //https://bitrix24.ibt.ru/workgroups/group/25/tasks/task/view/12251/?MID=113843#com113843 убираем костыль
+//        if ($delivery->delivery_service === LogisticsDeliveryService::SERVICE_CDEK && $delivery->status >= DeliveryStatus::ASSEMBLED) {
+//            return;
+//        }
 
         if ($xmlId) {
             // IBT-621: не удалять xml_id при отмене доставки
