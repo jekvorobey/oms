@@ -9260,15 +9260,15 @@
         },
         {
             "name": "yoomoney/yookassa-sdk-php",
-            "version": "2.6.1",
+            "version": "2.7.4",
             "source": {
                 "type": "git",
                 "url": "https://git.yoomoney.ru/scm/sdk/yookassa-sdk-php.git",
-                "reference": "7a157ad53abbdaa56ff7a4011f366e8d5466c27b"
+                "reference": "00143384d50d159d2054441359987cd80e1539ca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://git.yoomoney.ru/rest/api/latest/projects/SDK/repos/yookassa-sdk-php/archive?at=refs%2Ftags%2F2.6.0&format=zip"
+                "url": "https://git.yoomoney.ru/rest/api/latest/projects/SDK/repos/yookassa-sdk-php/archive?at=refs%2Ftags%2F2.7.4&format=zip"
             },
             "require": {
                 "ext-curl": "*",
@@ -9307,7 +9307,7 @@
                 "yookassa",
                 "yoomoney"
             ],
-            "time": "2022-10-07T10:30:14+00:00"
+            "time": "2023-01-18T08:03:39+00:00"
         },
         {
             "name": "zircote/swagger-php",
