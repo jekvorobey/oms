@@ -18,19 +18,22 @@ use Greensight\Logistics\Dto\Lists\PointDto;
 use Greensight\Logistics\Services\ListsService\ListsService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use DateTime;
-use Exception;
 use MerchantManagement\Dto\MerchantDto;
 use MerchantManagement\Services\MerchantService\MerchantService;
 use Pim\Dto\BrandDto;
 use Pim\Dto\CategoryDto;
 use Pim\Dto\Offer\OfferDto;
+use Pim\Dto\Offer\OfferOptionsDto;
+use Pim\Dto\Offer\OfferOptionValueDto;
 use Pim\Dto\Product\ProductByOfferDto;
 use Pim\Dto\Product\ProductDto;
 use Pim\Services\BrandService\BrandService;
 use Pim\Services\CategoryService\CategoryService;
+use Pim\Services\OfferOptionsService\OfferOptionsService;
 use Pim\Services\OfferService\OfferService;
 use Pim\Services\ProductService\ProductService;
+use DateTime;
+use Exception;
 
 class AnalyticsDumpOrdersService
 {
@@ -132,11 +135,14 @@ class AnalyticsDumpOrdersService
         $merchantsId = [];
         $categoriesId = [];
         $brandsId = [];
+        $offerOptionsId = [];
 
         foreach ($productsByOffers->toArray() as $item) {
             $merchantId = $item['offer']['merchant_id'] ?? null;
             $categoryId = $item['product']['category_id'] ?? null;
             $brandId = $item['product']['brand_id'] ?? null;
+            $optionValues = $item['optionValues'] ?? null;
+
 
             if ($merchantId) {
                 $merchantsId[$merchantId] = $merchantId;
@@ -147,11 +153,20 @@ class AnalyticsDumpOrdersService
             if ($brandId) {
                 $brandsId[$brandId] = $brandId;
             }
+            if ($optionValues) {
+                foreach ($optionValues->toArray() as $optionValue) {
+                    $offerOptionId = $optionValue['offer_option_id'] ?? null;
+                    if ($offerOptionId) {
+                        $offerOptionsId[$offerOptionId] = $offerOptionId;
+                    }
+                }
+            }
         }
 
         $merchants = $this->getMerchants($merchantsId);
         $categories = $this->getCategories($categoriesId);
         $brands = $this->getBrands($brandsId);
+        $offerOptions = $this->getOfferOptions($offerOptionsId);
 
         $customersIds = $orders->pluck('customerId')->unique()->all();
         $customers = $this->getCustomers($customersIds);
@@ -197,42 +212,72 @@ class AnalyticsDumpOrdersService
 
             /** @var ProductDto|null $product */
             $product = $productsByOffers[$item['offerId']]['product'] ?? null;
-            if ($product) {
+            if ($product instanceof ProductDto) {
+
                 /** @var CategoryDto $category */
                 $category = $categories[$product->category_id] ?? null;
+                if ($category instanceof CategoryDto) {
+                    $item['categoryId'] = $category->id;
+                    $item['categoryName'] = $category->name;
+
+                    $mainCategory = $category->parent ?? null;
+                    if ($mainCategory instanceof CategoryDto) {
+                        $item['categoryGroupId'] = $mainCategory->id;
+                        $item['categoryGroupName'] = $mainCategory->name;
+                    }
+                }
+
                 /** @var BrandDto $brand */
                 $brand = $brands[$product->brand_id] ?? null;
-
-                $item['brandId'] = $product->brand_id ?? null;
-                $item['brandName'] = $brand->name ?? null;
-                $item['categoryId'] = $product->category_id ?? null;
-                $item['categoryName'] = $category->name ?? null;
-                $item['vendorCode'] = $product->vendor_code ?? null;
-                $item['productId'] = $product->id ?? null;
-                if ($item['productName'] !== $product->name) {
-                    $optionsValue = str_replace($product->name, '', $item['productName']);
-                    $item['optionsValue'] = $optionsValue;
-                    //$item['productName'] = $product->name;
+                if ($brand) {
+                    $item['brandId'] = $product->brand_id;
+                    $item['brandName'] = $brand->name;
                 }
+
+                $item['vendorCode'] = $product->vendor_code;
+                $item['productId'] = $product->id;
+                $item['productName'] = $product->name;
             }
 
             /** @var OfferDto|null $offer */
             $offer = $productsByOffers[$item['offerId']]['offer'] ?? null;
-            if ($offer) {
-                $merchant = $merchants[$offer->merchant_id] ?? null;
-
+            if ($offer instanceof OfferDto) {
                 $item['merchantId'] = $offer->merchant_id ?? null;
-                $item['merchantName'] = $merchant->legal_name ?? null;
+
+                /** @var MerchantDto|null $merchant */
+                $merchant = $merchants[$offer->merchant_id] ?? null;
+                if ($merchant instanceof MerchantDto) {
+                    $item['merchantName'] = $merchant->legal_name ?? null;
+                }
+
+                /** @var Collection|OfferOptionValueDto[]|null $offer */
+                $offerOptionValues = $productsByOffers[$item['offerId']]['optionValues'] ?? null;
+                if ($offerOptionValues) {
+                    /** @var OfferOptionValueDto $offerOptionValue */
+                    foreach ($offerOptionValues->toArray() as $offerOptionValue) {
+                        $item['optionValues'][] = $offerOptionValue['value_string'];
+                        /** @var OfferOptionsDto $offerOption */
+                        $offerOption = $offerOptions[$offerOptionValue['offer_option_id']] ?? null;
+                        if ($offerOption) {
+                            $item['optionNames'][] = $offerOption->name;
+                        }
+                    }
+                    $item['optionValues'] = implode(", ", array_unique($item['optionValues']));
+                    $item['optionNames'] = implode(", ", array_unique($item['optionNames']));
+                }
             }
 
             /** @var CustomerDto|null $customer */
             $customer = $customers[$item['customerId']] ?? null;
 
-            if ($customer) {
+            if ($customer instanceof CustomerDto) {
                 unset($item['customerId']);
                 $item['customerId'] = $customer->id ?? null;
                 $customerRegistration = $customer->created_at ?? null;
-                $item['customerRegistration'] = $customerRegistration ? (new DateTime($customerRegistration))->format('Y-m-d') : null;
+                try {
+                    $item['customerRegistration'] = $customerRegistration ? (new DateTime($customerRegistration))->format('Y-m-d') : null;
+                } catch (Exception) {
+                }
                 $item['userId'] = $customer->user_id ?? null;
 
                 /** @var UserDto|null $user */
@@ -310,8 +355,9 @@ class AnalyticsDumpOrdersService
 
         foreach (array_chunk($offersIds, 500) as $chunkedOffersIds) {
             $offersQuery = $offerService->newQuery()
-                ->setFilter('id', $chunkedOffersIds)
-                ->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id', 'xml_id');
+                ->addFields(OfferDto::entity(), 'id', 'product_id', 'merchant_id', 'xml_id')
+                ->include('optionValues')
+                ->setFilter('id', $chunkedOffersIds);
             $offers = $offerService->offers($offersQuery);
 
             $productsIds = $offers->pluck('product_id')->toArray();
@@ -321,13 +367,10 @@ class AnalyticsDumpOrdersService
             $products = $productService->products($productQuery)->keyBy('id');
 
             foreach ($offers as $offer) {
-                //if (!isset($products[$offer->product_id])) {
-                //    continue;
-                //}
-
                 $productByOffer = new ProductByOfferDto();
                 $productByOffer->offer = $offer;
                 $productByOffer->product = $products[$offer->product_id] ?? null;
+                $productByOffer->optionValues = $offer->optionValues ?? null;
                 $productsByOffers->put($offer->id, $productByOffer);
             }
         }
@@ -376,13 +419,14 @@ class AnalyticsDumpOrdersService
     private function getCategories(array $categoriesId): Collection
     {
         $results = collect();
+        $mainCategories = collect();
 
         /** @var CategoryService $categoryService */
         $categoryService = resolve(CategoryService::class);
 
         foreach (array_chunk(array_unique($categoriesId), 500) as $chunkedCategoriesIds) {
             $categoryQuery = $categoryService->newQuery()
-                ->addFields(CategoryDto::entity(), 'id', 'name')
+                ->addFields(CategoryDto::entity(), 'id', 'name', 'parent_id')
                 ->setFilter('id', $chunkedCategoriesIds);
 
             try {
@@ -393,11 +437,51 @@ class AnalyticsDumpOrdersService
 
             /** @var CategoryDto $category */
             foreach ($categories as $category) {
+                if ($category->parent_id && !isset($mainCategories[$category->parent_id])) {
+                    $mainCategory = $this->getMainCategories($category);
+                    if ($mainCategory instanceof CategoryDto) {
+                        $mainCategories->put($category->parent_id, $mainCategory);
+                    }
+                }
+                $category->parent = $mainCategories[$category->parent_id] ?? null;
                 $results->put($category->id, $category);
             }
         }
 
         return $results;
+    }
+
+    private function getMainCategories(CategoryDto $category): ?CategoryDto
+    {
+        if (!$category->parent_id) {
+            return $category;
+        }
+
+        /** @var CategoryService $categoryService */
+        $categoryService = resolve(CategoryService::class);
+
+        $categoryQuery = $categoryService->newQuery()
+            ->addFields(CategoryDto::entity(), 'id', 'name', 'parent_id')
+            ->setFilter('id', $category->parent_id);
+
+        try {
+            /** @var CategoryDto $category */
+            $category = $categoryService->categories($categoryQuery)->first();
+        } catch (Exception) {
+            return $category;
+        }
+
+        $i = 0;
+
+        get_main_categories:
+        if ($i >= CategoryService::CATEGORIES_MAX_LEVEL || !$category->parent_id) {
+            return $category;
+        }
+        ++$i;
+
+        $category = $this->getMainCategories($category);
+
+        goto get_main_categories;
     }
 
     private function getBrands(array $brandsIds): Collection
@@ -421,6 +505,33 @@ class AnalyticsDumpOrdersService
             /** @var BrandDto $brand */
             foreach ($brands as $brand) {
                 $results->put($brand->id, $brand);
+            }
+        }
+
+        return $results;
+    }
+
+    private function getOfferOptions(array $offerOptionIds): Collection
+    {
+        $results = collect();
+
+        /** @var OfferOptionsService $offerOptionsService */
+        $offerOptionsService = resolve(OfferOptionsService::class);
+
+        foreach (array_chunk(array_unique($offerOptionIds), 500) as $chunkedOfferOptionIds) {
+            $offerOptionQuery = $offerOptionsService->newQuery()
+                ->addFields(OfferOptionsDto::entity(), 'id', 'name')
+                ->setFilter('id', $chunkedOfferOptionIds);
+
+            try {
+                $offerOptions = $offerOptionsService->options($offerOptionQuery)->keyBy('id');
+            } catch (Exception) {
+                continue;
+            }
+
+            /** @var OfferOptionsDto $offerOption */
+            foreach ($offerOptions as $offerOption) {
+                $results->put($offerOption->id, $offerOption);
             }
         }
 
