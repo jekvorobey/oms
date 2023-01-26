@@ -216,7 +216,6 @@ class DeliveryService
                 );
                 if ($courierCallOutputDto->success) {
                     $cargo->xml_id = $courierCallOutputDto->xml_id;
-                    $cargo->cdek_intake_number = $courierCallOutputDto->cdek_intake_number ?? null;
                     $cargo->error_xml_id = $courierCallOutputDto->special_courier_call_status;
                     $cargo->intake_date = $date;
                     $cargo->intake_time_from = $deliveryCargoDto->time_start;
