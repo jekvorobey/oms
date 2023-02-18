@@ -388,7 +388,7 @@ class DeliveryObserver
                 }
 
                 $allowDowngradeStatus = $delivery->getOriginal('status') == DeliveryStatus::CANCELLATION_EXPECTED
-                    && $delivery->status == DeliveryStatus::READY_FOR_RECIPIENT;
+                    && in_array($delivery->status, [DeliveryStatus::READY_FOR_RECIPIENT, DeliveryStatus::DONE]);
 
                 if ($shipment->status >= self::STATUS_TO_SHIPMENTS[$delivery->status] && !$allowDowngradeStatus) {
                     continue;

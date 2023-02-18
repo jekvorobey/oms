@@ -39,7 +39,14 @@ class CheckCourierCallsForCDEK extends Command
         $deliveryService = resolve(OMSDeliveryService::class);
         $cargos = Cargo::query()
             ->where('delivery_service', DeliveryService::SERVICE_CDEK)
-            ->where('error_xml_id', '=', ExternalStatusCheckDto::CDEK_STATUS_ACCEPTED)
+            ->where(function ($query) {
+                $query
+                    ->where('error_xml_id', '=', ExternalStatusCheckDto::CDEK_STATUS_ACCEPTED)
+                    ->orWhere(function ($query) {
+                        $query->whereNotNull('xml_id')->whereNull('cdek_intake_number');
+                    })
+                ;
+            })
             ->get();
 
         /** @var Cargo $cargo */

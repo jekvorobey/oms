@@ -26,7 +26,7 @@ class CustomerBasketService extends BasketService
     public function findFreeUserBasket(int $type, int|string $customerId): Basket
     {
         return Basket::query()
-            ->select('id')
+            ->select('id', 'customer_id')
             ->where('customer_id', $customerId)
             ->where('type', $type)
             ->where('is_belongs_to_order', 0)
