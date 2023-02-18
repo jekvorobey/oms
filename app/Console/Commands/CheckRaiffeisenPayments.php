@@ -18,19 +18,17 @@ class CheckRaiffeisenPayments extends Command
     {
         Payment::query()
             ->where('payment_system', PaymentSystem::RAIFFEISEN)
-            /*
             ->where(function ($query) {
                 $query->where(function ($query) {
                     $query
                         ->whereNotIn('status', [PaymentStatus::PAID, PaymentStatus::TIMEOUT, PaymentStatus::ERROR])
-                        ->where('created_at', '<', now()->subHour());
+                        ->where('created_at', '<', now()->subMinutes(5));
                 })->orWhere(function ($query) {
                     $query
                         ->whereIn('status', [PaymentStatus::ERROR])
                         ->where('created_at', '>', now()->subDays(7));
                 });
             })
-            */
             ->with('order')
             ->each(function (Payment $payment) {
                 if ($payment->order->remaining_price <= $payment->order->spent_certificate) {
@@ -43,7 +41,6 @@ class CheckRaiffeisenPayments extends Command
 
     private function checkStatus(Payment $payment): void
     {
-        dump($payment->external_payment_id);
         try {
             $paymentService = new PaymentService();
             $paymentService->updatePaymentInfo($payment);

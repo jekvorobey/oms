@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 
 class CheckYooKassaPayments extends Command
 {
-    protected $signature = 'payments:yookassa:check';
+    protected $signature = 'payments:check';
     protected $description = 'Проверить платежи ЮКассы на наличие и актуализировать статус';
 
     public function handle(): void

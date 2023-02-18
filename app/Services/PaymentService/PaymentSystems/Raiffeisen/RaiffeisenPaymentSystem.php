@@ -117,43 +117,28 @@ class RaiffeisenPaymentSystem implements PaymentSystemInterface
         }
     }
 
-    public function processExternalPayment(Payment $localPayment, Payment $payment): void
+    public function processExternalPayment(Payment $localPayment, array $paymentInfo): void
     {
-        switch ($payment->status) {
-            case YooKassaPaymentStatus::PENDING:
-                $this->logger->info('Set waiting', ['local_payment_id' => $localPayment->id]);
-                $localPayment->status = PaymentStatus::WAITING;
-                //$localPayment->payment_type = $payment->payment_method->getType();
-                $localPayment->save();
-
-                break;
-            case YooKassaPaymentStatus::WAITING_FOR_CAPTURE:
-                $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
-                $localPayment->status = PaymentStatus::HOLD;
-                //$localPayment->yandex_expires_at = $payment->getExpiresAt();
-                //$localPayment->payment_type = $payment->payment_method?->getType();
-                $localPayment->save();
-
-                break;
-            case YooKassaPaymentStatus::SUCCEEDED:
+        switch ($paymentInfo['code'] ?? null) {
+            case "SUCCESS":
                 $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
                 $localPayment->status = PaymentStatus::PAID;
-                //$localPayment->payment_type = $payment->payment_method?->getType();
+                $localPayment->payment_type = $paymentInfo['code']['transaction']['paymentMethod'] ?? null;
                 $localPayment->save();
 
                 break;
-            case YooKassaPaymentStatus::CANCELED:
+            case "CANCEL":
                 $order = $localPayment->order;
-                // Если была оплата ПС+доплата и частично отменили на всю сумму доплаты, то платеж в Юкассе отменился, а у нас отменять не надо
+                // Если была оплата ПС+доплата и частично отменили на всю сумму доплаты, то платеж отменился, а у нас отменять не надо
                 if ($order->remaining_price && $order->remaining_price <= $order->spent_certificate) {
                     break;
                 }
                 $this->logger->info('Set canceled', [
                     'local_payment_id' => $localPayment->id,
-                    //'cancel_reason' => $payment->getCancellationDetails()->reason,
+                    'cancel_reason' => '',
                 ]);
                 $localPayment->status = PaymentStatus::TIMEOUT;
-                //$localPayment->cancel_reason = $payment->getCancellationDetails()->reason;
+                $localPayment->cancel_reason = '';
                 $localPayment->save();
 
                 break;
@@ -228,19 +213,18 @@ class RaiffeisenPaymentSystem implements PaymentSystemInterface
 
     public function paymentInfo(Payment $payment): ?array
     {
-        dump($payment->external_payment_id);
-
         try {
             $orderTransaction = $this->raiffeisenService->getOrderTransaction($payment->external_payment_id);
         } catch (ClientException $e) {
+            $this->logger->info('Error payment info', ['message' => $e]);
         }
-        $this->logger->info('Get payment info', ['orderTransaction' => $orderTransaction]);
+        $this->logger->info('Get payment info', ['orderTransaction' => $orderTransaction ?? []]);
 
-        return $orderTransaction;
+        return $orderTransaction ?? [];
     }
 
     /**
-     * @param Payment $payment
+     * @param array $payment
      */
     public function updatePaymentStatus(Payment $localPayment, $payment): void
     {
