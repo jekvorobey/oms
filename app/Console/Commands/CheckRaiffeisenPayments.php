@@ -7,16 +7,18 @@ use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentSystem;
 use App\Services\PaymentService\PaymentService;
 use Illuminate\Console\Command;
+use Throwable;
 
-class CheckYooKassaPayments extends Command
+class CheckRaiffeisenPayments extends Command
 {
-    protected $signature = 'payments:yookassa:check';
-    protected $description = 'Проверить платежи ЮКассы на наличие и актуализировать статус';
+    protected $signature = 'payments:raiffeisen:check';
+    protected $description = 'Проверить платежи Raiffeisen на наличие и актуализировать статус';
 
     public function handle(): void
     {
         Payment::query()
-            ->where('payment_system', PaymentSystem::YANDEX)
+            ->where('payment_system', PaymentSystem::RAIFFEISEN)
+            /*
             ->where(function ($query) {
                 $query->where(function ($query) {
                     $query
@@ -28,6 +30,7 @@ class CheckYooKassaPayments extends Command
                         ->where('created_at', '>', now()->subDays(7));
                 });
             })
+            */
             ->with('order')
             ->each(function (Payment $payment) {
                 if ($payment->order->remaining_price <= $payment->order->spent_certificate) {
@@ -40,10 +43,11 @@ class CheckYooKassaPayments extends Command
 
     private function checkStatus(Payment $payment): void
     {
+        dump($payment->external_payment_id);
         try {
             $paymentService = new PaymentService();
             $paymentService->updatePaymentInfo($payment);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $payment->status = PaymentStatus::ERROR;
             $payment->save();
             report($e);
