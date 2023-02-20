@@ -42,6 +42,7 @@ class PaymentMethod extends AbstractModel
     public const CREDITPAID = 3;
     public const B2B_SBERBANK = 4;
     public const BANK_TRANSFER_FOR_LEGAL = 5;
+    public const SBP_RAIFFEISEN = 6;
 
     protected $fillable = [
         'name',
@@ -73,6 +74,7 @@ class PaymentMethod extends AbstractModel
             self::POSTPAID,
             self::CREDITPAID,
             self::B2B_SBERBANK,
+            self::SBP_RAIFFEISEN,
         ];
     }
 }

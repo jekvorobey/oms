@@ -12,6 +12,9 @@ class PaymentSystem
     /** Яндекс.Касса */
     public const YANDEX = 1;
 
+    /** банк Райффайзен */
+    public const RAIFFEISEN = 2;
+
     /** кредит */
     public const CREDIT = 10;
 
@@ -40,6 +43,7 @@ class PaymentSystem
     {
         return [
             new self(self::YANDEX, 'Яндекс.Касса'),
+            new self(self::RAIFFEISEN, 'Райффайзен'),
             new self(self::TEST, 'Тестовая система оплаты'),
         ];
     }
@@ -48,6 +52,7 @@ class PaymentSystem
     {
         return [
             self::YANDEX,
+            self::RAIFFEISEN,
             self::TEST,
         ];
     }

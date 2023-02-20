@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Greensight\CommonMsa\Models\AbstractModel;
+use OpenApi\Annotations as OA;
 
 /**
  * @OA\Schema(

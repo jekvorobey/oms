@@ -7,6 +7,7 @@ use App\Models\WithHistory;
 use App\Services\PaymentService\PaymentSystems\KitInvest\KitInvestPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\LocalPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
+use App\Services\PaymentService\PaymentSystems\Raiffeisen\RaiffeisenPaymentSystem;
 use App\Services\PaymentService\PaymentSystems\Yandex\YandexPaymentSystem;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -138,6 +139,8 @@ class Payment extends AbstractModel
                 return new YandexPaymentSystem();
             case PaymentSystem::CREDIT:
                 return new KitInvestPaymentSystem();
+            case PaymentSystem::RAIFFEISEN:
+                return new RaiffeisenPaymentSystem();
             case PaymentSystem::TEST:
                 return new LocalPaymentSystem();
         }

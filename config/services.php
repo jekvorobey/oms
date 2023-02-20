@@ -50,4 +50,10 @@ return [
         'login' => env('KIT_INVEST_PAYMENT_LOGIN'),
         'password' => env('KIT_INVEST_PAYMENT_PASSWORD'),
     ],
+
+    'raiffeisen_payment' => [
+        'secretKey' => env('RAIFFEISEN_PAYMENT_SECRET_KEY'),
+        'publicId' => env('RAIFFEISEN_PAYMENT_PUBLIC_ID'),
+        'host' => env('RAIFFEISEN_PAYMENT_HOST'),
+    ],
 ];

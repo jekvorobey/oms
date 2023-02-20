@@ -49,7 +49,7 @@ class ReturnOrderPayment extends Command
 
     private function refundPayment(OrderReturn $orderReturn): void
     {
-        if (!in_array($orderReturn->order->payment_method_id, [PaymentMethod::PREPAID, PaymentMethod::B2B_SBERBANK])) {
+        if (!in_array($orderReturn->order->payment_method_id, [PaymentMethod::PREPAID, PaymentMethod::B2B_SBERBANK], true)) {
             $orderReturn->status = OrderReturn::STATUS_DONE;
             return;
         }
