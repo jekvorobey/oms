@@ -623,7 +623,10 @@ class CheckoutOrder
         }
         $payment = new Payment();
         $payment->payment_method = $this->paymentMethodId;
-        $payment->payment_system = PaymentSystem::YANDEX;
+        $payment->payment_system = match ($this->paymentMethodId) {
+            PaymentMethod::SBP_RAIFFEISEN => PaymentSystem::RAIFFEISEN,
+            default => PaymentSystem::YANDEX,
+        };
         $payment->order_id = $order->id;
         $payment->sum = $this->price;
 

@@ -154,12 +154,12 @@ class OrderObserver
                 // Отправка уведомления "Ожидает оплаты" или "Оплачен"
                 if (
                     $order->type !== Basket::TYPE_MASTER
+                    && $order->payment_method_id !== PaymentMethod::CREDITPAID
                     && (
                         $this->shouldSendPaidNotification($order)
                         // || $order->payment_status == PaymentStatus::TIMEOUT
                         || ($order->payment_status == PaymentStatus::WAITING && !$order->is_postpaid)
                     )
-                    && $order->payment_method_id !== PaymentMethod::CREDITPAID
                 ) {
                     $delivery_method = !empty($order->deliveries()->firstOrFail()->delivery_method) &&
                         $order->deliveries()->firstOrFail()->delivery_method === DeliveryMethod::METHOD_PICKUP;
@@ -170,7 +170,7 @@ class OrderObserver
                             $order->isConsolidatedDelivery(),
                             $delivery_method
                         ),
-                        $this->generateNotificationVariables($order, (function () use ($order) {
+                        $this->generateNotificationVariables($order, (static function () use ($order) {
                             switch ($order->payment_status) {
                                 // case PaymentStatus::TIMEOUT:
                                 case PaymentStatus::WAITING:
@@ -196,8 +196,8 @@ class OrderObserver
 
             if (
                 $statusWasChanged
-                && !in_array($order->status, [OrderStatus::CREATED, OrderStatus::AWAITING_CONFIRMATION, OrderStatus::DONE])
                 && !$sent_notification
+                && !in_array($order->status, [OrderStatus::CREATED, OrderStatus::AWAITING_CONFIRMATION, OrderStatus::DONE], true)
             ) {
                 $this->sendStatusNotification($notificationService, $order, $user_id);
             }

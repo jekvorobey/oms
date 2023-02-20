@@ -83,6 +83,7 @@
         "phpoffice/phpspreadsheet": "^1.18",
         "phpoffice/phpword": "^0.18",
         "predis/predis": "^2.0",
+        "raiffeisen-ecom/payment-sdk": "^1.1",
         "sentry/sentry-laravel": "^2.12",
         "spatie/calendar-links": "^1.7",
         "yoomoney/yookassa-sdk-php": "^2.4"

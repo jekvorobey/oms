@@ -6,6 +6,7 @@ use App\Console\Commands\ApproveBonus;
 use App\Console\Commands\CargoExport;
 use App\Console\Commands\CheckCourierCallsForCDEK;
 use App\Console\Commands\CheckCreditLineStatus;
+use App\Console\Commands\CheckRaiffeisenPayments;
 use App\Console\Commands\CheckYooKassaPayments;
 use App\Console\Commands\CommitPayments;
 use App\Console\Commands\NotifyPublicEvent;
@@ -46,6 +47,7 @@ class Kernel extends ConsoleKernel
         $schedule->command(CheckCourierCallsForCDEK::class)->everyFiveMinutes();
         $schedule->command(ReturnOrderPayment::class)->everyMinute();
         $schedule->command(CheckYooKassaPayments::class)->hourly();
+        $schedule->command(CheckRaiffeisenPayments::class)->everyFiveMinutes();
         $schedule->command(CheckCreditLineStatus::class)->everyFifteenMinutes();
 //        $schedule->command(CheckCargoShipmentsStatus::class)->dailyAt('10:00');
 

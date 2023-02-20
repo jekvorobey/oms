@@ -98,7 +98,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
         $payment = $this->yandexService->getPaymentInfo($paymentId);
 
         if ($payment) {
-            $metadata = $payment->metadata ? $payment->metadata->toArray() : null;
+            $metadata = $payment->metadata?->toArray();
             $this->logger->info('Metadata', $metadata);
             $this->logger->info('Process payment', [
                 'external_payment_id' => $paymentId,
@@ -135,7 +135,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
             case PaymentStatus::PENDING:
                 $this->logger->info('Set waiting', ['local_payment_id' => $localPayment->id]);
                 $localPayment->status = Models\Payment\PaymentStatus::WAITING;
-                $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
+                $localPayment->payment_type = $payment->payment_method?->getType();
                 $localPayment->save();
 
                 break;
@@ -143,14 +143,14 @@ class YandexPaymentSystem implements PaymentSystemInterface
                 $this->logger->info('Set holded', ['local_payment_id' => $localPayment->id]);
                 $localPayment->status = Models\Payment\PaymentStatus::HOLD;
                 $localPayment->yandex_expires_at = $payment->getExpiresAt();
-                $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
+                $localPayment->payment_type = $payment->payment_method?->getType();
                 $localPayment->save();
 
                 break;
             case PaymentStatus::SUCCEEDED:
                 $this->logger->info('Set paid', ['local_payment_id' => $localPayment->id]);
                 $localPayment->status = Models\Payment\PaymentStatus::PAID;
-                $localPayment->payment_type = $payment->payment_method ? $payment->payment_method->getType() : null;
+                $localPayment->payment_type = $payment->payment_method?->getType();
                 $localPayment->save();
 
                 break;
