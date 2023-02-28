@@ -154,7 +154,7 @@ class OrderObserver
                 // Отправка уведомления "Ожидает оплаты" или "Оплачен"
                 if (
                     $order->type !== Basket::TYPE_MASTER
-                    && $order->payment_method_id !== PaymentMethod::CREDITPAID
+                    && !in_array($order->payment_method_id, [PaymentMethod::CREDITLINE_PAID, PaymentMethod::CREDITLINE_PAID], true)
                     && (
                         $this->shouldSendPaidNotification($order)
                         // || $order->payment_status == PaymentStatus::TIMEOUT

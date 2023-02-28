@@ -3,6 +3,7 @@
 namespace App\Models\Payment;
 
 use Greensight\CommonMsa\Models\AbstractModel;
+use OpenApi\Annotations as OA;
 
 /**
  * @OA\Schema(
@@ -34,15 +35,17 @@ use Greensight\CommonMsa\Models\AbstractModel;
  * @property float $min_available_price - Доступность варианта оплаты при сумме от
  * @property float $max_available_price - Доступность варианта оплаты при сумме до
  * @property array $settings - Дополнительные настройки оплаты
+ * @property int $sort - Сортировка методов оплаты в корзине
  */
 class PaymentMethod extends AbstractModel
 {
     public const PREPAID = 1;
     public const POSTPAID = 2;
-    public const CREDITPAID = 3;
+    public const CREDITLINE_PAID = 3;
     public const B2B_SBERBANK = 4;
     public const BANK_TRANSFER_FOR_LEGAL = 5;
     public const SBP_RAIFFEISEN = 6;
+    public const POSCREDIT_PAID = 7;
 
     protected $fillable = [
         'name',
@@ -56,6 +59,7 @@ class PaymentMethod extends AbstractModel
         'min_available_price',
         'max_available_price',
         'settings',
+        'sort',
     ];
 
     protected $casts = [
@@ -72,9 +76,10 @@ class PaymentMethod extends AbstractModel
         return [
             self::PREPAID,
             self::POSTPAID,
-            self::CREDITPAID,
+            self::CREDITLINE_PAID,
             self::B2B_SBERBANK,
             self::SBP_RAIFFEISEN,
+            self::POSCREDIT_PAID,
         ];
     }
 }

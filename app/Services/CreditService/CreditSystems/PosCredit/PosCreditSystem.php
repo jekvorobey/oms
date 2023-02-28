@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\CreditService\CreditSystems\CreditLine;
+namespace App\Services\CreditService\CreditSystems\PosCredit;
 
 use App\Core\Order\OrderWriter;
 use App\Models\Order\Order;
@@ -13,26 +13,26 @@ use App\Services\CreditService\CreditService;
 use App\Services\CreditService\CreditSystems\CreditSystemInterface;
 use App\Services\OrderService;
 use App\Services\PaymentService\PaymentService;
-use IBT\CreditLine\CreditLine;
 use IBT\CreditLine\Enum\OrderStatusEnum;
+use IBT\PosCredit\PosCredit;
 use Throwable;
 
 /**
- * Class CreditLineSystem
- * @package App\Services\CreditService\CreditSystems\CreditLine
+ * Class PosCreditSystem
+ * @package App\Services\CreditService\CreditSystems\PosCredit
  */
-class CreditLineSystem implements CreditSystemInterface
+class PosCreditSystem implements CreditSystemInterface
 {
     public const CREDIT_ORDER_ERROR_NOT_FIND = -5;
 
-    private CreditLine $creditLineService;
+    private PosCredit $posCreditService;
 
     /**
      * CreditLineSystem constructor.
      */
     public function __construct()
     {
-        $this->creditLineService = resolve(CreditLine::class);
+        $this->posCreditService = resolve(PosCredit::class);
     }
 
     /**
@@ -40,7 +40,7 @@ class CreditLineSystem implements CreditSystemInterface
      */
     public function getCreditOrder(string $id): ?array
     {
-        $creditOrder = $this->creditLineService->getOrderStatus($id);
+        $creditOrder = $this->posCreditService->getOrderStatus($id);
 
         if ($creditOrder->getErrorCode() === self::CREDIT_ORDER_ERROR_NOT_FIND) {
             return null;
@@ -67,7 +67,7 @@ class CreditLineSystem implements CreditSystemInterface
         /** @var OrderService $orderService */
         $orderService = resolve(OrderService::class);
 
-        $creditOrder = $this->creditLineService->getOrderStatus($order->number);
+        $creditOrder = $this->posCreditService->getOrderStatus($order->number);
 
         if ($creditOrder->getErrorCode() === self::CREDIT_ORDER_ERROR_NOT_FIND) {
             return null;

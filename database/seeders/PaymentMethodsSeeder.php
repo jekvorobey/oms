@@ -60,7 +60,7 @@ class PaymentMethodsSeeder extends Seeder
             'button_text' => '<p class="text-bold">Наличными или картой при получении</p>',
         ],
         [
-            'id' => PaymentMethod::CREDITPAID,
+            'id' => PaymentMethod::CREDITLINE_PAID,
             'name' => 'В рассрочку',
             'code' => 'creditpaid',
             'active' => true,

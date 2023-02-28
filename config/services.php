@@ -45,6 +45,11 @@ return [
         'password' => env('CREDIT_LINE_PAYMENT_PASSWORD'),
     ],
 
+    'pos_credit' => [
+        'userId' => env('POS_CREDIT_PAYMENT_USER_ID'),
+        'userToken' => env('POS_CREDIT_PAYMENT_USER_TOKEN'),
+    ],
+
     'kit_invest' => [
         'companyId' => env('KIT_INVEST_PAYMENT_COMPANY_ID'),
         'login' => env('KIT_INVEST_PAYMENT_LOGIN'),
