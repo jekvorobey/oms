@@ -46,8 +46,8 @@ return [
     ],
 
     'pos_credit' => [
-        'userId' => env('POS_CREDIT_PAYMENT_USER_ID'),
-        'userToken' => env('POS_CREDIT_PAYMENT_USER_TOKEN'),
+        'userId' => env('POS_CREDIT_ACCESS_ID'),
+        'userToken' => env('POS_CREDIT_TOKEN'),
     ],
 
     'kit_invest' => [
