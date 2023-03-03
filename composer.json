@@ -55,6 +55,10 @@
         {
             "type": "vcs",
             "url": "git@gitlab.com:iBT.studio/laravel-kit-invest-sdk"
+        },
+        {
+            "type": "vcs",
+            "url": "git@gitlab.com:iBT.studio/laravel-poscredit-sdk"
         }
     ],
     "require": {
@@ -74,6 +78,7 @@
         "ibt/merchant-management-lib": "dev-master",
         "ibt/message-lib": "dev-master",
         "ibt/pim-lib": "dev-master",
+        "ibt/poscredit-sdk": "dev-master",
         "ibt/pp-credit-sdk": "dev-master",
         "ibt/store-lib": "dev-master",
         "laravel/framework": "9.*",
