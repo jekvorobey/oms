@@ -28,7 +28,7 @@ class CheckCreditLineStatus extends Command
     public function handle(): void
     {
         Order::query()
-            ->where('payment_method_id', PaymentMethod::CREDITPAID)
+            ->where('payment_method_id', PaymentMethod::CREDITLINE_PAID)
             ->where('is_canceled', 0)
             ->whereNotIn('status', [OrderStatus::DONE])
             //->whereNotIn('payment_status', [PaymentStatus::PAID])

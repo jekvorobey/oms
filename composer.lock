@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "00b806897e440976efe8cf61d07cae1c",
+    "content-hash": "92c77f0a673fc46d5f2bee70c8081db9",
     "packages": [
         {
             "name": "barryvdh/laravel-snappy",
@@ -2278,6 +2278,45 @@
                 "issues": "https://gitlab.com/api/v4/projects/37965556/issues"
             },
             "time": "2023-01-09T08:24:17+00:00"
+        },
+        {
+            "name": "ibt/poscredit-sdk",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "git@gitlab.com:iBT.studio/laravel-poscredit-sdk.git",
+                "reference": "8f2fdd94454606290224c0f313565c08dd8fe1a4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Flaravel-poscredit-sdk/repository/archive.zip?sha=8f2fdd94454606290224c0f313565c08dd8fe1a4",
+                "reference": "8f2fdd94454606290224c0f313565c08dd8fe1a4",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "ext-soap": "*",
+                "ext-xml": "*",
+                "jms/serializer": "^3.17",
+                "php": "^7.4 || ^8.0"
+            },
+            "require-dev": {
+                "vimeo/psalm": "^0.3.86",
+                "wsdl2phpgenerator/wsdl2phpgenerator": "^3.4"
+            },
+            "default-branch": true,
+            "type": "sdk",
+            "autoload": {
+                "psr-4": {
+                    "IBT\\PosCredit\\": "src/"
+                }
+            },
+            "description": "IBT PosCredit sdk",
+            "support": {
+                "issues": "https://gitlab.com/api/v4/projects/43677136/issues"
+            },
+            "time": "2023-02-26T19:40:29+03:00"
         },
         {
             "name": "ibt/pp-credit-sdk",
@@ -11955,6 +11994,7 @@
         "ibt/merchant-management-lib": 20,
         "ibt/message-lib": 20,
         "ibt/pim-lib": 20,
+        "ibt/poscredit-sdk": 20,
         "ibt/pp-credit-sdk": 20,
         "ibt/store-lib": 20,
         "letsgoi/laravel-health-check": 20

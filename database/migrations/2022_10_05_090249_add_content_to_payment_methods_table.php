@@ -18,7 +18,7 @@ class AddContentToPaymentMethodsTable extends Migration
 
     public function up()
     {
-        PaymentMethod::query()->where('id', PaymentMethod::CREDITPAID)->update([
+        PaymentMethod::query()->where('id', PaymentMethod::CREDITLINE_PAID)->update([
             'settings' => json_encode([
                 'is_fixed_discount' => false,
                 'discount' => '14',
@@ -37,7 +37,7 @@ class AddContentToPaymentMethodsTable extends Migration
      */
     public function down()
     {
-        PaymentMethod::query()->where('id', PaymentMethod::CREDITPAID)->update([
+        PaymentMethod::query()->where('id', PaymentMethod::CREDITLINE_PAID)->update([
             'settings' => json_encode([
                 'is_fixed_discount' => false,
                 'discount' => '14',

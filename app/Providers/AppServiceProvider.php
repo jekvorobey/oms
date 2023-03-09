@@ -33,6 +33,7 @@ use Illuminate\Support\ServiceProvider;
 use L5Swagger\L5SwaggerServiceProvider;
 use YooKassa\Client as YooKassaClient;
 use IBT\CreditLine\CreditLine as CreditLineClient;
+use IBT\PosCredit\PosCredit as PosCreditClient;
 use IBT\KitInvest\KitInvest as KitInvestClient;
 use Raiffeisen\Ecom\Client as RaiffeisenClient;
 
@@ -47,7 +48,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         $this->app->register(L5SwaggerServiceProvider::class);
     }
@@ -57,27 +58,54 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         $this->app->singleton(YooKassaClient::class, function () {
             $yooKassaClient = new YooKassaClient();
-            $yooKassaClient->setAuth(config('services.y_checkout.shop_id'), config('services.y_checkout.key'));
+            $yooKassaClient->setAuth(
+                config('services.y_checkout.shop_id'),
+                config('services.y_checkout.key')
+            );
+
             return $yooKassaClient;
         });
 
         $this->app->singleton(RaiffeisenClient::class, function () {
-            return new RaiffeisenClient(config('services.raiffeisen_payment.secretKey'), config('services.raiffeisen_payment.publicId'), config('services.raiffeisen_payment.host') ?: null);
+            return new RaiffeisenClient(
+                config('services.raiffeisen_payment.secretKey'),
+                config('services.raiffeisen_payment.publicId'),
+                config('services.raiffeisen_payment.host') ?: null
+            );
         });
 
         $this->app->singleton(CreditLineClient::class, function () {
             $creditLineClient = new CreditLineClient();
-            $creditLineClient->setAuth(config('services.credit_line.login'), config('services.credit_line.password'));
+            $creditLineClient->setAuth(
+                config('services.credit_line.login'),
+                config('services.credit_line.password')
+            );
+
             return $creditLineClient;
+        });
+
+        $this->app->singleton(PosCreditClient::class, function () {
+            $posCreditClient = new PosCreditClient();
+            $posCreditClient->setAuth(
+                config('services.pos_credit.userId'),
+                config('services.pos_credit.userToken')
+            );
+
+            return $posCreditClient;
         });
 
         $this->app->singleton(KitInvestClient::class, function () {
             $kitInvestClient = new KitInvestClient();
-            $kitInvestClient->setAuth(config('services.kit_invest.companyId'), config('services.kit_invest.login'), config('services.kit_invest.password'));
+            $kitInvestClient->setAuth(
+                config('services.kit_invest.companyId'),
+                config('services.kit_invest.login'),
+                config('services.kit_invest.password')
+            );
+
             return $kitInvestClient;
         });
 
