@@ -2047,12 +2047,12 @@
             "source": {
                 "type": "git",
                 "url": "git@gitlab.com:iBT.studio/ibt-logistics-lib.git",
-                "reference": "9a68ea7609ecf0ef85dc419e4b20e075fc79a6c6"
+                "reference": "d5d04682409e86648e182920c0133f4658eb66d2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-logistics-lib/repository/archive.zip?sha=9a68ea7609ecf0ef85dc419e4b20e075fc79a6c6",
-                "reference": "9a68ea7609ecf0ef85dc419e4b20e075fc79a6c6",
+                "url": "https://gitlab.com/api/v4/projects/iBT%2Estudio%2Fibt-logistics-lib/repository/archive.zip?sha=d5d04682409e86648e182920c0133f4658eb66d2",
+                "reference": "d5d04682409e86648e182920c0133f4658eb66d2",
                 "shasum": ""
             },
             "require": {
@@ -2091,7 +2091,7 @@
             "support": {
                 "issues": "https://gitlab.com/api/v4/projects/37965501/issues"
             },
-            "time": "2022-12-13T07:41:09+00:00"
+            "time": "2023-03-11T00:39:13+07:00"
         },
         {
             "name": "ibt/marketing-lib",
