@@ -207,13 +207,13 @@ class CheckoutOrder
         }
 
         //todo 10810 временно убрать проверку
-//        foreach ($offersInfo as $offerInfo) {
-//            if (!$offerInfo[ProductQuery::FREE_BUY]) {
-//                throw new AccessDeniedException(
-//                    'Товар с закрытой продажей доступен только для Профессионалов'
-//                );
-//            }
-//        }
+        foreach ($offersInfo as $offerInfo) {
+            if (!$offerInfo[ProductQuery::FREE_BUY]) {
+                throw new AccessDeniedException(
+                    'Товар с закрытой продажей доступен только для Профессионалов'
+                );
+            }
+        }
     }
 
     /**
