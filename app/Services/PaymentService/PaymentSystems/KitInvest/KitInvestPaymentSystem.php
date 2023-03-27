@@ -4,6 +4,7 @@ namespace App\Services\PaymentService\PaymentSystems\KitInvest;
 
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentReceipt;
 use App\Services\PaymentService\PaymentSystems\KitInvest\Receipt\CreditReceiptData;
 use App\Services\PaymentService\PaymentSystems\KitInvest\Receipt\RefundReceiptData;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
@@ -108,7 +109,7 @@ class KitInvestPaymentSystem implements PaymentSystemInterface
         return $request ?? null;
     }
 
-    public function sendReceipt(Payment $payment, array $receipt): ?array
+    public function sendReceipt(Payment $payment, array $receipt, int $type): ?array
     {
         $request = $this->kitInvestService->createRequest(true, true, true);
         $receiptModel = new ReceiptModel();
@@ -121,9 +122,15 @@ class KitInvestPaymentSystem implements PaymentSystemInterface
         //    return $receiptModel->toArray();
         //}
 
+        $paymentReceipt = $this->createPaymentReceipt($payment, $request->toArray(), $type);
+
         try {
-            $result = $this->kitInvestService->sendReceiptModel($receiptModel);
             $this->logger->info('Send receipt', $receiptModel->toArray());
+            $result = $this->kitInvestService->sendReceiptModel($receiptModel);
+            $this->logger->info('Sending receipt result', $result ? $result->toArray() : []);
+
+            $this->updateResponsePaymentReceipt($paymentReceipt, $result ? $result->toArray() : []);
+
         } catch (Throwable $exception) {
             $this->logger->error('Error sending receipt', ['local_payment_id' => $payment->id, 'error' => $exception->getMessage()]);
             report($exception);
@@ -138,6 +145,26 @@ class KitInvestPaymentSystem implements PaymentSystemInterface
      */
     public function createIncomeReceipt(Payment $payment, bool $isFullPayment): void
     {
+    }
+
+    private function createPaymentReceipt(Payment $payment, array $request, int $receiptType): PaymentReceipt
+    {
+        $paymentReceipt = new PaymentReceipt();
+        $paymentReceipt->payment_id = $payment->id;
+        $paymentReceipt->order_id = $payment->order_id;
+        $paymentReceipt->sum = $payment->sum;
+        $paymentReceipt->receipt_type = $receiptType;
+        $paymentReceipt->request = $request;
+        $paymentReceipt->save();
+
+        return $paymentReceipt;
+    }
+
+    private function updateResponsePaymentReceipt(PaymentReceipt $paymentReceipt, ?array $receiptResponse = []): void
+    {
+        $paymentReceipt->response = $receiptResponse;
+        $paymentReceipt->payed_at = now();
+        $paymentReceipt->save();
     }
 
     /**

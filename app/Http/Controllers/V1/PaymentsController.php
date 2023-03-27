@@ -84,7 +84,7 @@ class PaymentsController extends Controller
      *      @OA\JsonContent(
      *          required={"type"},
      *          @OA\Property(property="payment_method", type="integer", example="0"),
-     *          @OA\Property(property="orderIds", type="integer", example="0"),
+     *          @OA\Property(property="orderId", type="integer", example="0"),
      *      ),
      *     ),
      *     @OA\Response(

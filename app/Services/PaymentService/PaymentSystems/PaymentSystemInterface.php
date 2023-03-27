@@ -86,7 +86,7 @@ interface PaymentSystemInterface
     /**
      * Отправить чек в кассу для фискализации
      */
-    public function sendReceipt(Payment $payment, array $receipt): ?array;
+    public function sendReceipt(Payment $payment, array $receipt, int $type): ?array;
 
     /**
      * Создание чека возврата (при отмене всего заказа/платежа)

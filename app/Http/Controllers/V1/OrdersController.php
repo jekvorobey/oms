@@ -15,6 +15,7 @@ use App\Models\Order\OrderComment;
 use App\Models\Order\OrderConfirmationType;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentReceipt;
 use App\Models\Payment\PaymentStatus;
 use App\Services\DocumentService\OrderTicketsCreator;
 use App\Services\OrderService;
@@ -348,23 +349,27 @@ class OrdersController extends Controller
         $checkCreditOrder = $creditService->checkCreditOrder($order);
 
         $payment = $creditService->createCreditPayment($order, $receiptType);
+        $paymentReceiptType = null;
         if ($payment instanceof Payment) {
             switch ($receiptType) {
                 case CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_PREPAYMENT:
                     $creditPaymentReceipt = $paymentService->createCreditPrepaymentReceipt($payment);
+                    $paymentReceiptType = PaymentReceipt::TYPE_PREPAYMENT;
                     break;
                 case CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_ON_CREDIT:
                     $creditPaymentReceipt = $paymentService->createCreditReceipt($payment);
+                    $paymentReceiptType = PaymentReceipt::TYPE_ON_CREDIT;
                     break;
                 case CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_PAYMENT:
                     $creditPaymentReceipt = $paymentService->createCreditPaymentReceipt($payment);
+                    $paymentReceiptType = PaymentReceipt::TYPE_CREDIT_PAYMENT;
                     break;
                 default:
                     $creditPaymentReceipt = null;
             }
 
             if ($creditPaymentReceipt) {
-                $resultSendReceipt = $paymentService->sendCreditPaymentReceipt($payment, $creditPaymentReceipt);
+                $resultSendReceipt = $paymentService->sendCreditPaymentReceipt($payment, $creditPaymentReceipt, $paymentReceiptType);
             }
         }
 
