@@ -4,6 +4,7 @@ namespace App\Services\PaymentService\PaymentSystems\Yandex;
 
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentReceipt;
 use App\Models;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\IncomeReceiptData;
@@ -35,6 +36,7 @@ class YandexPaymentSystem implements PaymentSystemInterface
 {
     /** @var Client */
     private $yandexService;
+
     /** @var Logger */
     private $logger;
 
@@ -282,9 +284,15 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $receiptData->setIsFullPayment($isFullPayment);
             $builder = $receiptData->getReceiptData($payment->order, $payment->external_payment_id);
             $request = $builder->build();
-            $this->logger->info('Start create receipt', $request->toArray());
 
-            $this->yandexService->createReceipt($request)->jsonSerialize();
+            $paymentReceipt = $this->createPaymentReceipt($payment, $request->toArray(), PaymentReceipt::TYPE_INCOME);
+
+            $this->logger->info('Start create income receipt', $request->toArray());
+            $receiptResponse = $this->yandexService->createReceipt($request)?->jsonSerialize();
+            $this->logger->info('Creating income receipt result', $receiptResponse);
+
+            $this->updateResponsePaymentReceipt($paymentReceipt, $receiptResponse);
+
         } catch (\Throwable $exception) {
             $this->logger->error('Error creating receipt', ['local_payment_id' => $payment->id, 'error' => $exception->getMessage()]);
             report($exception);
@@ -302,9 +310,14 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $builder = $refundAllItemsReceiptData->getRefundReceiptAllItemsData($payment->order, $payment->external_payment_id);
             $request = $builder->build();
 
-            $this->logger->info('Start creating refund receipt', $request->toArray());
-            $data = $this->yandexService->createReceipt($request)->jsonSerialize();
-            $this->logger->info('Return creating refund receipt result', $data);
+            $paymentReceipt = $this->createPaymentReceipt($payment, $request->toArray(), PaymentReceipt::TYPE_REFUND_ALL);
+
+            $this->logger->info('Start creating refund all receipt', $request->toArray());
+            $receiptResponse = $this->yandexService->createReceipt($request)?->jsonSerialize();
+            $this->logger->info('Return creating refund receipt all result', $receiptResponse);
+
+            $this->updateResponsePaymentReceipt($paymentReceipt, $receiptResponse);
+
         } catch (\Throwable $exception) {
             $this->logger->error('Error creating refund receipt', ['yandex_payment_id' => $payment->external_payment_id, 'error' => $exception->getMessage()]);
             report($exception);
@@ -321,16 +334,21 @@ class YandexPaymentSystem implements PaymentSystemInterface
             $refundData->setIsFullPayment($payment->is_fullpayment_receipt_sent);
             $returnReceiptBuilder = $refundData->getRefundReceiptPartiallyData($payment->external_payment_id, $orderReturn);
             $request = $returnReceiptBuilder->build();
-            $this->logger->info('Start create refund receipt', $request->toArray());
 
-            $response = $this->yandexService->createReceipt($request);
-            $this->logger->info('Return receipt', $response->jsonSerialize());
+            $paymentReceipt = $this->createPaymentReceipt($payment, $request->toArray(), PaymentReceipt::TYPE_REFUND_CANCEL);
+
+            $this->logger->info('Start create refund receipt', $request->toArray());
+            $receiptResponse = $this->yandexService->createReceipt($request)?->jsonSerialize();
+            $this->logger->info('Return receipt', $receiptResponse);
+
+            $this->updateResponsePaymentReceipt($paymentReceipt, $receiptResponse);
+
         } catch (\Throwable $exception) {
             $this->logger->error('Error creating refund receipt', ['yandex_payment_id' => $payment->external_payment_id, 'error' => $exception->getMessage()]);
             report($exception);
         }
 
-        return $response->jsonSerialize();
+        return $receiptResponse ?? [];
     }
 
     /**
@@ -401,9 +419,29 @@ class YandexPaymentSystem implements PaymentSystemInterface
      * @inheritDoc
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
-    public function sendReceipt(Payment $payment, array $receipt): ?array
+    public function sendReceipt(Payment $payment, array $receipt, int $type): ?array
     {
         // TODO: Implement createCreditPaymentReceipt() method.
         return null;
+    }
+
+    private function createPaymentReceipt(Payment $payment, array $request, int $receiptType): PaymentReceipt
+    {
+        $paymentReceipt = new PaymentReceipt();
+        $paymentReceipt->payment_id = $payment->id;
+        $paymentReceipt->order_id = $payment->order_id;
+        $paymentReceipt->sum = $payment->sum;
+        $paymentReceipt->receipt_type = $receiptType;
+        $paymentReceipt->request = $request;
+        $paymentReceipt->save();
+
+        return $paymentReceipt;
+    }
+
+    private function updateResponsePaymentReceipt(PaymentReceipt $paymentReceipt, ?array $receiptResponse = []): void
+    {
+        $paymentReceipt->response = $receiptResponse;
+        $paymentReceipt->payed_at = now();
+        $paymentReceipt->save();
     }
 }

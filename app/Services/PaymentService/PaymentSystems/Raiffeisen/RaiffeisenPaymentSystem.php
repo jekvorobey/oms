@@ -4,6 +4,7 @@ namespace App\Services\PaymentService\PaymentSystems\Raiffeisen;
 
 use App\Models\Order\OrderReturn;
 use App\Models\Payment\Payment;
+use App\Models\Payment\PaymentReceipt;
 use App\Models\Payment\PaymentStatus;
 use App\Services\PaymentService\PaymentSystems\PaymentSystemInterface;
 use App\Services\PaymentService\PaymentSystems\Yandex\Receipt\IncomeReceiptData;
@@ -14,8 +15,6 @@ use Psr\Log\LoggerInterface;
 use Monolog\Logger;
 use Throwable;
 use Exception;
-
-use YooKassa\Model\PaymentStatus as YooKassaPaymentStatus;
 
 class RaiffeisenPaymentSystem implements PaymentSystemInterface
 {
@@ -182,9 +181,14 @@ class RaiffeisenPaymentSystem implements PaymentSystemInterface
             $receiptData->setIsFullPayment($isFullPayment);
             $builder = $receiptData->getReceiptData($payment->order, $payment->external_payment_id);
             $request = $builder->build();
-            $this->logger->info('Start create receipt', $request->toArray());
 
-            $this->raiffeisenService->createReceipt($request)?->jsonSerialize();
+            $paymentReceipt = $this->createPaymentReceipt($payment, $request->toArray(), PaymentReceipt::TYPE_INCOME);
+
+            $this->logger->info('Start create receipt', $request->toArray());
+            $receiptResponse = $this->raiffeisenService->createReceipt($request)?->jsonSerialize();
+            $this->logger->info('Creating income receipt result', $receiptResponse);
+
+            $this->updateResponsePaymentReceipt($paymentReceipt, $receiptResponse);
         } catch (Throwable $exception) {
             $this->logger->error('Error creating receipt', ['local_payment_id' => $payment->id, 'error' => $exception->getMessage()]);
             report($exception);
@@ -271,8 +275,28 @@ class RaiffeisenPaymentSystem implements PaymentSystemInterface
      * @inheritDoc
      * @phpcsSuppress SlevomatCodingStandard.Functions.UnusedParameter
      */
-    public function sendReceipt(Payment $payment, array $receipt): ?array
+    public function sendReceipt(Payment $payment, array $receipt, int $type): ?array
     {
         return null;
+    }
+
+    private function createPaymentReceipt(Payment $payment, array $request, int $receiptType): PaymentReceipt
+    {
+        $paymentReceipt = new PaymentReceipt();
+        $paymentReceipt->payment_id = $payment->id;
+        $paymentReceipt->order_id = $payment->order_id;
+        $paymentReceipt->sum = $payment->sum;
+        $paymentReceipt->receipt_type = $receiptType;
+        $paymentReceipt->request = $request;
+        $paymentReceipt->save();
+
+        return $paymentReceipt;
+    }
+
+    private function updateResponsePaymentReceipt(PaymentReceipt $paymentReceipt, ?array $receiptResponse = []): void
+    {
+        $paymentReceipt->response = $receiptResponse;
+        $paymentReceipt->payed_at = now();
+        $paymentReceipt->save();
     }
 }
