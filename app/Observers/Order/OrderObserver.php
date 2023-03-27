@@ -9,6 +9,7 @@ use App\Models\Delivery\Delivery;
 use App\Models\Delivery\DeliveryStatus;
 use App\Models\Delivery\Shipment;
 use App\Models\Delivery\ShipmentItem;
+use App\Models\Delivery\ShipmentStatus;
 use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
@@ -458,6 +459,11 @@ class OrderObserver
                 $delivery->save();
 
                 foreach ($delivery->shipments as $shipment) {
+                    if ($shipment->status == ShipmentStatus::CHECKING) {
+                        $order->is_require_check = true;
+                        $order->save();
+                        break;
+                    }
                     $shipment->status = OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo'];
                     $shipment->save();
                 }
