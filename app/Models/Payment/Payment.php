@@ -105,11 +105,13 @@ class Payment extends AbstractModel
 
     /** @var bool */
     public $timestamps = false;
+
     /** @var bool */
     protected static $unguarded = true;
 
     /** @var array */
     protected $dates = ['created_at', 'payed_at', 'expires_at', 'yandex_expires_at'];
+
     /** @var array */
     protected $casts = [
         'data' => 'array',

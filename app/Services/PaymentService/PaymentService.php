@@ -293,7 +293,7 @@ class PaymentService
     /**
      * Отправка сформированного фискального чека на фискализацию
      */
-    public function sendCreditPaymentReceipt(?Payment $payment, array $receipt): ?array
+    public function sendCreditPaymentReceipt(?Payment $payment, array $receipt, int $type): ?array
     {
         if (!$payment instanceof Payment) {
             return null;
@@ -304,7 +304,7 @@ class PaymentService
             return null;
         }
 
-        return $paymentSystem->sendReceipt($payment, $receipt);
+        return $paymentSystem->sendReceipt($payment, $receipt, $type);
     }
 
     public function updatePaymentInfo(Payment $payment): void

@@ -7,6 +7,7 @@ use App\Models\Order\Order;
 use App\Models\Order\OrderStatus;
 use App\Models\Payment\Payment;
 use App\Models\Payment\PaymentMethod;
+use App\Models\Payment\PaymentReceipt;
 use App\Models\Payment\PaymentStatus;
 use App\Models\Payment\PaymentSystem;
 use App\Services\CreditService\CreditService;
@@ -160,7 +161,7 @@ class PosCreditSystem implements CreditSystemInterface
         ) {
             $payment = $this->createCreditPayment($order, CreditService::CREDIT_PAYMENT_RECEIPT_TYPE_ON_CREDIT);
             if ($payment instanceof Payment) {
-                $creditPaymentReceipt = $paymentService->sendCreditPaymentReceipt($payment, null);
+                $creditPaymentReceipt = $paymentService->sendCreditPaymentReceipt($payment, null, PaymentReceipt::TYPE_ON_CREDIT);
             }
         }
 
@@ -185,7 +186,7 @@ class PosCreditSystem implements CreditSystemInterface
         ) {
             $payment = $order->payments()->first();
             if ($payment instanceof Payment) {
-                $creditPaymentReceipt = $paymentService->sendCreditPaymentReceipt($payment, null);
+                $creditPaymentReceipt = $paymentService->sendCreditPaymentReceipt($payment, null, PaymentReceipt::TYPE_CREDIT_PAYMENT);
             }
         }
 

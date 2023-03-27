@@ -17,19 +17,15 @@ use IBT\CreditLine\Enum\OrderStatusEnum;
 use Illuminate\Console\Command;
 use Throwable;
 
-/**
- * Class CheckCreditLineStatus
- * @package App\Console\Commands
- */
-class CheckCreditLineStatus extends Command
+class CheckPosCreditStatus extends Command
 {
-    protected $signature = 'creditline:check';
-    protected $description = 'Проверить статусы кредитных договоров по кредитным заказам CreditLine и актуализация статуса заказа';
+    protected $signature = 'poscredit:check';
+    protected $description = 'Проверить статусы кредитных договоров по кредитным заказам PosCredit и актуализация статуса заказа';
 
     public function handle(): void
     {
         Order::query()
-            ->where('payment_method_id', PaymentMethod::CREDITLINE_PAID)
+            ->where('payment_method_id', PaymentMethod::POSCREDIT_PAID)
             ->where('is_canceled', 0)
             ->whereNotIn('status', [OrderStatus::DONE])
             //->whereNotIn('payment_status', [PaymentStatus::PAID])
