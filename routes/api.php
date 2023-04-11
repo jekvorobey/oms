@@ -292,6 +292,7 @@ Route::namespace('V1')->prefix('v1')->group(function () {
                 Route::put('mark-as-problem', [ShipmentsController::class, 'markAsProblem']);
                 Route::put('mark-as-non-problem', [ShipmentsController::class, 'markAsNonProblem']);
                 Route::put('cancel', [ShipmentsController::class, 'cancel']);
+                Route::put('approve', [ShipmentsController::class, 'approve']);
                 Route::delete('', [ShipmentsController::class, 'delete']);
                 Route::get('barcodes', [ShipmentsController::class, 'barcodes']);
                 Route::get('cdek-receipt', [ShipmentsController::class, 'cdekReceipt']);

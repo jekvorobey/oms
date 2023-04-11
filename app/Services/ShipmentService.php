@@ -253,6 +253,27 @@ class ShipmentService
     }
 
     /**
+     * Подтвердить отправление
+     * @throws Exception|Throwable
+     */
+    public function approveShipment(Shipment $shipment): bool
+    {
+        if ($shipment->status !== ShipmentStatus::CHECKING) {
+            throw new DeliveryServiceInvalidConditions(
+                'Можно подтвердить только отправление со статусом "Проверка"'
+            );
+        }
+
+        $shipment->status = ShipmentStatus::AWAITING_CONFIRMATION;
+
+        if (!$shipment->save()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Отменить элемент (товар с одного склада одного мерчанта) отправления
      * @throws Exception
      */

@@ -862,6 +862,28 @@ class ShipmentsController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="api/v1/shipments/{id}/approve",
+     *     tags={"Поставки"},
+     *     description="Подтвердить отправление",
+     *     @OA\Parameter(name="id", required=true, in="path", @OA\Schema(type="integer")),
+     *     @OA\Response(response="204", description=""),
+     *     @OA\Response(response="404", description="product not found"),
+     * )
+     * Отменить отправление
+     * @throws Throwable
+     */
+    public function approve(int $id, Request $request, ShipmentService $shipmentService): Response
+    {
+        $shipment = $shipmentService->getShipment($id);
+        if (!$shipmentService->approveShipment($shipment)) {
+            throw new HttpException(500);
+        }
+
+        return response('', 204);
+    }
+
+    /**
      * @OA\Get(
      *     path="api/v1/shipments/exports/new",
      *     tags={"Поставки"},
