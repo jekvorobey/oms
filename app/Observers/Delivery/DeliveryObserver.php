@@ -59,6 +59,8 @@ class DeliveryObserver
      * Автоматическая установка статуса для заказа, если все его доставки получили нужный статус
      */
     protected const STATUS_TO_ORDER = [
+        DeliveryStatus::CHECKING => OrderStatus::CHECKING,
+        DeliveryStatus::AWAITING_CONFIRMATION => OrderStatus::AWAITING_CONFIRMATION,
         DeliveryStatus::ASSEMBLING => OrderStatus::IN_PROCESSING,
         DeliveryStatus::SHIPPED => OrderStatus::TRANSFERRED_TO_DELIVERY,
         DeliveryStatus::ON_POINT_IN => OrderStatus::DELIVERING,

@@ -260,6 +260,7 @@ class OrderObserver
         $this->setProblemAt($order);
         $this->setCanceledAt($order);
         $this->setAwaitingCheckStatus($order);
+        $this->setCheckingStatus($order);
         $this->setAwaitingConfirmationStatus($order);
         $this->sendTicketsEmail($order);
         $this->returnTickets($order);
@@ -447,6 +448,15 @@ class OrderObserver
         }
     }
 
+    protected function setCheckingStatus(Order $order): void
+    {
+        if ($order->status == OrderStatus::CREATED && $order->is_require_check && $order->canBeProcessed()) {
+            if ($order->type == Basket::TYPE_PRODUCT) {
+                $order->status = OrderStatus::CHECKING;
+            }
+        }
+    }
+
     /**
      * Установить статус заказа всем доставкам и отправлениями.
      */
@@ -464,8 +474,6 @@ class OrderObserver
                         $order->save();
                         break;
                     }
-                    $shipment->status = OrderService::STATUS_TO_CHILDREN[$order->status]['shipmentsStatusTo'];
-                    $shipment->save();
                 }
             }
         }

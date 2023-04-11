@@ -20,6 +20,7 @@ use Greensight\CommonMsa\Services\AuthService\UserService;
 use Greensight\Message\Services\ServiceNotificationService\ServiceNotificationService;
 use Illuminate\Support\Str;
 use MerchantManagement\Dto\OperatorCommunicationMethod;
+use MerchantManagement\Services\MerchantService\MerchantService;
 use MerchantManagement\Services\OperatorService\OperatorService;
 use Greensight\Logistics\Dto\Lists\DeliveryService as DeliveryServiceDto;
 
@@ -38,6 +39,7 @@ class ShipmentObserver
      * Автоматическая установка статуса для доставки, если все её отправления получили нужный статус
      */
     protected const STATUS_TO_DELIVERY = [
+        ShipmentStatus::AWAITING_CONFIRMATION => DeliveryStatus::AWAITING_CONFIRMATION,
         ShipmentStatus::ASSEMBLING => DeliveryStatus::ASSEMBLING,
         ShipmentStatus::ASSEMBLED => DeliveryStatus::ASSEMBLED,
         ShipmentStatus::SHIPPED => DeliveryStatus::SHIPPED,
@@ -66,6 +68,7 @@ class ShipmentObserver
      */
     public function updated(Shipment $shipment)
     {
+        $this->setCheckingStatus($shipment);
         $this->setStatusToDelivery($shipment);
         $this->setIsCanceledToDelivery($shipment);
         $this->setIsCanceledToBasketItems($shipment);
@@ -395,6 +398,16 @@ class ShipmentObserver
     {
         if ($shipment->status == ShipmentStatus::CREATED && $shipment->delivery->status == DeliveryStatus::AWAITING_CONFIRMATION) {
             $shipment->status = ShipmentStatus::AWAITING_CONFIRMATION;
+        }
+    }
+
+    protected function setCheckingStatus(Shipment $shipment): void
+    {
+        $merchantService = resolve(MerchantService::class);
+        $merchant = $merchantService->merchant($shipment->merchant_id);
+
+        if ($shipment->getOriginal('status') == ShipmentStatus::CREATED && $shipment->status == ShipmentStatus::AWAITING_CONFIRMATION && $merchant->is_require_approval) {
+            $shipment->status = ShipmentStatus::CHECKING;
         }
     }
 
